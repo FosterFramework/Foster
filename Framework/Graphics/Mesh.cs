@@ -11,7 +11,7 @@ public class Mesh : IResource
 	public int IndexCount { get; private set; } = 0;
 
 	internal IntPtr resource;
-	private bool isDisposed = false;
+	internal bool isDisposed = false;
 
 	public Mesh()
 	{

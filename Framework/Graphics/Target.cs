@@ -36,7 +36,7 @@ public class Target : IResource
 	public readonly ReadOnlyCollection<Texture> Attachments;
 
 	internal readonly IntPtr resource;
-	private bool isDisposed = false;
+	internal bool isDisposed = false;
 
 	public Target(int width, int height)
 		: this(width, height, defaultFormats) { }
@@ -104,6 +104,10 @@ public class Target : IResource
 		if (!isDisposed)
 		{
 			isDisposed = true;
+
+			foreach (var attachment in Attachments)
+				attachment.isDisposed = true;
+
 			Platform.FosterTargetDestroy(resource);
 		}
 	}

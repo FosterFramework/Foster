@@ -181,7 +181,7 @@ public class Shader : IResource
 	public readonly ReadOnlyDictionary<string, Uniform> Uniforms;
 
 	internal readonly IntPtr resource;
-	private bool isDisposed = false;
+	internal bool isDisposed = false;
 
 	public Shader(in ShaderCreateInfo createInfo)
 	{

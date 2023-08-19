@@ -8,8 +8,14 @@ namespace Foster.Framework;
 /// </summary>
 public class Texture : IResource
 {
+	/// <summary>
+	/// Optional Texture Name
+	/// </summary>
 	public string Name { get; set; } = string.Empty;
 
+	/// <summary>
+	/// If the Texture has been disposed
+	/// </summary>
 	public bool IsDisposed => isDisposed;
 
 	/// <summary>
@@ -33,9 +39,9 @@ public class Texture : IResource
 	public readonly TextureFormat Format;
 
 	/// <summary>
-	/// Whether the Texture is part of a FrameBuffer
+	/// If this Texture is an Attachment for a Render Target.
 	/// </summary>
-	public readonly bool IsRenderTarget;
+	public readonly bool IsTargetAttachment;
 
 	/// <summary>
 	/// The Memory Size of the Texture, in bytes
@@ -43,7 +49,7 @@ public class Texture : IResource
 	public int MemorySize => Width * Height * Format.Size();
 
 	internal readonly IntPtr resource;
-	private bool isDisposed = false;
+	internal bool isDisposed = false;
 
 	public Texture(int width, int height, TextureFormat format = TextureFormat.Color)
 	{
@@ -57,7 +63,7 @@ public class Texture : IResource
 		Width = width;
 		Height = height;
 		Format = format;
-		IsRenderTarget = false;
+		IsTargetAttachment = false;
 	}
 
 	public Texture(Image image) 
@@ -72,12 +78,12 @@ public class Texture : IResource
 		Width = width;
 		Height = height;
 		Format = format;
-		IsRenderTarget = true;
+		IsTargetAttachment = true;
 	}
 
 	~Texture()
 	{
-		if (!IsRenderTarget)
+		if (!IsTargetAttachment)
 			Dispose();
 	}
 
@@ -117,7 +123,7 @@ public class Texture : IResource
 
 	public void Dispose()
 	{
-		Debug.Assert(!IsRenderTarget, "Cannot Dispose a Texture that is part of a Target");
+		Debug.Assert(!IsTargetAttachment, "Cannot Dispose a Texture that is part of a Target");
 
 		if (!isDisposed)
 		{
