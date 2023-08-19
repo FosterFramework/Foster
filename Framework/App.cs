@@ -347,48 +347,4 @@ public static class App
 		};
 		Platform.FosterClear(ref clear);
 	}
-
-	public static void Main()
-	{
-		Register<Test>();
-		Run("Hello World", 1280, 720);
-	}
-}
-
-class Test : Module
-{
-	private readonly Batcher batch = new();
-	private readonly Texture texture = new Texture(new Image(64, 64, Color.Blue));
-	private readonly Texture texture2 = new Texture(new Image(64, 64, Color.Red * 0.1f));
-	private Vector2 pos = new();
-
-	public override void Startup()
-	{
-		var test = new Image(64, 64, Color.Blue);
-		test.WritePng("test.png");
-	}
-
-	public override void Update()
-	{
-		App.Title = $"Something Else {App.Width}x{App.Height} : {App.WidthInPixels}x{App.HeightInPixels}";
-
-		pos.X += Input.Controllers[0].Axis(Axes.LeftX) * 128 * Time.Delta;
-		pos.Y += Input.Controllers[0].Axis(Axes.LeftY) * 128 * Time.Delta;
-		var it = new VirtualStick().AddLeftJoystick(0);
-
-		Console.WriteLine(Input.Controllers[0].Name);
-
-		if (Input.Keyboard.Pressed(Keys.A))
-			texture.Dispose();
-	}
-
-	public override void Render()
-	{
-		App.Clear(0x44aa77);
-
-		batch.Image(texture, Vector2.Zero, Color.White);
-		batch.Rect(new Rect(pos.X, pos.Y, 64, 64), Color.Red);
-		batch.Render();
-		batch.Clear();
-	}
 }
