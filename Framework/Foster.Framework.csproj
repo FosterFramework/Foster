@@ -8,14 +8,20 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   
-  <ItemGroup>
-    <Content Condition="$([MSBuild]::IsOSPlatform('Windows'))" Include="$(ProjectDir)../Platform/libs/x64/FosterPlatform.dll">
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <Content Include="$(ProjectDir)../Platform/libs/x64/FosterPlatform.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Condition="$([MSBuild]::IsOSPlatform('Linux'))" Include="$(ProjectDir)../Platform/libs/lib64/libFosterPlatform.so">
+  </ItemGroup>
+  
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
+    <Content Include="$(ProjectDir)../Platform/libs/lib64/libFosterPlatform.so">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Condition="$([MSBuild]::IsOSPlatform('OSX'))" Include="$(ProjectDir)../Platform/libs/osx/libFosterPlatform.dylib">
+  </ItemGroup>
+  
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <Content Include="$(ProjectDir)../Platform/libs/osx/libFosterPlatform.dylib">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
