@@ -1,4 +1,4 @@
-#ifdef FOSTER_D3D11_ENABLED
+#if 0 && defined(FOSTER_D3D11_ENABLED)
 
 // TODO:
 // Note the D3D11 Implementation is still a work-in-progress

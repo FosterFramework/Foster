@@ -4,11 +4,15 @@ bool FosterGetDevice(FosterRenderers preferred, FosterRenderDevice* device)
 {
 	if (preferred == FOSTER_RENDERER_NONE)
 	{
-		#ifdef _WIN32
+		// TODO: 
+		// once D3D11 renderer is re-implemented, this is the correct behavior:
+		/*#if defined(_WIN32) && defined(FOSTER_D3D11_ENABLED)
 			preferred = FOSTER_RENDERER_D3D11;
 		#else
 			preferred = FOSTER_RENDERER_OPENGL;
-		#endif
+		#endif*/
+
+		preferred = FOSTER_RENDERER_OPENGL;
 	}
 
 	switch (preferred)
