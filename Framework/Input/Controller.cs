@@ -155,8 +155,8 @@ public class Controller
 	public Vector2 Axis(int axisX, int axisY) => new Vector2(Axis(axisX), Axis(axisY));
 	public Vector2 Axis(Axes axisX, Axes axisY) => new Vector2(Axis(axisX), Axis(axisY));
 
-	public Vector2 LeftStick => Axis(Foster.Axes.LeftX, Foster.Axes.LeftY);
-	public Vector2 RightStick => Axis(Foster.Axes.RightX, Foster.Axes.RightY);
+	public Vector2 LeftStick => Axis(Foster.Framework.Axes.LeftX, Foster.Framework.Axes.LeftY);
+	public Vector2 RightStick => Axis(Foster.Framework.Axes.RightX, Foster.Framework.Axes.RightY);
 
 	public bool Repeated(Buttons button)
 	{
