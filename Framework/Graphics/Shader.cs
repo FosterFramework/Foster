@@ -5,28 +5,28 @@ using System.Numerics;
 
 namespace Foster.Framework;
 
-public readonly struct ShaderCreateInfo
+public struct ShaderCreateInfo
 {
-	public readonly struct Attribute
+	public struct Attribute
 	{
-		public readonly string SemanticName;
-		public readonly int SemanticIndex;
+		public string SemanticName;
+		public int SemanticIndex;
 	}
 
 	/// <summary>
 	/// Vertex Shader Code
 	/// </summary>
-	public readonly string VertexShader;
+	public string VertexShader;
 
 	/// <summary>
 	/// Fragment Shader Code
 	/// </summary>
-	public readonly string FragmentShader;
+	public string FragmentShader;
 
 	/// <summary>
 	/// Attributes, required if using HLSL / D3D11
 	/// </summary>
-	public readonly Attribute[]? Attributes;
+	public Attribute[]? Attributes;
 
 	public ShaderCreateInfo(string vertexShader, string fragmentShader, Attribute[]? attributes = null)
 	{
