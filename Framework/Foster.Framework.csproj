@@ -1,23 +1,23 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-
-  <Target Condition="$([MSBuild]::IsOSPlatform('Linux'))" Name="CopyLinuxLibs" AfterTargets="AfterBuild">
-    <Copy SourceFiles="$(ProjectDir)../Platform/libs/lib64/libFosterPlatform.so" DestinationFolder="$(OutDir)" />
-  </Target>
-
-  <Target Condition="$([MSBuild]::IsOSPlatform('Windows'))" Name="CopyWindowsLibs" AfterTargets="AfterBuild">
-    <Copy SourceFiles="$(ProjectDir)../Platform/libs/x64/FosterPlatform.dll" DestinationFolder="$(OutDir)" />
-  </Target>
-
-  <Target Condition="$([MSBuild]::IsOSPlatform('OSX'))" Name="CopyOSXLibs" AfterTargets="AfterBuild">
-    <Copy SourceFiles="$(ProjectDir)../Platform/libs/osx/libFosterPlatform.dylib" DestinationFolder="$(OutDir)" />
-  </Target>
+  
+  <ItemGroup>
+    <Content Condition="$([MSBuild]::IsOSPlatform('Windows'))" Include="$(ProjectDir)../Platform/libs/x64/FosterPlatform.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Condition="$([MSBuild]::IsOSPlatform('Linux'))" Include="$(ProjectDir)../Platform/libs/lib64/libFosterPlatform.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Condition="$([MSBuild]::IsOSPlatform('OSX'))" Include="$(ProjectDir)../Platform/libs/osx/libFosterPlatform.dylib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 
 </Project>
