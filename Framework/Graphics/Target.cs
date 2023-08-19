@@ -3,15 +3,36 @@ using System.Diagnostics;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// A 2D Render Target used to draw content off-frame.
+/// </summary>
 public class Target : IResource
 {
 	private static readonly TextureFormat[] defaultFormats = new TextureFormat[] { TextureFormat.Color };
 
+	/// <summary>
+	/// Optional Target Name
+	/// </summary>
 	public string Name { get; set; } = string.Empty;
+
+	/// <summary>
+	/// Ii the Target has been disposed.
+	/// </summary>
 	public bool IsDisposed => isDisposed;
 
+	/// <summary>
+	/// The Width of the Target.
+	/// </summary>
 	public readonly int Width;
+
+	/// <summary>
+	/// The Height of the Target.
+	/// </summary>
 	public readonly int Height;
+
+	/// <summary>
+	/// The Texture attachments in the Target. 
+	/// </summary>
 	public readonly ReadOnlyCollection<Texture> Attachments;
 
 	internal readonly IntPtr resource;
@@ -47,11 +68,17 @@ public class Target : IResource
 		Dispose();
 	}
 
+	/// <summary>
+	/// Clears the Target to the given color
+	/// </summary>
 	public void Clear(Color color)
 	{
 		Clear(color, 0, 0, ClearMask.Color);
 	}
 
+	/// <summary>
+	/// Clears the Target
+	/// </summary>
 	public void Clear(Color color, int depth, int stencil, ClearMask mask)
 	{
 		Debug.Assert(!IsDisposed, "Target is Disposed");
@@ -69,6 +96,9 @@ public class Target : IResource
 		Platform.FosterClear(ref clear);
 	}
 
+	/// <summary>
+	/// Disposes of the Target and all its Attachments
+	/// </summary>
 	public void Dispose()
 	{
 		if (!isDisposed)

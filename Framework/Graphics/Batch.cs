@@ -91,7 +91,7 @@ public class Batcher
 
 	public Batcher()
 	{
-		DefaultShader ??= new Shader(DefaultShaders.BatcherDefault[Renderers.OpenGL]);
+		DefaultShader ??= new Shader(ShaderDefaults.Batcher[Renderers.OpenGL]);
 		Clear();
 	}
 

@@ -4,12 +4,34 @@ using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// 2D Image representation.
+/// </summary>
 public class Image : IDisposable
 {
+	/// <summary>
+	/// Width of the Image
+	/// </summary>
 	public int Width { get; private set; }
+
+	/// <summary>
+	/// Height of the Image
+	/// </summary>
 	public int Height { get; private set; }
+
+	/// <summary>
+	/// Total number of pixels in the Image
+	/// </summary>
 	public int PixelCount => Width * Height;
+
+	/// <summary>
+	/// Width and Height of the Image
+	/// </summary>
 	public Point2 Size => new(Width, Height);
+
+	/// <summary>
+	/// Bounds of the Image
+	/// </summary>
 	public RectInt Bounds => new (0, 0, Width, Height);
 	
 	/// <summary>

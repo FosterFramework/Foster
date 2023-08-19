@@ -1,8 +1,8 @@
 namespace Foster.Framework;
 
-internal static class DefaultShaders
+internal static class ShaderDefaults
 {
-	public static Dictionary<Renderers, ShaderCreateInfo> BatcherDefault = new()
+	public static Dictionary<Renderers, ShaderCreateInfo> Batcher = new()
 	{
 		[Renderers.OpenGL] = new()
 		{

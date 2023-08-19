@@ -8,8 +8,7 @@ namespace Foster.Framework;
 /// </summary>
 public class Keyboard
 {
-
-	public const int MaxKeys = 400;
+	public const int MaxKeys = 512;
 
 	internal readonly bool[] pressed = new bool[MaxKeys];
 	internal readonly bool[] down = new bool[MaxKeys];

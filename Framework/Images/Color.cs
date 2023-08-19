@@ -93,7 +93,6 @@ public struct Color
 	/// <summary>
 	/// Premultiplies the color value based on its Alpha component
 	/// </summary>
-	/// <returns></returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Color Premultiply()
 	{
@@ -136,7 +135,6 @@ public struct Color
 	/// Returns a Hex String representation of the Color's given components
 	/// </summary>
 	/// <param name="components">The Components, in any order. ex. "RGBA" or "RGB" or "ARGB"</param>
-	/// <returns></returns>
 	public string ToHexString(string components)
 	{
 		const string HEX = "0123456789ABCDEF";
@@ -193,7 +191,6 @@ public struct Color
 	/// </summary>
 	/// <param name="components">The components to parse in order, ex. "RGBA"</param>
 	/// <param name="value">The Hex value to parse</param>
-	/// <returns></returns>
 	public static Color FromHexString(string components, ReadOnlySpan<char> value)
 	{
 		// skip past useless string data (ex. if the string was 0xffffff or #ffffff)
@@ -237,8 +234,6 @@ public struct Color
 	/// <summary>
 	/// Creates a new Color from the given RGB Hex value
 	/// </summary>
-	/// <param name="value"></param>
-	/// <returns></returns>
 	public static Color FromHexStringRGB(string value)
 	{
 		return FromHexString("RGB", value);
@@ -247,8 +242,6 @@ public struct Color
 	/// <summary>
 	/// Creates a new Color from the given RGBA Hex value
 	/// </summary>
-	/// <param name="value"></param>
-	/// <returns></returns>
 	public static Color FromHexStringRGBA(string value)
 	{
 		return FromHexString("RGBA", value);
@@ -257,7 +250,6 @@ public struct Color
 	/// <summary>
 	/// Linearly interpolates between two colors
 	/// </summary>
-	/// <returns></returns>
 	public static Color Lerp(Color a, Color b, float amount)
 	{
 		amount = Math.Max(0, Math.Min(1, amount));
@@ -274,7 +266,6 @@ public struct Color
 	/// Implicitely converts an int32 to a Color, ex 0xffffff
 	/// This does not include Alpha values
 	/// </summary>
-	/// <param name="color"></param>
 	public static implicit operator Color(int color)
 	{
 		return new Color(color);
@@ -283,7 +274,6 @@ public struct Color
 	/// <summary>
 	/// Implicitely converts an uint32 to a Color, ex 0xffffffff
 	/// </summary>
-	/// <param name="color"></param>
 	public static implicit operator Color(uint color)
 	{
 		return new Color(color);
