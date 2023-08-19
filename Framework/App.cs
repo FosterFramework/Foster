@@ -351,7 +351,7 @@ public static class App
 	public static void Main()
 	{
 		Register<Test>();
-		Run("Hello World", 1920, 1080);
+		Run("Hello World", 1280, 720);
 	}
 }
 

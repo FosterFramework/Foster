@@ -9,15 +9,15 @@
   </PropertyGroup>
 
   <Target Condition="$([MSBuild]::IsOSPlatform('Linux'))" Name="CopyLinuxLibs" AfterTargets="AfterBuild">
-    <Copy SourceFiles="Platform/libs/lib64/libFosterPlatform.so" DestinationFolder="$(OutDir)" />
+    <Copy SourceFiles="$(ProjectDir)../Platform/libs/lib64/libFosterPlatform.so" DestinationFolder="$(OutDir)" />
   </Target>
 
   <Target Condition="$([MSBuild]::IsOSPlatform('Windows'))" Name="CopyWindowsLibs" AfterTargets="AfterBuild">
-    <Copy SourceFiles="Platform/libs/x64/FosterPlatform.dll" DestinationFolder="$(OutDir)" />
+    <Copy SourceFiles="$(ProjectDir)../Platform/libs/x64/FosterPlatform.dll" DestinationFolder="$(OutDir)" />
   </Target>
 
   <Target Condition="$([MSBuild]::IsOSPlatform('OSX'))" Name="CopyOSXLibs" AfterTargets="AfterBuild">
-    <Copy SourceFiles="Platform/libs/osx/libFosterPlatform.dylib" DestinationFolder="$(OutDir)" />
+    <Copy SourceFiles="$(ProjectDir)../Platform/libs/osx/libFosterPlatform.dylib" DestinationFolder="$(OutDir)" />
   </Target>
 
 </Project>
