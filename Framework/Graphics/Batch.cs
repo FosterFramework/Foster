@@ -119,7 +119,7 @@ public class Batcher
 	{
 		Matrix4x4 matrix = target != null
 			? Matrix4x4.CreateOrthographicOffCenter(0, target.Width, target.Height, 0, 0, float.MaxValue)
-			: Matrix4x4.CreateOrthographicOffCenter(0, App.Width, App.Height, 0, 0, float.MaxValue);
+			: Matrix4x4.CreateOrthographicOffCenter(0, App.WidthInPixels, App.HeightInPixels, 0, 0, float.MaxValue);
 		Render(target, matrix);
 	}
 
