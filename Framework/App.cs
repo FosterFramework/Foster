@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
@@ -34,9 +33,10 @@ public static class App
 	public static bool Exiting { get; private set; } = false;
 
 	/// <summary>
-	/// Evaluates and returns the immediate current time
+	/// Gets the Stopwatch used to evaluate Application time.
+	/// Note: Modifying this can break your update loop!
 	/// </summary>
-	public static TimeSpan Now() => TimeSpan.FromTicks(timer.Elapsed.Ticks);
+	public static Stopwatch Timer => timer;
 
 	/// <summary>
 	/// The Window Title
@@ -53,10 +53,11 @@ public static class App
 	public static string Name { get; private set; } = string.Empty;
 
 	/// <summary>
-	/// Gets the path to the User Directory, which is a writable location to store user settings/data.
-	/// This path has the Appliaction Name appended to it. 
-	/// For example on Windows this is usually in AppData/Roaming/{AppName}, where as on Linux it's 
-	/// usually in .local/share/{Appname}
+	/// Gets the path to the User Directory, which is the location where you should
+	/// store application data like settings or save data.
+	/// The location of this directory is platform and application dependent.
+	/// For example on Windows this is usually in C:/User/{user}/AppData/Roaming/{App.Name}, 
+	/// where as on Linux it's usually in ~/.local/share/{App.Name}
 	/// </summary>
 	public static string UserPath { get; private set; } = string.Empty;
 

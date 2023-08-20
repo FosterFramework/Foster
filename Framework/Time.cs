@@ -13,22 +13,34 @@ public static class Time
 	public static TimeSpan Duration;
 
 	/// <summary>
+	/// Requests the current time since the Application was started.
+	/// This is different than Time.Duration which is only incremented once per frame.
+	/// </summary>
+	public static TimeSpan Now => App.Timer.Elapsed;
+
+	/// <summary>
 	/// Current frame index
 	/// </summary>
 	public static ulong Frame = 0;
 
 	/// <summary>
-	/// Requests the current time since the Application was started.
+	/// If the Application should run in Fixed Timestep mode
 	/// </summary>
-	public static TimeSpan Now => App.Now();
-
 	public static bool FixedStep = true;
 
+	/// <summary>
+	/// What the Fixed Timestep target is (defaults to 60fps, or 0.016s per frame)
+	/// </summary>
 	public static TimeSpan FixedStepTarget = TimeSpan.FromSeconds(1.0f / 60.0f);
 
+	/// <summary>
+	/// The maximum amount of time a Fixed Update is allowed to take before the Application starts dropping frames.
+	/// </summary>
 	public static TimeSpan FixedStepMaxElapsedTime = TimeSpan.FromSeconds(5.0f / 60.0f);
 
-
+	/// <summary>
+	/// Advances the Time.Duration by the given delta, and assigns Time.Delta.
+	/// </summary>
 	public static void Advance(TimeSpan delta)
 	{
 		Delta = (float)delta.TotalSeconds;
