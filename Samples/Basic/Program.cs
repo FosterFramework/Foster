@@ -22,11 +22,6 @@ class Game : Module
 	private Vector2 pos = new();
 	private Vector2 speed = new();
 
-	public override void Startup()
-	{
-
-	}
-
 	public override void Update()
 	{
 		App.Title = $"Something Else {App.Width}x{App.Height} : {App.WidthInPixels}x{App.HeightInPixels}";
@@ -44,6 +39,9 @@ class Game : Module
 			speed.X = Calc.Approach(speed.X, 0, Time.Delta * Friction);
 		if (!Input.Keyboard.Down(Keys.Up, Keys.Down))
 			speed.Y = Calc.Approach(speed.Y, 0, Time.Delta * Friction);
+
+		if (Input.Keyboard.Pressed(Keys.F4))
+			App.Fullscreen = !App.Fullscreen;
 
 		if (speed.Length() > MaxSpeed)
 			speed = speed.Normalized() * MaxSpeed;
@@ -63,7 +61,8 @@ class Game : Module
 		batch.Image(texture, Vector2.Zero, Color.White);
 		batch.PopMatrix();
 
-		batch.Circle(new Circle(pos.X, pos.Y, 64), 16, Color.Red);
+		batch.Circle(new Circle(pos, 64), 16, Color.Red);
+		batch.Circle(new Circle(Input.Mouse.Position, 8), 16, Color.White);
 
 		batch.Render();
 		batch.Clear();
