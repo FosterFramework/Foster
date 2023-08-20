@@ -16,6 +16,11 @@ public class Mouse
 	internal readonly TimeSpan[] timestamp = new TimeSpan[MaxButtons];
 	internal Vector2 wheelValue;
 
+	/// <summary>
+	/// Mouse position, relative to the window, in Pixel Coordinates.
+	/// </summary>
+	public Vector2 Position;
+
 	public bool Pressed(MouseButtons button) => pressed[(int)button];
 	public bool Down(MouseButtons button) => down[(int)button];
 	public bool Released(MouseButtons button) => released[(int)button];
@@ -55,6 +60,7 @@ public class Mouse
 		Array.Copy(other.released, 0, released, 0, MaxButtons);
 		Array.Copy(other.timestamp, 0, timestamp, 0, MaxButtons);
 
+		Position = other.Position;
 		wheelValue = other.wheelValue;
 	}
 

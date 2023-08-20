@@ -161,6 +161,18 @@ public static class Input
 	/// <summary>
 	/// Invoked by the Application platform when the Mouse Wheel state is changed
 	/// </summary>
+	internal static void OnMouseMove(float offsetX, float offsetY)
+	{
+		Point2 size = new Point2(App.Width, App.Height);
+		Point2 pixels = new Point2(App.WidthInPixels, App.HeightInPixels);
+
+		nextState.Mouse.Position.X = (offsetX / size.X) * pixels.X;
+		nextState.Mouse.Position.Y = (offsetY / size.Y) * pixels.Y;
+	}
+
+	/// <summary>
+	/// Invoked by the Application platform when the Mouse Wheel state is changed
+	/// </summary>
 	internal static void OnMouseWheel(float offsetX, float offsetY)
 	{
 		nextState.Mouse.wheelValue = new Vector2(offsetX, offsetY);

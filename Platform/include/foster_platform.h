@@ -398,6 +398,7 @@ typedef void (FOSTER_CALL * FosterExitRequestFn)();
 typedef void (FOSTER_CALL * FosterOnTextFn)(const char* txt);
 typedef void (FOSTER_CALL * FosterOnKeyFn)(int key, bool pressed);
 typedef void (FOSTER_CALL * FosterOnMouseButtonFn)(int button, bool pressed);
+typedef void (FOSTER_CALL * FosterOnMouseMoveFn)(float posX, float posY);
 typedef void (FOSTER_CALL * FosterOnMouseWheelFn)(float offsetX, float offsetY);
 typedef void (FOSTER_CALL * FosterOnControllerConnectFn)(int index, const char* name, int buttonCount, int axisCount, bool isGamepad, uint16_t vendor, uint16_t product, uint16_t version);
 typedef void (FOSTER_CALL * FosterOnControllerDisconnectFn)(int index);
@@ -425,6 +426,7 @@ typedef struct FosterDesc
 	FosterOnTextFn onText;
 	FosterOnKeyFn onKey;
 	FosterOnMouseButtonFn onMouseButton;
+	FosterOnMouseMoveFn onMouseMove;
 	FosterOnMouseWheelFn onMouseWheel;
 	FosterOnControllerConnectFn onControllerConnect;
 	FosterOnControllerDisconnectFn onControllerDisconnect;

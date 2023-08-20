@@ -2,7 +2,7 @@ namespace Foster.Framework;
 
 public enum Renderers
 {
-	None,
+	None = 0,
+	D3D11,
 	OpenGL,
-	D3D11
 }

@@ -31,6 +31,9 @@ internal static class Platform
 	public delegate void FosterOnMouseButtonFn(int button, bool pressed);
 	
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public delegate void FosterOnMouseMoveFn(float posX, float posY);
+	
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate void FosterOnMouseWheelFn(float offsetX, float offsetY);
 	
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -64,6 +67,7 @@ internal static class Platform
 		public FosterOnTextFn onText;
 		public FosterOnKeyFn onKey;
 		public FosterOnMouseButtonFn onMouseButton;
+		public FosterOnMouseMoveFn onMouseMove;
 		public FosterOnMouseWheelFn onMouseWheel;
 		public FosterOnControllerConnectFn onControllerConnect;
 		public FosterOnControllerDisconnectFn onControllerDisconnect;
@@ -184,7 +188,7 @@ internal static class Platform
 	[DllImport(DLL)]
 	public static extern bool FosterImageWrite(FosterWriteFn func, IntPtr context, int w, int h, IntPtr data);
 	[DllImport(DLL)]
-	public static extern unsafe Renderers FosterGetRenderer();
+	public static extern Renderers FosterGetRenderer();
 	[DllImport(DLL)]
 	public static extern IntPtr FosterTextureCreate(int width, int height, TextureFormat format);
 	[DllImport(DLL)]

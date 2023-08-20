@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
@@ -62,6 +63,16 @@ public static class App
 	public static string UserPath { get; private set; } = string.Empty;
 
 	/// <summary>
+	/// The current Renderer API in use
+	/// </summary>
+	public static Renderers Renderer { get; private set; } = Renderers.None;
+
+	/// <summary>
+	/// Returns whether the Application Window is currently Focused or not.
+	/// </summary>
+	public static bool Focused => true;//Platform.FosterGetFocused();
+
+	/// <summary>
 	/// The Window width, which isn't necessarily the size in Pixels depending on the Platform.
 	/// Use WidthInPixels to get the drawable size.
 	/// </summary>
@@ -110,6 +121,12 @@ public static class App
 			return h;
 		}
 	}
+
+	/// <summary>
+	/// Gets the Content Scale for the Application Window.
+	/// The content scale is the ratio between the current DPI and the platform's default DPI.
+	/// </summary>
+	public static Vector2 ContentScale => Vector2.One * 2.0f;
 
 	/// <summary>
 	/// Whether the Window is Fullscreen or not
@@ -220,6 +237,7 @@ public static class App
 			onText = Input.OnText,
 			onKey = Input.OnKey,
 			onMouseButton = Input.OnMouseButton,
+			onMouseMove = Input.OnMouseMove,
 			onMouseWheel = Input.OnMouseWheel,
 			onControllerConnect = Input.OnControllerConnect,
 			onControllerDisconnect = Input.OnControllerDisconnect,
@@ -235,6 +253,7 @@ public static class App
 		});
 
 		App.UserPath = Platform.ParseUTF8(Platform.FosterGetUserPath());
+		App.Renderer = Platform.FosterGetRenderer();
 
 		while (registrations.Count > 0)
 		{
