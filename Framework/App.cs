@@ -273,6 +273,7 @@ public static class App
 
 			Input.Step();
 			Platform.FosterPollEvents();
+			FramePool.NextFrame();
 
 			for (int i = 0; i < modules.Count; i ++)
 				modules[i].Update();
