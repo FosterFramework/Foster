@@ -1,24 +1,21 @@
 using System;
-using System.Collections.Generic;
 using System.IO.Compression;
-using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
 
 namespace Foster.Framework;
 
 public class Aseprite : Aseprite.IUserDataTarget
 {
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	private static int MulUn8(int a, int b)
 	{
 		var t = a * b + 0x80;
 		return (t >> 8) + t >> 8;
 	}
 
-	public delegate Color BlendFn(Color backdrop, Color src, int opacity);
-
-	static readonly BlendFn BlendNormal = (Color backdrop, Color src, int opacity) =>
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	private static Color BlendNormal(Color backdrop, Color src, int opacity)
 	{
 		int r, g, b, a;
 
@@ -46,7 +43,7 @@ public class Aseprite : Aseprite.IUserDataTarget
 			r = g = b = 0;
 
 		return new Color((byte)r, (byte)g, (byte)b, (byte)a);
-	};
+	}
 
 	public enum BlendMode
 	{
@@ -487,7 +484,7 @@ public class Aseprite : Aseprite.IUserDataTarget
 										pixels[i] = new Color(buffer[b], buffer[b + 1], buffer[b + 2], buffer[b + 3]);
 									break;
 								case Format.Grayscale:
-									for (int i = 0, b = 0; i < pixels.Length; ++i, b += 4)
+									for (int i = 0, b = 0; i < pixels.Length; ++i, b += 2)
 										pixels[i] = new Color(buffer[b], buffer[b], buffer[b], buffer[b + 1]);
 									break;
 								case Format.Indexed:
@@ -543,45 +540,48 @@ public class Aseprite : Aseprite.IUserDataTarget
 		return results;
 	}
 
-	public Image? RenderFrame(int index, Predicate<Layer> layerFilter)
+	public Image RenderFrame(int index, Predicate<Layer>? layerFilter = null)
 	{
-		Image? image = null;
+		Image image = new Image(Width, Height);
 
 		foreach (var layer in Layers)
 		{
-			if (!layer.Visible || !layerFilter(layer))
+			if (!layer.Visible)
+				continue;
+			if (layerFilter != null && !layerFilter(layer))
 				continue;
 			if (Frames[index].Cels.Find(cel => cel.Layer == layer) is not Cel cel)
 				continue;
 			if (cel.Image is not Image src)
 				continue;
 
-			if (image is not Image dst)
-				image = dst = new Image(Width, Height);
-
 			int opacity = MulUn8(cel.Opacity, layer.Opacity);
-			dst.CopyPixels(src, src.Bounds, cel.Pos, (src, dst) => BlendNormal(dst, src, opacity));
+			image.CopyPixels(src, src.Bounds, cel.Pos, (src, dst) => BlendNormal(dst, src, opacity));
 		}
 
 		return image;
 	}
 
-	public Image?[]? RenderAllFrames(Predicate<Layer> layerFilter)
+	public Image[] RenderAllFrames(Predicate<Layer>? layerFilter = null)
 	{
 		if (Frames.Length == 0)
-			return null;
+			return Array.Empty<Image>();
 		return RenderFrames(0, Frames.Length - 1, layerFilter);
 	}
 
-	public Image?[]? RenderFrames(int from, int to, Predicate<Layer> layerFilter)
+	public Image[] RenderFrames(int from, int to, Predicate<Layer>? layerFilter = null)
 	{
-		Image?[]? results = null;
-
 		int len = (to - from) + 1;
+
+		Image[] results = new Image[len];
+		for (int i = 0; i < len; i ++)
+			results[i] = new Image(Width, Height);
 
 		foreach (var layer in Layers)
 		{
-			if (!layer.Visible || !layerFilter(layer))
+			if (!layer.Visible)
+				continue;
+			if (layerFilter != null && !layerFilter(layer))
 				continue;
 			for (int i = 0; i < len; ++i)
 			{
@@ -590,14 +590,8 @@ public class Aseprite : Aseprite.IUserDataTarget
 				if (cel.Image is not Image src)
 					continue;
 
-				if (results is not Image?[] images)
-					results = images = new Image?[len];
-
-				if (images[i] is not Image dst)
-					images[i] = dst = new Image(Size.X, Size.Y);
-
 				int opacity = MulUn8(cel.Opacity, layer.Opacity);
-				dst.CopyPixels(src, src.Bounds, cel.Pos, (src, dst) => BlendNormal(dst, src, opacity));
+				results[i].CopyPixels(src, src.Bounds, cel.Pos, (src, dst) => BlendNormal(dst, src, opacity));
 			}
 		}
 

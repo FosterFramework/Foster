@@ -182,6 +182,8 @@ internal static class Platform
 	[DllImport(DLL)]
 	public static extern IntPtr FosterGetClipboard();
 	[DllImport(DLL)]
+	public static extern bool FosterGetFocused();
+	[DllImport(DLL)]
 	public static extern IntPtr FosterImageLoad(IntPtr memory, int length, out int w, out int h);
 	[DllImport(DLL)]
 	public static extern void FosterImageFree(IntPtr data);

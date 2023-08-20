@@ -551,6 +551,8 @@ FOSTER_API void FosterSetClipboard(const char* cstr);
 
 FOSTER_API const char* FosterGetClipboard();
 
+FOSTER_API bool FosterGetFocused();
+
 FOSTER_API unsigned char* FosterImageLoad(const unsigned char* memory, int length, int* w, int* h);
 
 FOSTER_API void FosterImageFree(unsigned char* data);

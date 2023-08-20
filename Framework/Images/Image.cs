@@ -269,7 +269,7 @@ public class Image : IDisposable
 	/// <param name="sourceRect">Rectangle within the source image to copy</param>
 	/// <param name="destination">Destination to copy the source pixels to</param>
 	/// <param name="blend">Optional blend method</param>
-	public unsafe void CopyPixels(Span<Color> sourcePixels, int sourceWidth, int sourceHeight, in RectInt sourceRect, in Point2 destination, Func<Color, Color, Color>? blend = null)
+	public unsafe void CopyPixels(ReadOnlySpan<Color> sourcePixels, int sourceWidth, int sourceHeight, in RectInt sourceRect, in Point2 destination, Func<Color, Color, Color>? blend = null)
 	{
 		Debug.Assert(sourcePixels.Length >= sourceWidth * sourceHeight);
 
@@ -304,14 +304,19 @@ public class Image : IDisposable
 		}
 	}
 
-	public unsafe void CopyPixels(Image source, in RectInt sourceRect, Point2? destination, Func<Color, Color, Color>? blend = null)
+	public void CopyPixels(ReadOnlySpan<Color> sourcePixels, int sourceWidth, int sourceHeight, in Point2? destination = null, Func<Color, Color, Color>? blend = null)
+	{
+		CopyPixels(sourcePixels, sourceWidth, sourceHeight, new RectInt(0, 0, sourceWidth, sourceHeight), destination ?? Point2.Zero, blend);
+	}
+
+	public void CopyPixels(Image source, in RectInt sourceRect, Point2? destination, Func<Color, Color, Color>? blend = null)
 	{
 		CopyPixels(source.Data, source.Width, source.Height, sourceRect, destination ?? Point2.Zero);
 	}
 
-	public unsafe void CopyPixels(Image source, Point2? destination, Func<Color, Color, Color>? blend = null)
+	public void CopyPixels(Image source, Point2? destination, Func<Color, Color, Color>? blend = null)
 	{
-		CopyPixels(source.Data, source.Width, source.Height, new RectInt(0, 0, source.Width, source.Height), destination ?? Point2.Zero);
+		CopyPixels(source.Data, source.Width, source.Height, new RectInt(0, 0, source.Width, source.Height), destination ?? Point2.Zero, blend);
 	}
 
 	public void Premultiply()
