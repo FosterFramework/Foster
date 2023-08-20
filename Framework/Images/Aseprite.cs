@@ -7,42 +7,23 @@ namespace Foster.Framework;
 
 public class Aseprite : Aseprite.IUserDataTarget
 {
-	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-	private static int MulUn8(int a, int b)
+	private enum ChunkType
 	{
-		var t = a * b + 0x80;
-		return (t >> 8) + t >> 8;
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-	private static Color BlendNormal(Color backdrop, Color src, int opacity)
-	{
-		int r, g, b, a;
-
-		if (backdrop.A == 0)
-		{
-			r = src.R;
-			g = src.G;
-			b = src.B;
-		}
-		else if (src.A == 0)
-		{
-			r = backdrop.R;
-			g = backdrop.G;
-			b = backdrop.B;
-		}
-		else
-		{
-			r = backdrop.R + MulUn8(src.R - backdrop.R, opacity);
-			g = backdrop.G + MulUn8(src.G - backdrop.G, opacity);
-			b = backdrop.B + MulUn8(src.B - backdrop.B, opacity);
-		}
-
-		a = backdrop.A + MulUn8(Math.Max(0, src.A - backdrop.A), opacity);
-		if (a == 0)
-			r = g = b = 0;
-
-		return new Color((byte)r, (byte)g, (byte)b, (byte)a);
+		Unknown = -1,
+		OldPalette = 0x0004,
+		OldPalette2 = 0x0011,
+		Layer = 0x2004,
+		Cel = 0x2005,
+		CelExtra = 0x2006,
+		ColorProfile = 0x2007,
+		ExternalFiles = 0x2008,
+		Mask = 0x2016,
+		Path = 0x2017,
+		Tags = 0x2018,
+		Palette = 0x2019,
+		UserData = 0x2020,
+		Slice = 0x2022,
+		Tileset = 0x2023,
 	}
 
 	public enum BlendMode
@@ -75,25 +56,6 @@ public class Aseprite : Aseprite.IUserDataTarget
 		Tilemap = 2,
 	}
 
-	enum ChunkType
-	{
-		Unknown = -1,
-		OldPalette = 0x0004,
-		OldPalette2 = 0x0011,
-		Layer = 0x2004,
-		Cel = 0x2005,
-		CelExtra = 0x2006,
-		ColorProfile = 0x2007,
-		ExternalFiles = 0x2008,
-		Mask = 0x2016,
-		Path = 0x2017,
-		Tags = 0x2018,
-		Palette = 0x2019,
-		UserData = 0x2020,
-		Slice = 0x2022,
-		Tileset = 0x2023,
-	}
-
 	public enum LoopDir
 	{
 		Forward = 0,
@@ -108,7 +70,7 @@ public class Aseprite : Aseprite.IUserDataTarget
 		public Color? Color;
 	}
 
-	interface IUserDataTarget
+	private interface IUserDataTarget
 	{
 		void SetUserData(UserData userData);
 	}
@@ -160,14 +122,14 @@ public class Aseprite : Aseprite.IUserDataTarget
 		public void SetUserData(UserData userData) => UserData = userData;
 	}
 
-	enum Format
+	public enum Format
 	{
 		Rgba = 32,
 		Grayscale = 16,
 		Indexed = 8,
 	}
 
-	enum CelType
+	public enum CelType
 	{
 		RawImageData = 0,
 		LinkedCel = 1,
@@ -239,7 +201,8 @@ public class Aseprite : Aseprite.IUserDataTarget
 		public void SetUserData(UserData userData) => UserData = userData;
 	}
 
-	public Point2 Size;
+	public int Width;
+	public int Height;
 	public Frame[] Frames = Array.Empty<Frame>();
 	public Color[] Palette = Array.Empty<Color>();
 	public Tag[] Tags = Array.Empty<Tag>();
@@ -247,20 +210,23 @@ public class Aseprite : Aseprite.IUserDataTarget
 	public List<Layer> Layers = new();
 	public UserData? SpriteUserData;
 
-	public int Width => Size.X;
-	public int Height => Size.Y;
 	public string? UserDataText => SpriteUserData?.Text;
 
 	public void SetUserData(UserData userData) => SpriteUserData = userData;
-
-	public static Aseprite FromFile(string filePath)
+	
+	public Aseprite(string filePath)
 	{
 		using var file = File.OpenRead(filePath);
 		using var bin = new BinaryReader(file);
-		return new Aseprite(bin);
+		Load(bin);
 	}
 
 	public Aseprite(BinaryReader bin)
+	{
+		Load(bin);
+	}
+
+	private void Load(BinaryReader bin)
 	{
 		byte ReadByte() => bin.ReadByte();
 		ushort ReadWord() => bin.ReadUInt16();
@@ -279,8 +245,8 @@ public class Aseprite : Aseprite.IUserDataTarget
 		if (ReadWord() != 0xA5E0)
 			Log.Error("invalid aseprite file, magic number is wrong");
 		Frames = new Frame[ReadWord()];
-		Size.X = ReadWord();
-		Size.Y = ReadWord();
+		Width = ReadWord();
+		Height = ReadWord();
 		var format = (Format)ReadWord();
 		ReadDWord(); // Flags (IGNORE)
 		ReadWord(); // Speed (DEPRECATED)
@@ -297,7 +263,7 @@ public class Aseprite : Aseprite.IUserDataTarget
 		ReadWord(); // Grid height
 		Skip(84);
 
-		byte[] buffer = new byte[Size.X * Size.Y * ((int)format / 8)];
+		byte[] buffer = new byte[Width * Height * ((int)format / 8)];
 
 		for (int f = 0; f < Frames.Length; ++f)
 		{
@@ -328,221 +294,177 @@ public class Aseprite : Aseprite.IUserDataTarget
 				long chunkEnd = chunkStart + chunkSize;
 				void SkipChunk() => bin.BaseStream.Position = chunkEnd;
 
-				switch (chunkType)
+				if (chunkType == ChunkType.Palette)
 				{
-					case ChunkType.Palette:
-						{
-							int len = (int)ReadDWord();
-							if (Palette == null || len > Palette.Length)
-								Array.Resize(ref Palette, len);
-							int first = (int)ReadDWord();
-							int last = (int)ReadDWord();
-							Skip(8);
-							for (int i = first; i <= last; ++i)
-							{
-								var flags = ReadWord();
-								Palette[i] = new Color(ReadByte(), ReadByte(), ReadByte(), ReadByte());
-								if ((flags & 1) != 0)
-									ReadString();
-							}
+					int len = (int)ReadDWord();
+					if (Palette == null || len > Palette.Length)
+						Array.Resize(ref Palette, len);
+					int first = (int)ReadDWord();
+					int last = (int)ReadDWord();
+					Skip(8);
+					for (int i = first; i <= last; ++i)
+					{
+						var flags = ReadWord();
+						Palette[i] = new Color(ReadByte(), ReadByte(), ReadByte(), ReadByte());
+						if ((flags & 1) != 0)
+							ReadString();
+					}
 
-							userDataTarget = this;
-						}
-						break;
+					userDataTarget = this;
+				}
+				else if (chunkType == ChunkType.Slice)
+				{
+					var count = (int)ReadDWord();
+					var flags = ReadDWord();
+					ReadDWord();
+					var name = ReadString();
 
-					case ChunkType.Slice:
-						{
-							var count = (int)ReadDWord();
-							var flags = ReadDWord();
-							ReadDWord();
-							var name = ReadString();
+					var slice = new Slice(name, count, (flags & 1) != 0, (flags & 2) != 0);
+					Slices.Add(slice);
+					userDataTarget = slice;
 
-							var slice = new Slice(name, count, (flags & 1) != 0, (flags & 2) != 0);
-							Slices.Add(slice);
-							userDataTarget = slice;
-
-							for (int i = 0; i < count; ++i)
-							{
-								slice.Frames[i] = (int)ReadDWord();
-								slice.Bounds[i] = new RectInt(ReadLong(), ReadLong(), (int)ReadDWord(), (int)ReadDWord());
-								if (slice.NineSliceCenters is RectInt[] centers)
-									centers[i] = new RectInt(ReadLong(), ReadLong(), (int)ReadDWord(), (int)ReadDWord());
-								if (slice.Pivots is Point2[] pivots)
-									pivots[i] = new Point2(ReadLong(), ReadLong());
-							}
-						}
-						break;
-
-					case ChunkType.Tags:
-						{
-							Array.Resize(ref Tags, ReadWord());
-							Skip(8);
-							for (int t = 0; t < Tags.Length; ++t)
-							{
-								var tag = Tags[t] = new Tag();
-								tag.From = ReadWord();
-								tag.To = ReadWord();
-								tag.LoopDir = (LoopDir)ReadByte();
-								tag.Repeat = ReadWord();
-								Skip(10);
-								tag.Name = ReadString();
-							}
-							userDataTarget = null;
-						}
-						break;
-
-					case ChunkType.UserData:
-						{
-							var userData = new UserData();
-							var flags = ReadDWord();
-							if ((flags & 1) != 0)
-								userData.Text = ReadString();
-							if ((flags & 2) != 0)
-								userData.Color = new Color(ReadByte(), ReadByte(), ReadByte(), ReadByte());
-							if ((flags & 4) != 0)
-								SkipChunk();
-
-							if (userDataTarget is IUserDataTarget target)
-							{
-								target.SetUserData(userData);
-								userDataTarget = null;
-							}
-							else if (Tags is Tag[] tags && nextTagUserData < tags.Length)
-								tags[nextTagUserData++].UserData = userData;
-						}
-						break;
-
-					case ChunkType.Layer:
-						{
-							var layer = new Layer();
-							Layers.Add(layer);
-							userDataTarget = layer;
-
-							layer.Flags = (LayerFlags)ReadWord();
-							layer.Type = (LayerType)ReadWord();
-							layer.ChildLevel = ReadWord();
-							layer.DefaultSize = new Point2(ReadWord(), ReadWord());
-							layer.BlendMode = (BlendMode)ReadWord();
-							layer.Opacity = ReadByte();
-							Skip(3);
-							layer.Name = ReadString();
-							if (layer.Type == LayerType.Tilemap)
-								layer.TilesetIndex = (int)ReadDWord();
-						}
-						break;
-
-					case ChunkType.Cel:
-						{
-							var layer = Layers[ReadWord()];
-							var pos = new Point2(ReadShort(), ReadShort());
-							var opacity = ReadByte();
-							var type = (CelType)ReadWord();
-							var zIndex = ReadShort();
-
-							if (type == CelType.CompressedTilemap)
-							{
-								SkipChunk();
-								continue;
-							}
-
-							var cel = new Cel(layer, pos, opacity, zIndex);
-							frame.Cels.Add(cel);
-							userDataTarget = cel;
-
-							Skip(5);
-
-							if (type == CelType.LinkedCel)
-							{
-								var linkedFrame = ReadWord();
-								Cel linkedCel = Frames[linkedFrame].Cels.Find(c => c.Layer == layer)!;
-								cel.Image = linkedCel.Image;
-								continue;
-							}
-
-							var width = (int)ReadWord();
-							var height = (int)ReadWord();
-							var pixels = new Color[width * height];
-
-							int decompressedLen = width * height * ((int)format / 8);
-							if (buffer.Length < decompressedLen)
-								Array.Resize(ref buffer, decompressedLen);
-
-							if (type == CelType.RawImageData)
-							{
-								bin.Read(buffer, 0, decompressedLen);
-							}
-							else if (type == CelType.CompressedImage)
-							{
-								using var zip = new ZLibStream(bin.BaseStream, CompressionMode.Decompress, true);
-								zip.ReadExactly(buffer, 0, decompressedLen);
-							}
-
-							switch (format)
-							{
-								case Format.Rgba:
-									for (int i = 0, b = 0; i < pixels.Length; ++i, b += 4)
-										pixels[i] = new Color(buffer[b], buffer[b + 1], buffer[b + 2], buffer[b + 3]);
-									break;
-								case Format.Grayscale:
-									for (int i = 0, b = 0; i < pixels.Length; ++i, b += 2)
-										pixels[i] = new Color(buffer[b], buffer[b], buffer[b], buffer[b + 1]);
-									break;
-								case Format.Indexed:
-									for (int i = 0; i < pixels.Length; ++i)
-										pixels[i] = Palette![buffer[i]];
-									break;
-							}
-
-							cel.Image = new Image(width, height, pixels);
-
-							SkipChunk();
-						}
-						break;
-
-					default:
+					for (int i = 0; i < count; ++i)
+					{
+						slice.Frames[i] = (int)ReadDWord();
+						slice.Bounds[i] = new RectInt(ReadLong(), ReadLong(), (int)ReadDWord(), (int)ReadDWord());
+						if (slice.NineSliceCenters is RectInt[] centers)
+							centers[i] = new RectInt(ReadLong(), ReadLong(), (int)ReadDWord(), (int)ReadDWord());
+						if (slice.Pivots is Point2[] pivots)
+							pivots[i] = new Point2(ReadLong(), ReadLong());
+					}
+				}
+				else if (chunkType == ChunkType.Tags)
+				{
+					Array.Resize(ref Tags, ReadWord());
+					Skip(8);
+					for (int t = 0; t < Tags.Length; ++t)
+					{
+						var tag = Tags[t] = new Tag();
+						tag.From = ReadWord();
+						tag.To = ReadWord();
+						tag.LoopDir = (LoopDir)ReadByte();
+						tag.Repeat = ReadWord();
+						Skip(10);
+						tag.Name = ReadString();
+					}
+					userDataTarget = null;
+				}
+				else if (chunkType == ChunkType.UserData)
+				{
+					var userData = new UserData();
+					var flags = ReadDWord();
+					if ((flags & 1) != 0)
+						userData.Text = ReadString();
+					if ((flags & 2) != 0)
+						userData.Color = new Color(ReadByte(), ReadByte(), ReadByte(), ReadByte());
+					if ((flags & 4) != 0)
 						SkipChunk();
-						break;
+
+					if (userDataTarget is IUserDataTarget target)
+					{
+						target.SetUserData(userData);
+						userDataTarget = null;
+					}
+					else if (Tags is Tag[] tags && nextTagUserData < tags.Length)
+						tags[nextTagUserData++].UserData = userData;
+				}
+				else if (chunkType == ChunkType.Layer)
+				{
+					var layer = new Layer();
+					Layers.Add(layer);
+					userDataTarget = layer;
+
+					layer.Flags = (LayerFlags)ReadWord();
+					layer.Type = (LayerType)ReadWord();
+					layer.ChildLevel = ReadWord();
+					layer.DefaultSize = new Point2(ReadWord(), ReadWord());
+					layer.BlendMode = (BlendMode)ReadWord();
+					layer.Opacity = ReadByte();
+					Skip(3);
+					layer.Name = ReadString();
+					if (layer.Type == LayerType.Tilemap)
+						layer.TilesetIndex = (int)ReadDWord();
+				}
+				else if (chunkType == ChunkType.Cel)
+				{
+					var layer = Layers[ReadWord()];
+					var pos = new Point2(ReadShort(), ReadShort());
+					var opacity = ReadByte();
+					var type = (CelType)ReadWord();
+					var zIndex = ReadShort();
+
+					if (type == CelType.CompressedTilemap)
+					{
+						SkipChunk();
+						continue;
+					}
+
+					var cel = new Cel(layer, pos, opacity, zIndex);
+					frame.Cels.Add(cel);
+					userDataTarget = cel;
+
+					Skip(5);
+
+					if (type == CelType.LinkedCel)
+					{
+						var linkedFrame = ReadWord();
+						Cel linkedCel = Frames[linkedFrame].Cels.Find(c => c.Layer == layer)!;
+						cel.Image = linkedCel.Image;
+						continue;
+					}
+
+					var width = (int)ReadWord();
+					var height = (int)ReadWord();
+					var pixels = new Color[width * height];
+
+					int decompressedLen = width * height * ((int)format / 8);
+					if (buffer.Length < decompressedLen)
+						Array.Resize(ref buffer, decompressedLen);
+
+					if (type == CelType.RawImageData)
+					{
+						bin.Read(buffer, 0, decompressedLen);
+					}
+					else if (type == CelType.CompressedImage)
+					{
+						using var zip = new ZLibStream(bin.BaseStream, CompressionMode.Decompress, true);
+						zip.ReadExactly(buffer, 0, decompressedLen);
+					}
+
+					switch (format)
+					{
+						case Format.Rgba:
+							for (int i = 0, b = 0; i < pixels.Length; ++i, b += 4)
+								pixels[i] = new Color(buffer[b], buffer[b + 1], buffer[b + 2], buffer[b + 3]);
+							break;
+						case Format.Grayscale:
+							for (int i = 0, b = 0; i < pixels.Length; ++i, b += 2)
+								pixels[i] = new Color(buffer[b], buffer[b], buffer[b], buffer[b + 1]);
+							break;
+						case Format.Indexed:
+							for (int i = 0; i < pixels.Length; ++i)
+								pixels[i] = Palette![buffer[i]];
+							break;
+					}
+
+					cel.Image = new Image(width, height, pixels);
+
+					SkipChunk();
+				}
+				else
+				{
+					SkipChunk();
 				}
 			}
 		}
 	}
 
-	public Image?[]? RenderFrames(in RectInt slice, Predicate<Layer> layerFilter)
-	{
-		Image?[]? results = null;
-
-		foreach (var layer in Layers)
-		{
-			if (!layerFilter(layer))
-				continue;
-
-			for (int i = 0; i < Frames.Length; ++i)
-			{
-				if (Frames[i].Cels.Find(cel => cel.Layer == layer) is not Cel cel)
-					continue;
-				if (cel.Image is not Image src)
-					continue;
-				if (!slice.Overlaps(new RectInt(cel.Pos.X, cel.Pos.Y, src.Width, src.Height)))
-					continue;
-
-				if (results is not Image?[] images)
-					results = images = new Image?[Frames.Length];
-
-				if (images[i] is not Image img)
-					images[i] = img = new Image(slice.Width, slice.Height);
-
-				// TODO: handle group layer opacity cascading
-				int opacity = MulUn8(cel.Opacity, layer.Opacity);
-				img.CopyPixels(src, cel.Pos - slice.TopLeft, (src, dst) => BlendNormal(dst, src, opacity));
-			}
-		}
-
-		return results;
-	}
-
+	/// <summary>
+	/// Renders the frame at the given Index
+	/// </summary>
 	public Image RenderFrame(int index, Predicate<Layer>? layerFilter = null)
 	{
-		Image image = new Image(Width, Height);
+		var image = new Image(Width, Height);
 
 		foreach (var layer in Layers)
 		{
@@ -562,18 +484,14 @@ public class Aseprite : Aseprite.IUserDataTarget
 		return image;
 	}
 
-	public Image[] RenderAllFrames(Predicate<Layer>? layerFilter = null)
-	{
-		if (Frames.Length == 0)
-			return Array.Empty<Image>();
-		return RenderFrames(0, Frames.Length - 1, layerFilter);
-	}
-
+	/// <summary>
+	/// Renders the frames in the given range. 
+	/// Note that 'to' is inclusive to match how Aseprite implements Tags.
+	/// </summary>
 	public Image[] RenderFrames(int from, int to, Predicate<Layer>? layerFilter = null)
 	{
-		int len = (to - from) + 1;
-
-		Image[] results = new Image[len];
+		var len = (to - from) + 1;
+		var results = new Image[len];
 		for (int i = 0; i < len; i ++)
 			results[i] = new Image(Width, Height);
 
@@ -596,6 +514,88 @@ public class Aseprite : Aseprite.IUserDataTarget
 		}
 
 		return results;
+	}
+
+	/// <summary>
+	/// Renders the frames in the given range with a specific slice.
+	/// Note that 'to' is inclusive to match how Aseprite implements Tags.
+	/// </summary>
+	public Image[] RenderFrames(int from, int to, in RectInt slice, Predicate<Layer> layerFilter)
+	{
+		var len = (to - from) + 1;
+		var results = new Image[Frames.Length];
+		for (int i = 0; i < results.Length; i ++)
+			results[i] = new Image(slice.Width, slice.Height);
+
+		foreach (var layer in Layers)
+		{
+			if (!layerFilter(layer))
+				continue;
+
+			for (int i = from; i < len; ++i)
+			{
+				if (Frames[i].Cels.Find(cel => cel.Layer == layer) is not Cel cel)
+					continue;
+				if (cel.Image is not Image src)
+					continue;
+				if (!slice.Overlaps(new RectInt(cel.Pos.X, cel.Pos.Y, src.Width, src.Height)))
+					continue;
+
+				// TODO: handle group layer opacity cascading
+				int opacity = MulUn8(cel.Opacity, layer.Opacity);
+				results[i].CopyPixels(src, cel.Pos - slice.TopLeft, (src, dst) => BlendNormal(dst, src, opacity));
+			}
+		}
+
+		return results;
+	}
+
+	/// <summary>
+	/// Renders all the frames in the Aseprite file.
+	/// </summary>
+	public Image[] RenderAllFrames(Predicate<Layer>? layerFilter = null)
+	{
+		if (Frames.Length == 0)
+			return Array.Empty<Image>();
+		return RenderFrames(0, Frames.Length - 1, layerFilter);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	private static int MulUn8(int a, int b)
+	{
+		var t = a * b + 0x80;
+		return (t >> 8) + t >> 8;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	private static Color BlendNormal(Color backdrop, Color src, int opacity)
+	{
+		int r, g, b, a;
+
+		if (backdrop.A == 0)
+		{
+			r = src.R;
+			g = src.G;
+			b = src.B;
+		}
+		else if (src.A == 0)
+		{
+			r = backdrop.R;
+			g = backdrop.G;
+			b = backdrop.B;
+		}
+		else
+		{
+			r = backdrop.R + MulUn8(src.R - backdrop.R, opacity);
+			g = backdrop.G + MulUn8(src.G - backdrop.G, opacity);
+			b = backdrop.B + MulUn8(src.B - backdrop.B, opacity);
+		}
+
+		a = backdrop.A + MulUn8(Math.Max(0, src.A - backdrop.A), opacity);
+		if (a == 0)
+			r = g = b = 0;
+
+		return new Color((byte)r, (byte)g, (byte)b, (byte)a);
 	}
 }
 
