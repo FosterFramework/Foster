@@ -84,6 +84,7 @@ public class Image : IDisposable
 		Height = height;
 		handle = GCHandle.Alloc(pixels, GCHandleType.Pinned);
 		ptr = handle.AddrOfPinnedObject();
+		unmanaged = false;
 	}
 
 	public Image(string file)
@@ -283,17 +284,22 @@ public class Image : IDisposable
 		
 		fixed (Color* sourcePtr = sourcePixels)
 		{
+			var sourceEnd = sourcePtr + sourceWidth * sourceHeight;
 			var destinationPtr = (Color*)ptr.ToPointer();
-			var len = sourceRect.Width * 4;
+			var destinationEnd = destinationPtr + Width * Height;
+			var len = dst.Width;
 
 			for (int y = 0; y < dst.Height; y++)
 			{
 				var srcPtr = sourcePtr + ((p.Y + y) * sourceWidth + p.X);
 				var dstPtr = destinationPtr + ((dst.Y + y) * Width + dst.X);
 
+				Debug.Assert(srcPtr + len <= sourceEnd);
+				Debug.Assert(dstPtr + len <= destinationEnd);
+
 				if (blend == null)
 				{
-					Buffer.MemoryCopy(srcPtr, dstPtr, len, len);
+					Buffer.MemoryCopy(srcPtr, dstPtr, len * 4, len * 4);
 				}
 				else
 				{
