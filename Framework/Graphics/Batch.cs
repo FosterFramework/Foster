@@ -7,6 +7,9 @@ namespace Foster.Framework;
 
 public class Batcher
 {
+	/// <summary>
+	/// Vertex Format of Batcher.Vertex
+	/// </summary>
 	private static readonly VertexFormat VertexFormat = VertexFormat.Create<Vertex>(
 		new VertexFormat.Element(0, VertexType.Float2, false),
 		new VertexFormat.Element(1, VertexType.Float2, false),
@@ -14,6 +17,9 @@ public class Batcher
 		new VertexFormat.Element(3, VertexType.UByte4, true)
 	);
 
+	/// <summary>
+	/// The Vertex Layout used for Sprite Batching
+	/// </summary>
 	[StructLayout(LayoutKind.Sequential, Pack = 1)]
 	public struct Vertex : IVertex
 	{
@@ -33,25 +39,47 @@ public class Batcher
 		public readonly VertexFormat Format => VertexFormat;
 	}
 
-	public static Shader? DefaultShader { get; private set; }
+	/// <summary>
+	/// The Default shader used by the Batcher.
+	/// </summary>
+	private static Shader? DefaultShader;
 
-	public Matrix3x2 MatrixStack = Matrix3x2.Identity;
+	/// <summary>
+	/// The current Matrix Value of the Batcher
+	/// </summary>
+	public Matrix3x2 Matrix = Matrix3x2.Identity;
+
+	/// <summary>
+	/// The current Scissor Value of the Batcher
+	/// </summary>
 	public RectInt? Scissor => currentBatch.Scissor;
-
-	public string TextureUniformName = "u_texture";
-	public string SamplerUniformName = "u_texture_sampler";
-	public string MatrixUniformName = "u_matrix";
 	
+	/// <summary>
+	/// The number of Triangles in the Batcher to be drawn
+	/// </summary>
 	public int TriangleCount => indexCount / 3;
+
+	/// <summary>
+	/// The number of Vertices in the Batcher to be drawn
+	/// </summary>
 	public int VertexCount => vertexCount;
+
+	/// <summary>
+	/// The number of vertex indices in the Batcher to be drawn
+	/// </summary>
 	public int IndexCount => indexCount;
+
+	/// <summary>
+	/// The number of individual batches (draw calls).
+	/// </summary>
 	public int BatchCount => batches.Count + (currentBatch.Elements > 0 ? 1 : 0);
 
+	private readonly ShaderState defaultShaderState = new();
 	private readonly Stack<Matrix3x2> matrixStack = new();
 	private readonly Stack<RectInt?> scissorStack = new();
 	private readonly Stack<BlendMode> blendStack = new();
 	private readonly Stack<TextureSampler> samplerStack = new();
-	private readonly Stack<Shader?> effectStack = new();
+	private readonly Stack<ShaderState> effectStack = new();
 	private readonly Stack<int> layerStack = new();
 	private readonly Stack<Color> modeStack = new();
 	private readonly List<Batch> batches = new();
@@ -65,10 +93,26 @@ public class Batcher
 	private int[] indexArray = new int[64];
 	private int indexCount;
 
+	private readonly struct ShaderState
+	{
+		public readonly Shader Shader;
+		public readonly Shader.Uniform MatrixUniform;
+		public readonly Shader.Uniform TextureUniform;
+		public readonly Shader.Uniform SamplerUniform;
+
+		public ShaderState(Shader shader, string matrixUniformName, string textureUniformName, string samplerUniformName)
+		{
+			Shader = shader;
+			MatrixUniform = shader[matrixUniformName];
+			TextureUniform = shader[textureUniformName];
+			SamplerUniform = shader[samplerUniformName];
+		}
+	}
+
 	private struct Batch
 	{
 		public int Layer;
-		public Shader? Shader;
+		public ShaderState ShaderState;
 		public BlendMode Blend;
 		public Texture? Texture;
 		public RectInt? Scissor;
@@ -76,10 +120,10 @@ public class Batcher
 		public int Offset;
 		public int Elements;
 
-		public Batch(Shader? effect, BlendMode blend, Texture? texture, TextureSampler sampler, int offset, int elements)
+		public Batch(ShaderState shaderState, BlendMode blend, Texture? texture, TextureSampler sampler, int offset, int elements)
 		{
 			Layer = 0;
-			Shader = effect;
+			ShaderState = shaderState;
 			Blend = blend;
 			Texture = texture;
 			Sampler = sampler;
@@ -91,16 +135,20 @@ public class Batcher
 
 	public Batcher()
 	{
-		DefaultShader ??= new Shader(ShaderDefaults.Batcher[Renderers.OpenGL]);
+		DefaultShader ??= new Shader(ShaderDefaults.Batcher[App.Renderer]);
+		defaultShaderState = new(DefaultShader, "u_matrix", "u_texture", "u_texture_sampler");
 		Clear();
 	}
 
+	/// <summary>
+	/// Clears the Batcher.
+	/// </summary>
 	public void Clear()
 	{
 		vertexCount = 0;
 		indexCount = 0;
 		currentBatchInsert = 0;
-		currentBatch = new Batch(null, BlendMode.Premultiply, null, new(), 0, 0);
+		currentBatch = new Batch(defaultShaderState, BlendMode.Premultiply, null, new(), 0, 0);
 		mode = new Color(255, 0, 0, 0);
 		batches.Clear();
 		matrixStack.Clear();
@@ -110,19 +158,32 @@ public class Batcher
 		layerStack.Clear();
 		samplerStack.Clear();
 		modeStack.Clear();
-		MatrixStack = Matrix3x2.Identity;
+		Matrix = Matrix3x2.Identity;
 	}
 
 	#region Rendering
 
-	public void Render(Target? target = null)
+	/// <summary>
+	/// Draws the Batcher to the given Target
+	/// </summary>
+	/// <param name="target">What Target to Draw to, or null for the Window's backbuffer</param>
+	/// <param name="viewport">Optional Viewport Rectangle</param>
+	/// <param name="scissor">Optional Scissor Rectangle, which will clip any Scissor rectangles pushed to the Batcher.</param>
+	public void Render(Target? target = null, RectInt? viewport = null, RectInt? scissor = null)
 	{
 		Matrix4x4 matrix = target != null
 			? Matrix4x4.CreateOrthographicOffCenter(0, target.Width, target.Height, 0, 0, float.MaxValue)
 			: Matrix4x4.CreateOrthographicOffCenter(0, App.WidthInPixels, App.HeightInPixels, 0, 0, float.MaxValue);
-		Render(target, matrix);
+		Render(target, matrix, viewport, scissor);
 	}
 
+	/// <summary>
+	/// Draws the Batcher to the given Target with the given Matrix Transformation
+	/// </summary>
+	/// <param name="target">What Target to Draw to, or null for the Window's backbuffer</param>
+	/// <param name="matrix">Transforms the entire Batch</param>
+	/// <param name="viewport">Optional Viewport Rectangle</param>
+	/// <param name="scissor">Optional Scissor Rectangle, which will clip any Scissor rectangles pushed to the Batcher.</param>
 	public void Render(Target? target, Matrix4x4 matrix, RectInt? viewport = null, RectInt? scissor = null)
 	{
 		Debug.Assert(target == null || !target.IsDisposed, "Target is disposed");
@@ -130,6 +191,7 @@ public class Batcher
 		if (batches.Count <= 0 && currentBatch.Elements <= 0)
 			return;
 		
+		// upload our data if we've been modified since the last time we rendered
 		if (dirty)
 		{
 			mesh.SetIndices<int>(indexArray.AsSpan(0, indexCount));
@@ -162,15 +224,14 @@ public class Batcher
 			trimmed = batch.Scissor;
 			
 		var texture = batch.Texture != null && !batch.Texture.IsDisposed ? batch.Texture : null;
-		var shader = batch.Shader ?? DefaultShader ?? throw new Exception("No Default Shader");
-		shader[TextureUniformName].Set(texture);
-		shader[SamplerUniformName].Set(batch.Sampler);
-		shader[MatrixUniformName].Set(matrix);
+		batch.ShaderState.MatrixUniform.Set(matrix);
+		batch.ShaderState.TextureUniform.Set(texture);
+		batch.ShaderState.SamplerUniform.Set(batch.Sampler);
 
-		DrawCommand command = new(target, mesh, shader)
+		DrawCommand command = new(target, mesh, batch.ShaderState.Shader)
 		{
 			Viewport = viewport,
-			Scissor = scissor,
+			Scissor = trimmed,
 			BlendMode = batch.Blend,
 			MeshIndexStart = batch.Offset * 3,
 			MeshIndexCount = batch.Elements * 3
@@ -182,6 +243,9 @@ public class Batcher
 
 	#region Modify State
 
+	/// <summary>
+	/// Sets the Current Texture being drawn
+	/// </summary>
 	public void SetTexture(Texture? texture)
 	{
 		if (currentBatch.Texture == null || currentBatch.Elements == 0)
@@ -199,6 +263,9 @@ public class Batcher
 		}
 	}
 
+	/// <summary>
+	/// Sets the Current Texture Sampler being used
+	/// </summary>
 	public void SetSampler(TextureSampler sampler)
 	{
 		if (currentBatch.Sampler == sampler || currentBatch.Elements == 0)
@@ -216,6 +283,10 @@ public class Batcher
 		}
 	}
 
+	/// <summary>
+	/// Sets the current Layer to draw at.
+	/// Note that this is not very performant and should generally be avoided.
+	/// </summary>
 	public void SetLayer(int layer)
 	{
 		if (currentBatch.Layer == layer)
@@ -238,17 +309,21 @@ public class Batcher
 		currentBatchInsert = insert;
 	}
 	
-	private void SetShader(Shader? effect)
+	private void SetShader(ShaderState shaderState)
 	{
 		if (currentBatch.Elements == 0)
 		{
-			currentBatch.Shader = effect;
+			currentBatch.ShaderState = shaderState;
 		}
-		else if (currentBatch.Shader != effect)
+		else if (
+			currentBatch.ShaderState.Shader != shaderState.Shader ||
+			currentBatch.ShaderState.MatrixUniform != shaderState.MatrixUniform ||
+			currentBatch.ShaderState.TextureUniform != shaderState.TextureUniform ||
+			currentBatch.ShaderState.SamplerUniform != shaderState.SamplerUniform)
 		{
 			batches.Insert(currentBatchInsert, currentBatch);
 
-			currentBatch.Shader = effect;
+			currentBatch.ShaderState = shaderState;
 			currentBatch.Offset += currentBatch.Elements;
 			currentBatch.Elements = 0;
 			currentBatchInsert++;
@@ -289,122 +364,200 @@ public class Batcher
 		}
 	}
 
+	/// <summary>
+	/// Pushes a relative draw layer, with lower values being rendered first.
+	/// Note that this is not very performant and should generally be avoided.
+	/// </summary>
 	public void PushLayer(int delta)
 	{
 		layerStack.Push(currentBatch.Layer);
 		SetLayer(currentBatch.Layer + delta);
 	}
 
+	/// <summary>
+	/// Pops the current Draw Layer
+	/// </summary>
 	public void PopLayer()
 	{
 		SetLayer(layerStack.Pop());
 	}
 
-	public void PushShader(Shader effect)
+	/// <summary>
+	/// Pushes a Shader to draw with
+	/// </summary>
+	public void PushShader(Shader shader)
 	{
-		effectStack.Push(currentBatch.Shader);
-		SetShader(effect);
+		effectStack.Push(currentBatch.ShaderState);
+		SetShader(new(shader, "u_matrix", "u_texture", "u_texture_sampler"));
 	}
 
+	/// <summary>
+	/// Pushes a Shader to draw with
+	/// </summary>
+	public void PushShader(Shader shader, string matrixUniform, string textureUniform, string samplerUniform)
+	{
+		effectStack.Push(currentBatch.ShaderState);
+		SetShader(new(shader, matrixUniform, textureUniform, samplerUniform));
+	}
+
+	/// <summary>
+	/// Pops the current Shader
+	/// </summary>
 	public void PopShader()
 	{
 		SetShader(effectStack.Pop());
 	}
 
+	/// <summary>
+	/// Pushes a Texture Sampler to draw with
+	/// </summary>
 	public void PushSampler(TextureSampler state)
 	{
 		samplerStack.Push(currentBatch.Sampler);
 		SetSampler(state);
 	}
 
+	/// <summary>
+	/// Pops the current Texture Sampler
+	/// </summary>
 	public void PopSampler()
 	{
 		SetSampler(samplerStack.Pop());
 	}
 
+	/// <summary>
+	/// Pushes a BlendMode to draw with
+	/// </summary>
 	public void PushBlend(BlendMode blend)
 	{
 		blendStack.Push(currentBatch.Blend);
 		SetBlend(blend);
 	}
 
+	/// <summary>
+	/// Pops the current Blend Mode
+	/// </summary>
 	public void PopBlend()
 	{
 		SetBlend(blendStack.Pop());
 	}
 
+	/// <summary>
+	/// Pushes a Scissor Rectangle to draw with.
+	/// Note this is in absolute coordinates, and ignores previous
+	/// scissors that are in the stack.
+	/// </summary>
 	public void PushScissor(RectInt? scissor)
 	{
 		scissorStack.Push(currentBatch.Scissor);
 		SetScissor(scissor);
 	}
 
+	/// <summary>
+	/// Pops the current Scissor Rectangle
+	/// </summary>
 	public void PopScissor()
 	{
 		SetScissor(scissorStack.Pop());
 	}
 
+	/// <summary>
+	/// Pushes a Matrix that will transform all future data
+	/// </summary>
+	/// <param name="relative">If the Matrix should be relative to the previously pushed transformations</param>
 	public Matrix3x2 PushMatrix(in Vector2 position, in Vector2 scale, in Vector2 origin, float rotation, bool relative = true)
 	{
 		return PushMatrix(Transform.CreateMatrix(position, origin, scale, rotation), relative);
 	}
 
+	/// <summary>
+	/// Pushes a Matrix that will transform all future data
+	/// </summary>
+	/// <param name="relative">If the Matrix should be relative to the previously pushed transformations</param>
 	public Matrix3x2 PushMatrix(Transform transform, bool relative = true)
 	{
 		return PushMatrix(transform.Matrix, relative);
 	}
 
+	/// <summary>
+	/// Pushes a Matrix that will transform all future data
+	/// </summary>
+	/// <param name="relative">If the Matrix should be relative to the previously pushed transformations</param>
 	public Matrix3x2 PushMatrix(in Vector2 position, bool relative = true)
 	{
 		return PushMatrix(Matrix3x2.CreateTranslation(position.X, position.Y), relative);
 	}
 
+	/// <summary>
+	/// Pushes a Matrix that will transform all future data
+	/// </summary>
+	/// <param name="relative">If the Matrix should be relative to the previously pushed transformations</param>
 	public Matrix3x2 PushMatrix(in Matrix3x2 matrix, bool relative = true)
 	{
-		matrixStack.Push(MatrixStack);
+		matrixStack.Push(Matrix);
 
 		if (relative)
 		{
-			MatrixStack = matrix * MatrixStack;
+			Matrix = matrix * Matrix;
 		}
 		else
 		{
-			MatrixStack = matrix;
+			Matrix = matrix;
 		}
 
-		return MatrixStack;
+		return Matrix;
 	}
 
+	/// <summary>
+	/// Pops the current Matrix used for drawing.
+	/// </summary>
 	public Matrix3x2 PopMatrix()
 	{
-		MatrixStack = matrixStack.Pop();
-		return MatrixStack;
+		Matrix = matrixStack.Pop();
+		return Matrix;
 	}
 
+	/// <summary>
+	/// Pushes the Normal drawing mode.
+	/// This mode is used for drawing textures normally.
+	/// </summary>
 	public void PushModeNormal()
 	{
 		modeStack.Push(mode);
 		mode = new Color(255, 0, 0, 0);
 	}
 
+	/// <summary>
+	/// Pushes the Wash drawing mode, where only texture transparency is used and vertex color is the resulting output.
+	/// </summary>
 	public void PushModeWash()
 	{
 		modeStack.Push(mode);
 		mode = new Color(0, 255, 0, 0);
 	}
 
+	/// <summary>
+	/// Pushes the Fill drawing mode, where the texture is entirely ignored and the vertex color and alpha will be the resulting output.
+	/// This mode is used for drawing shapes.
+	/// </summary>
 	public void PushModeFill()
 	{
 		modeStack.Push(mode);
 		mode = new Color(0, 0, 255, 0);
 	}
 
+	/// <summary>
+	/// Pushes a custom Mode value
+	/// </summary>
 	public void PushMode(Color value)
 	{
 		modeStack.Push(mode);
 		mode = value;
 	}
 
+	/// <summary>
+	/// Pops the current Color Mode
+	/// </summary>
 	public void PopMode()
 	{
 		mode = modeStack.Pop();
@@ -467,10 +620,10 @@ public class Batcher
 
 		unchecked
 		{
-		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, MatrixStack);
-		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, MatrixStack);
-		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, MatrixStack);
-		vertexArray[vertexCount + 3].Pos = Vector2.Transform(v3, MatrixStack);
+		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, Matrix);
+		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, Matrix);
+		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, Matrix);
+		vertexArray[vertexCount + 3].Pos = Vector2.Transform(v3, Matrix);
 		vertexArray[vertexCount + 0].Col = color;
 		vertexArray[vertexCount + 1].Col = color;
 		vertexArray[vertexCount + 2].Col = color;
@@ -490,10 +643,10 @@ public class Batcher
 		ExpandvertexArray(vertexCount + 4);
 		unchecked
 		{
-		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, MatrixStack);
-		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, MatrixStack);
-		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, MatrixStack);
-		vertexArray[vertexCount + 3].Pos = Vector2.Transform(v3, MatrixStack);
+		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, Matrix);
+		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, Matrix);
+		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, Matrix);
+		vertexArray[vertexCount + 3].Pos = Vector2.Transform(v3, Matrix);
 		vertexArray[vertexCount + 0].Tex = t0;
 		vertexArray[vertexCount + 1].Tex = t1;
 		vertexArray[vertexCount + 2].Tex = t2;
@@ -518,10 +671,10 @@ public class Batcher
 
 		unchecked
 		{
-		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, MatrixStack);
-		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, MatrixStack);
-		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, MatrixStack);
-		vertexArray[vertexCount + 3].Pos = Vector2.Transform(v3, MatrixStack);
+		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, Matrix);
+		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, Matrix);
+		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, Matrix);
+		vertexArray[vertexCount + 3].Pos = Vector2.Transform(v3, Matrix);
 		vertexArray[vertexCount + 0].Col = c0;
 		vertexArray[vertexCount + 1].Col = c1;
 		vertexArray[vertexCount + 2].Col = c2;
@@ -544,10 +697,10 @@ public class Batcher
 		{
 
 		// POS
-		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, MatrixStack);
-		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, MatrixStack);
-		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, MatrixStack);
-		vertexArray[vertexCount + 3].Pos = Vector2.Transform(v3, MatrixStack);
+		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, Matrix);
+		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, Matrix);
+		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, Matrix);
+		vertexArray[vertexCount + 3].Pos = Vector2.Transform(v3, Matrix);
 
 		// TEX
 		vertexArray[vertexCount + 0].Tex = t0;
@@ -583,9 +736,9 @@ public class Batcher
 
 		unchecked
 		{
-		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, MatrixStack);
-		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, MatrixStack);
-		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, MatrixStack);
+		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, Matrix);
+		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, Matrix);
+		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, Matrix);
 		vertexArray[vertexCount + 0].Col = color;
 		vertexArray[vertexCount + 1].Col = color;
 		vertexArray[vertexCount + 2].Col = color;
@@ -605,9 +758,9 @@ public class Batcher
 
 		unchecked
 		{
-		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, MatrixStack);
-		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, MatrixStack);
-		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, MatrixStack);
+		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, Matrix);
+		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, Matrix);
+		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, Matrix);
 		vertexArray[vertexCount + 0].Tex = uv0;
 		vertexArray[vertexCount + 1].Tex = uv1;
 		vertexArray[vertexCount + 2].Tex = uv2;
@@ -630,9 +783,9 @@ public class Batcher
 
 		unchecked
 		{
-		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, MatrixStack);
-		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, MatrixStack);
-		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, MatrixStack);
+		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, Matrix);
+		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, Matrix);
+		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, Matrix);
 		vertexArray[vertexCount + 0].Col = c0;
 		vertexArray[vertexCount + 1].Col = c1;
 		vertexArray[vertexCount + 2].Col = c2;
@@ -843,21 +996,21 @@ public class Batcher
 
 				Array.Fill(vertexArray, new Vertex(Vector2.Zero, Vector2.Zero, color, new Color(0, 0, 255, 0)), vertexCount, 12);
 
-				vertexArray[vertexCount + 00].Pos = Vector2.Transform(r0_tr, MatrixStack); // 0
-				vertexArray[vertexCount + 01].Pos = Vector2.Transform(r0_br, MatrixStack); // 1
-				vertexArray[vertexCount + 02].Pos = Vector2.Transform(r0_bl, MatrixStack); // 2
+				vertexArray[vertexCount + 00].Pos = Vector2.Transform(r0_tr, Matrix); // 0
+				vertexArray[vertexCount + 01].Pos = Vector2.Transform(r0_br, Matrix); // 1
+				vertexArray[vertexCount + 02].Pos = Vector2.Transform(r0_bl, Matrix); // 2
 
-				vertexArray[vertexCount + 03].Pos = Vector2.Transform(r1_tl, MatrixStack); // 3
-				vertexArray[vertexCount + 04].Pos = Vector2.Transform(r1_br, MatrixStack); // 4
-				vertexArray[vertexCount + 05].Pos = Vector2.Transform(r1_bl, MatrixStack); // 5
+				vertexArray[vertexCount + 03].Pos = Vector2.Transform(r1_tl, Matrix); // 3
+				vertexArray[vertexCount + 04].Pos = Vector2.Transform(r1_br, Matrix); // 4
+				vertexArray[vertexCount + 05].Pos = Vector2.Transform(r1_bl, Matrix); // 5
 
-				vertexArray[vertexCount + 06].Pos = Vector2.Transform(r2_tl, MatrixStack); // 6
-				vertexArray[vertexCount + 07].Pos = Vector2.Transform(r2_tr, MatrixStack); // 7
-				vertexArray[vertexCount + 08].Pos = Vector2.Transform(r2_bl, MatrixStack); // 8
+				vertexArray[vertexCount + 06].Pos = Vector2.Transform(r2_tl, Matrix); // 6
+				vertexArray[vertexCount + 07].Pos = Vector2.Transform(r2_tr, Matrix); // 7
+				vertexArray[vertexCount + 08].Pos = Vector2.Transform(r2_bl, Matrix); // 8
 
-				vertexArray[vertexCount + 09].Pos = Vector2.Transform(r3_tl, MatrixStack); // 9
-				vertexArray[vertexCount + 10].Pos = Vector2.Transform(r3_tr, MatrixStack); // 10
-				vertexArray[vertexCount + 11].Pos = Vector2.Transform(r3_br, MatrixStack); // 11
+				vertexArray[vertexCount + 09].Pos = Vector2.Transform(r3_tl, Matrix); // 9
+				vertexArray[vertexCount + 10].Pos = Vector2.Transform(r3_tr, Matrix); // 10
+				vertexArray[vertexCount + 11].Pos = Vector2.Transform(r3_br, Matrix); // 11
 
 				vertexCount += 12;
 			}
@@ -1102,9 +1255,9 @@ public class Batcher
 
 	public void Image(Texture texture, in Vector2 position, in Vector2 origin, in Vector2 scale, float rotation, Color color)
 	{
-		var was = MatrixStack;
+		var was = Matrix;
 
-		MatrixStack = Transform.CreateMatrix(position, origin, scale, rotation) * MatrixStack;
+		Matrix = Transform.CreateMatrix(position, origin, scale, rotation) * Matrix;
 
 		SetTexture(texture);
 		Quad(
@@ -1118,7 +1271,7 @@ public class Batcher
 			Vector2.UnitY,
 			color);
 
-		MatrixStack = was;
+		Matrix = was;
 	}
 
 	public void Image(Texture texture, in Rect clip, in Vector2 position, Color color)
@@ -1142,9 +1295,9 @@ public class Batcher
 
 	public void Image(Texture texture, in Rect clip, in Vector2 position, in Vector2 origin, in Vector2 scale, float rotation, Color color)
 	{
-		var was = MatrixStack;
+		var was = Matrix;
 
-		MatrixStack = Transform.CreateMatrix(position, origin, scale, rotation) * MatrixStack;
+		Matrix = Transform.CreateMatrix(position, origin, scale, rotation) * Matrix;
 
 		var tx0 = clip.X / texture.Width;
 		var ty0 = clip.Y / texture.Height;
@@ -1163,7 +1316,7 @@ public class Batcher
 			new Vector2(tx0, ty1),
 			color);
 
-		MatrixStack = was;
+		Matrix = was;
 	}
 
 	public void Image(in Subtexture subtex, Color color)
@@ -1185,9 +1338,9 @@ public class Batcher
 
 	public void Image(in Subtexture subtex, in Vector2 position, in Vector2 origin, in Vector2 scale, float rotation, Color color)
 	{
-		var was = MatrixStack;
+		var was = Matrix;
 
-		MatrixStack = Transform.CreateMatrix(position, origin, scale, rotation) * MatrixStack;
+		Matrix = Transform.CreateMatrix(position, origin, scale, rotation) * Matrix;
 
 		SetTexture(subtex.Texture);
 		Quad(
@@ -1195,14 +1348,14 @@ public class Batcher
 			subtex.TexCoords0, subtex.TexCoords1, subtex.TexCoords2, subtex.TexCoords3,
 			color);
 
-		MatrixStack = was;
+		Matrix = was;
 	}
 
 	public void Image(in Subtexture subtex, in Vector2 position, in Vector2 origin, in Vector2 scale, float rotation, Color c0, Color c1, Color c2, Color c3)
 	{
-		var was = MatrixStack;
+		var was = Matrix;
 
-		MatrixStack = Transform.CreateMatrix(position, origin, scale, rotation) * MatrixStack;
+		Matrix = Transform.CreateMatrix(position, origin, scale, rotation) * Matrix;
 
 		SetTexture(subtex.Texture);
 		Quad(
@@ -1210,16 +1363,16 @@ public class Batcher
 			subtex.TexCoords0, subtex.TexCoords1, subtex.TexCoords2, subtex.TexCoords3,
 			c0, c1, c2, c3);
 
-		MatrixStack = was;
+		Matrix = was;
 	}
 
 	public void Image(in Subtexture subtex, in Rect clip, in Vector2 position, in Vector2 origin, in Vector2 scale, float rotation, Color color)
 	{
 		var (source, frame) = subtex.GetClip(clip);
 		var tex = subtex.Texture;
-		var was = MatrixStack;
+		var was = Matrix;
 
-		MatrixStack = Transform.CreateMatrix(position, origin, scale, rotation) * MatrixStack;
+		Matrix = Transform.CreateMatrix(position, origin, scale, rotation) * Matrix;
 
 		var px0 = -frame.X;
 		var py0 = -frame.Y;
@@ -1245,7 +1398,7 @@ public class Batcher
 			new Vector2(tx0, ty0), new Vector2(tx1, ty0), new Vector2(tx1, ty1), new Vector2(tx0, ty1),
 			color);
 
-		MatrixStack = was;
+		Matrix = was;
 	}
 
 	public void ImageFit(in Subtexture subtex, in Rect rect, in Vector2 justify, Color color, bool flipX, bool flipY)
@@ -1286,165 +1439,6 @@ public class Batcher
 
 	#endregion
 
-	#region Nine-Slice & Three-Slice
-
-	public void ThreeSlice(in Subtexture texture, in Rect bounds, float inset, Color color)
-	{
-		ThreeSlice(texture, bounds, inset, 1.0f, color);
-	}
-
-	public void ThreeSlice(in Subtexture texture, Rect rect, float inset, float textureScale, Color color)
-	{
-		rect = rect.Inflate(inset);
-		rect.Width /= textureScale;
-		rect.Height /= textureScale;
-
-		PushMatrix(rect.Position, Vector2.One * textureScale, Vector2.Zero, 0);
-
-		// split into 3 subtextures
-		var cell = new Vector2(texture.Frame.Width / 3, texture.Frame.Height);
-		var a = texture.GetClipSubtexture(new Rect(0, 0, cell.X, cell.Y));
-		var b = texture.GetClipSubtexture(new Rect(cell.X, 0, cell.X, cell.Y));
-		var c = texture.GetClipSubtexture(new Rect(cell.X * 2, 0, cell.X, cell.Y));
-
-		// figure out scale based on vertical size
-		var scale = rect.Height / c.Height;
-		var fill = rect.Width - cell.X * 2 * scale;
-
-		// draw images
-		Image(a, new Vector2(0, 0), Vector2.Zero, Vector2.One * scale, 0, color);
-		Image(b, new Vector2(0 + cell.X * scale, 0), Vector2.Zero, new Vector2(fill / cell.X, scale), 0, color);
-		Image(c, new Vector2(0 + rect.Width - cell.X * scale, 0), Vector2.Zero, Vector2.One * scale, 0, color);
-
-		PopMatrix();
-	}
-
-	public void NineSlice(in Subtexture texture, in Rect bounds, float inset, Color color, bool stretch = false)
-	{
-		NineSlice(texture, bounds, inset, 1.0f, color, stretch);
-	}
-
-	public void NineSlice(in Subtexture texture, Rect rect, float inset, float textureScale, Color color, bool stretch = false)
-	{
-		static void draw_edge(Batcher batch, in Subtexture tex, in Rect area, Color color, bool stretch)
-		{
-			var size = new Vector2(tex.Width, tex.Height);
-
-			if (tex.Texture == null || size.X <= 0 || size.Y <= 0)
-				return;
-
-			// single, stretched
-			if (stretch)
-			{
-				batch.Image(tex, new Vector2(area.X, area.Y), Vector2.Zero, new Vector2(area.Width / size.X, area.Height / size.Y), 0, color);
-			}
-			// centered, tiled
-			else
-			{
-				int columns = (int)MathF.Ceiling(area.Width / size.X);
-				int rows = (int)MathF.Ceiling(area.Height / size.Y);
-
-				// keeping grid an odd number forces center-alignment
-				if (columns % 2 == 0) columns++;
-				if (rows % 2 == 0) rows++;
-
-				// get area
-				float left = area.CenterX - columns * 0.5f * size.X;
-				float right = area.CenterX + columns * 0.5f * size.X;
-				float top = area.CenterY - rows * 0.5f * size.Y;
-				float bottom = area.CenterY + rows * 0.5f * size.Y;
-
-				for (float x = left; x < right; x += size.X)
-				{
-					for (float y = top; y < bottom; y += size.Y)
-					{
-						var cell = new Rect(x, y, size.X, size.Y);
-
-						// crop to visible area
-						var visible = cell.OverlapRect(area);
-						if (visible.Width <= 0 || visible.Height <= 0)
-							continue;
-
-						// draw segment
-						var offset = visible.TopLeft - cell.TopLeft;
-						var crop = new Rect(offset.X, offset.Y, visible.Width, visible.Height);
-						batch.Image(tex, crop, new Vector2(x, y) + offset, Vector2.Zero, Vector2.One, 0, color);
-					}
-				}
-			}
-		};
-
-		rect = rect.Inflate(inset);
-
-		var trim = new Vector2(texture.Frame.Width / 3, texture.Frame.Height / 3);
-		var sw = texture.Width;
-		var sh = texture.Height;
-		var width = (rect.Width / textureScale);
-		var height = (rect.Height / textureScale);
-
-		// crop 9-slice into the rectangle we're drawing in ...
-		if (trim.X > width / 2)
-			trim.X = (width / 2);
-		if (trim.Y > height / 2)
-			trim.Y = (height / 2);
-
-		// get 9-slice textures
-		StackList16<Subtexture> cells = new();
-		cells.Resize(9);
-		cells[0] = texture.GetClipSubtexture(new Rect(0, 0, trim.X, trim.Y));
-		cells[1] = texture.GetClipSubtexture(new Rect((sw - trim.X) / 2, 0, trim.X, trim.Y));
-		cells[2] = texture.GetClipSubtexture(new Rect(sw - trim.X, 0, trim.X, trim.Y));
-		cells[3] = texture.GetClipSubtexture(new Rect(0, (sh - trim.Y) / 2, trim.X, trim.Y));
-		cells[4] = texture.GetClipSubtexture(new Rect((sw - trim.X) / 2, (sh - trim.Y) / 2, trim.X, trim.Y));
-		cells[5] = texture.GetClipSubtexture(new Rect(sw - trim.X, (sh - trim.Y) / 2, trim.X, trim.Y));
-		cells[6] = texture.GetClipSubtexture(new Rect(0, sh - trim.Y, trim.X, trim.Y));
-		cells[7] = texture.GetClipSubtexture(new Rect((sw - trim.X) / 2, sh - trim.Y, trim.X, trim.Y));
-		cells[8] = texture.GetClipSubtexture(new Rect(sw - trim.X, sh - trim.Y, trim.X, trim.Y));
-
-		// figure out filled space
-		float fill_x = width - trim.X * 2;
-		float fill_y = height - trim.Y * 2;
-
-		PushMatrix(rect.TopLeft, Vector2.One * textureScale, Vector2.Zero, 0.0f);
-		{
-			// top left
-			Image(cells[0], new Vector2(0, 0), Vector2.Zero, Vector2.One, 0, color);
-
-			// top-center
-			if (fill_x > 0)
-				draw_edge(this, cells[1], new Rect(trim.X, 0, fill_x, trim.Y), color, stretch);
-
-			// top right
-			Image(cells[2], new Vector2(width - trim.X, 0), Vector2.Zero, Vector2.One, 0, color);
-
-			if (fill_y > 0)
-			{
-				// left
-				draw_edge(this, cells[3], new Rect(0, trim.Y, trim.X, fill_y), color, stretch);
-
-				// center
-				if (fill_x > 0)
-					draw_edge(this, cells[4], new Rect(trim.X, trim.Y, fill_x, fill_y), color, stretch);
-
-				// right
-				draw_edge(this, cells[5], new Rect(width - trim.X, trim.Y, trim.X, fill_y), color, stretch);
-			}
-
-			// bottom-left
-			Image(cells[6], new Vector2(0, height - trim.Y), Vector2.Zero, Vector2.One, 0, color);
-
-			// bottom-center
-			if (fill_x > 0)
-				draw_edge(this, cells[7], new Rect(trim.X, height - trim.Y, fill_x, trim.Y), color, stretch);
-
-			// bottom-right
-			Image(cells[8], new Vector2(width - trim.X, height - trim.Y), Vector2.Zero, Vector2.One, 0, color);
-		}
-		PopMatrix();
-	}
-
-	#endregion
-
 	#region Copy Arrays
 
 	/// <summary>
@@ -1477,6 +1471,10 @@ public class Batcher
 
 	#region Misc.
 
+	/// <summary>
+	/// Draws a checkered pattern.
+	/// This is fine for small a amount of grid cells, but larger areas should use a custom shader for performance.
+	/// </summary>
 	public void CheckeredPattern(in Rect bounds, float cellWidth, float cellHeight, Color a, Color b)
 	{
 		var odd = false;
