@@ -365,6 +365,17 @@ public struct Rect : IConvexShape
 
 		return rect;
 	}
+	
+	public static Rect Transform(in Rect rect, in Matrix3x2 matrix)
+	{
+		var a = Vector2.Transform(rect.TopLeft, matrix);
+		var b = Vector2.Transform(rect.TopRight, matrix);
+		var c = Vector2.Transform(rect.BottomRight, matrix);
+		var d = Vector2.Transform(rect.BottomLeft, matrix);
+		var min = new Vector2(Calc.Min(a.X, b.X, c.X, d.X), Calc.Min(a.Y, b.Y, c.Y, d.Y));
+		var max = new Vector2(Calc.Max(a.X, b.X, c.X, d.X), Calc.Max(a.Y, b.Y, c.Y, d.Y));
+		return new(min.X, min.Y, max.X - min.X, max.Y - min.Y);
+	}
 
 	public static implicit operator Rect((float X, float Y, float Width, float Height) tuple) => new(tuple.X, tuple.Y, tuple.Width, tuple.Height);
 
