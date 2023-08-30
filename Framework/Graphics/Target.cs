@@ -31,6 +31,11 @@ public class Target : IResource
 	public readonly int Height;
 
 	/// <summary>
+	/// Target Bounds
+	/// </summary>
+	public readonly RectInt Bounds;
+
+	/// <summary>
 	/// The Texture attachments in the Target. 
 	/// </summary>
 	public readonly ReadOnlyCollection<Texture> Attachments;
@@ -52,6 +57,7 @@ public class Target : IResource
 
 		Width = width;
 		Height = height;
+		Bounds = new RectInt(0, 0, Width, Height);
 
 		var textures = new List<Texture>();
 		for (int i = 0; i < attachments.Length; i ++)
