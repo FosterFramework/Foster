@@ -12,6 +12,7 @@ public class Mesh : IResource
 
 	internal IntPtr resource;
 	internal bool isDisposed = false;
+	private VertexFormat currentFormat;
 
 	public Mesh()
 	{
@@ -64,7 +65,10 @@ public class Mesh : IResource
 		VertexCount = vertices.Length;
 
 		// update vertex format
+		if (currentFormat != format)
 		{
+			currentFormat = format;
+			
 			var elements = stackalloc Platform.FosterVertexElement[format.Elements.Length];
 			for (int i = 0; i < format.Elements.Length; i ++)
 			{
