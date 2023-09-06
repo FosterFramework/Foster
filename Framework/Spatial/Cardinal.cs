@@ -3,129 +3,82 @@ using System.Numerics;
 
 namespace Foster.Framework;
 
-public struct Cardinal
+public readonly struct Cardinal
 {
-	public const byte VAL_RIGHT = 0;
-	public const byte VAL_DOWN = 1;
-	public const byte VAL_LEFT = 2;
-	public const byte VAL_UP = 3;
+	private const int RightValue = 0;
+	private const int DownValue = 1;
+	private const int LeftValue = 2;
+	private const int UpValue = 3;
 
-	static public readonly Cardinal Right = new Cardinal(VAL_RIGHT);
-	static public readonly Cardinal Down = new Cardinal(VAL_DOWN);
-	static public readonly Cardinal Left = new Cardinal(VAL_LEFT);
-	static public readonly Cardinal Up = new Cardinal(VAL_UP);
+	public static readonly Cardinal Right = new (RightValue);
+	public static readonly Cardinal Down = new (DownValue);
+	public static readonly Cardinal Left = new (LeftValue);
+	public static readonly Cardinal Up = new (UpValue);
 
-	public byte Value { get; private set; }
+	public readonly int Value;
 
-	private Cardinal(byte val)
+	public Cardinal(int val)
 	{
+		Debug.Assert(val >= 0 && val < 4);
 		Value = val;
 	}
 
-	public Cardinal Reverse => new Cardinal((byte)((Value + 2) % 4));
-	public Cardinal TurnRight => new Cardinal((byte)((Value + 1) % 4));
-	public Cardinal TurnLeft => new Cardinal((byte)((Value + 3) % 4));
+	public Cardinal Reverse => new ((Value + 2) % 4);
+	public Cardinal TurnRight => new ((Value + 1) % 4);
+	public Cardinal TurnLeft => new ((Value + 3) % 4);
 
 	public bool Horizontal => Value % 2 == 0;
 	public bool Vertical => Value % 2 == 1;    
 
-	public int X
-	{
-		get
+	public int X => Value switch
 		{
-			switch (Value)
-			{
-				case VAL_RIGHT:
-					return 1;
-				case VAL_LEFT:
-					return -1;
-				default:
-					return 0;
-			}
+			RightValue => 1,
+			LeftValue => -1,
+			_ => 0
+		};
 
-			throw new ArgumentException();
-		}
-	}
-
-	public int Y
-	{
-		get
+	public int Y => Value switch
 		{
-			switch (Value)
-			{
-				case VAL_DOWN:
-					return 1;
-				case VAL_UP:
-					return -1;
-				default:
-					return 0;
-			}
-
-			throw new ArgumentException();
-		}
-	}
+			UpValue => -1,
+			DownValue => 1,
+			_ => 0
+		};
 
 	/// <summary>
 	/// The cardinal's direction represented as radians
 	/// </summary>
-	public float Angle
-	{
-		get
+	public float Angle => Value switch
 		{
-			switch (Value)
-			{
-				case VAL_RIGHT:
-					return 0;
-				case VAL_UP:
-					return -Calc.HalfPI;
-				case VAL_LEFT:
-					return Calc.PI;
-				case VAL_DOWN:
-					return Calc.HalfPI;
-			}
+			RightValue => 0,
+			UpValue => -Calc.HalfPI,
+			LeftValue => Calc.PI,
+			DownValue => Calc.HalfPI,
+			_ => throw new Exception()
+		};
 
-			throw new ArgumentException();
-		}
-	}
+	public static implicit operator Cardinal(Facing f) => f.Sign > 0 ? Cardinal.Right : Cardinal.Left;
+	public static implicit operator Point2(Cardinal c) => new Point2(c.X, c.Y);
+	public static bool operator ==(Cardinal a, Cardinal b) => a.Value == b.Value;
+	public static bool operator !=(Cardinal a, Cardinal b) => a.Value != b.Value;
+	public static Point2 operator *(Cardinal a, int b) => (Point2)a * b;
 
-	static public implicit operator Cardinal(Facing f) => f.ToByte() == 0 ? Cardinal.Right : Cardinal.Left;
-	static public implicit operator Point2(Cardinal c) => new Point2(c.X, c.Y);
-	static public bool operator ==(Cardinal a, Cardinal b) => a.Value == b.Value;
-	static public bool operator !=(Cardinal a, Cardinal b) => a.Value != b.Value;
-	static public Point2 operator *(Cardinal a, int b) => (Point2)a * b;
-
-	public override int GetHashCode()
-	{
-		return Value;
-	}
+	public override int GetHashCode() => Value;
 
 	public override bool Equals(object? obj)
-	{
-		if (obj == null || !(obj is Cardinal c))
-			return false;
-		else
-			return this == c;
-	}
+		=> obj is Cardinal c && c == this;
 
 	public override string ToString()
-	{
-		return Value switch
+		=> Value switch
 		{
-			VAL_DOWN => "Down",
-			VAL_LEFT => "Left",
-			VAL_UP => "Up",
+			DownValue => "Down",
+			LeftValue => "Left",
+			UpValue => "Up",
 			_ => "Right",
 		};
-	}
 
-	public byte ToByte()
+	public static Cardinal FromRawValue(int v)
 	{
-		return Value;
-	}
-
-	public static Cardinal FromByte(byte v)
-	{
-		Debug.Assert(v < 4, "Argument out of range");
+		Debug.Assert(v >= 0 && v < 4, "Argument out of range");
 		return new Cardinal(v);
 	}
 
@@ -168,15 +121,6 @@ public struct Cardinal
 		}
 	}
 
-	public static Cardinal operator++(Cardinal c)
-	{
-		c.Value = (byte)((c.Value + 1) % 4);
-		return c;
-	}
-
-	public static Cardinal operator --(Cardinal c)
-	{
-		c.Value = (byte)((c.Value + 3) % 4);
-		return c;
-	}
+	public static Cardinal operator++(Cardinal c) => new((c.Value + 1) % 4);
+	public static Cardinal operator --(Cardinal c) => new ((c.Value + 3) % 4);
 }
