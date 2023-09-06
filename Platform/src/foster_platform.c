@@ -158,7 +158,7 @@ void FosterBeginFrame()
 
 void FosterPollEvents()
 {
-	FOSTER_ASSERT_RUNNING(FosterBeginFrame);
+	FOSTER_ASSERT_RUNNING(FosterPollEvents);
 
 	// always update the mouse position state
 	{
