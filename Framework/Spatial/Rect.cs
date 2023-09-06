@@ -339,17 +339,11 @@ public struct Rect : IConvexShape
 			_ => throw new IndexOutOfRangeException(),
 		};
 
-	public override bool Equals(object? obj) => (obj is Rect other) && (this == other);
+	public override bool Equals(object? obj)
+		=> (obj is Rect other) && (this == other);
 
 	public override int GetHashCode()
-	{
-		int hash = 17;
-		hash = hash * 23 + X.GetHashCode();
-		hash = hash * 23 + Y.GetHashCode();
-		hash = hash * 23 + Width.GetHashCode();
-		hash = hash * 23 + Height.GetHashCode();
-		return hash;
-	}
+		=> HashCode.Combine(X, Y, Width, Height);
 
 	public override string ToString()
 		=> $"[{X}, {Y}, {Width}, {Height}]";

@@ -170,16 +170,8 @@ public struct Transform
 	public static bool operator !=(Transform a, Transform b) => !(a == b);
 
 	public override bool Equals(object? obj)
-	{
-		return obj is Transform transform && this == transform;
-	}
+		=> obj is Transform transform && this == transform;
 
 	public override int GetHashCode()
-	{
-		HashCode hash = new HashCode();
-		hash.Add(position);
-		hash.Add(scale);
-		hash.Add(rotation);
-		return hash.ToHashCode();
-	}
+		=> HashCode.Combine(position, scale, rotation);
 }

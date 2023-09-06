@@ -357,22 +357,14 @@ public struct RectInt
 			return new RectInt(X, Y - distance, Width, distance);
 	}
 
-	public override bool Equals(object? obj) => (obj is RectInt other) && (this == other);
+	public override bool Equals(object? obj)
+		=> (obj is RectInt other) && (this == other);
 
 	public override int GetHashCode()
-	{
-		int hash = 17;
-		hash = hash * 23 + X;
-		hash = hash * 23 + Y;
-		hash = hash * 23 + Width;
-		hash = hash * 23 + Height;
-		return hash;
-	}
+		=> HashCode.Combine(X, Y, Width, Height);
 
 	public override string ToString()
-	{
-		return $"[{X}, {Y}, {Width}, {Height}]";
-	}
+		=> $"[{X}, {Y}, {Width}, {Height}]";
 
 	public static RectInt Box(Point2 center, Point2 size)
 	{

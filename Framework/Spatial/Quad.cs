@@ -8,7 +8,6 @@ namespace Foster.Framework;
 /// </summary>
 public struct Quad : IConvexShape
 {
-
 	private Vector2 a;
 	private Vector2 b;
 	private Vector2 c;
@@ -204,17 +203,11 @@ public struct Quad : IConvexShape
 		return bounds;
 	}
 
-	public override bool Equals(object? obj) => (obj is Quad other) && (this == other);
+	public override bool Equals(object? obj)
+		=> (obj is Quad other) && (this == other);
 
 	public override int GetHashCode()
-	{
-		int hash = 17;
-		hash = hash * 23 + A.GetHashCode();
-		hash = hash * 23 + B.GetHashCode();
-		hash = hash * 23 + C.GetHashCode();
-		hash = hash * 23 + D.GetHashCode();
-		return hash;
-	}
+		=> HashCode.Combine(a, b, c, d);
 
 	public static Quad Transform(Vector2 a, Vector2 b, Vector2 c, Vector2 d, Matrix3x2 matrix)
 	{

@@ -54,17 +54,10 @@ public struct Point3
 	public override bool Equals(object? obj) => (obj is Point3 other) && (this == other);
 
 	public override int GetHashCode()
-	{
-		var hashCode = 17;
-		hashCode = hashCode * 23 + X;
-		hashCode = hashCode * 23 + Y;
-		return hashCode;
-	}
+		=> HashCode.Combine(X, Y, Z);
 
 	public override string ToString()
-	{
-		return $"[{X}, {Y}]";
-	}
+		=> $"[{X}, {Y}, {Z}]";
 
 
 	public static implicit operator Point3((int X, int Y, int Z) tuple) => new Point3(tuple.X, tuple.Y, tuple.Z);

@@ -119,17 +119,10 @@ public struct Point2 : IEquatable<Point2>
 	public bool Equals(Point2 other) => (X == other.X && Y == other.Y);
 
 	public override int GetHashCode()
-	{
-		var hashCode = 17;
-		hashCode = hashCode * 23 + X;
-		hashCode = hashCode * 23 + Y;
-		return hashCode;
-	}
+		=> HashCode.Combine(X, Y);
 
 	public override string ToString()
-	{
-		return $"[{X}, {Y}]";
-	}
+		=> $"[{X}, {Y}]";
 
 	public static Point2 Min(Point2 a, Point2 b) => new(Math.Min(a.X, b.X), Math.Min(a.Y, b.Y));
 	public static Point2 Min(Point2 a, Point2 b, Point2 c) => new(Calc.Min(a.X, b.X, c.X), Calc.Min(a.Y, b.Y, c.Y));
