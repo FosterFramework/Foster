@@ -48,7 +48,7 @@ public class Target : IResource
 
 	public Target(int width, int height, TextureFormat[] attachments)
 	{
-		Debug.Assert(width <= 0 || height <= 0, "Target width and height must be larger than 0");
+		Debug.Assert(width > 0 && height > 0, "Target width and height must be larger than 0");
 		Debug.Assert(attachments != null && attachments.Length > 0, "Target needs at least 1 color attachment");
 
 		resource = Platform.FosterTargetCreate(width, height, attachments, attachments.Length);
