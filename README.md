@@ -20,5 +20,5 @@ _★ very work in progress! likely to have frequent, breaking changes! please us
 Taken a lot of inspiration from other Frameworks and APIs, namely [FNA](https://fna-xna.github.io/).
 
 ## notes
- - This is the second iteration of this library. The first can be found here.
+ - This is the second iteration of this library. The first [can be found here](https://github.com/noelfb/fosterold).
  - 
