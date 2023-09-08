@@ -16,9 +16,6 @@ _★ very work in progress! likely to have frequent, breaking changes! please us
  - separate shaders are required depending on which rendering API you're targetting.
  - planning to replace the rendering implementation with [SDL3 GPU when it is complete](https://github.com/NoelFB/Foster2023/issues/1).
 
-## inspiration
-Taken a lot of inspiration from other Frameworks and APIs, namely [FNA](https://fna-xna.github.io/).
-
 ## notes
+ - Taken a lot of inspiration from other Frameworks and APIs, namely [FNA](https://fna-xna.github.io/).
  - This is the second iteration of this library. The first [can be found here](https://github.com/noelfb/fosterold).
- - 
