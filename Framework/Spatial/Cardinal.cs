@@ -5,10 +5,10 @@ namespace Foster.Framework;
 
 public readonly struct Cardinal
 {
-	private const int RightValue = 0;
-	private const int DownValue = 1;
-	private const int LeftValue = 2;
-	private const int UpValue = 3;
+	public const int RightValue = 0;
+	public const int DownValue = 1;
+	public const int LeftValue = 2;
+	public const int UpValue = 3;
 
 	public static readonly Cardinal Right = new (RightValue);
 	public static readonly Cardinal Down = new (DownValue);
