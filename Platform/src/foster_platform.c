@@ -143,6 +143,23 @@ void FosterStartup(FosterDesc desc)
 		}
 	}
 
+	// compare pixel sizes and downscale the Window if they don't match ...
+	// this stops the window from being huge on Windows
+	{
+		int pixelWidth, pixelHeight;
+		int logicWidth, logicHeight;
+		SDL_GetWindowSize(fstate.window, &logicWidth, &logicHeight);
+		SDL_GetWindowSizeInPixels(fstate.window, &pixelWidth, &pixelHeight);
+
+		if (logicWidth != pixelWidth && logicHeight != pixelHeight)
+		{
+			// Todo: on Windows this doesn't seem to produce a Window at the actual given size
+			// ex. on my PC putting in 1080 I get 810? Do I need to use DPI scaling somehow?
+			SDL_SetWindowSize(fstate.window, logicWidth, logicHeight);
+			SDL_SetWindowPosition(fstate.window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+		}
+	}
+
 	// toggle flags & show window
 	FosterSetFlags(fstate.desc.flags);
 	SDL_ShowWindow(fstate.window);
