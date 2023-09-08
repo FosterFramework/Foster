@@ -66,6 +66,18 @@ public class Texture : IResource
 		IsTargetAttachment = false;
 	}
 
+	public Texture(int width, int height, ReadOnlySpan<Color> pixels)
+		: this(width, height, TextureFormat.Color)
+	{
+		SetData<Color>(pixels);
+	}
+
+	public Texture(int width, int height, ReadOnlySpan<byte> pixels)
+		: this(width, height, TextureFormat.Color)
+	{
+		SetData<byte>(pixels);
+	}
+
 	public Texture(Image image) 
 		: this(image.Width, image.Height, TextureFormat.Color)
 	{

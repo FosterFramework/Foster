@@ -4,17 +4,20 @@ public static class Time
 {
 	/// <summary>
 	/// Time in Seconds since our last Update.
+	/// In Fixed Timestep this always returns a constant value.
 	/// </summary>
 	public static float Delta;
 
 	/// <summary>
 	/// An Accumulation of the Delta Time, incremented each Update.
+	/// In Fixed Timestep this is incremented by a constant value.
 	/// </summary>
 	public static TimeSpan Duration;
 
 	/// <summary>
 	/// Requests the current time since the Application was started.
 	/// This is different than Time.Duration which is only incremented once per frame.
+	/// This is also not affected by Fixed Timestep.
 	/// </summary>
 	public static TimeSpan Now => App.Timer.Elapsed;
 

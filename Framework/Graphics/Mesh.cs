@@ -28,8 +28,6 @@ public class Mesh : IResource
 
 	public unsafe void SetIndices<T>(ReadOnlySpan<T> indices) where T : struct
 	{
-		Debug.Assert(!IsDisposed, "Mesh is Disposed");
-
 		var format = true switch
 		{
 			true when typeof(T) == typeof(short) => IndexFormat.Sixteen,
@@ -38,19 +36,32 @@ public class Mesh : IResource
 			true when typeof(T) == typeof(uint) => IndexFormat.ThirtyTwo,
 			_ => throw new NotImplementedException(),
 		};
-		
-		IndexCount = indices.Length;
-
-		Platform.FosterMeshSetIndexFormat(resource, format);
 
 		fixed (byte* ptr = MemoryMarshal.AsBytes(indices))
 		{
-			Platform.FosterMeshSetIndexData(
-				resource, 
-				new IntPtr(ptr),
-				Marshal.SizeOf<T>() * indices.Length
-			);
+			SetIndices(new IntPtr(ptr), indices.Length, format);
 		}
+	}
+
+	public unsafe void SetIndices(IntPtr data, int count, IndexFormat format)
+	{
+		Debug.Assert(!IsDisposed, "Mesh is Disposed");
+
+		IndexCount = count;
+
+		int size = format switch
+		{
+			IndexFormat.Sixteen => 2,
+			IndexFormat.ThirtyTwo => 4,
+			_ => throw new Exception()
+		};
+
+		Platform.FosterMeshSetIndexFormat(resource, format);
+		Platform.FosterMeshSetIndexData(
+			resource, 
+			data,
+			size * count
+		);
 	}
 
 	public unsafe void SetVertices<T>(ReadOnlySpan<T> vertices) where T : struct, IVertex
@@ -60,9 +71,17 @@ public class Mesh : IResource
 
 	public unsafe void SetVertices<T>(ReadOnlySpan<T> vertices, VertexFormat format) where T : struct
 	{
+		fixed (byte* ptr = MemoryMarshal.AsBytes(vertices))
+		{
+			SetVertices(new IntPtr(ptr), vertices.Length, format);
+		}
+	}
+
+	public unsafe void SetVertices(IntPtr data, int count, VertexFormat format)
+	{
 		Debug.Assert(!IsDisposed, "Mesh is Disposed");
-		
-		VertexCount = vertices.Length;
+
+		VertexCount = count;
 
 		// update vertex format
 		if (currentFormat != format)
@@ -87,14 +106,11 @@ public class Mesh : IResource
 			Platform.FosterMeshSetVertexFormat(resource, ref f);
 		}
 
-		fixed (byte* ptr = MemoryMarshal.AsBytes(vertices))
-		{
-			Platform.FosterMeshSetVertexData(
-				resource,
-				new IntPtr(ptr),
-				Marshal.SizeOf<T>() * vertices.Length
-			);
-		}
+		Platform.FosterMeshSetVertexData(
+			resource,
+			data,
+			format.Stride * count
+		);
 	}
 
 	public void Dispose()

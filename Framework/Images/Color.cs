@@ -10,7 +10,7 @@ namespace Foster.Framework;
 /// Color Data
 /// </summary>
 [StructLayout(LayoutKind.Sequential, Pack = 4, Size = 4)]
-public struct Color
+public struct Color : IEquatable<Color>
 {
 	public static readonly Color Transparent = new(0, 0, 0, 0);
 	public static readonly Color White = new(0xffffff);
@@ -82,6 +82,22 @@ public struct Color
 		G = (byte)(g * 255);
 		B = (byte)(b * 255);
 		A = (byte)(a * 255);
+	}
+
+	public Color(in Vector3 value)
+	{
+		R = (byte)(value.X * 255);
+		G = (byte)(value.Y * 255);
+		B = (byte)(value.Z * 255);
+		A = 255;
+	}
+
+	public Color(in Vector4 value)
+	{
+		R = (byte)(value.X * 255);
+		G = (byte)(value.Y * 255);
+		B = (byte)(value.Z * 255);
+		A = (byte)(value.W * 255);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -260,6 +276,11 @@ public struct Color
 			(byte)(a.B + (b.B - a.B) * amount),
 			(byte)(a.A + (b.A - a.A) * amount)
 		);
+	}
+
+	public bool Equals(Color other)
+	{
+		return this == other;
 	}
 
 	/// <summary>

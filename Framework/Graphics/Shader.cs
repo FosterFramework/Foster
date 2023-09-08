@@ -7,10 +7,16 @@ namespace Foster.Framework;
 
 public struct ShaderCreateInfo
 {
-	public struct Attribute
+	public readonly struct Attribute
 	{
-		public string SemanticName;
-		public int SemanticIndex;
+		public readonly string SemanticName;
+		public readonly int SemanticIndex;
+
+		public Attribute(string semanticName, int semanticIndex)
+		{
+			SemanticName = semanticName;
+			SemanticIndex = semanticIndex;
+		}
 	}
 
 	/// <summary>

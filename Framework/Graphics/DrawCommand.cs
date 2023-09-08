@@ -55,7 +55,7 @@ public struct DrawCommand
 	public RectInt? Scissor;
 
 	/// <summary>
-	/// Creates a Render Pass based on the given mesh and shader
+	/// Creates a Draw Command based on the given mesh and shader
 	/// </summary>
 	public DrawCommand(Target? target, Mesh mesh, Shader shader)
 	{

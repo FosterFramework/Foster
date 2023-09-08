@@ -1448,7 +1448,7 @@ public class Batcher
 	{
 		// copy vertexArray over
 		ExpandvertexArray(vertexCount + vertexBuffer.Length);
-		vertexBuffer.CopyTo(vertexArray.AsSpan().Slice(vertexCount));
+		vertexBuffer.CopyTo(vertexArray.AsSpan()[vertexCount..]);
 
 		// copy indexArray over
 		while (indexCount + indexBuffer.Length >= indexArray.Length)

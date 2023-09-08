@@ -270,9 +270,11 @@ public static class App
 		timer.Restart();
 		started = true;
 
+		// begin normal game loop
 		while (Running && !Exiting)
 			Tick();
 
+		// shutdown
 		for (int i = 0; i < modules.Count; i ++)
 			modules[i].Shutdown();
 
@@ -284,9 +286,7 @@ public static class App
 
 	private static void Tick()
 	{
-		Platform.FosterBeginFrame();
-
-		static void Step(TimeSpan delta)
+		static void Update(TimeSpan delta)
 		{
 			Time.Frame++;
 			Time.Advance(delta);
@@ -298,6 +298,8 @@ public static class App
 			for (int i = 0; i < modules.Count; i ++)
 				modules[i].Update();
 		}
+		
+		Platform.FosterBeginFrame();
 
 		var currentTime = timer.Elapsed;
 		var deltaTime = currentTime - lastTime;
@@ -306,6 +308,18 @@ public static class App
 		if (Time.FixedStep)
 		{
 			accumulator += deltaTime;
+
+			// Do not let us run too fast
+			while (accumulator < Time.FixedStepTarget)
+			{
+				int milliseconds = (int)(Time.FixedStepTarget - accumulator).TotalMilliseconds;
+				Thread.Sleep(milliseconds);
+
+				currentTime = timer.Elapsed;
+				deltaTime = currentTime - lastTime;
+				lastTime = currentTime;
+				accumulator += deltaTime;
+			}
 
 			// Do not allow any update to take longer than our maximum.
 			if (accumulator > Time.FixedStepMaxElapsedTime)
@@ -318,14 +332,14 @@ public static class App
 			while (accumulator >= Time.FixedStepTarget)
 			{
 				accumulator -= Time.FixedStepTarget;
-				Step(Time.FixedStepTarget);
+				Update(Time.FixedStepTarget);
 				if (Exiting)
 					break;
 			}
 		}
 		else
 		{
-			Step(deltaTime);
+			Update(deltaTime);
 		}
 
 		for (int i = 0; i < modules.Count; i ++)

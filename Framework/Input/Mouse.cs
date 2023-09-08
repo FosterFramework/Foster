@@ -21,6 +21,10 @@ public class Mouse
 	/// </summary>
 	public Vector2 Position;
 
+	public float X => Position.X;
+
+	public float Y => Position.Y;
+
 	public bool Pressed(MouseButtons button) => pressed[(int)button];
 	public bool Down(MouseButtons button) => down[(int)button];
 	public bool Released(MouseButtons button) => released[(int)button];
