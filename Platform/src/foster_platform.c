@@ -614,10 +614,10 @@ void FosterMeshSetVertexFormat(FosterMesh* mesh, FosterVertexFormat* format)
 	fstate.device.meshSetVertexFormat(mesh, format);
 }
 
-void FosterMeshSetVertexData(FosterMesh* mesh, void* data, int dataSize)
+void FosterMeshSetVertexData(FosterMesh* mesh, void* data, int dataSize, int dataDestOffset)
 {
 	FOSTER_ASSERT_RUNNING(FosterMeshSetVertexData);
-	fstate.device.meshSetVertexData(mesh, data, dataSize);
+	fstate.device.meshSetVertexData(mesh, data, dataSize, dataDestOffset);
 }
 
 void FosterMeshSetIndexFormat(FosterMesh* mesh, FosterIndexFormat format)
@@ -626,10 +626,10 @@ void FosterMeshSetIndexFormat(FosterMesh* mesh, FosterIndexFormat format)
 	fstate.device.meshSetIndexFormat(mesh, format);
 }
 
-void FosterMeshSetIndexData(FosterMesh* mesh, void* data, int dataSize)
+void FosterMeshSetIndexData(FosterMesh* mesh, void* data, int dataSize, int dataDestOffset)
 {
 	FOSTER_ASSERT_RUNNING(FosterMeshSetIndexData);
-	fstate.device.meshSetIndexData(mesh, data, dataSize);
+	fstate.device.meshSetIndexData(mesh, data, dataSize, dataDestOffset);
 }
 
 void FosterMeshDestroy(FosterMesh* mesh)

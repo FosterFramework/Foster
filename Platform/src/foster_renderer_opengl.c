@@ -394,6 +394,8 @@ typedef struct FosterMesh_OpenGL
 	GLuint instanceAttributes[32];
 	GLenum indexFormat;
 	int indexSize;
+	int vertexBufferSize;
+	int indexBufferSize;
 } FosterMesh_OpenGL;
 
 typedef struct
@@ -1134,6 +1136,8 @@ FosterMesh* FosterMeshCreate_OpenGL()
 	result.instanceBuffer = 0;
 	result.vertexAttributesEnabled = 0;
 	result.instanceAttributesEnabled = 0;
+	result.vertexBufferSize = 0;
+	result.indexBufferSize = 0;
 
 	fgl.glGenVertexArrays(1, &result.id);
 	if (result.id == 0)
@@ -1158,7 +1162,7 @@ void FosterMeshSetVertexFormat_OpenGL(FosterMesh* mesh, FosterVertexFormat* form
 	fgl.glBindVertexArray(0);
 }
 
-void FosterMeshSetVertexData_OpenGL(FosterMesh* mesh, void* data, int dataSize)
+void FosterMeshSetVertexData_OpenGL(FosterMesh* mesh, void* data, int dataSize, int dataDestOffset)
 {
 	FosterMesh_OpenGL* it = (FosterMesh_OpenGL*)mesh;
 
@@ -1166,7 +1170,17 @@ void FosterMeshSetVertexData_OpenGL(FosterMesh* mesh, void* data, int dataSize)
 	if (it->vertexBuffer == 0)
 		fgl.glGenBuffers(1, &(it->vertexBuffer));
 	fgl.glBindBuffer(GL_ARRAY_BUFFER, it->vertexBuffer);
-	fgl.glBufferData(GL_ARRAY_BUFFER, dataSize, data, GL_DYNAMIC_DRAW);
+
+	// expand vertex buffer if needed
+	int totalSize = dataDestOffset + dataSize;
+	if (totalSize > it->vertexBufferSize)
+	{
+		it->vertexBufferSize = totalSize;
+		fgl.glBufferData(GL_ARRAY_BUFFER, totalSize, NULL, GL_DYNAMIC_DRAW);
+	}
+
+	// fill data at the offset
+	fgl.glBufferSubData(GL_ARRAY_BUFFER, dataDestOffset, dataSize, data);
 	fgl.glBindVertexArray(0);
 }
 
@@ -1190,14 +1204,24 @@ void FosterMeshSetIndexFormat_OpenGL(FosterMesh* mesh, FosterIndexFormat format)
 	}
 }
 
-void FosterMeshSetIndexData_OpenGL(FosterMesh* mesh, void* data, int dataSize)
+void FosterMeshSetIndexData_OpenGL(FosterMesh* mesh, void* data, int dataSize, int dataDestOffset)
 {
 	FosterMesh_OpenGL* it = (FosterMesh_OpenGL*)mesh;
 	fgl.glBindVertexArray(it->id);
 	if (it->indexBuffer == 0)
 		fgl.glGenBuffers(1, &(it->indexBuffer));
 	fgl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, it->indexBuffer);
-	fgl.glBufferData(GL_ELEMENT_ARRAY_BUFFER, dataSize, data, GL_DYNAMIC_DRAW);
+
+	// expand buffer if needed
+	int totalSize = dataDestOffset + dataSize;
+	if (totalSize > it->indexBufferSize)
+	{
+		it->indexBufferSize = totalSize;
+		fgl.glBufferData(GL_ELEMENT_ARRAY_BUFFER, totalSize, NULL, GL_DYNAMIC_DRAW);
+	}
+
+	// fill data from the offset
+	fgl.glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, dataDestOffset, dataSize, data);
 	fgl.glBindVertexArray(0);
 }
 

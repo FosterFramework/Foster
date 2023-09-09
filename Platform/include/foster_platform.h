@@ -608,11 +608,11 @@ FOSTER_API FosterMesh* FosterMeshCreate();
 
 FOSTER_API void FosterMeshSetVertexFormat(FosterMesh* mesh, FosterVertexFormat* format);
 
-FOSTER_API void FosterMeshSetVertexData(FosterMesh* mesh, void* data, int dataSize);
+FOSTER_API void FosterMeshSetVertexData(FosterMesh* mesh, void* data, int dataSize, int dataDestOffset);
 
 FOSTER_API void FosterMeshSetIndexFormat(FosterMesh* mesh, FosterIndexFormat format);
 
-FOSTER_API void FosterMeshSetIndexData(FosterMesh* mesh, void* data, int dataSize);
+FOSTER_API void FosterMeshSetIndexData(FosterMesh* mesh, void* data, int dataSize, int dataDestOffset);
 
 FOSTER_API void FosterMeshDestroy(FosterMesh* mesh);
 

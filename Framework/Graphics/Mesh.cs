@@ -12,7 +12,8 @@ public class Mesh : IResource
 
 	internal IntPtr resource;
 	internal bool isDisposed = false;
-	private VertexFormat currentFormat;
+	private IndexFormat currentIndexFormat;
+	private VertexFormat currentVertexFormat;
 
 	public Mesh()
 	{
@@ -26,7 +27,11 @@ public class Mesh : IResource
 		Dispose();
 	}
 
-	public unsafe void SetIndices<T>(ReadOnlySpan<T> indices) where T : struct
+	/// <summary>
+	/// Uploads the Index data to the Mesh.
+	/// Offset is an offset into where to upload the data in the underlying GPU buffer.
+	/// </summary>
+	public unsafe void SetIndices<T>(ReadOnlySpan<T> indices, int offset = 0) where T : struct
 	{
 		var format = true switch
 		{
@@ -39,11 +44,15 @@ public class Mesh : IResource
 
 		fixed (byte* ptr = MemoryMarshal.AsBytes(indices))
 		{
-			SetIndices(new IntPtr(ptr), indices.Length, format);
+			SetIndices(new IntPtr(ptr), indices.Length, offset, format);
 		}
 	}
 
-	public unsafe void SetIndices(IntPtr data, int count, IndexFormat format)
+	/// <summary>
+	/// Uploads the Index data to the Mesh.
+	/// Offset is an offset into where to upload the data in the underlying GPU buffer.
+	/// </summary>
+	public unsafe void SetIndices(IntPtr data, int count, int offset, IndexFormat format)
 	{
 		Debug.Assert(!IsDisposed, "Mesh is Disposed");
 
@@ -56,37 +65,55 @@ public class Mesh : IResource
 			_ => throw new Exception()
 		};
 
-		Platform.FosterMeshSetIndexFormat(resource, format);
+		if (currentIndexFormat != format)
+		{
+			currentIndexFormat = format;
+			Platform.FosterMeshSetIndexFormat(resource, format);
+		}
+		
 		Platform.FosterMeshSetIndexData(
 			resource, 
 			data,
-			size * count
+			size * count,
+			size * offset
 		);
 	}
 
-	public unsafe void SetVertices<T>(ReadOnlySpan<T> vertices) where T : struct, IVertex
+	/// <summary>
+	/// Uploads the Vertex data to the Mesh.
+	/// Offset is an offset into where to upload the data in the underlying GPU buffer.
+	/// </summary>
+	public unsafe void SetVertices<T>(ReadOnlySpan<T> vertices, int offset = 0) where T : struct, IVertex
 	{
-		SetVertices(vertices, default(T).Format);
+		SetVertices(vertices, offset, default(T).Format);
 	}
 
-	public unsafe void SetVertices<T>(ReadOnlySpan<T> vertices, VertexFormat format) where T : struct
+	/// <summary>
+	/// Uploads the Vertex data to the Mesh.
+	/// Offset is an offset into where to upload the data in the underlying GPU buffer.
+	/// </summary>
+	public unsafe void SetVertices<T>(ReadOnlySpan<T> vertices, int offset, VertexFormat format) where T : struct
 	{
 		fixed (byte* ptr = MemoryMarshal.AsBytes(vertices))
 		{
-			SetVertices(new IntPtr(ptr), vertices.Length, format);
+			SetVertices(new IntPtr(ptr), vertices.Length, offset, format);
 		}
 	}
 
-	public unsafe void SetVertices(IntPtr data, int count, VertexFormat format)
+	/// <summary>
+	/// Uploads the Vertex data to the Mesh.
+	/// Offset is an offset into where to upload the data in the underlying GPU buffer.
+	/// </summary>
+	public unsafe void SetVertices(IntPtr data, int count, int offset, VertexFormat format)
 	{
 		Debug.Assert(!IsDisposed, "Mesh is Disposed");
 
 		VertexCount = count;
 
 		// update vertex format
-		if (currentFormat != format)
+		if (currentVertexFormat != format)
 		{
-			currentFormat = format;
+			currentVertexFormat = format;
 			
 			var elements = stackalloc Platform.FosterVertexElement[format.Elements.Length];
 			for (int i = 0; i < format.Elements.Length; i ++)
@@ -109,7 +136,8 @@ public class Mesh : IResource
 		Platform.FosterMeshSetVertexData(
 			resource,
 			data,
-			format.Stride * count
+			format.Stride * count,
+			format.Stride * offset
 		);
 	}
 

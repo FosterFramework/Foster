@@ -238,11 +238,11 @@ internal static class Platform
 	[DllImport(DLL)]
 	public static extern void FosterMeshSetVertexFormat(IntPtr mesh, ref FosterVertexFormat format);
 	[DllImport(DLL)]
-	public static extern void FosterMeshSetVertexData(IntPtr mesh, IntPtr data, int dataSize);
+	public static extern void FosterMeshSetVertexData(IntPtr mesh, IntPtr data, int dataSize, int dataDestOffset);
 	[DllImport(DLL)]
 	public static extern void FosterMeshSetIndexFormat(IntPtr mesh, IndexFormat format);
 	[DllImport(DLL)]
-	public static extern void FosterMeshSetIndexData(IntPtr mesh, IntPtr data, int dataSize);
+	public static extern void FosterMeshSetIndexData(IntPtr mesh, IntPtr data, int dataSize, int dataDestOffset);
 	[DllImport(DLL)]
 	public static extern void FosterMeshDestroy(IntPtr mesh);
 	[DllImport(DLL)]
