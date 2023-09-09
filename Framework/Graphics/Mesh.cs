@@ -12,8 +12,8 @@ public class Mesh : IResource
 
 	internal IntPtr resource;
 	internal bool isDisposed = false;
-	private IndexFormat currentIndexFormat;
-	private VertexFormat currentVertexFormat;
+	private IndexFormat? currentIndexFormat;
+	private VertexFormat? currentVertexFormat;
 
 	public Mesh()
 	{
@@ -65,7 +65,7 @@ public class Mesh : IResource
 			_ => throw new Exception()
 		};
 
-		if (currentIndexFormat != format)
+		if (!currentIndexFormat.HasValue || currentIndexFormat.Value != format)
 		{
 			currentIndexFormat = format;
 			Platform.FosterMeshSetIndexFormat(resource, format);
@@ -111,7 +111,7 @@ public class Mesh : IResource
 		VertexCount = count;
 
 		// update vertex format
-		if (currentVertexFormat != format)
+		if (!currentVertexFormat.HasValue || currentVertexFormat.Value != format)
 		{
 			currentVertexFormat = format;
 			
