@@ -93,15 +93,25 @@ public class Font : IDisposable
 	/// </summary>
 	public float GetScale(float size)
 	{
+		Debug.Assert(fontPtr != IntPtr.Zero, "Invalid Font");
 		return Platform.FosterFontGetScale(fontPtr, size);
 	}
 
 	/// <summary>
-	/// Gets the kerning value between two characters at a given scale
+	/// Gets the kerning value between two chars at a given scale
+	/// </summary>
+	public float GetKerning(char ch1, char ch2, float scale)
+	{
+		var glyph1 = GetGlyphIndex(ch1);
+		var glyph2 = GetGlyphIndex(ch2);
+		return GetKerningBetweenGlyphs(glyph1, glyph2, scale);
+	}
+
+	/// <summary>
+	/// Gets the kerning value between two unicode codepoints at a given scale
 	/// </summary>
 	public float GetKerning(int codepoint1, int codepoint2, float scale)
 	{
-		Debug.Assert(fontPtr != IntPtr.Zero, "Invalid Font");
 		var glyph1 = GetGlyphIndex(codepoint1);
 		var glyph2 = GetGlyphIndex(codepoint2);
 		return GetKerningBetweenGlyphs(glyph1, glyph2, scale);
@@ -117,21 +127,21 @@ public class Font : IDisposable
 	}
 
 	/// <summary>
-	/// Gets Character Metrics of a given codepoint at a given scale
-	/// </summary>
-	public Character GetCharacter(int codepoint, float scale)
-	{
-		Debug.Assert(fontPtr != IntPtr.Zero, "Invalid Font");
-		return GetCharacterOfGlyph(GetGlyphIndex(codepoint), scale);
-	}
-
-	/// <summary>
-	/// Gets Character Metrics of a given C# char at a given scale
+	/// Gets Character Metrics of a given char at a given scale
 	/// </summary>
 	public Character GetCharacter(char ch, float scale)
 	{
 		Debug.Assert(fontPtr != IntPtr.Zero, "Invalid Font");
 		return GetCharacterOfGlyph(GetGlyphIndex(ch), scale);
+	}
+
+	/// <summary>
+	/// Gets Character Metrics of a given unicode codepoint at a given scale
+	/// </summary>
+	public Character GetCharacter(int codepoint, float scale)
+	{
+		Debug.Assert(fontPtr != IntPtr.Zero, "Invalid Font");
+		return GetCharacterOfGlyph(GetGlyphIndex(codepoint), scale);
 	}
 	
 	/// <summary>
@@ -156,6 +166,17 @@ public class Font : IDisposable
 		};
 	}
 
+	/// <summary>
+	/// Renders the given character to an Image and returns it
+	/// </summary>
+	public Image? GetImage(char ch, float scale)
+	{
+		return GetImage(GetCharacter(ch, scale));
+	}
+
+	/// <summary>
+	/// Renders a character to an Image and returns it
+	/// </summary>
 	public Image? GetImage(in Character character)
 	{
 		if (!character.Visible)
@@ -166,6 +187,9 @@ public class Font : IDisposable
 		return img;
 	}
 
+	/// <summary>
+	/// Renders a character to the given Color buffer.
+	/// </summary>
 	public bool GetPixels(in Character character, Span<Color> destination)
 	{
 		Debug.Assert(fontPtr != IntPtr.Zero, "Invalid Font");
