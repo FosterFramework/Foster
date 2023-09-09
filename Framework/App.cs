@@ -63,11 +63,6 @@ public static class App
 	public static string UserPath { get; private set; } = string.Empty;
 
 	/// <summary>
-	/// The current Renderer API in use
-	/// </summary>
-	public static Renderers Renderer { get; private set; } = Renderers.None;
-
-	/// <summary>
 	/// Returns whether the Application Window is currently Focused or not.
 	/// </summary>
 	public static bool Focused => Platform.FosterGetFocused();
@@ -252,8 +247,8 @@ public static class App
 			}
 		});
 
-		App.UserPath = Platform.ParseUTF8(Platform.FosterGetUserPath());
-		App.Renderer = Platform.FosterGetRenderer();
+		UserPath = Platform.ParseUTF8(Platform.FosterGetUserPath());
+		Graphics.Initialize();
 
 		while (registrations.Count > 0)
 		{
@@ -356,30 +351,5 @@ public static class App
 	{
 		if (Running)
 			Exiting = true;
-	}
-
-	/// <summary>
-	/// Clears the Application Back Buffer to a given Color
-	/// </summary>
-	public static void Clear(Color color)
-	{
-		Clear(color, 0, 0, ClearMask.Color);
-	}
-
-	/// <summary>
-	/// Clears the Application Back Buffer
-	/// </summary>
-	public static void Clear(Color color, int depth, int stencil, ClearMask mask)
-	{
-		Platform.FosterClearCommand clear = new()
-		{
-			target = IntPtr.Zero,
-			clip = new(0, 0, WidthInPixels, HeightInPixels),
-			color = color,
-			depth = depth,
-			stencil = stencil,
-			mask = mask
-		};
-		Platform.FosterClear(ref clear);
 	}
 }

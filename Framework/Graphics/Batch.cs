@@ -5,7 +5,7 @@ using System.Numerics;
 
 namespace Foster.Framework;
 
-public class Batcher
+public class Batcher : IDisposable
 {
 	/// <summary>
 	/// Vertex Format of Batcher.Vertex
@@ -88,10 +88,14 @@ public class Batcher
 	private int currentBatchInsert;
 	private Color mode = new(255, 0, 0, 0);
 	private bool dirty;
-	private Vertex[] vertexArray = new Vertex[64];
-	private int vertexCount;
-	private int[] indexArray = new int[64];
-	private int indexCount;
+
+	private IntPtr vertexPtr = IntPtr.Zero;
+	private int vertexCount = 0;
+	private int vertexCapacity = 0;
+
+	private IntPtr indexPtr = IntPtr.Zero;
+	private int indexCount = 0;
+	private int indexCapacity = 0;
 
 	private readonly struct ShaderState
 	{
@@ -119,6 +123,7 @@ public class Batcher
 		public TextureSampler Sampler;
 		public int Offset;
 		public int Elements;
+		public bool FlipVerticalUV;
 
 		public Batch(ShaderState shaderState, BlendMode blend, Texture? texture, TextureSampler sampler, int offset, int elements)
 		{
@@ -130,14 +135,37 @@ public class Batcher
 			Scissor = null;
 			Offset = offset;
 			Elements = elements;
+			FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && Graphics.OriginBottomLeft;
 		}
 	}
 
 	public Batcher()
 	{
-		DefaultShader ??= new Shader(ShaderDefaults.Batcher[App.Renderer]);
+		DefaultShader ??= new Shader(ShaderDefaults.Batcher[Graphics.Renderer]);
 		defaultShaderState = new(DefaultShader, "u_matrix", "u_texture", "u_texture_sampler");
 		Clear();
+	}
+
+	~Batcher()
+	{
+		Dispose();
+	}
+
+	public void Dispose()
+	{
+		if (vertexPtr != IntPtr.Zero)
+		{
+			Marshal.FreeHGlobal(vertexPtr);
+			vertexPtr = IntPtr.Zero;
+			vertexCapacity = 0;
+		}
+		
+		if (indexPtr != IntPtr.Zero)
+		{
+			Marshal.FreeHGlobal(indexPtr);
+			indexPtr = IntPtr.Zero;
+			indexCapacity = 0;
+		}
 	}
 
 	/// <summary>
@@ -188,14 +216,17 @@ public class Batcher
 	{
 		Debug.Assert(target == null || !target.IsDisposed, "Target is disposed");
 
+		if (indexPtr == IntPtr.Zero || vertexPtr == IntPtr.Zero)
+			return;
+
 		if (batches.Count <= 0 && currentBatch.Elements <= 0)
 			return;
 		
 		// upload our data if we've been modified since the last time we rendered
 		if (dirty)
 		{
-			mesh.SetIndices<int>(indexArray.AsSpan(0, indexCount));
-			mesh.SetVertices<Vertex>(vertexArray.AsSpan(0, vertexCount));
+			mesh.SetIndices(indexPtr, indexCount, IndexFormat.ThirtyTwo);
+			mesh.SetVertices(vertexPtr, vertexCount, VertexFormat);
 			dirty = false;
 		}
 
@@ -251,12 +282,14 @@ public class Batcher
 		if (currentBatch.Texture == null || currentBatch.Elements == 0)
 		{
 			currentBatch.Texture = texture;
+			currentBatch.FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && Graphics.OriginBottomLeft;
 		}
 		else if (currentBatch.Texture != texture)
 		{
 			batches.Insert(currentBatchInsert, currentBatch);
 
 			currentBatch.Texture = texture;
+			currentBatch.FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && Graphics.OriginBottomLeft;
 			currentBatch.Offset += currentBatch.Elements;
 			currentBatch.Elements = 0;
 			currentBatchInsert++;
@@ -616,22 +649,17 @@ public class Batcher
 	public void Quad(in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 v3, in Color color)
 	{
 		PushQuad();
-		ExpandvertexArray(vertexCount + 4);
+		EnsureVertexCapacity(vertexCount + 4);
 
-		unchecked
+		unsafe
 		{
-		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, Matrix);
-		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, Matrix);
-		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, Matrix);
-		vertexArray[vertexCount + 3].Pos = Vector2.Transform(v3, Matrix);
-		vertexArray[vertexCount + 0].Col = color;
-		vertexArray[vertexCount + 1].Col = color;
-		vertexArray[vertexCount + 2].Col = color;
-		vertexArray[vertexCount + 3].Col = color;
-		vertexArray[vertexCount + 0].Mode = new(0, 0, 255, 0);
-		vertexArray[vertexCount + 1].Mode = new(0, 0, 255, 0);
-		vertexArray[vertexCount + 2].Mode = new(0, 0, 255, 0);
-		vertexArray[vertexCount + 3].Mode = new(0, 0, 255, 0);
+			var mode = new Color(0, 0, 255, 0);
+
+			Vertex* ptr = (Vertex*)vertexPtr + vertexCount;
+			*(ptr++) = new(Vector2.Transform(v0, Matrix), Vector2.Zero, color, mode);
+			*(ptr++) = new(Vector2.Transform(v1, Matrix), Vector2.Zero, color, mode);
+			*(ptr++) = new(Vector2.Transform(v2, Matrix), Vector2.Zero, color, mode);
+			*(ptr++) = new(Vector2.Transform(v3, Matrix), Vector2.Zero, color, mode);
 		}
 
 		vertexCount += 4;
@@ -640,25 +668,19 @@ public class Batcher
 	public void Quad(in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 v3, in Vector2 t0, in Vector2 t1, in Vector2 t2, in Vector2 t3, in Color color)
 	{
 		PushQuad();
-		ExpandvertexArray(vertexCount + 4);
-		unchecked
+		EnsureVertexCapacity(vertexCount + 4);
+
+		unsafe
 		{
-		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, Matrix);
-		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, Matrix);
-		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, Matrix);
-		vertexArray[vertexCount + 3].Pos = Vector2.Transform(v3, Matrix);
-		vertexArray[vertexCount + 0].Tex = t0;
-		vertexArray[vertexCount + 1].Tex = t1;
-		vertexArray[vertexCount + 2].Tex = t2;
-		vertexArray[vertexCount + 3].Tex = t3;
-		vertexArray[vertexCount + 0].Col = color;
-		vertexArray[vertexCount + 1].Col = color;
-		vertexArray[vertexCount + 2].Col = color;
-		vertexArray[vertexCount + 3].Col = color;
-		vertexArray[vertexCount + 0].Mode = mode;
-		vertexArray[vertexCount + 1].Mode = mode;
-		vertexArray[vertexCount + 2].Mode = mode;
-		vertexArray[vertexCount + 3].Mode = mode;
+			Vertex* ptr = (Vertex*)vertexPtr + vertexCount;
+
+			*(ptr++) = new (Vector2.Transform(v0, Matrix), t0, color, mode);
+			*(ptr++) = new (Vector2.Transform(v1, Matrix), t1, color, mode);
+			*(ptr++) = new (Vector2.Transform(v2, Matrix), t2, color, mode);			
+			*(ptr++) = new (Vector2.Transform(v3, Matrix), t3, color, mode);
+			
+			if (currentBatch.FlipVerticalUV)
+				FlipVerticalUVs(vertexPtr, vertexCount, 4);
 		}
 
 		vertexCount += 4;
@@ -667,22 +689,16 @@ public class Batcher
 	public void Quad(in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 v3, in Color c0, in Color c1, in Color c2, in Color c3)
 	{
 		PushQuad();
-		ExpandvertexArray(vertexCount + 4);
+		EnsureVertexCapacity(vertexCount + 4);
 
-		unchecked
+		unsafe
 		{
-		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, Matrix);
-		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, Matrix);
-		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, Matrix);
-		vertexArray[vertexCount + 3].Pos = Vector2.Transform(v3, Matrix);
-		vertexArray[vertexCount + 0].Col = c0;
-		vertexArray[vertexCount + 1].Col = c1;
-		vertexArray[vertexCount + 2].Col = c2;
-		vertexArray[vertexCount + 3].Col = c3;
-		vertexArray[vertexCount + 0].Mode = new Color(0, 0, 255, 0);
-		vertexArray[vertexCount + 1].Mode = new Color(0, 0, 255, 0);
-		vertexArray[vertexCount + 2].Mode = new Color(0, 0, 255, 0);
-		vertexArray[vertexCount + 3].Mode = new Color(0, 0, 255, 0);
+			var mode = new Color(0, 0, 255, 0);
+			Vertex* ptr = (Vertex*)vertexPtr + vertexCount;
+			*(ptr++) = new (Vector2.Transform(v0, Matrix), Vector2.Zero, c0, mode);
+			*(ptr++) = new (Vector2.Transform(v1, Matrix), Vector2.Zero, c1, mode);
+			*(ptr++) = new (Vector2.Transform(v2, Matrix), Vector2.Zero, c2, mode);
+			*(ptr++) = new (Vector2.Transform(v3, Matrix), Vector2.Zero, c3, mode);
 		}
 
 		vertexCount += 4;
@@ -691,35 +707,18 @@ public class Batcher
 	public void Quad(in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 v3, in Vector2 t0, in Vector2 t1, in Vector2 t2, in Vector2 t3, Color c0, Color c1, Color c2, Color c3)
 	{
 		PushQuad();
-		ExpandvertexArray(vertexCount + 4);
+		EnsureVertexCapacity(vertexCount + 4);
 
-		unchecked
+		unsafe
 		{
-
-		// POS
-		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, Matrix);
-		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, Matrix);
-		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, Matrix);
-		vertexArray[vertexCount + 3].Pos = Vector2.Transform(v3, Matrix);
-
-		// TEX
-		vertexArray[vertexCount + 0].Tex = t0;
-		vertexArray[vertexCount + 1].Tex = t1;
-		vertexArray[vertexCount + 2].Tex = t2;
-		vertexArray[vertexCount + 3].Tex = t3;
-
-		// COL
-		vertexArray[vertexCount + 0].Col = c0;
-		vertexArray[vertexCount + 1].Col = c1;
-		vertexArray[vertexCount + 2].Col = c2;
-		vertexArray[vertexCount + 3].Col = c3;
-
-		// MULT
-		vertexArray[vertexCount + 0].Mode = mode;
-		vertexArray[vertexCount + 1].Mode = mode;
-		vertexArray[vertexCount + 2].Mode = mode;
-		vertexArray[vertexCount + 3].Mode = mode;
-
+			Vertex* ptr = (Vertex*)vertexPtr + vertexCount;
+			*(ptr++) = new(Vector2.Transform(v0, Matrix), t0, c0, mode);
+			*(ptr++) = new(Vector2.Transform(v1, Matrix), t1, c1, mode);
+			*(ptr++) = new(Vector2.Transform(v2, Matrix), t2, c2, mode);
+			*(ptr++) = new(Vector2.Transform(v3, Matrix), t3, c3, mode);
+			
+			if (currentBatch.FlipVerticalUV)
+				FlipVerticalUVs(vertexPtr, vertexCount, 4);
 		}
 
 		vertexCount += 4;
@@ -732,20 +731,15 @@ public class Batcher
 	public void Triangle(in Vector2 v0, in Vector2 v1, in Vector2 v2, Color color)
 	{
 		PushTriangle();
-		ExpandvertexArray(vertexCount + 3);
+		EnsureVertexCapacity(vertexCount + 3);
 
-		unchecked
+		unsafe
 		{
-		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, Matrix);
-		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, Matrix);
-		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, Matrix);
-		vertexArray[vertexCount + 0].Col = color;
-		vertexArray[vertexCount + 1].Col = color;
-		vertexArray[vertexCount + 2].Col = color;
-		vertexArray[vertexCount + 0].Mode = new Color(0, 0, 255, 0);
-		vertexArray[vertexCount + 1].Mode = new Color(0, 0, 255, 0);
-		vertexArray[vertexCount + 2].Mode = new Color(0, 0, 255, 0);
-		vertexArray[vertexCount + 3].Mode = new Color(0, 0, 255, 0);
+			var mode = new Color(0, 0, 255, 0);
+			Vertex* ptr = (Vertex*)vertexPtr + vertexCount;
+			(*ptr++) = new(Vector2.Transform(v0, Matrix), Vector2.Zero, color, mode);
+			(*ptr++) = new(Vector2.Transform(v1, Matrix), Vector2.Zero, color, mode);
+			(*ptr++) = new(Vector2.Transform(v2, Matrix), Vector2.Zero, color, mode);
 		}
 
 		vertexCount += 3;
@@ -754,23 +748,17 @@ public class Batcher
 	public void Triangle(in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 uv0, in Vector2 uv1, in Vector2 uv2, Color color)
 	{
 		PushTriangle();
-		ExpandvertexArray(vertexCount + 3);
+		EnsureVertexCapacity(vertexCount + 3);
 
-		unchecked
+		unsafe
 		{
-		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, Matrix);
-		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, Matrix);
-		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, Matrix);
-		vertexArray[vertexCount + 0].Tex = uv0;
-		vertexArray[vertexCount + 1].Tex = uv1;
-		vertexArray[vertexCount + 2].Tex = uv2;
-		vertexArray[vertexCount + 0].Col = color;
-		vertexArray[vertexCount + 1].Col = color;
-		vertexArray[vertexCount + 2].Col = color;
-		vertexArray[vertexCount + 0].Mode = mode;
-		vertexArray[vertexCount + 1].Mode = mode;
-		vertexArray[vertexCount + 2].Mode = mode;
-		vertexArray[vertexCount + 3].Mode = mode;
+			Vertex* ptr = (Vertex*)vertexPtr + vertexCount;
+			*(ptr++) = new(Vector2.Transform(v0, Matrix), uv0, color, mode);
+			*(ptr++) = new(Vector2.Transform(v1, Matrix), uv1, color, mode);
+			*(ptr++) = new(Vector2.Transform(v2, Matrix), uv2, color, mode);
+
+			if (currentBatch.FlipVerticalUV)
+				FlipVerticalUVs(vertexPtr, vertexCount, 3);
 		}
 
 		vertexCount += 3;
@@ -779,20 +767,18 @@ public class Batcher
 	public void Triangle(in Vector2 v0, in Vector2 v1, in Vector2 v2, Color c0, Color c1, Color c2)
 	{
 		PushTriangle();
-		ExpandvertexArray(vertexCount + 3);
+		EnsureVertexCapacity(vertexCount + 3);
 
-		unchecked
+		unsafe
 		{
-		vertexArray[vertexCount + 0].Pos = Vector2.Transform(v0, Matrix);
-		vertexArray[vertexCount + 1].Pos = Vector2.Transform(v1, Matrix);
-		vertexArray[vertexCount + 2].Pos = Vector2.Transform(v2, Matrix);
-		vertexArray[vertexCount + 0].Col = c0;
-		vertexArray[vertexCount + 1].Col = c1;
-		vertexArray[vertexCount + 2].Col = c2;
-		vertexArray[vertexCount + 0].Mode = new Color(0, 0, 255, 0);
-		vertexArray[vertexCount + 1].Mode = new Color(0, 0, 255, 0);
-		vertexArray[vertexCount + 2].Mode = new Color(0, 0, 255, 0);
-		vertexArray[vertexCount + 3].Mode = new Color(0, 0, 255, 0);
+			var mode = new Color(0, 0, 255, 0);
+			Vertex* ptr = (Vertex*)vertexPtr + vertexCount;
+			*(ptr++) = new(Vector2.Transform(v0, Matrix), Vector2.Zero, c0, mode);
+			*(ptr++) = new(Vector2.Transform(v1, Matrix), Vector2.Zero, c1, mode);
+			*(ptr++) = new(Vector2.Transform(v2, Matrix), Vector2.Zero, c2, mode);
+
+			if (currentBatch.FlipVerticalUV)
+				FlipVerticalUVs(vertexPtr, vertexCount, 3);
 		}
 
 		vertexCount += 3;
@@ -922,67 +908,66 @@ public class Batcher
 			var r3_bl = r3_tl + new Vector2(0, r3);
 			var r3_br = r3_tl + new Vector2(r3, r3);
 
-			unchecked
-			{
-
 			// set tris
+			unsafe
 			{
-				while (indexCount + 30 >= indexArray.Length)
-					Array.Resize(ref indexArray, indexArray.Length * 2);
+				EnsureIndexCapacity(indexCount + 30);
+
+				int* ptr = (int*)indexPtr + indexCount;
 
 				// top quad
 				{
-					indexArray[indexCount + 00] = vertexCount + 00; // r0b
-					indexArray[indexCount + 01] = vertexCount + 03; // r1a
-					indexArray[indexCount + 02] = vertexCount + 05; // r1d
+					*(ptr++) = vertexCount + 00; // r0b
+					*(ptr++) = vertexCount + 03; // r1a
+					*(ptr++) = vertexCount + 05; // r1d
 
-					indexArray[indexCount + 03] = vertexCount + 00; // r0b
-					indexArray[indexCount + 04] = vertexCount + 05; // r1d
-					indexArray[indexCount + 05] = vertexCount + 01; // r0c
+					*(ptr++) = vertexCount + 00; // r0b
+					*(ptr++) = vertexCount + 05; // r1d
+					*(ptr++) = vertexCount + 01; // r0c
 				}
 
 				// left quad
 				{
-					indexArray[indexCount + 06] = vertexCount + 02; // r0d
-					indexArray[indexCount + 07] = vertexCount + 01; // r0c
-					indexArray[indexCount + 08] = vertexCount + 10; // r3b
+					*(ptr++) = vertexCount + 02; // r0d
+					*(ptr++) = vertexCount + 01; // r0c
+					*(ptr++) = vertexCount + 10; // r3b
 
-					indexArray[indexCount + 09] = vertexCount + 02; // r0d
-					indexArray[indexCount + 10] = vertexCount + 10; // r3b
-					indexArray[indexCount + 11] = vertexCount + 09; // r3a
+					*(ptr++) = vertexCount + 02; // r0d
+					*(ptr++) = vertexCount + 10; // r3b
+					*(ptr++) = vertexCount + 09; // r3a
 				}
 
 				// right quad
 				{
-					indexArray[indexCount + 12] = vertexCount + 05; // r1d
-					indexArray[indexCount + 13] = vertexCount + 04; // r1c
-					indexArray[indexCount + 14] = vertexCount + 07; // r2b
+					*(ptr++) = vertexCount + 05; // r1d
+					*(ptr++) = vertexCount + 04; // r1c
+					*(ptr++) = vertexCount + 07; // r2b
 
-					indexArray[indexCount + 15] = vertexCount + 05; // r1d
-					indexArray[indexCount + 16] = vertexCount + 07; // r2b
-					indexArray[indexCount + 17] = vertexCount + 06; // r2a
+					*(ptr++) = vertexCount + 05; // r1d
+					*(ptr++) = vertexCount + 07; // r2b
+					*(ptr++) = vertexCount + 06; // r2a
 				}
 
 				// bottom quad
 				{
-					indexArray[indexCount + 18] = vertexCount + 10; // r3b
-					indexArray[indexCount + 19] = vertexCount + 06; // r2a
-					indexArray[indexCount + 20] = vertexCount + 08; // r2d
+					*(ptr++) = vertexCount + 10; // r3b
+					*(ptr++) = vertexCount + 06; // r2a
+					*(ptr++) = vertexCount + 08; // r2d
 
-					indexArray[indexCount + 21] = vertexCount + 10; // r3b
-					indexArray[indexCount + 22] = vertexCount + 08; // r2d
-					indexArray[indexCount + 23] = vertexCount + 11; // r3c
+					*(ptr++) = vertexCount + 10; // r3b
+					*(ptr++) = vertexCount + 08; // r2d
+					*(ptr++) = vertexCount + 11; // r3c
 				}
 
 				// center quad
 				{
-					indexArray[indexCount + 24] = vertexCount + 01; // r0c
-					indexArray[indexCount + 25] = vertexCount + 05; // r1d
-					indexArray[indexCount + 26] = vertexCount + 06; // r2a
+					*(ptr++) = vertexCount + 01; // r0c
+					*(ptr++) = vertexCount + 05; // r1d
+					*(ptr++) = vertexCount + 06; // r2a
 
-					indexArray[indexCount + 27] = vertexCount + 01; // r0c
-					indexArray[indexCount + 28] = vertexCount + 06; // r2a
-					indexArray[indexCount + 29] = vertexCount + 10; // r3b
+					*(ptr++) = vertexCount + 01; // r0c
+					*(ptr++) = vertexCount + 06; // r2a
+					*(ptr++) = vertexCount + 10; // r3b
 				}
 
 				indexCount += 30;
@@ -991,30 +976,31 @@ public class Batcher
 			}
 
 			// set verts
+			unsafe
 			{
-				ExpandvertexArray(vertexCount + 12);
+				EnsureVertexCapacity(vertexCount + 12);
 
-				Array.Fill(vertexArray, new Vertex(Vector2.Zero, Vector2.Zero, color, new Color(0, 0, 255, 0)), vertexCount, 12);
+				Vertex* ptr = (Vertex*)vertexPtr + vertexCount;
 
-				vertexArray[vertexCount + 00].Pos = Vector2.Transform(r0_tr, Matrix); // 0
-				vertexArray[vertexCount + 01].Pos = Vector2.Transform(r0_br, Matrix); // 1
-				vertexArray[vertexCount + 02].Pos = Vector2.Transform(r0_bl, Matrix); // 2
+				var mode = new Color(0, 0, 255, 0);				
 
-				vertexArray[vertexCount + 03].Pos = Vector2.Transform(r1_tl, Matrix); // 3
-				vertexArray[vertexCount + 04].Pos = Vector2.Transform(r1_br, Matrix); // 4
-				vertexArray[vertexCount + 05].Pos = Vector2.Transform(r1_bl, Matrix); // 5
+				*(ptr++) = new Vertex(Vector2.Transform(r0_tr, Matrix), Vector2.Zero, color, mode); // 0
+				*(ptr++) = new Vertex(Vector2.Transform(r0_br, Matrix), Vector2.Zero, color, mode); // 1
+				*(ptr++) = new Vertex(Vector2.Transform(r0_bl, Matrix), Vector2.Zero, color, mode); // 2
 
-				vertexArray[vertexCount + 06].Pos = Vector2.Transform(r2_tl, Matrix); // 6
-				vertexArray[vertexCount + 07].Pos = Vector2.Transform(r2_tr, Matrix); // 7
-				vertexArray[vertexCount + 08].Pos = Vector2.Transform(r2_bl, Matrix); // 8
+				*(ptr++) = new Vertex(Vector2.Transform(r1_tl, Matrix), Vector2.Zero, color, mode); // 3
+				*(ptr++) = new Vertex(Vector2.Transform(r1_br, Matrix), Vector2.Zero, color, mode); // 4
+				*(ptr++) = new Vertex(Vector2.Transform(r1_bl, Matrix), Vector2.Zero, color, mode); // 5
 
-				vertexArray[vertexCount + 09].Pos = Vector2.Transform(r3_tl, Matrix); // 9
-				vertexArray[vertexCount + 10].Pos = Vector2.Transform(r3_tr, Matrix); // 10
-				vertexArray[vertexCount + 11].Pos = Vector2.Transform(r3_br, Matrix); // 11
+				*(ptr++) = new Vertex(Vector2.Transform(r2_tl, Matrix), Vector2.Zero, color, mode); // 6
+				*(ptr++) = new Vertex(Vector2.Transform(r2_tr, Matrix), Vector2.Zero, color, mode); // 7
+				*(ptr++) = new Vertex(Vector2.Transform(r2_bl, Matrix), Vector2.Zero, color, mode); // 8
+
+				*(ptr++) = new Vertex(Vector2.Transform(r3_tl, Matrix), Vector2.Zero, color, mode); // 9
+				*(ptr++) = new Vertex(Vector2.Transform(r3_tr, Matrix), Vector2.Zero, color, mode); // 10
+				*(ptr++) = new Vertex(Vector2.Transform(r3_br, Matrix), Vector2.Zero, color, mode); // 11
 
 				vertexCount += 12;
-			}
-
 			}
 
 			var left = Calc.PI;
@@ -1488,36 +1474,6 @@ public class Batcher
 
 	#endregion
 
-	#region Copy Arrays
-
-	/// <summary>
-	/// Copies the contents of a Vertex and Index array to this Batcher
-	/// </summary>
-	public void CopyArray(ReadOnlySpan<Vertex> vertexBuffer, ReadOnlySpan<int> indexBuffer)
-	{
-		// copy vertexArray over
-		ExpandvertexArray(vertexCount + vertexBuffer.Length);
-		vertexBuffer.CopyTo(vertexArray.AsSpan()[vertexCount..]);
-
-		// copy indexArray over
-		while (indexCount + indexBuffer.Length >= indexArray.Length)
-			Array.Resize(ref indexArray, indexArray.Length * 2);
-
-		unchecked
-		{
-			for (int i = 0, n = indexCount; i < indexBuffer.Length; i++, n++)
-				indexArray[n] = vertexCount + indexBuffer[i];
-		}
-
-		// increment
-		vertexCount += vertexBuffer.Length;
-		indexCount += indexBuffer.Length;
-		currentBatch.Elements += (vertexBuffer.Length / 3);
-		dirty = true;
-	}
-
-	#endregion
-
 	#region Misc.
 
 	/// <summary>
@@ -1553,14 +1509,14 @@ public class Batcher
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void PushTriangle()
 	{
-		while (indexCount + 3 >= indexArray.Length)
-			Array.Resize(ref indexArray, indexArray.Length * 2);
+		EnsureIndexCapacity(indexCount + 3);
 
-		unchecked
+		unsafe
 		{
-		indexArray[indexCount + 0] = vertexCount + 0;
-		indexArray[indexCount + 1] = vertexCount + 1;
-		indexArray[indexCount + 2] = vertexCount + 2;
+			int* ptr = (int*)indexPtr + indexCount;
+			*(ptr++) = vertexCount + 0;
+			*(ptr++) = vertexCount + 1;
+			*(ptr++) = vertexCount + 2;
 		}
 
 		indexCount += 3;
@@ -1571,20 +1527,17 @@ public class Batcher
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void PushQuad()
 	{
-		int index = indexCount;
-		int vert = vertexCount;
+		EnsureIndexCapacity(indexCount + 6);
 
-		while (index + 6 >= indexArray.Length)
-			Array.Resize(ref indexArray, indexArray.Length * 2);
-
-		unchecked
+		unsafe
 		{
-		indexArray[index + 0] = vert + 0;
-		indexArray[index + 1] = vert + 1;
-		indexArray[index + 2] = vert + 2;
-		indexArray[index + 3] = vert + 0;
-		indexArray[index + 4] = vert + 2;
-		indexArray[index + 5] = vert + 3;
+			int* ptr = (int*)indexPtr + indexCount;
+			*(ptr++) = vertexCount + 0;
+			*(ptr++) = vertexCount + 1;
+			*(ptr++) = vertexCount + 2;
+			*(ptr++) = vertexCount + 0;
+			*(ptr++) = vertexCount + 2;
+			*(ptr++) = vertexCount + 3;
 		}
 
 		indexCount += 6;
@@ -1593,11 +1546,60 @@ public class Batcher
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void ExpandvertexArray(int index)
+	private unsafe void EnsureIndexCapacity(int index)
 	{
-		while (index >= vertexArray.Length)
+		if (index >= indexCapacity)
 		{
-			Array.Resize(ref vertexArray, vertexArray.Length * 2);
+			if (indexCapacity == 0)
+				indexCapacity = 32;
+
+			while (index >= indexCapacity)
+				indexCapacity *= 2;
+
+			var newPtr = Marshal.AllocHGlobal(sizeof(int) * indexCapacity);
+
+			if (indexCount > 0)
+				Buffer.MemoryCopy((void*)indexPtr, (void*)newPtr, indexCapacity * sizeof(int), indexCount * sizeof(int));
+
+			if (indexPtr != IntPtr.Zero)
+				Marshal.FreeHGlobal(indexPtr);
+
+			indexPtr = newPtr;
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private unsafe void EnsureVertexCapacity(int index)
+	{
+		if (index >= vertexCapacity)
+		{
+			if (vertexCapacity == 0)
+				vertexCapacity = 32;
+
+			while (index >= vertexCapacity)
+				vertexCapacity *= 2;
+
+			var newPtr = Marshal.AllocHGlobal(sizeof(Vertex) * vertexCapacity);
+
+			if (vertexCount > 0)
+				Buffer.MemoryCopy((void*)vertexPtr, (void*)newPtr, vertexCapacity * sizeof(Vertex), vertexCount * sizeof(Vertex));
+
+			if (vertexPtr != IntPtr.Zero)
+				Marshal.FreeHGlobal(vertexPtr);
+
+			vertexPtr = newPtr;
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private unsafe void FlipVerticalUVs(IntPtr ptr, int start, int count)
+	{
+		Vertex* it = (Vertex*)ptr + start;
+		Vertex* end = it + count;
+		while (it < end)
+		{
+			it->Tex.Y = 1.0f - it->Tex.Y;
+			it++;
 		}
 	}
 

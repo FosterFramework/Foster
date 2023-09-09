@@ -51,7 +51,7 @@ class Game : Module
 
 	public override void Render()
 	{
-		App.Clear(0x44aa77);
+		Graphics.Clear(0x44aa77);
 
 		batch.PushMatrix(
 			new Vector2(App.WidthInPixels, App.HeightInPixels) / 2,
