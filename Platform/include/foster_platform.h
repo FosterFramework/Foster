@@ -22,7 +22,6 @@
 #define FOSTER_MAX_UNIFORM_TEXTURES 32
 #define FOSTER_MAX_CONTROLLERS 32
 
-
 typedef enum FosterRenderers
 {
 	FOSTER_RENDERER_NONE,
@@ -519,6 +518,8 @@ typedef struct FosterClearCommand
 	FosterClearMask mask;
 } FosterClearCommand;
 
+typedef struct FosterFont FosterFont;
+
 #if __cplusplus
 extern "C" {
 #endif
@@ -558,6 +559,22 @@ FOSTER_API unsigned char* FosterImageLoad(const unsigned char* memory, int lengt
 FOSTER_API void FosterImageFree(unsigned char* data);
 
 FOSTER_API bool FosterImageWrite(FosterWriteFn* func, void* context, int w, int h, const void* data);
+
+FOSTER_API FosterFont* FosterFontInit(unsigned char* data, int length);
+
+FOSTER_API void FosterFontGetMetrics(FosterFont* font, int* ascent, int* descent, int* linegap);
+
+FOSTER_API int FosterFontGetGlyphIndex(FosterFont* font, int codepoint);
+
+FOSTER_API float FosterFontGetScale(FosterFont* font, float size);
+
+FOSTER_API float FosterFontGetKerning(FosterFont* font, int glyph1, int glyph2, float scale);
+
+FOSTER_API void FosterFontGetCharacter(FosterFont* font, int glyph, float scale, int* width, int* height, float* advance, float* offsetX, float* offsetY, int* visible);
+
+FOSTER_API void FosterFontGetPixels(FosterFont* font, unsigned char* dest, int glyph, int width, int height, float scale);
+
+FOSTER_API void FosterFontFree(FosterFont* font);
 
 FOSTER_API FosterRenderers FosterGetRenderer();
 
