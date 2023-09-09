@@ -7,4 +7,4 @@ cd build
 cmake ../
 make
 ```
-If built successfully, the library should appear in `libs/{yourPlatform}`, which is then used & copied from `Foster.csproj`.
+If built successfully, the library should appear in `libs/{yourPlatform}`, which is then used & copied from `Framework/Foster.Framework.csproj`.
