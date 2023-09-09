@@ -13,9 +13,9 @@ public class Packer
 	public struct Entry
 	{
 		/// <summary>
-		/// ID used when generating
+		/// Index when added to the Packer
 		/// </summary>
-		public int ID;
+		public int Index;
 
 		/// <summary>
 		/// The Name of the Entry
@@ -37,9 +37,9 @@ public class Packer
 		/// </summary>
 		public RectInt Frame;
 
-		public Entry(int id, string name, int page, RectInt source, RectInt frame)
+		public Entry(int index, string name, int page, RectInt source, RectInt frame)
 		{
-			ID = id;
+			Index = index;
 			Name = name;
 			Page = page;
 			Source = source;
@@ -90,41 +90,45 @@ public class Packer
 
 	private struct Source
 	{
-		public int ID;
+		public int Index;
 		public int Hash;
 		public string Name;
 		public RectInt Packed;
 		public RectInt Frame;
 		public int BufferIndex;
 		public int BufferLength;
-		public int DuplicateOf;
+		public int? DuplicateOf;
 		public bool Empty => Packed.Width <= 0 || Packed.Height <= 0;
 
-		public Source(int id, string name)
+		public Source(int index, string name)
 		{
-			ID = id;
+			Index = index;
 			Name = name;
 		}
 	}
 
-	private int nextSourceID = 0;
 	private readonly List<Source> sources = new();
 	private Color[] sourceBuffer = new Color[32];
 	private int sourceBufferIndex = 0;
 
-	public void Add(string name, Image image)
+	public int Add(string name, Image image)
 	{
-		Add(name, image.Width, image.Height, image.Data);
+		return Add(name, image.Width, image.Height, image.Data);
 	}
 
-	public void Add(string name, string path)
+	public int Add(string name, string path)
 	{
-		Add(name, new Image(path));
+		return Add(name, new Image(path));
 	}
 
-	public void Add(string name, int width, int height, ReadOnlySpan<Color> pixels)
+	public int Add(string name, int width, int height, ReadOnlySpan<Color> pixels)
 	{
-		var source = new Source(++nextSourceID, name);
+		return Add(sources.Count, name, width, height, pixels);
+	}
+
+	public int Add(int index, string name, int width, int height, ReadOnlySpan<Color> pixels)
+	{
+		var source = new Source(index, name);
 		int top = 0, left = 0, right = width, bottom = height;
 
 		// trim
@@ -179,7 +183,7 @@ public class Packer
 				for (int i = 0; i < sources.Count; i ++)
 					if (sources[i].Hash == source.Hash)
 					{
-						source.DuplicateOf = sources[i].ID;
+						source.DuplicateOf = sources[i].Index;
 						break;
 					}
 			}
@@ -187,7 +191,7 @@ public class Packer
 			source.Packed = new RectInt(0, 0, right - left, bottom - top);
 			source.Frame = new RectInt(-left, -top, width, height);
 
-			if (source.DuplicateOf == 0)
+			if (!source.DuplicateOf.HasValue)
 			{
 				var append = source.Packed.Width * source.Packed.Height;
 				while (sourceBufferIndex + append >= sourceBuffer.Length)
@@ -217,6 +221,7 @@ public class Packer
 		}
 
 		sources.Add(source);
+		return source.Index;
 	}
 
 	private struct PackingNode
@@ -270,7 +275,7 @@ public class Packer
 
 				while (packed < sources.Count)
 				{
-					if (sources[packed].Empty || sources[packed].DuplicateOf != 0)
+					if (sources[packed].Empty || sources[packed].DuplicateOf.HasValue)
 					{
 						packed++;
 						continue;
@@ -356,12 +361,12 @@ public class Packer
 						var source = sources[i];
 
 						// do not pack duplicate entries yet
-						if (source.DuplicateOf != 0)
+						if (source.DuplicateOf.HasValue)
 							continue;
 
-						result.Entries.Add(new (source.ID, source.Name, page, source.Packed, source.Frame));
+						result.Entries.Add(new (source.Index, source.Name, page, source.Packed, source.Frame));
 
-						if (source.Empty)
+						if (source.Empty || source.BufferLength <= 0)
 							continue;
 
 						var data = sourceBuffer.AsSpan(source.BufferIndex, source.BufferLength);
@@ -379,13 +384,13 @@ public class Packer
 		{
 			foreach (var source in sources)
 			{
-				if (source.DuplicateOf == 0)
+				if (!source.DuplicateOf.HasValue)
 					continue;
 
 				foreach (var entry in result.Entries)
-					if (entry.ID == source.DuplicateOf)
+					if (entry.Index == source.DuplicateOf.Value)
 					{   
-						result.Entries.Add(new (source.ID, source.Name, entry.Page, entry.Source, entry.Frame));
+						result.Entries.Add(new (source.Index, source.Name, entry.Page, entry.Source, entry.Frame));
 						break;
 					}
 			}

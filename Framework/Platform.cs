@@ -190,6 +190,22 @@ internal static class Platform
 	[DllImport(DLL)]
 	public static extern bool FosterImageWrite(FosterWriteFn func, IntPtr context, int w, int h, IntPtr data);
 	[DllImport(DLL)]
+	public static extern IntPtr FosterFontInit(IntPtr data, int length);
+	[DllImport(DLL)]
+	public static extern void FosterFontGetMetrics(IntPtr font, out int ascent, out int descent, out int linegap);
+	[DllImport(DLL)]
+	public static extern int FosterFontGetGlyphIndex(IntPtr font, int codepoint);
+	[DllImport(DLL)]
+	public static extern float FosterFontGetScale(IntPtr font, float size);
+	[DllImport(DLL)]
+	public static extern float FosterFontGetKerning(IntPtr font, int glyph1, int glyph2, float scale);
+	[DllImport(DLL)]
+	public static extern void FosterFontGetCharacter(IntPtr font, int glyph, float scale, out int width, out int height, out float advance, out float offsetX, out float offsetY, out int visible);
+	[DllImport(DLL)]
+	public static extern void FosterFontGetPixels(IntPtr font, IntPtr dest, int glyph, int width, int height, float scale);
+	[DllImport(DLL)]
+	public static extern void FosterFontFree(IntPtr font);
+	[DllImport(DLL)]
 	public static extern Renderers FosterGetRenderer();
 	[DllImport(DLL)]
 	public static extern IntPtr FosterTextureCreate(int width, int height, TextureFormat format);
@@ -222,11 +238,11 @@ internal static class Platform
 	[DllImport(DLL)]
 	public static extern void FosterMeshSetVertexFormat(IntPtr mesh, ref FosterVertexFormat format);
 	[DllImport(DLL)]
-	public static extern void FosterMeshSetVertexData(IntPtr mesh, IntPtr data, int dataSize);
+	public static extern void FosterMeshSetVertexData(IntPtr mesh, IntPtr data, int dataSize, int dataDestOffset);
 	[DllImport(DLL)]
 	public static extern void FosterMeshSetIndexFormat(IntPtr mesh, IndexFormat format);
 	[DllImport(DLL)]
-	public static extern void FosterMeshSetIndexData(IntPtr mesh, IntPtr data, int dataSize);
+	public static extern void FosterMeshSetIndexData(IntPtr mesh, IntPtr data, int dataSize, int dataDestOffset);
 	[DllImport(DLL)]
 	public static extern void FosterMeshDestroy(IntPtr mesh);
 	[DllImport(DLL)]

@@ -7,7 +7,7 @@ namespace Foster.Framework;
 /// <summary>
 /// A 2D Integer Rectangle
 /// </summary>
-public struct RectInt
+public struct RectInt : IEquatable<RectInt>
 {
     public int X;
     public int Y;
@@ -348,6 +348,7 @@ public struct RectInt
     }
 
     public override readonly bool Equals(object? obj) => (obj is RectInt other) && (this == other);
+	public readonly bool Equals(RectInt other) => this == other;
 
     public override readonly int GetHashCode()
     {
@@ -442,7 +443,7 @@ public struct RectInt
         return rect;
     }
 
-    public readonly IEnumerable<Point2> AllPoints
+	public readonly IEnumerable<Point2> AllPoints
     {
         get
         {

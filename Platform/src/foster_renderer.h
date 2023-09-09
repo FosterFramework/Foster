@@ -31,9 +31,9 @@ typedef struct FosterRenderDevice
 
 	FosterMesh* (*meshCreate)();
 	void (*meshSetVertexFormat)(FosterMesh* mesh, FosterVertexFormat* format);
-	void (*meshSetVertexData)(FosterMesh* mesh, void* data, int dataSize);
+	void (*meshSetVertexData)(FosterMesh* mesh, void* data, int dataSize, int dataDestOffset);
 	void (*meshSetIndexFormat)(FosterMesh* mesh, FosterIndexFormat format);
-	void (*meshSetIndexData)(FosterMesh* mesh, void* data, int dataSize);
+	void (*meshSetIndexData)(FosterMesh* mesh, void* data, int dataSize, int dataDestOffset);
 	void (*meshDestroy)(FosterMesh* mesh);
 
 	void (*draw)(FosterDrawCommand* command);

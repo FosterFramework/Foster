@@ -9,6 +9,10 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "third_party/stb_image_write.h"
 
+#define STBTT_STATIC
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "third_party/stb_truetype.h"
+
 #define FOSTER_MAX_MESSAGE_SIZE 1024
 
 #define FOSTER_CHECK(flags, flag) \
@@ -431,6 +435,85 @@ bool FosterImageWrite(FosterWriteFn* func, void* context, int w, int h, const vo
     return stbi_write_png_to_func((stbi_write_func*)func, context, w, h, 4, data, w * 4) != 0;
 }
 
+FosterFont* FosterFontInit(unsigned char* data, int length)
+{
+	stbtt_fontinfo* info = (stbtt_fontinfo*)SDL_malloc(sizeof(stbtt_fontinfo));
+
+	if (stbtt_InitFont(info, data, 0) == 0)
+	{
+		FosterLogError("Unable to parse Font File");
+		SDL_free(info);
+		return NULL;
+	}
+
+	return (FosterFont*)info;
+}
+
+void FosterFontGetMetrics(FosterFont* font, int* ascent, int* descent, int* linegap)
+{
+	stbtt_fontinfo* info = (stbtt_fontinfo*)font;
+	stbtt_GetFontVMetrics(info, ascent, descent, linegap);
+}
+
+int FosterFontGetGlyphIndex(FosterFont* font, int codepoint)
+{
+	stbtt_fontinfo* info = (stbtt_fontinfo*)font;
+	return stbtt_FindGlyphIndex(info, codepoint);
+}
+
+float FosterFontGetScale(FosterFont* font, float size)
+{
+	stbtt_fontinfo* info = (stbtt_fontinfo*)font;
+	return stbtt_ScaleForMappingEmToPixels(info, size);
+}
+
+float FosterFontGetKerning(FosterFont* font, int glyph1, int glyph2, float scale)
+{
+	stbtt_fontinfo* info = (stbtt_fontinfo*)font;
+	return stbtt_GetGlyphKernAdvance(info, glyph1, glyph2) * scale;
+}
+
+void FosterFontGetCharacter(FosterFont* font, int glyph, float scale, int* width, int* height, float* advance, float* offsetX, float* offsetY, int* visible)
+{
+	stbtt_fontinfo* info = (stbtt_fontinfo*)font;
+
+	int adv, ox, oy, x0, y0, x1, y1;
+
+	stbtt_GetGlyphHMetrics(info, glyph, &adv, &ox);
+	stbtt_GetGlyphBitmapBox(info, glyph, scale, scale, &x0, &y0, &x1, &y1);
+
+	*width = (x1 - x0);
+	*height = (y1 - y0);
+	*advance = adv * scale;
+	*offsetX = ox * scale;
+	*offsetY = (float)y0;
+	*visible = *width > 0 && *height > 0 && stbtt_IsGlyphEmpty(info, glyph) == 0;
+}
+
+void FosterFontGetPixels(FosterFont* font, unsigned char* dest, int glyph, int width, int height, float scale)
+{
+	stbtt_fontinfo* info = (stbtt_fontinfo*)font;
+
+	// parse it directly into the dest buffer
+	stbtt_MakeGlyphBitmap(info, dest, width, height, width, scale, scale, glyph);
+
+	// convert the buffer to RGBA data by working backwards, overwriting data
+	int len = width * height;
+	for (int a = (len - 1) * 4, b = (len - 1); b >= 0; a -= 4, b -= 1)
+	{
+		dest[a + 0] = dest[b];
+		dest[a + 1] = dest[b];
+		dest[a + 2] = dest[b];
+		dest[a + 3] = dest[b];
+	}
+}
+
+void FosterFontFree(FosterFont* font)
+{
+	stbtt_fontinfo* info = (stbtt_fontinfo*)font;
+	SDL_free(info);
+}
+
 FosterRenderers FosterGetRenderer()
 {
 	FOSTER_ASSERT_RUNNING_RET(FosterGetRenderer, FOSTER_RENDERER_NONE);
@@ -531,10 +614,10 @@ void FosterMeshSetVertexFormat(FosterMesh* mesh, FosterVertexFormat* format)
 	fstate.device.meshSetVertexFormat(mesh, format);
 }
 
-void FosterMeshSetVertexData(FosterMesh* mesh, void* data, int dataSize)
+void FosterMeshSetVertexData(FosterMesh* mesh, void* data, int dataSize, int dataDestOffset)
 {
 	FOSTER_ASSERT_RUNNING(FosterMeshSetVertexData);
-	fstate.device.meshSetVertexData(mesh, data, dataSize);
+	fstate.device.meshSetVertexData(mesh, data, dataSize, dataDestOffset);
 }
 
 void FosterMeshSetIndexFormat(FosterMesh* mesh, FosterIndexFormat format)
@@ -543,10 +626,10 @@ void FosterMeshSetIndexFormat(FosterMesh* mesh, FosterIndexFormat format)
 	fstate.device.meshSetIndexFormat(mesh, format);
 }
 
-void FosterMeshSetIndexData(FosterMesh* mesh, void* data, int dataSize)
+void FosterMeshSetIndexData(FosterMesh* mesh, void* data, int dataSize, int dataDestOffset)
 {
 	FOSTER_ASSERT_RUNNING(FosterMeshSetIndexData);
-	fstate.device.meshSetIndexData(mesh, data, dataSize);
+	fstate.device.meshSetIndexData(mesh, data, dataSize, dataDestOffset);
 }
 
 void FosterMeshDestroy(FosterMesh* mesh)
