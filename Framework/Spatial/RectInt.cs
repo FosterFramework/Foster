@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 namespace Foster.Framework;
 
@@ -237,10 +238,10 @@ public struct RectInt : IEquatable<RectInt>
     public readonly RectInt Inflate(int byX, int byY)
         => new(X - byX, Y - byY, Width + byX * 2, Height + byY * 2);
 
-    public readonly RectInt Scale(float scale)
-        => new((int)(X * scale), (int)(Y * scale), (int)(Width * scale), (int)(Height * scale));
+    public readonly RectInt Inflate(in Point2 by)
+        => Inflate(by.X, by.Y);
 
-    public readonly RectInt MultiplyX(int scale)
+	public readonly RectInt MultiplyX(int scale)
     {
         var r = new RectInt(X * scale, Y, Width * scale, Height);
 
@@ -409,22 +410,37 @@ public struct RectInt : IEquatable<RectInt>
     public static explicit operator RectInt(in Rect rect)
         => new((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private RectInt Validate()
+	public static Rect operator *(in RectInt rect, float scaler)
+		=> new Rect(rect.X * scaler, rect.Y * scaler, rect.Width * scaler, rect.Height * scaler).Validate();
+
+	public static Rect operator *(in RectInt rect, in Vector2 scaler)
+		=> new Rect(rect.X * scaler.X, rect.Y * scaler.Y, rect.Width * scaler.X, rect.Height * scaler.Y).Validate();
+
+	public static Rect operator /(in RectInt rect, float scaler)
+		=> new Rect(rect.X / scaler, rect.Y / scaler, rect.Width / scaler, rect.Height / scaler).Validate();
+
+	public static Rect operator /(in RectInt rect, in Vector2 scaler)
+		=> new Rect(rect.X / scaler.X, rect.Y / scaler.Y, rect.Width / scaler.X, rect.Height / scaler.Y).Validate();
+
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private readonly RectInt Validate()
     {
+        RectInt rect = this;
+
         if (Width < 0)
         {
-            X += Width;
-            Width *= -1;
+			rect.X += Width;
+			rect.Width *= -1;
         }
 
         if (Height < 0)
         {
-            Y += Height;
-            Height *= -1;
+			rect.Y += Height;
+			rect.Height *= -1;
         }
 
-        return this;
+        return rect;
     }
 
 	public readonly IEnumerable<Point2> AllPoints

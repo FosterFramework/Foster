@@ -48,6 +48,9 @@ public static class Log
 	public static void Info(string message)
 		=> Info(message.AsSpan());
 
+	public static void Info(object? obj)
+		=> Info(obj?.ToString() ?? "null");
+
 	public static void Warning(ReadOnlySpan<char> message)
 	{
 		Append(message);

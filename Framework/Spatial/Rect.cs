@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 namespace Foster.Framework;
 
@@ -16,7 +17,7 @@ public struct Rect : IConvexShape
 
 	public Vector2 Position
 	{
-		get => new(X, Y);
+		readonly get => new(X, Y);
 		set
 		{
 			X = value.X;
@@ -26,7 +27,7 @@ public struct Rect : IConvexShape
 
 	public Vector2 Size
 	{
-		get => new(Width, Height);
+		readonly get => new(Width, Height);
 		set
 		{
 			Width = value.X;
@@ -34,7 +35,7 @@ public struct Rect : IConvexShape
 		}
 	}
 
-	public float Area => Math.Abs(Width * Height);
+	public readonly float Area => Math.Abs(Width * Height);
 
 	#region Edges
 
@@ -238,13 +239,13 @@ public struct Rect : IConvexShape
 		return r;
 	}
 
-	public RectInt Int()
+	public readonly RectInt Int()
 		=> new((int)X, (int)Y, (int)Width, (int)Height);
 
-	public Rect Inflate(float by)
+	public readonly Rect Inflate(float by)
 		=> new(X - by, Y - by, Width + by * 2, Height + by * 2);
 
-	public Rect Inflate(float left, float top, float right, float bottom)
+	public readonly Rect Inflate(float left, float top, float right, float bottom)
 	{
 		var rect = new Rect(X, Y, Width, Height);
 		rect.Left -= left;
@@ -402,4 +403,24 @@ public struct Rect : IConvexShape
 
 	public static Rect operator /(in Rect a, float scaler)
 		=> new(a.X / scaler, a.Y / scaler, a.Width / scaler, a.Height / scaler);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect Validate()
+	{
+		var rect = this;
+
+		if (Width < 0)
+		{
+			rect.X += Width;
+			rect.Width *= -1;
+		}
+
+		if (Height < 0)
+		{
+			rect.Y += Height;
+			rect.Height *= -1;
+		}
+
+		return rect;
+	}
 }
