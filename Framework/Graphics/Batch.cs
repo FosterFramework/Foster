@@ -858,22 +858,22 @@ public class Batcher : IDisposable
 
 	#region Rounded Rect
 
-	public void RoundedRect(float x, float y, float width, float height, float r0, float r1, float r2, float r3, Color color)
+	public void RectRounded(float x, float y, float width, float height, float r0, float r1, float r2, float r3, Color color)
 	{
-		RoundedRect(new Rect(x, y, width, height), r0, r1, r2, r3, color);
+		RectRounded(new Rect(x, y, width, height), r0, r1, r2, r3, color);
 	}
 
-	public void RoundedRect(float x, float y, float width, float height, float radius, Color color)
+	public void RectRounded(float x, float y, float width, float height, float radius, Color color)
 	{
-		RoundedRect(new Rect(x, y, width, height), radius, radius, radius, radius, color);
+		RectRounded(new Rect(x, y, width, height), radius, radius, radius, radius, color);
 	}
 
-	public void RoundedRect(in Rect rect, float radius, Color color)
+	public void RectRounded(in Rect rect, float radius, Color color)
 	{
-		RoundedRect(rect, radius, radius, radius, radius, color);
+		RectRounded(rect, radius, radius, radius, radius, color);
 	}
 
-	public void RoundedRect(in Rect rect, float r0, float r1, float r2, float r3, Color color)
+	public void RectRounded(in Rect rect, float r0, float r1, float r2, float r3, Color color)
 	{
 		// clamp
 		r0 = Math.Min(Math.Min(Math.Max(0, r0), rect.Width / 2f), rect.Height / 2f);
@@ -1035,6 +1035,48 @@ public class Batcher : IDisposable
 
 	}
 
+	public void RectRoundedLine(in Rect r, float rounding, float t, Color color)
+	{
+		RectRoundedLine(r, rounding, rounding, rounding, rounding, t, color);
+	}
+
+	public void RectRoundedLine(in Rect r, float rtl, float rtr, float rbr, float rbl, float t, Color color)
+	{
+		// clamp
+		rtl = MathF.Min(MathF.Min(MathF.Max(0.0f, rtl), r.Width / 2.0f), r.Height / 2.0f);
+		rtr = MathF.Min(MathF.Min(MathF.Max(0.0f, rtr), r.Width / 2.0f), r.Height / 2.0f);
+		rbr = MathF.Min(MathF.Min(MathF.Max(0.0f, rbr), r.Width / 2.0f), r.Height / 2.0f);
+		rbl = MathF.Min(MathF.Min(MathF.Max(0.0f, rbl), r.Width / 2.0f), r.Height / 2.0f);
+
+		if (rtl <= 0 && rtr <= 0 && rbr <= 0 && rbl <= 0)
+		{
+			RectLine(r, t, color);
+		}
+		else
+		{
+			var rtlSteps = Math.Max(3, (int)(rtl / 4));
+			var rtrSteps = Math.Max(3, (int)(rtr / 4));
+			var rbrSteps = Math.Max(3, (int)(rbr / 4));
+			var rblSteps = Math.Max(3, (int)(rbl / 4));
+
+			// rounded corners
+			SemiCircleLine(new Vector2(r.X + rtl, r.Y + rtl), Calc.Up, Calc.Left, rtl, rtlSteps, t, color);
+			SemiCircleLine(new Vector2(r.X + r.Width - rtr, r.Y + rtr), Calc.Up, Calc.Up + Calc.TAU * 0.25f, rtr, rtrSteps, t, color);
+			SemiCircleLine(new Vector2(r.X + rbl, r.Y + r.Height - rbl), Calc.Down, Calc.Left, rbl, rblSteps, t, color);
+			SemiCircleLine(new Vector2(r.X + r.Width - rbr, r.Y + r.Height - rbr), Calc.Down, Calc.Right, rbr, rbrSteps, t, color);
+
+			// connect sides that aren't touching
+			if (r.Height > rtl + rbl)
+				Rect(new Rect(r.X, r.Y + rtl, t, r.Height - rtl - rbl), color);
+			if (r.Height > rtr + rbr)
+				Rect(new Rect(r.X + r.Width - t, r.Y + rtr, t, r.Height - rtr - rbr), color);
+			if (r.Width > rtl + rtr)
+				Rect(new Rect(r.X + rtl, r.Y, r.Width - rtl - rtr, t), color);
+			if (r.Width > rbl + rbr)
+				Rect(new Rect(r.X + rbl, r.Y + r.Height - t, r.Width - rbl - rbr, t), color);
+		}
+	}
+
 	#endregion
 
 	#region Dashed Rect
@@ -1066,6 +1108,31 @@ public class Batcher : IDisposable
 			var next = Calc.AngleToVector(startRadians + (endRadians - startRadians) * (i / (float)steps), radius);
 			Triangle(center + last, center + next, center, edgeColor, edgeColor, centerColor);
 			last = next;
+		}
+	}
+
+	public void SemiCircleLine(in Vector2 center, float startRadians, float endRadians, float radius, int steps, float t, Color color)
+	{
+		if (t >= radius)
+		{
+			SemiCircle(center, startRadians, endRadians, radius, steps, color, color);
+		}
+		else
+		{
+			var add = Calc.AngleDiff(startRadians, endRadians);
+			var lastInner = Calc.AngleToVector(startRadians, radius - t);
+			var lastOuter = Calc.AngleToVector(startRadians, radius);
+
+			for (int i = 1; i <= steps; i++)
+			{
+				var nextInner = Calc.AngleToVector(startRadians + add * (i / (float)steps), radius - t);
+				var nextOuter = Calc.AngleToVector(startRadians + add * (i / (float)steps), radius);
+
+				Quad(center + lastInner, center + lastOuter, center + nextOuter, center + nextInner, color);
+
+				lastInner = nextInner;
+				lastOuter = nextOuter;
+			}
 		}
 	}
 
