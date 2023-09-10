@@ -607,33 +607,22 @@ public static class Calc
 	/// .NET Core doesn't always hash string values the same (it can seed it based on the running instance)
 	/// So this is to get a static value for every same string
 	/// </summary>
-	public static ulong StaticStringHash(string value)
+	public static int StaticStringHash(ReadOnlySpan<char> value)
 	{
 		unchecked
 		{
-			ulong hash = 5381;
+			int hash = 5381;
 			for (int i = 0; i < value.Length; i++)
 				hash = ((hash << 5) + hash) + value[i];
 			return hash;
 		}
 	}
 	
-	public static ulong StaticStringHash(ReadOnlySpan<char> value)
+	public static int StaticStringHash(ReadOnlySpan<byte> value)
 	{
 		unchecked
 		{
-			ulong hash = 5381;
-			for (int i = 0; i < value.Length; i++)
-				hash = ((hash << 5) + hash) + value[i];
-			return hash;
-		}
-	}
-	
-	public static ulong StaticStringHash(ReadOnlySpan<byte> value)
-	{
-		unchecked
-		{
-			ulong hash = 5381;
+			int hash = 5381;
 			for (int i = 0; i < value.Length; i++)
 				hash = ((hash << 5) + hash) + value[i];
 			return hash;
