@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -172,30 +173,24 @@ public class Aseprite : Aseprite.IUserDataTarget
 
 	public class Slice : IUserDataTarget
 	{
+		public struct Key
+		{
+			public int FrameStart;
+			public RectInt Bounds;
+			public RectInt? NinSliceCenters;
+			public Point2? Pivot;
+		}
+
 		public string Name;
-		public int[] Frames;
-		public RectInt[] Bounds;
-		public RectInt[]? NineSliceCenters;
-		public Point2[]? Pivots;
+		public Key[] Keys;
 		public UserData? UserData;
 
 		public string? UserDataText => UserData?.Text;
 
-		public int KeyCount => Bounds.Length;
-		public int FirstFrame => Frames[0];
-		public RectInt FirstBounds => Bounds[0];
-		public RectInt? FirstNineSliceCenter => NineSliceCenters?[0];
-		public Point2? FirstPivot => Pivots?[0];
-
-		public Slice(string name, int count, bool nineSlices, bool pivots)
+		public Slice(string name, int count)
 		{
 			Name = name;
-			Frames = new int[count];
-			Bounds = new RectInt[count];
-			if (nineSlices)
-				NineSliceCenters = new RectInt[count];
-			if (pivots)
-				Pivots = new Point2[count];
+			Keys = new Key[count];
 		}
 
 		public void SetUserData(UserData userData) => UserData = userData;
@@ -318,19 +313,21 @@ public class Aseprite : Aseprite.IUserDataTarget
 					var flags = ReadDWord();
 					ReadDWord();
 					var name = ReadString();
+					var hasNineSlice = (flags & 1) != 0;
+					var hasPivot = (flags & 2) != 0;
 
-					var slice = new Slice(name, count, (flags & 1) != 0, (flags & 2) != 0);
+					var slice = new Slice(name, count);
 					Slices.Add(slice);
 					userDataTarget = slice;
 
 					for (int i = 0; i < count; ++i)
 					{
-						slice.Frames[i] = (int)ReadDWord();
-						slice.Bounds[i] = new RectInt(ReadLong(), ReadLong(), (int)ReadDWord(), (int)ReadDWord());
-						if (slice.NineSliceCenters is RectInt[] centers)
-							centers[i] = new RectInt(ReadLong(), ReadLong(), (int)ReadDWord(), (int)ReadDWord());
-						if (slice.Pivots is Point2[] pivots)
-							pivots[i] = new Point2(ReadLong(), ReadLong());
+						slice.Keys[i].FrameStart = (int)ReadDWord();
+						slice.Keys[i].Bounds = new RectInt(ReadLong(), ReadLong(), (int)ReadDWord(), (int)ReadDWord());
+						if (hasNineSlice)
+							slice.Keys[i].NinSliceCenters = new RectInt(ReadLong(), ReadLong(), (int)ReadDWord(), (int)ReadDWord());
+						if (hasPivot)
+							slice.Keys[i].Pivot = new Point2(ReadLong(), ReadLong());
 					}
 				}
 				else if (chunkType == ChunkType.Tags)

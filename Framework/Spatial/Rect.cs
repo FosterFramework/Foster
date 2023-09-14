@@ -8,7 +8,7 @@ namespace Foster.Framework;
 /// <summary>
 /// A 2D Rectangle
 /// </summary>
-public struct Rect : IConvexShape
+public struct Rect : IConvexShape, IEquatable<Rect>
 {
 	public float X;
 	public float Y;
@@ -339,6 +339,9 @@ public struct Rect : IConvexShape
 			1 => Vector2.UnitY,
 			_ => throw new IndexOutOfRangeException(),
 		};
+
+	public bool Equals(Rect other)
+		=> this == other;
 
 	public override bool Equals(object? obj)
 		=> (obj is Rect other) && (this == other);

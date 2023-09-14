@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Foster.Framework;
 
@@ -54,8 +55,8 @@ internal static class Platform
 	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
 	public struct FosterDesc
 	{
-		public string windowTitle;
-		public string applicationName;
+		public IntPtr windowTitle;
+		public IntPtr applicationName;
 		public int width;
 		public int height;
 		public Renderers renderer;
@@ -151,6 +152,21 @@ internal static class Platform
 		while (*ptr != 0)
 			ptr++;
 		return System.Text.Encoding.UTF8.GetString((byte*)s, (int)(ptr - (byte*)s));
+	}
+
+	public static unsafe IntPtr ToUTF8(in string str)
+	{
+		var count = Encoding.UTF8.GetByteCount(str) + 1;
+		var ptr = Marshal.AllocHGlobal(count);
+		var span = new Span<byte>((byte*)ptr.ToPointer(), count);
+		Encoding.UTF8.GetBytes(str, span);
+		span[^1] = 0;
+		return ptr;
+	}
+
+	public static void FreeUTF8(IntPtr ptr)
+	{
+		Marshal.FreeHGlobal(ptr);
 	}
 
 	[DllImport(DLL)]

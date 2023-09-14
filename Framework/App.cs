@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Foster.Framework;
 
@@ -218,10 +219,14 @@ public static class App
 		if (fullscreen)
 			App.flags |= Platform.FosterFlags.FULLSCREEN;
 
+		App.title = applicationName;
+		App.Name = applicationName;
+		var name = Platform.ToUTF8(applicationName);
+
 		Platform.FosterStartup(new()
 		{
-			windowTitle = App.title = applicationName,
-			applicationName = App.Name = applicationName,
+			windowTitle = name,
+			applicationName = name,
 			width = width,
 			height = height,
 			flags = App.flags,
@@ -274,7 +279,7 @@ public static class App
 			modules[i].Shutdown();
 
 		Platform.FosterShutdown();
-
+		Platform.FreeUTF8(name);
 		started = false;
 		Exiting = false;
 	}
