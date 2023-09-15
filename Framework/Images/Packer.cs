@@ -116,6 +116,11 @@ public class Packer
 		return Add(name, image.Width, image.Height, image.Data);
 	}
 
+	public int Add(string name, Image image, RectInt clip)
+	{
+		return Add(sources.Count, name, clip, image.Width, image.Data);
+	}
+
 	public int Add(string name, string path)
 	{
 		return Add(name, new Image(path));
@@ -128,39 +133,44 @@ public class Packer
 
 	public int Add(int index, string name, int width, int height, ReadOnlySpan<Color> pixels)
 	{
+		return Add(sources.Count, name, new RectInt(0, 0, width, height), width, pixels);
+	}
+
+	public int Add(int index, string name, RectInt clip, int stride, ReadOnlySpan<Color> pixels)
+	{
 		var source = new Source(index, name);
-		int top = 0, left = 0, right = width, bottom = height;
+		int top = clip.Top, left = clip.Left, right = clip.Right, bottom = clip.Bottom;
 
 		// trim
 		if (Trim)
 		{
 			// TOP:
-			for (int y = 0; y < height; y++)
-				for (int x = 0, s = y * width; x < width; x++, s++)
+			for (int y = clip.Top; y < clip.Bottom; y++)
+				for (int x = clip.Left, s = y * stride; x < clip.Right; x++, s++)
 					if (pixels[s].A > 0)
 					{
 						top = y;
 						goto LEFT;
 					}
 				LEFT:
-			for (int x = 0; x < width; x++)
-				for (int y = top, s = x + y * width; y < height; y++, s += width)
+			for (int x = clip.Left; x < clip.Right; x++)
+				for (int y = top, s = x + y * stride; y < clip.Bottom; y++, s += stride)
 					if (pixels[s].A > 0)
 					{
 						left = x;
 						goto RIGHT;
 					}
 				RIGHT:
-			for (int x = width - 1; x >= left; x--)
-				for (int y = top, s = x + y * width; y < height; y++, s += width)
+			for (int x = clip.Right - 1; x >= left; x--)
+				for (int y = top, s = x + y * stride; y < clip.Bottom; y++, s += stride)
 					if (pixels[s].A > 0)
 					{
 						right = x + 1;
 						goto BOTTOM;
 					}
 				BOTTOM:
-			for (int y = height - 1; y >= top; y--)
-				for (int x = left, s = x + y * width; x < right; x++, s++)
+			for (int y = clip.Bottom - 1; y >= top; y--)
+				for (int x = left, s = x + y * stride; x < right; x++, s++)
 					if (pixels[s].A > 0)
 					{
 						bottom = y + 1;
@@ -178,7 +188,7 @@ public class Packer
 				source.Hash = 0;
 				for (int x = left; x < right; x++)
 					for (int y = top; y < bottom; y++)
-						source.Hash = ((source.Hash << 5) + source.Hash) + (int)pixels[x + y * width].RGBA;
+						source.Hash = ((source.Hash << 5) + source.Hash) + (int)pixels[x + y * stride].RGBA;
 
 				for (int i = 0; i < sources.Count; i ++)
 					if (sources[i].Hash == source.Hash)
@@ -189,7 +199,7 @@ public class Packer
 			}
 
 			source.Packed = new RectInt(0, 0, right - left, bottom - top);
-			source.Frame = new RectInt(-left, -top, width, height);
+			source.Frame = new RectInt(clip.Left - left, clip.Top - top, clip.Width, clip.Height);
 
 			if (!source.DuplicateOf.HasValue)
 			{
@@ -204,7 +214,7 @@ public class Packer
 				for (int i = 0; i < source.Packed.Height; i++)
 				{
 					var len = source.Packed.Width;
-					var srcIndex = left + (top + i) * width;
+					var srcIndex = left + (top + i) * stride;
 					var dstIndex = sourceBufferIndex;
 					var srcData = pixels.Slice(srcIndex, len);
 					var dstData = sourceBuffer.AsSpan(dstIndex, len);
@@ -217,7 +227,7 @@ public class Packer
 		else
 		{
 			source.Packed = new RectInt();
-			source.Frame = new RectInt(0, 0, width, height);
+			source.Frame = new RectInt(0, 0, clip.Width, clip.Height);
 		}
 
 		sources.Add(source);
