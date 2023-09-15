@@ -178,11 +178,11 @@ public struct RectInt : IEquatable<RectInt>
 
     public readonly float CenterXF => X + Width * .5f;
     public readonly float CenterYF => Y + Height * .5f;
-    public readonly Vector2 TopCenterF => new(CenterX, Top);
-    public readonly Vector2 CenterLeftF => new(Left, CenterY);
-    public readonly Vector2 CenterF => new(CenterX, CenterY);
-    public readonly Vector2 CenterRightF => new(Right, CenterY);
-    public readonly Vector2 BottomCenterF => new(CenterX, Bottom);
+    public readonly Vector2 TopCenterF => new(CenterXF, Top);
+    public readonly Vector2 CenterLeftF => new(Left, CenterYF);
+    public readonly Vector2 CenterF => new(CenterXF, CenterYF);
+    public readonly Vector2 CenterRightF => new(Right, CenterYF);
+    public readonly Vector2 BottomCenterF => new(CenterXF, Bottom);
 
     #endregion
 
