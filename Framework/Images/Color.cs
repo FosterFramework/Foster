@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -151,10 +152,11 @@ public struct Color : IEquatable<Color>
 	/// Returns a Hex String representation of the Color's given components
 	/// </summary>
 	/// <param name="components">The Components, in any order. ex. "RGBA" or "RGB" or "ARGB"</param>
-	public string ToHexString(string components)
+	public void ToHexString(ReadOnlySpan<char> components, Span<char> destination)
 	{
+		Debug.Assert(destination.Length >= components.Length * 2);
+
 		const string HEX = "0123456789ABCDEF";
-		Span<char> result = stackalloc char[components.Length * 2];
 
 		for (int i = 0; i < components.Length; i++)
 		{
@@ -162,28 +164,37 @@ public struct Color : IEquatable<Color>
 			{
 				case 'R':
 				case 'r':
-					result[i * 2 + 0] = HEX[(R & 0xf0) >> 4];
-					result[i * 2 + 1] = HEX[(R & 0x0f)];
+					destination[i * 2 + 0] = HEX[(R & 0xf0) >> 4];
+					destination[i * 2 + 1] = HEX[(R & 0x0f)];
 					break;
 				case 'G':
 				case 'g':
-					result[i * 2 + 0] = HEX[(G & 0xf0) >> 4];
-					result[i * 2 + 1] = HEX[(G & 0x0f)];
+					destination[i * 2 + 0] = HEX[(G & 0xf0) >> 4];
+					destination[i * 2 + 1] = HEX[(G & 0x0f)];
 					break;
 				case 'B':
 				case 'b':
-					result[i * 2 + 0] = HEX[(B & 0xf0) >> 4];
-					result[i * 2 + 1] = HEX[(B & 0x0f)];
+					destination[i * 2 + 0] = HEX[(B & 0xf0) >> 4];
+					destination[i * 2 + 1] = HEX[(B & 0x0f)];
 					break;
 				case 'A':
 				case 'a':
-					result[i * 2 + 0] = HEX[(A & 0xf0) >> 4];
-					result[i * 2 + 1] = HEX[(A & 0x0f)];
+					destination[i * 2 + 0] = HEX[(A & 0xf0) >> 4];
+					destination[i * 2 + 1] = HEX[(A & 0x0f)];
 					break;
 			}
 		}
+	}
 
-		return new string(result);
+	/// <summary>
+	/// Returns a Hex String representation of the Color's given components
+	/// </summary>
+	/// <param name="components">The Components, in any order. ex. "RGBA" or "RGB" or "ARGB"</param>
+	public string ToHexString(ReadOnlySpan<char> components)
+	{
+		Span<char> dest = stackalloc char[components.Length * 2];
+		ToHexString(components, dest);
+		return dest.ToString();
 	}
 
 	/// <summary>
@@ -207,7 +218,7 @@ public struct Color : IEquatable<Color>
 	/// </summary>
 	/// <param name="components">The components to parse in order, ex. "RGBA"</param>
 	/// <param name="value">The Hex value to parse</param>
-	public static Color FromHexString(string components, ReadOnlySpan<char> value)
+	public static Color FromHexString(ReadOnlySpan<char> components, ReadOnlySpan<char> value)
 	{
 		// skip past useless string data (ex. if the string was 0xffffff or #ffffff)
 		if (value.Length > 0 && value[0] == '#')
@@ -250,7 +261,7 @@ public struct Color : IEquatable<Color>
 	/// <summary>
 	/// Creates a new Color from the given RGB Hex value
 	/// </summary>
-	public static Color FromHexStringRGB(string value)
+	public static Color FromHexStringRGB(ReadOnlySpan<char> value)
 	{
 		return FromHexString("RGB", value);
 	}
@@ -258,7 +269,7 @@ public struct Color : IEquatable<Color>
 	/// <summary>
 	/// Creates a new Color from the given RGBA Hex value
 	/// </summary>
-	public static Color FromHexStringRGBA(string value)
+	public static Color FromHexStringRGBA(ReadOnlySpan<char> value)
 	{
 		return FromHexString("RGBA", value);
 	}
