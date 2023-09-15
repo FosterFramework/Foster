@@ -120,8 +120,40 @@ public class Shader : IResource
 
 		public void Set(Color value)
 			=> Set(value.ToVector4());
-			
-		public unsafe void Set(Span<float> values)
+
+		public unsafe void Set(ReadOnlySpan<Vector2> value)
+		{
+			fixed (Vector2* ptr = value)
+				Set(new ReadOnlySpan<float>((float*)ptr, value.Length * 2));
+		}
+
+		public unsafe void Set(ReadOnlySpan<Vector3> value)
+		{
+			fixed (Vector3* ptr = value)
+				Set(new ReadOnlySpan<float>((float*)ptr, value.Length * 3));
+		}
+
+		public unsafe void Set(ReadOnlySpan<Vector4> value)
+		{
+			fixed (Vector4* ptr = value)
+				Set(new ReadOnlySpan<float>((float*)ptr, value.Length * 4));
+		}
+		
+		public void Set(ReadOnlySpan<Color> value)
+		{
+			Span<float> data = stackalloc float[value.Length * 4];
+			for (int i = 0, n = 0; i < value.Length; i ++, n += 4)
+			{
+				var vec4 = value[i].ToVector4();
+				data[n + 0] = vec4.X;
+				data[n + 1] = vec4.Y;
+				data[n + 2] = vec4.Z;
+				data[n + 3] = vec4.W;
+			}
+			Set(data);
+		}
+		
+		public unsafe void Set(ReadOnlySpan<float> values)
 		{
 			Debug.Assert(!shader.IsDisposed, "Shader is Disposed");
 			Debug.Assert(floatBuffer != null, "Uniform is not Float value type");
