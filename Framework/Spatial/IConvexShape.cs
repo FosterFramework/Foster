@@ -34,11 +34,11 @@ public interface IConvexShape : IProjectable
 /// </summary>
 public static class IConvexShape2DExt
 {
-
 	/// <summary>
 	/// Checks if the Convex Shape overlaps a Circle, and returns the pushout vector
 	/// </summary>
-	public static bool Overlaps(this IConvexShape a, in Circle b, out Vector2 pushout)
+	public static bool Overlaps<TConvexA>(this TConvexA a, in Circle b, out Vector2 pushout)
+		where TConvexA : IConvexShape
 	{
 		pushout = Vector2.Zero;
 
@@ -78,7 +78,9 @@ public static class IConvexShape2DExt
 	/// <summary>
 	/// Checks if the Convex Shape overlaps another Convex Shape, and returns the pushout vector
 	/// </summary>
-	public static bool Overlaps(this IConvexShape a, in IConvexShape b, out Vector2 pushout)
+	public static bool Overlaps<TConvexA, TConvexB>(this TConvexA a, in TConvexB b, out Vector2 pushout) 
+		where TConvexA : IConvexShape
+		where TConvexB : IConvexShape
 	{
 		pushout = Vector2.Zero;
 

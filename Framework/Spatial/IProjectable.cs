@@ -19,7 +19,9 @@ public static class IProjectableExt
 	/// <summary>
 	/// Checks if two Projectable Shapes overlap on the given Axis, and returns the amount
 	/// </summary>
-	public static bool AxisOverlaps(this IProjectable a, in IProjectable b, in Vector2 axis, out float amount)
+	public static bool AxisOverlaps<TProjA, TProjB>(this TProjA a, in TProjB b, in Vector2 axis, out float amount)
+		where TProjA : IProjectable
+		where TProjB : IProjectable
 	{
 		a.Project(axis, out float min0, out float max0);
 		b.Project(axis, out float min1, out float max1);
