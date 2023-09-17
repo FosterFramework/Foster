@@ -37,11 +37,11 @@ class Game : Module
 		Time.FixedStep = false;
 		App.Resizable = false;
 
-		using var image = new Image(@"Assets\wabbit_alpha.png");
+		using var image = new Image(Path.Join("Assets", "wabbit_alpha.png"));
 		image.Premultiply();
 		texture = new Texture(image);
 
-		font = new SpriteFont(@"Assets\monogram.ttf", 32);
+		font = new SpriteFont(Path.Join("Assets", "monogram.ttf"), 32);
 
 		shader = new Shader(ShaderDefinitions[Graphics.Renderer]);
 
