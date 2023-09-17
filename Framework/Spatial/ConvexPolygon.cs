@@ -91,4 +91,35 @@ public unsafe struct ConvexPolygon : IConvexShape
 			}
 		}
 	}
+
+	public static ConvexPolygon Transform(in ConvexPolygon polygon, in Matrix3x2 matrix)
+	{
+		ConvexPolygon result = new();
+		for (int i = 0; i < polygon.Points; i ++)
+			result.AddPoint(Vector2.Transform(polygon.GetPoint(i), matrix));
+		return result;
+	}
+
+	public static bool operator ==(in ConvexPolygon a, in ConvexPolygon b)
+	{
+		if (a.pointCount != b.pointCount)
+			return false;
+
+		for (int i = 0, n = a.pointCount * 2; i < n; i ++)
+			if (a.points[i] != b.points[i])
+				return false;
+
+		return true;
+	}
+
+	public static bool operator !=(in ConvexPolygon a, in ConvexPolygon b) => !(a == b);
+
+	public override bool Equals(object? obj) => obj is ConvexPolygon value && value == this;
+	public override int GetHashCode()
+	{
+		var hash = pointCount.GetHashCode();
+		for (int i = 0, n = pointCount * 2; i < n; i ++)
+			hash = HashCode.Combine(hash, points[i]);
+		return hash;
+	}
 }

@@ -16,7 +16,7 @@ public struct Quad : IConvexShape
 	private Vector2 normalBC;
 	private Vector2 normalCD;
 	private Vector2 normalDA;
-	private bool dirty;
+	private bool normalsDirty;
 
 	public Vector2 A
 	{
@@ -26,7 +26,7 @@ public struct Quad : IConvexShape
 			if (a != value)
 			{
 				a = value;
-				dirty = true;
+				normalsDirty = true;
 			}
 		}
 	}
@@ -39,7 +39,7 @@ public struct Quad : IConvexShape
 			if (b != value)
 			{
 				b = value;
-				dirty = true;
+				normalsDirty = true;
 			}
 		}
 	}
@@ -52,7 +52,7 @@ public struct Quad : IConvexShape
 			if (c != value)
 			{
 				c = value;
-				dirty = true;
+				normalsDirty = true;
 			}
 		}
 	}
@@ -65,7 +65,7 @@ public struct Quad : IConvexShape
 			if (d != value)
 			{
 				d = value;
-				dirty = true;
+				normalsDirty = true;
 			}
 		}
 	}
@@ -74,8 +74,7 @@ public struct Quad : IConvexShape
 	{
 		get
 		{
-			if (dirty)
-				UpdateQuad();
+			UpdateNormals();
 			return normalAB;
 		}
 	}
@@ -84,8 +83,7 @@ public struct Quad : IConvexShape
 	{
 		get
 		{
-			if (dirty)
-				UpdateQuad();
+			UpdateNormals();
 			return normalBC;
 		}
 	}
@@ -94,8 +92,7 @@ public struct Quad : IConvexShape
 	{
 		get
 		{
-			if (dirty)
-				UpdateQuad();
+			UpdateNormals();
 			return normalCD;
 		}
 	}
@@ -104,8 +101,7 @@ public struct Quad : IConvexShape
 	{
 		get
 		{
-			if (dirty)
-				UpdateQuad();
+			UpdateNormals();
 			return normalDA;
 		}
 	}
@@ -120,11 +116,13 @@ public struct Quad : IConvexShape
 		this.c = c;
 		this.d = d;
 		normalAB = normalBC = normalCD = normalDA = Vector2.Zero;
-		dirty = true;
+		normalsDirty = true;
 	}
 
-	private void UpdateQuad()
+	private void UpdateNormals()
 	{
+		if (!normalsDirty)
+			return;
 		normalAB = (b - a).Normalized();
 		normalAB = new Vector2(-normalAB.Y, normalAB.X);
 		normalBC = (c - b).Normalized();
@@ -133,8 +131,7 @@ public struct Quad : IConvexShape
 		normalCD = new Vector2(-normalCD.Y, normalCD.X);
 		normalDA = (a - d).Normalized();
 		normalDA = new Vector2(-normalDA.Y, normalDA.X);
-
-		dirty = false;
+		normalsDirty = false;
 	}
 
 	public Quad Translate(in Vector2 amount)
@@ -183,6 +180,7 @@ public struct Quad : IConvexShape
 
 	public Vector2 GetAxis(int index)
 	{
+		UpdateNormals();
 		return index switch
 		{
 			0 => new Vector2(-normalAB.Y, normalAB.X),
@@ -195,10 +193,12 @@ public struct Quad : IConvexShape
 
 	public Rect BoundingRect()
 	{
-		var bounds = new Rect();
-		bounds.X = Math.Min(a.X, Math.Min(b.X, Math.Min(c.X, d.X)));
-		bounds.Y = Math.Min(a.Y, Math.Min(b.Y, Math.Min(c.Y, d.Y)));
-		bounds.Width = Math.Max(a.X, Math.Max(b.X, Math.Max(c.X, d.X))) - bounds.X;
+        var bounds = new Rect
+        {
+            X = Math.Min(a.X, Math.Min(b.X, Math.Min(c.X, d.X))),
+            Y = Math.Min(a.Y, Math.Min(b.Y, Math.Min(c.Y, d.Y)))
+        };
+        bounds.Width = Math.Max(a.X, Math.Max(b.X, Math.Max(c.X, d.X))) - bounds.X;
 		bounds.Height = Math.Max(a.Y, Math.Max(b.Y, Math.Max(c.Y, d.Y))) - bounds.Y;
 		return bounds;
 	}
@@ -229,11 +229,11 @@ public struct Quad : IConvexShape
 
 	public static bool operator ==(Quad a, Quad b)
 	{
-		return a.A == b.A && a.B == b.B && a.C == b.C && a.D == b.D;
+		return a.a == b.a && a.b == b.b && a.c == b.c && a.d == b.d;
 	}
 
 	public static bool operator !=(Quad a, Quad b)
 	{
-		return a.A != b.A || a.B != b.B || a.C != b.C || a.D != b.D;
+		return a.a != b.a || a.b != b.b || a.c != b.c || a.d != b.d;
 	}
 }
