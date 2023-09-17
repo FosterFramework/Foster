@@ -133,7 +133,7 @@ public class Packer
 
 	public int Add(int index, string name, int width, int height, ReadOnlySpan<Color> pixels)
 	{
-		return Add(sources.Count, name, new RectInt(0, 0, width, height), width, pixels);
+		return Add(index, name, new RectInt(0, 0, width, height), width, pixels);
 	}
 
 	public int Add(int index, string name, RectInt clip, int stride, ReadOnlySpan<Color> pixels)
