@@ -3,25 +3,25 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace Bunnymark;
+namespace Froggymark;
 
 class Program
 {
 	public static void Main()
 	{
 		App.Register<Game>();
-		App.Run("Bunnymark", 1280, 720);
+		App.Run("Froggymark", 1280, 720);
 	}
 }
 
 class Game : Module
 {
-	private const int MaxBunnies = 1_000_000;
+	private const int MaxFrogs = 1_000_000;
 	private const int AddRemoveAmount = 5_000;
 	private const int DrawBatchSize = 32768;
 
-	private Bunny[] bunnies = new Bunny[MaxBunnies];
-	private int bunniesCount = 0;
+	private Frog[] frogs = new Frog[MaxFrogs];
+	private int frogCount = 0;
 	private Rng rng = new(1337);
 	private Mesh mesh = new();
 	private Vertex[] vertexArray = new Vertex[DrawBatchSize * 4];
@@ -37,8 +37,8 @@ class Game : Module
 		Time.FixedStep = false;
 		App.Resizable = false;
 
-		using var image = new Image(Path.Join("Assets", "wabbit_alpha.png"));
-		image.Premultiply();
+		using var image = new Image(Path.Join("Assets", "frog_knight.png"));
+		//image.Premultiply();
 		texture = new Texture(image);
 
 		font = new SpriteFont(Path.Join("Assets", "monogram.ttf"), 32);
@@ -74,51 +74,51 @@ class Game : Module
 
 	public override void Update()
 	{
-		// Spawn bunnies
+		// Spawn frogs
 		if (Input.Mouse.LeftDown)
 		{
 			for (int i = 0; i < AddRemoveAmount; i++)
 			{
-				if (bunniesCount < MaxBunnies)
+				if (frogCount < MaxFrogs)
 				{
-					bunnies[bunniesCount].Position = Input.Mouse.Position;
-					bunnies[bunniesCount].Speed.X = rng.Float(-250, 250) / 60.0f;
-					bunnies[bunniesCount].Speed.Y = rng.Float(-250, 250) / 60.0f;
-					bunnies[bunniesCount].Color = new Color(
+					frogs[frogCount].Position = Input.Mouse.Position;
+					frogs[frogCount].Speed.X = rng.Float(-250, 250) / 60.0f;
+					frogs[frogCount].Speed.Y = rng.Float(-250, 250) / 60.0f;
+					frogs[frogCount].Color = new Color(
 								rng.U8(50, 240),
 								rng.U8(80, 240),
 								rng.U8(100, 240),
 								255
 							);
-					bunniesCount++;
+					frogCount++;
 				}
 			}
 
 		}
-		// Remove bunnies
+		// Remove frogs
 		else if (Input.Mouse.RightDown)
 		{
-			bunniesCount = Math.Max(0, bunniesCount - AddRemoveAmount);
+			frogCount = Math.Max(0, frogCount - AddRemoveAmount);
 		}
 
-		// Update bunnies
+		// Update frogs
 		Vector2 halfSize = ((Vector2)texture.Size) / 2f;
 		Vector2 screenSize = new Vector2(App.WidthInPixels, App.HeightInPixels);
 
-		for (int i = 0; i < bunniesCount; i++)
+		for (int i = 0; i < frogCount; i++)
 		{
-			bunnies[i].Position += bunnies[i].Speed;
+			frogs[i].Position += frogs[i].Speed;
 
-			if (((bunnies[i].Position.X + halfSize.X) > screenSize.X) ||
-				((bunnies[i].Position.X + halfSize.X) < 0))
+			if (((frogs[i].Position.X + halfSize.X) > screenSize.X) ||
+				((frogs[i].Position.X + halfSize.X) < 0))
 			{
-				bunnies[i].Speed.X *= -1;
+				frogs[i].Speed.X *= -1;
 			}
 
-			if (((bunnies[i].Position.Y + halfSize.Y) > screenSize.Y) ||
-				((bunnies[i].Position.Y + halfSize.Y - 40) < 0))
+			if (((frogs[i].Position.Y + halfSize.Y) > screenSize.Y) ||
+				((frogs[i].Position.Y + halfSize.Y - 40) < 0))
 			{
-				bunnies[i].Speed.Y *= -1;
+				frogs[i].Speed.Y *= -1;
 			}
 		}
 	}
@@ -130,20 +130,20 @@ class Game : Module
 		Graphics.Clear(Color.White);
 
 		batcher.Clear();
-		batcher.Text(font, $"{bunniesCount} Bunnies : {frameCounter.FPS} FPS", new(8, -2), Color.Black);
+		batcher.Text(font, $"{frogCount} Frogs : {frameCounter.FPS} FPS", new(8, -2), Color.Black);
 		batcher.Render();
 
 		// Batching/batch size is important: too low = excessive draw calls, too high = slower gpu copies
-		for (int i = 0; i < bunniesCount; i += DrawBatchSize)
+		for (int i = 0; i < frogCount; i += DrawBatchSize)
 		{
-			var count = Math.Min(bunniesCount - i, DrawBatchSize);
+			var count = Math.Min(frogCount - i, DrawBatchSize);
 			if (Input.Keyboard.Down(Keys.Space))
 			{
-				RenderBunnyBatchCustom(i, count);
+				RenderBatchCustom(i, count);
 			}
 			else
 			{
-				RenderBunnyBatchFoster(i, count);
+				RenderBatchFoster(i, count);
 			}
 		}
 	}
@@ -152,19 +152,19 @@ class Game : Module
 	/// Plain Foster.
 	/// So simple, so fast.
 	/// </summary>
-	private void RenderBunnyBatchFoster(int from, int count)
+	private void RenderBatchFoster(int from, int count)
 	{
 		batcher.Clear();
 		for (int i = 0; i < count; i++)
 		{
-			var bunny = bunnies[i + from];
-			batcher.Image(texture, bunny.Position, bunny.Color);
+			var frog = frogs[i + from];
+			batcher.Image(texture, frog.Position, frog.Color);
 		}
 		batcher.Render();
 	}
 
 	/// <summary>
-	/// A tailor made solution for shoving bunnies into a gpu.
+	/// A tailor made solution for shoving frogs into a gpu.
 	/// Goes down a rabbit hole (ha) for a few extra frames:
 	/// - Smaller vertex format
 	/// - Simplified shader logic
@@ -173,20 +173,20 @@ class Game : Module
 	/// - One time shader uniform set per frame
 	/// - A lot of inlining (same result could be achieved with AggressiveInlining)
 	/// </summary>
-	private void RenderBunnyBatchCustom(int from, int count)
+	private void RenderBatchCustom(int from, int count)
 	{
 		for (int i = 0; i < count; i++)
 		{
-			var bunny = bunnies[i + from];
+			var frog = frogs[i + from];
 			var v = i * 4;
-			vertexArray[v].Col = bunny.Color;
-			vertexArray[v + 1].Col = bunny.Color;
-			vertexArray[v + 2].Col = bunny.Color;
-			vertexArray[v + 3].Col = bunny.Color;
-			vertexArray[v].Pos = bunny.Position;
-			vertexArray[v + 1].Pos = bunny.Position + new Vector2(texture.Width, 0);
-			vertexArray[v + 2].Pos = bunny.Position + new Vector2(texture.Width, texture.Height);
-			vertexArray[v + 3].Pos = bunny.Position + new Vector2(0, texture.Height);
+			vertexArray[v].Col = frog.Color;
+			vertexArray[v + 1].Col = frog.Color;
+			vertexArray[v + 2].Col = frog.Color;
+			vertexArray[v + 3].Col = frog.Color;
+			vertexArray[v].Pos = frog.Position;
+			vertexArray[v + 1].Pos = frog.Position + new Vector2(texture.Width, 0);
+			vertexArray[v + 2].Pos = frog.Position + new Vector2(texture.Width, texture.Height);
+			vertexArray[v + 3].Pos = frog.Position + new Vector2(0, texture.Height);
 		}
 
 		mesh.SetVertices<Vertex>(vertexArray.AsSpan(0, count * 4));
@@ -209,7 +209,7 @@ class Game : Module
 		command.Submit();
 	}
 
-	public struct Bunny
+	public struct Frog
 	{
 		public Vector2 Position;
 		public Vector2 Speed;

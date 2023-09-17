@@ -1,15 +1,15 @@
-﻿# Bunnymark
+﻿# Froggymark
 This serves as a naive test to find just how fast sprites can be pushed to the gpu. 
 
 **Use Release build without debugger for best results.**
 
 ## Controls
-- Left Mouse: Spawn bunnies
-- Right Mouse: Remove bunnies
+- Left Mouse: Spawn frogs
+- Right Mouse: Remove frogs
 - Space: Enable custom renderer for a few extra frames
 
 ## Results
-- 335k (405k w/ custom renderer) bunnies @ 60 fps on:
+- 340k (475k w/ custom renderer) frogs @ 60 fps on:
   - NVIDIA GeForce RTX 2060 with Max-Q Design/PCIe/SSE2
   - AMD Ryzen 9 4900HS
 
@@ -22,7 +22,7 @@ This serves as a naive test to find just how fast sprites can be pushed to the g
 | asset                | author      | license | notes |
 | :------------------- | :---------: | :------: | :---- |
 | monogram.ttf         | [datagoblin](https://datagoblin.itch.io/monogram/) | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) | |
-| wabbit_alpha.png     | ❔ | ❔ | |
+| frog_knight.png     |  [NoelFB](https://github.com/NoelFB/tiny_link/tree/main) | [MIT](https://github.com/NoelFB/tiny_link/blob/main/LICENSE) | |
 
 ## Disclaimer
-_You should never base your evaluation of any engine/framework on a bunnymark or any other benchmark alone, as an extremely specialized solution, such as this one, provides no indication of real world performance or usability._
+_You should never base your evaluation of any engine/framework on a single benchmark alone, as an extremely specialized solution, such as this one, provides no indication of real world performance or usability._
