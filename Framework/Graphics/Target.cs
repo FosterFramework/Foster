@@ -113,8 +113,8 @@ public class Target : IResource
 
 			foreach (var attachment in Attachments)
 				attachment.isDisposed = true;
-
-			Platform.FosterTargetDestroy(resource);
+				
+			Graphics.QueueDeleteResource(resource, Platform.FosterTargetDestroy);
 		}
 	}
 

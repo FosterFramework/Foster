@@ -187,6 +187,11 @@ public static class App
 	public static Action? OnExitRequested;
 
 	/// <summary>
+	/// The Main Thread that the Application was Run on
+	/// </summary>
+	public static int MainThreadID { get; private set; }
+
+	/// <summary>
 	/// Registers a Module that will be run within the Application once it has started.
 	/// If the Application is already running, the Module's Startup method will immediately be invoked.
 	/// </summary>
@@ -215,6 +220,8 @@ public static class App
 		Log.Info($"Foster: v{Version}");
 		Log.Info($"Platform: {RuntimeInformation.OSDescription} ({RuntimeInformation.OSArchitecture})");
 		Log.Info($"Framework: {RuntimeInformation.FrameworkDescription}");
+
+		MainThreadID = Thread.CurrentThread.ManagedThreadId;
 
 		if (fullscreen)
 			App.flags |= Platform.FosterFlags.FULLSCREEN;
@@ -291,6 +298,7 @@ public static class App
 			Time.Frame++;
 			Time.Advance(delta);
 
+			Graphics.Step();
 			Input.Step();
 			Platform.FosterPollEvents();
 			FramePool.NextFrame();

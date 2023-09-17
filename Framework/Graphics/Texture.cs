@@ -137,10 +137,10 @@ public class Texture : IResource
 	{
 		Debug.Assert(!IsTargetAttachment, "Cannot Dispose a Texture that is part of a Target");
 
-		if (!isDisposed)
+		if (!IsTargetAttachment && !isDisposed)
 		{
 			isDisposed = true;
-			Platform.FosterTextureDestroy(resource);
+			Graphics.QueueDeleteResource(resource, Platform.FosterTextureDestroy);
 		}
 	}
 }

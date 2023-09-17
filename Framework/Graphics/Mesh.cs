@@ -248,7 +248,7 @@ public class Mesh : IResource
 		if (!isDisposed)
 		{
 			isDisposed = true;
-			Platform.FosterMeshDestroy(resource);
+			Graphics.QueueDeleteResource(resource, Platform.FosterMeshDestroy);
 		}
 	}
 }

@@ -106,5 +106,42 @@ namespace Foster.Framework
 
 			Platform.FosterDraw(ref fc);
 		}
+
+		/// <summary>
+		/// Resource deletion queue.
+		/// TODO: This should be handled by the C platform renderer instead
+		/// </summary>
+		private static Queue<(IntPtr Resource, Action<IntPtr> Delete)> resourceDeleteQueue = new();
+
+		/// <summary>
+		/// Delete any resources that are queue'd up for deletion
+		/// </summary>
+		internal static void Step()
+		{
+			lock (resourceDeleteQueue)
+			{
+				while (resourceDeleteQueue.Count > 0)
+				{
+					var it = resourceDeleteQueue.Dequeue();
+					it.Delete(it.Resource);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Delete a Graphical resource, but ensure it's on the main thread
+		/// </summary>
+		internal static void QueueDeleteResource(IntPtr ptr, Action<IntPtr> deleteMethod)
+		{
+			if (Thread.CurrentThread.ManagedThreadId == App.MainThreadID)
+			{
+				deleteMethod(ptr);
+			}
+			else
+			{
+				lock (resourceDeleteQueue)
+					resourceDeleteQueue.Enqueue((ptr, deleteMethod));
+			}
+		}
 	}
 }

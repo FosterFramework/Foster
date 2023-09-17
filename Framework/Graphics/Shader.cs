@@ -304,7 +304,7 @@ public class Shader : IResource
 		if (!isDisposed)
 		{
 			isDisposed = true;
-			Platform.FosterShaderDestroy(resource);
+			Graphics.QueueDeleteResource(resource, Platform.FosterShaderDestroy);
 		}
 	}
 }
