@@ -5,7 +5,9 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Foster.Framework", "Framework\Foster.Framework.csproj", "{56CC3A01-3034-47DE-9EFA-5FE445FE8173}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Basic", "Samples\Basic\Basic.csproj", "{7FFD70B2-B337-477E-9F1E-4C791DCD75B9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Basic", "Samples\Basic\Basic.csproj", "{7FFD70B2-B337-477E-9F1E-4C791DCD75B9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{4F0E672E-B329-4A57-B5C4-1A41BFEA7782}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,5 +26,11 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7FFD70B2-B337-477E-9F1E-4C791DCD75B9} = {4F0E672E-B329-4A57-B5C4-1A41BFEA7782}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {755B23DD-0EA7-4D86-99FD-09CD78D4F936}
 	EndGlobalSection
 EndGlobal
