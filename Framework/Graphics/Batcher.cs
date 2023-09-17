@@ -53,7 +53,7 @@ public class Batcher : IDisposable
 	/// The current Scissor Value of the Batcher
 	/// </summary>
 	public RectInt? Scissor => currentBatch.Scissor;
-	
+
 	/// <summary>
 	/// The number of Triangles in the Batcher to be drawn
 	/// </summary>
@@ -159,7 +159,7 @@ public class Batcher : IDisposable
 			vertexPtr = IntPtr.Zero;
 			vertexCapacity = 0;
 		}
-		
+
 		if (indexPtr != IntPtr.Zero)
 		{
 			Marshal.FreeHGlobal(indexPtr);
@@ -221,7 +221,7 @@ public class Batcher : IDisposable
 
 		if (batches.Count <= 0 && currentBatch.Elements <= 0)
 			return;
-		
+
 		// upload our data if we've been modified since the last time we rendered
 		if (dirty)
 		{
@@ -253,7 +253,7 @@ public class Batcher : IDisposable
 			trimmed = batch.Scissor.Value.OverlapRect(trimmed.Value);
 		else if (batch.Scissor.HasValue)
 			trimmed = batch.Scissor;
-			
+
 		var texture = batch.Texture != null && !batch.Texture.IsDisposed ? batch.Texture : null;
 		batch.ShaderState.MatrixUniform.Set(matrix);
 		batch.ShaderState.TextureUniform.Set(texture);
@@ -341,7 +341,7 @@ public class Batcher : IDisposable
 		currentBatch.Layer = layer;
 		currentBatchInsert = insert;
 	}
-	
+
 	private void SetShader(ShaderState shaderState)
 	{
 		if (currentBatch.Elements == 0)
@@ -595,7 +595,7 @@ public class Batcher : IDisposable
 	{
 		mode = modeStack.Pop();
 	}
-	
+
 	#endregion
 
 	#region Line
@@ -654,12 +654,20 @@ public class Batcher : IDisposable
 		unsafe
 		{
 			var mode = new Color(0, 0, 255, 0);
+			var vertexArray = new Span<Vertex>((Vertex*)vertexPtr + vertexCount, 4);
 
-			Vertex* ptr = (Vertex*)vertexPtr + vertexCount;
-			*(ptr++) = new(Vector2.Transform(v0, Matrix), Vector2.Zero, color, mode);
-			*(ptr++) = new(Vector2.Transform(v1, Matrix), Vector2.Zero, color, mode);
-			*(ptr++) = new(Vector2.Transform(v2, Matrix), Vector2.Zero, color, mode);
-			*(ptr++) = new(Vector2.Transform(v3, Matrix), Vector2.Zero, color, mode);
+			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
+			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
+			vertexArray[2].Pos = Vector2.Transform(v2, Matrix);
+			vertexArray[3].Pos = Vector2.Transform(v3, Matrix);
+			vertexArray[0].Col = color;
+			vertexArray[1].Col = color;
+			vertexArray[2].Col = color;
+			vertexArray[3].Col = color;
+			vertexArray[0].Mode = mode;
+			vertexArray[1].Mode = mode;
+			vertexArray[2].Mode = mode;
+			vertexArray[3].Mode = mode;
 		}
 
 		vertexCount += 4;
@@ -672,13 +680,25 @@ public class Batcher : IDisposable
 
 		unsafe
 		{
-			Vertex* ptr = (Vertex*)vertexPtr + vertexCount;
+			var vertexArray = new Span<Vertex>((Vertex*)vertexPtr + vertexCount, 4);
 
-			*(ptr++) = new (Vector2.Transform(v0, Matrix), t0, color, mode);
-			*(ptr++) = new (Vector2.Transform(v1, Matrix), t1, color, mode);
-			*(ptr++) = new (Vector2.Transform(v2, Matrix), t2, color, mode);			
-			*(ptr++) = new (Vector2.Transform(v3, Matrix), t3, color, mode);
-			
+			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
+			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
+			vertexArray[2].Pos = Vector2.Transform(v2, Matrix);
+			vertexArray[3].Pos = Vector2.Transform(v3, Matrix);
+			vertexArray[0].Tex = t0;
+			vertexArray[1].Tex = t1;
+			vertexArray[2].Tex = t2;
+			vertexArray[3].Tex = t3;
+			vertexArray[0].Col = color;
+			vertexArray[1].Col = color;
+			vertexArray[2].Col = color;
+			vertexArray[3].Col = color;
+			vertexArray[0].Mode = mode;
+			vertexArray[1].Mode = mode;
+			vertexArray[2].Mode = mode;
+			vertexArray[3].Mode = mode;
+
 			if (currentBatch.FlipVerticalUV)
 				FlipVerticalUVs(vertexPtr, vertexCount, 4);
 		}
@@ -694,11 +714,20 @@ public class Batcher : IDisposable
 		unsafe
 		{
 			var mode = new Color(0, 0, 255, 0);
-			Vertex* ptr = (Vertex*)vertexPtr + vertexCount;
-			*(ptr++) = new (Vector2.Transform(v0, Matrix), Vector2.Zero, c0, mode);
-			*(ptr++) = new (Vector2.Transform(v1, Matrix), Vector2.Zero, c1, mode);
-			*(ptr++) = new (Vector2.Transform(v2, Matrix), Vector2.Zero, c2, mode);
-			*(ptr++) = new (Vector2.Transform(v3, Matrix), Vector2.Zero, c3, mode);
+			var vertexArray = new Span<Vertex>((Vertex*)vertexPtr + vertexCount, 4);
+
+			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
+			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
+			vertexArray[2].Pos = Vector2.Transform(v2, Matrix);
+			vertexArray[3].Pos = Vector2.Transform(v3, Matrix);
+			vertexArray[0].Col = c0;
+			vertexArray[1].Col = c1;
+			vertexArray[2].Col = c2;
+			vertexArray[3].Col = c3;
+			vertexArray[0].Mode = mode;
+			vertexArray[1].Mode = mode;
+			vertexArray[2].Mode = mode;
+			vertexArray[3].Mode = mode;
 		}
 
 		vertexCount += 4;
@@ -711,12 +740,25 @@ public class Batcher : IDisposable
 
 		unsafe
 		{
-			Vertex* ptr = (Vertex*)vertexPtr + vertexCount;
-			*(ptr++) = new(Vector2.Transform(v0, Matrix), t0, c0, mode);
-			*(ptr++) = new(Vector2.Transform(v1, Matrix), t1, c1, mode);
-			*(ptr++) = new(Vector2.Transform(v2, Matrix), t2, c2, mode);
-			*(ptr++) = new(Vector2.Transform(v3, Matrix), t3, c3, mode);
-			
+			var vertexArray = new Span<Vertex>((Vertex*)vertexPtr + vertexCount, 4);
+
+			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
+			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
+			vertexArray[2].Pos = Vector2.Transform(v2, Matrix);
+			vertexArray[3].Pos = Vector2.Transform(v3, Matrix);
+			vertexArray[0].Tex = t0;
+			vertexArray[1].Tex = t1;
+			vertexArray[2].Tex = t2;
+			vertexArray[3].Tex = t3;
+			vertexArray[0].Col = c0;
+			vertexArray[1].Col = c1;
+			vertexArray[2].Col = c2;
+			vertexArray[3].Col = c3;
+			vertexArray[0].Mode = mode;
+			vertexArray[1].Mode = mode;
+			vertexArray[2].Mode = mode;
+			vertexArray[3].Mode = mode;
+
 			if (currentBatch.FlipVerticalUV)
 				FlipVerticalUVs(vertexPtr, vertexCount, 4);
 		}
@@ -736,10 +778,17 @@ public class Batcher : IDisposable
 		unsafe
 		{
 			var mode = new Color(0, 0, 255, 0);
-			Vertex* ptr = (Vertex*)vertexPtr + vertexCount;
-			(*ptr++) = new(Vector2.Transform(v0, Matrix), Vector2.Zero, color, mode);
-			(*ptr++) = new(Vector2.Transform(v1, Matrix), Vector2.Zero, color, mode);
-			(*ptr++) = new(Vector2.Transform(v2, Matrix), Vector2.Zero, color, mode);
+			var vertexArray = new Span<Vertex>((Vertex*)vertexPtr + vertexCount, 3);
+
+			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
+			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
+			vertexArray[2].Pos = Vector2.Transform(v2, Matrix);
+			vertexArray[0].Col = color;
+			vertexArray[1].Col = color;
+			vertexArray[2].Col = color;
+			vertexArray[0].Mode = mode;
+			vertexArray[1].Mode = mode;
+			vertexArray[2].Mode = mode;
 		}
 
 		vertexCount += 3;
@@ -752,10 +801,20 @@ public class Batcher : IDisposable
 
 		unsafe
 		{
-			Vertex* ptr = (Vertex*)vertexPtr + vertexCount;
-			*(ptr++) = new(Vector2.Transform(v0, Matrix), uv0, color, mode);
-			*(ptr++) = new(Vector2.Transform(v1, Matrix), uv1, color, mode);
-			*(ptr++) = new(Vector2.Transform(v2, Matrix), uv2, color, mode);
+			var vertexArray = new Span<Vertex>((Vertex*)vertexPtr + vertexCount, 3);
+
+			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
+			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
+			vertexArray[2].Pos = Vector2.Transform(v2, Matrix);
+			vertexArray[0].Tex = uv0;
+			vertexArray[1].Tex = uv1;
+			vertexArray[2].Tex = uv2;
+			vertexArray[0].Col = color;
+			vertexArray[1].Col = color;
+			vertexArray[2].Col = color;
+			vertexArray[0].Mode = mode;
+			vertexArray[1].Mode = mode;
+			vertexArray[2].Mode = mode;
 
 			if (currentBatch.FlipVerticalUV)
 				FlipVerticalUVs(vertexPtr, vertexCount, 3);
@@ -772,10 +831,17 @@ public class Batcher : IDisposable
 		unsafe
 		{
 			var mode = new Color(0, 0, 255, 0);
-			Vertex* ptr = (Vertex*)vertexPtr + vertexCount;
-			*(ptr++) = new(Vector2.Transform(v0, Matrix), Vector2.Zero, c0, mode);
-			*(ptr++) = new(Vector2.Transform(v1, Matrix), Vector2.Zero, c1, mode);
-			*(ptr++) = new(Vector2.Transform(v2, Matrix), Vector2.Zero, c2, mode);
+			var vertexArray = new Span<Vertex>((Vertex*)vertexPtr + vertexCount, 3);
+
+			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
+			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
+			vertexArray[2].Pos = Vector2.Transform(v2, Matrix);
+			vertexArray[0].Col = c0;
+			vertexArray[1].Col = c1;
+			vertexArray[2].Col = c2;
+			vertexArray[0].Mode = mode;
+			vertexArray[1].Mode = mode;
+			vertexArray[2].Mode = mode;
 
 			if (currentBatch.FlipVerticalUV)
 				FlipVerticalUVs(vertexPtr, vertexCount, 3);
@@ -913,61 +979,61 @@ public class Batcher : IDisposable
 			{
 				EnsureIndexCapacity(indexCount + 30);
 
-				int* ptr = (int*)indexPtr + indexCount;
+				var indexArray = new Span<int>((int*)indexPtr + indexCount, 30);
 
 				// top quad
 				{
-					*(ptr++) = vertexCount + 00; // r0b
-					*(ptr++) = vertexCount + 03; // r1a
-					*(ptr++) = vertexCount + 05; // r1d
+					indexArray[00] = vertexCount + 00; // r0b
+					indexArray[01] = vertexCount + 03; // r1a
+					indexArray[02] = vertexCount + 05; // r1d
 
-					*(ptr++) = vertexCount + 00; // r0b
-					*(ptr++) = vertexCount + 05; // r1d
-					*(ptr++) = vertexCount + 01; // r0c
+					indexArray[03] = vertexCount + 00; // r0b
+					indexArray[04] = vertexCount + 05; // r1d
+					indexArray[05] = vertexCount + 01; // r0c
 				}
 
 				// left quad
 				{
-					*(ptr++) = vertexCount + 02; // r0d
-					*(ptr++) = vertexCount + 01; // r0c
-					*(ptr++) = vertexCount + 10; // r3b
+					indexArray[06] = vertexCount + 02; // r0d
+					indexArray[07] = vertexCount + 01; // r0c
+					indexArray[08] = vertexCount + 10; // r3b
 
-					*(ptr++) = vertexCount + 02; // r0d
-					*(ptr++) = vertexCount + 10; // r3b
-					*(ptr++) = vertexCount + 09; // r3a
+					indexArray[09] = vertexCount + 02; // r0d
+					indexArray[10] = vertexCount + 10; // r3b
+					indexArray[11] = vertexCount + 09; // r3a
 				}
 
 				// right quad
 				{
-					*(ptr++) = vertexCount + 05; // r1d
-					*(ptr++) = vertexCount + 04; // r1c
-					*(ptr++) = vertexCount + 07; // r2b
+					indexArray[12] = vertexCount + 05; // r1d
+					indexArray[13] = vertexCount + 04; // r1c
+					indexArray[14] = vertexCount + 07; // r2b
 
-					*(ptr++) = vertexCount + 05; // r1d
-					*(ptr++) = vertexCount + 07; // r2b
-					*(ptr++) = vertexCount + 06; // r2a
+					indexArray[15] = vertexCount + 05; // r1d
+					indexArray[16] = vertexCount + 07; // r2b
+					indexArray[17] = vertexCount + 06; // r2a
 				}
 
 				// bottom quad
 				{
-					*(ptr++) = vertexCount + 10; // r3b
-					*(ptr++) = vertexCount + 06; // r2a
-					*(ptr++) = vertexCount + 08; // r2d
+					indexArray[18] = vertexCount + 10; // r3b
+					indexArray[19] = vertexCount + 06; // r2a
+					indexArray[20] = vertexCount + 08; // r2d
 
-					*(ptr++) = vertexCount + 10; // r3b
-					*(ptr++) = vertexCount + 08; // r2d
-					*(ptr++) = vertexCount + 11; // r3c
+					indexArray[21] = vertexCount + 10; // r3b
+					indexArray[22] = vertexCount + 08; // r2d
+					indexArray[23] = vertexCount + 11; // r3c
 				}
 
 				// center quad
 				{
-					*(ptr++) = vertexCount + 01; // r0c
-					*(ptr++) = vertexCount + 05; // r1d
-					*(ptr++) = vertexCount + 06; // r2a
+					indexArray[24] = vertexCount + 01; // r0c
+					indexArray[25] = vertexCount + 05; // r1d
+					indexArray[26] = vertexCount + 06; // r2a
 
-					*(ptr++) = vertexCount + 01; // r0c
-					*(ptr++) = vertexCount + 06; // r2a
-					*(ptr++) = vertexCount + 10; // r3b
+					indexArray[27] = vertexCount + 01; // r0c
+					indexArray[28] = vertexCount + 06; // r2a
+					indexArray[29] = vertexCount + 10; // r3b
 				}
 
 				indexCount += 30;
@@ -980,25 +1046,31 @@ public class Batcher : IDisposable
 			{
 				EnsureVertexCapacity(vertexCount + 12);
 
-				Vertex* ptr = (Vertex*)vertexPtr + vertexCount;
+				var vertexArray = new Span<Vertex>((Vertex*)vertexPtr + vertexCount, 12);
 
-				var mode = new Color(0, 0, 255, 0);				
+				var mode = new Color(0, 0, 255, 0);
 
-				*(ptr++) = new Vertex(Vector2.Transform(r0_tr, Matrix), Vector2.Zero, color, mode); // 0
-				*(ptr++) = new Vertex(Vector2.Transform(r0_br, Matrix), Vector2.Zero, color, mode); // 1
-				*(ptr++) = new Vertex(Vector2.Transform(r0_bl, Matrix), Vector2.Zero, color, mode); // 2
+				vertexArray[00].Pos = Vector2.Transform(r0_tr, Matrix); // 0
+				vertexArray[01].Pos = Vector2.Transform(r0_br, Matrix); // 1
+				vertexArray[02].Pos = Vector2.Transform(r0_bl, Matrix); // 2
 
-				*(ptr++) = new Vertex(Vector2.Transform(r1_tl, Matrix), Vector2.Zero, color, mode); // 3
-				*(ptr++) = new Vertex(Vector2.Transform(r1_br, Matrix), Vector2.Zero, color, mode); // 4
-				*(ptr++) = new Vertex(Vector2.Transform(r1_bl, Matrix), Vector2.Zero, color, mode); // 5
+				vertexArray[03].Pos = Vector2.Transform(r1_tl, Matrix); // 3
+				vertexArray[04].Pos = Vector2.Transform(r1_br, Matrix); // 4
+				vertexArray[05].Pos = Vector2.Transform(r1_bl, Matrix); // 5
 
-				*(ptr++) = new Vertex(Vector2.Transform(r2_tl, Matrix), Vector2.Zero, color, mode); // 6
-				*(ptr++) = new Vertex(Vector2.Transform(r2_tr, Matrix), Vector2.Zero, color, mode); // 7
-				*(ptr++) = new Vertex(Vector2.Transform(r2_bl, Matrix), Vector2.Zero, color, mode); // 8
+				vertexArray[06].Pos = Vector2.Transform(r2_tl, Matrix); // 6
+				vertexArray[07].Pos = Vector2.Transform(r2_tr, Matrix); // 7
+				vertexArray[08].Pos = Vector2.Transform(r2_bl, Matrix); // 8
 
-				*(ptr++) = new Vertex(Vector2.Transform(r3_tl, Matrix), Vector2.Zero, color, mode); // 9
-				*(ptr++) = new Vertex(Vector2.Transform(r3_tr, Matrix), Vector2.Zero, color, mode); // 10
-				*(ptr++) = new Vertex(Vector2.Transform(r3_br, Matrix), Vector2.Zero, color, mode); // 11
+				vertexArray[09].Pos = Vector2.Transform(r3_tl, Matrix); // 9
+				vertexArray[10].Pos = Vector2.Transform(r3_tr, Matrix); // 10
+				vertexArray[11].Pos = Vector2.Transform(r3_br, Matrix); // 11
+
+				for (int i = 0; i < vertexArray.Length; i++)
+				{
+					vertexArray[i].Col = color;
+					vertexArray[i].Mode = mode;
+				}
 
 				vertexCount += 12;
 			}
@@ -1007,7 +1079,7 @@ public class Batcher : IDisposable
 			var right = 0.0f;
 			var up = -Calc.PI / 2;
 			var down = Calc.PI / 2;
-			
+
 			// top-left corner
 			if (r0 > 0)
 				SemiCircle(r0_br, up, -left, r0, Math.Max(3, (int)(r0 / 4)), color);
@@ -1513,7 +1585,7 @@ public class Batcher : IDisposable
 		if (justify.Y != 0)
 			at.Y -= justify.Y * font.HeightOf(text);
 
-		for (int i = 0; i < text.Length; i ++)
+		for (int i = 0; i < text.Length; i++)
 		{
 			if (text[i] == '\n')
 			{
@@ -1580,10 +1652,11 @@ public class Batcher : IDisposable
 
 		unsafe
 		{
-			int* ptr = (int*)indexPtr + indexCount;
-			*(ptr++) = vertexCount + 0;
-			*(ptr++) = vertexCount + 1;
-			*(ptr++) = vertexCount + 2;
+			var indexArray = new Span<int>((int*)indexPtr + indexCount, 3);
+
+			indexArray[0] = vertexCount + 0;
+			indexArray[1] = vertexCount + 1;
+			indexArray[2] = vertexCount + 2;
 		}
 
 		indexCount += 3;
@@ -1598,13 +1671,14 @@ public class Batcher : IDisposable
 
 		unsafe
 		{
-			int* ptr = (int*)indexPtr + indexCount;
-			*(ptr++) = vertexCount + 0;
-			*(ptr++) = vertexCount + 1;
-			*(ptr++) = vertexCount + 2;
-			*(ptr++) = vertexCount + 0;
-			*(ptr++) = vertexCount + 2;
-			*(ptr++) = vertexCount + 3;
+			var indexArray = new Span<int>((int*)indexPtr + indexCount, 6);
+
+			indexArray[0] = vertexCount + 0;
+			indexArray[1] = vertexCount + 1;
+			indexArray[2] = vertexCount + 2;
+			indexArray[3] = vertexCount + 0;
+			indexArray[4] = vertexCount + 2;
+			indexArray[5] = vertexCount + 3;
 		}
 
 		indexCount += 6;
