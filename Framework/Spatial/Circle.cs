@@ -72,7 +72,8 @@ public struct Circle : IProjectable
 	/// <summary>
 	/// Checks if the Circle overlaps with a Convex Shape, and returns their pushout vector
 	/// </summary>
-	public bool Overlaps(in IConvexShape shape, out Vector2 pushout)
+	public bool Overlaps<TConvex>(in TConvex shape, out Vector2 pushout)
+		where TConvex : IConvexShape
 	{
 		pushout = Vector2.Zero;
 
