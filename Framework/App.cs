@@ -127,8 +127,8 @@ public static class App
 	/// pixel size compared to the window size as a rough scaling value.
 	/// </summary>
 	public static Vector2 ContentScale => new Vector2(
-		WidthInPixels / Width,
-		HeightInPixels / Height);
+		WidthInPixels / (float)Width,
+		HeightInPixels / (float)Height);
 
 	/// <summary>
 	/// Whether the Window is Fullscreen or not
