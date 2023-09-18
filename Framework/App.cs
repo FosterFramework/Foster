@@ -120,9 +120,15 @@ public static class App
 
 	/// <summary>
 	/// Gets the Content Scale for the Application Window.
-	/// The content scale is the ratio between the current DPI and the platform's default DPI.
+	/// In the future this should try to use the Display DPI, however the SDL2
+	/// implementation doesn't have very reliable values across platforms.
+	/// (See here: https://wiki.libsdl.org/SDL2/SDL_GetDisplayDPI#remarks)
+	/// Until this has a better underlying solution we are just using the
+	/// pixel size compared to the window size as a rough scaling value.
 	/// </summary>
-	public static Vector2 ContentScale => Vector2.One * 2.0f;
+	public static Vector2 ContentScale => new Vector2(
+		WidthInPixels / Width,
+		HeightInPixels / Height);
 
 	/// <summary>
 	/// Whether the Window is Fullscreen or not
