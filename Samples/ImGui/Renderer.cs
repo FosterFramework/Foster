@@ -261,6 +261,7 @@ public static class Renderer
 	public static void Shutdown()
 	{
 		ImGui.DestroyContext(context);
+		context = IntPtr.Zero;
 	}
 
 	/// <summary>
