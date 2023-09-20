@@ -6,6 +6,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PackageId>FosterFramework</PackageId>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>Foster</Title>
+    <Authors>Noel Berry</Authors>
+    <Product>Foster</Product>
+    <Description>A small 2D cross-platform Game Framework</Description>
+    <PackageProjectUrl>https://github.com/NoelFB/Foster</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/NoelFB/Foster</RepositoryUrl>
+    <Version>0.1.0-alpha</Version>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
   
   <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
@@ -24,6 +36,17 @@
     <Content Include="$(ProjectDir)../Platform/libs/osx/libFosterPlatform.dylib">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
