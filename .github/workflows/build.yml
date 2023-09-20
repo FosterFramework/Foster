@@ -24,7 +24,7 @@ jobs:
         dotnet-version: '7.0.x'
 
     - name: Build/Pack
-      run: dotnet pack Alimer.sln --configuration Release -p:Packing=true
+      run: dotnet pack Foster.sln --configuration Release
 
     - name: Publish to NuGet
       if: github.event_name == 'push'
