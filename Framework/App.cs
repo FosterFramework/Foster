@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Numerics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -22,7 +23,7 @@ public static class App
 	/// <summary>
 	/// Foster Version Number
 	/// </summary>
-	public static readonly Version Version = new(0, 1, 0);
+	public static readonly Version Version = typeof(App).Assembly.GetName().Version!;
 
 	/// <summary>
 	/// If the Application is currently running
@@ -223,7 +224,7 @@ public static class App
 		Debug.Assert(!Running, "Application is already running");
 		Debug.Assert(!Exiting, "Application is still exiting");
 
-		Log.Info($"Foster: v{Version}");
+		Log.Info($"Foster: v{Version.Major}.{Version.Minor}.{Version.Build}");
 		Log.Info($"Platform: {RuntimeInformation.OSDescription} ({RuntimeInformation.OSArchitecture})");
 		Log.Info($"Framework: {RuntimeInformation.FrameworkDescription}");
 
