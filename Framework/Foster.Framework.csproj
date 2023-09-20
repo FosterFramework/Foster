@@ -18,6 +18,7 @@
     <RepositoryUrl>https://github.com/NoelFB/Foster</RepositoryUrl>
     <Version>0.1.0-alpha</Version>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
+	<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
   
   <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
