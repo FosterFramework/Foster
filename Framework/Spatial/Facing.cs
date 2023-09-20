@@ -6,7 +6,7 @@ namespace Foster.Framework;
 /// A left/right struct, where left < 0 and right >= 0.
 /// Useful for 2D Platformers.
 /// </summary>
-public readonly struct Facing
+public readonly struct Facing : IEquatable<Facing>
 {
 	public static readonly Facing Right = new(1);
 	public static readonly Facing Left = new(-1);
@@ -28,5 +28,7 @@ public readonly struct Facing
 
 	public override int GetHashCode() => Sign;
 	public override bool Equals(object? obj) =>
-		obj != null && obj is Facing f && f == this; 
+		obj != null && obj is Facing f && f == this;
+
+    public bool Equals(Facing other) => this == other;
 }

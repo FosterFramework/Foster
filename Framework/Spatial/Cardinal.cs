@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace Foster.Framework;
 
-public readonly struct Cardinal
+public readonly struct Cardinal : IEquatable<Cardinal>
 {
 	public const int RightValue = 0;
 	public const int DownValue = 1;
@@ -110,7 +110,9 @@ public readonly struct Cardinal
 		return y < 0 ? Up : Down;
 	}
 
-	public static IEnumerable<Cardinal> All
+    public bool Equals(Cardinal other) => this == other;
+
+    public static IEnumerable<Cardinal> All
 	{
 		get
 		{
