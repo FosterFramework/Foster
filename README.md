@@ -3,10 +3,6 @@
 </p>
 
 # Foster
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/NoelFB/Foster/blob/main/LICENSE)
-[![Build status](https://github.com/NoelFB/Foster/workflows/Build/badge.svg)](https://github.com/NoelFB/Foster/actions)
-
 Foster is cross-platform game framework made in C#.
 
 _★ very work in progress! likely to have frequent, breaking changes! please use at your own risk! ★_
