@@ -415,7 +415,7 @@ bool FosterGetFocused()
 {
 	FOSTER_ASSERT_RUNNING_RET(FosterGetClipboard, false);
 	Uint32 flags = SDL_GetWindowFlags(fstate.window);
-	return flags & SDL_WINDOW_INPUT_FOCUS != 0;
+	return (flags & (SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS)) != 0;
 }
 
 unsigned char* FosterImageLoad(const unsigned char* memory, int length, int* w, int* h)
