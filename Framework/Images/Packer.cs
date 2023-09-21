@@ -146,7 +146,7 @@ public class Packer
 		{
 			// TOP:
 			for (int y = clip.Top; y < clip.Bottom; y++)
-				for (int x = clip.Left, s = y * stride; x < clip.Right; x++, s++)
+				for (int x = clip.Left, s = left + y * stride; x < clip.Right; x++, s++)
 					if (pixels[s].A > 0)
 					{
 						top = y;
@@ -170,7 +170,7 @@ public class Packer
 					}
 				BOTTOM:
 			for (int y = clip.Bottom - 1; y >= top; y--)
-				for (int x = left, s = x + y * stride; x < right; x++, s++)
+				for (int x = left, s = left + y * stride; x < right; x++, s++)
 					if (pixels[s].A > 0)
 					{
 						bottom = y + 1;
