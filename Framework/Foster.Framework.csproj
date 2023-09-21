@@ -7,7 +7,6 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PackageId>FosterFramework</PackageId>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>Foster</Title>
     <Authors>Noel Berry</Authors>
     <Product>Foster</Product>
@@ -18,7 +17,7 @@
     <RepositoryUrl>https://github.com/NoelFB/Foster</RepositoryUrl>
     <Version>0.1.0-alpha</Version>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-	<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageOutputPath>$(SolutionDir)artifacts/</PackageOutputPath>
   </PropertyGroup>
   
   <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
