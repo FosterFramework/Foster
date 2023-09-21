@@ -1,0 +1,31 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - 'main'
+    paths-ignore:
+      - '*.md'
+  pull_request:
+    paths-ignore:
+      - '*.md'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 7 SDK
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '7.0.x'
+
+    - name: Build/Pack
+      run: dotnet pack Foster.sln --configuration Release
+
+    - name: Publish to NuGet
+      if: github.event_name == 'push'
+      run: dotnet nuget push artifacts/**/*.nupkg -k ${{secrets.NUGET_TOKEN}} --skip-duplicate --source https://api.nuget.org/v3/index.json
