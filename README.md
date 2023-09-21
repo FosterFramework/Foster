@@ -1,3 +1,7 @@
+<p align="center">
+<img width="480" src="Foster.png" alt="Foster logo">
+</p>
+
 # Foster
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/NoelFB/Foster/blob/main/LICENSE)
