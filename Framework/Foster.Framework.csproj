@@ -6,47 +6,42 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <PackageId>FosterFramework</PackageId>
     <Title>Foster</Title>
-    <Authors>Noel Berry</Authors>
     <Product>Foster</Product>
+    <Version>0.1.1-alpha</Version>
+    <Authors>Noel Berry</Authors>
     <Description>A small 2D cross-platform Game Framework</Description>
-    <PackageProjectUrl>https://github.com/NoelFB/Foster</PackageProjectUrl>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/NoelFB/Foster</RepositoryUrl>
-    <Version>0.1.0-alpha</Version>
+    <PackageId>FosterFramework</PackageId>
+    <PackageProjectUrl>https://github.com/NoelFB/Foster</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageOutputPath>$(SolutionDir)artifacts/</PackageOutputPath>
   </PropertyGroup>
-  
-  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
-    <Content Include="$(ProjectDir)../Platform/libs/x64/FosterPlatform.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+
+  <PropertyGroup>
+    <NativeLibsDir>$(ProjectDir)..\Platform\libs\</NativeLibsDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="$(NativeLibsDir)x64\FosterPlatform.dll">
+      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Windows'))">PreserveNewest</CopyToOutputDirectory>
+      <PackagePath>runtimes\win-x64\native</PackagePath>
+      <Pack>True</Pack>
+      <Link>FosterPlatform.dll</Link>
     </Content>
-  </ItemGroup>
-  
-  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
-    <Content Include="$(ProjectDir)../Platform/libs/lib64/libFosterPlatform.so">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  
-  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
-    <Content Include="$(ProjectDir)../Platform/libs/osx/libFosterPlatform.dylib">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <Content Include="$(NativeLibsDir)lib64\libFosterPlatform.so">
+      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux'))">PreserveNewest</CopyToOutputDirectory>
+      <PackagePath>runtimes\linux-x64\native</PackagePath>
+      <Pack>True</Pack>
+      <Link>libFosterPlatform.so</Link>
     </Content>
   </ItemGroup>
   
   <ItemGroup>
-    <None Include="..\LICENSE">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-    <None Include="..\README.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
+    <None Include="$(ProjectDir)..\LICENSE" Pack="true" PackagePath="/"/>
+    <None Include="$(ProjectDir)..\README.md" Pack="true" PackagePath="/"/>
   </ItemGroup>
 
 </Project>
