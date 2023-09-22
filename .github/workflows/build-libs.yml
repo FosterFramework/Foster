@@ -18,11 +18,11 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            lib: x64
-          - os: macos-latest
-            lib: osx
+            lib: x64/FosterPlatform.dll
+          #- os: macos-latest
+          #  lib: osx/libFosterPlatform.dylib
           - os: ubuntu-latest
-            lib: lib64
+            lib: lib64/libFosterPlatform.so
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
@@ -38,3 +38,21 @@ jobs:
         with:
           name: ${{matrix.os}}-build
           path: Platform/libs/${{matrix.lib}}
+  UpdateLibs:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.0.0
+      - name: Download windows lib
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-latest-build
+          path: Platform/libs/x64
+      - name: Download ubuntu lib
+        uses: actions/download-artifact@v3
+        with:
+          name: ubuntu-latest-build
+          path: Platform/libs/lib64
+      - name: Display structure of downloaded files
+        run: ls -R
+        working-directory: Platform/libs
