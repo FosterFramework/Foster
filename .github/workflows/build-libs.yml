@@ -1,25 +1,40 @@
+name: Build Libs
+
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - 'Platform/**'
+      - '!Platform/libs/**'
+  pull_request:
+    paths:
+      - 'Platform/**'
+      - '!Platform/libs/**'
 jobs:
   Build:
     strategy:
       matrix:
         include:
           - os: windows-latest
+            lib: x64
           - os: macos-latest
+            lib: osx
           - os: ubuntu-latest
+            lib: lib64
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3.5.3
+        uses: actions/checkout@v4.0.0
       - name: Get CMake
-        uses: lukka/get-cmake@v3.26.4
+        uses: lukka/get-cmake@v3.27.4
       - name: CMake Configure
         run: cmake -B build -S Platform
       - name: CMake Build
         run: cmake --build build --config Release
       - name: Publish Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: ${{matrix.os}}-build
-          path: build
+          path: Platform/libs/${{matrix.lib}}
