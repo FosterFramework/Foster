@@ -1,0 +1,25 @@
+on:
+  workflow_dispatch:
+jobs:
+  Build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+          - os: macos-latest
+          - os: ubuntu-latest
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3.5.3
+      - name: Get CMake
+        uses: lukka/get-cmake@v3.26.4
+      - name: CMake Configure
+        run: cmake -B build -S Platform
+      - name: CMake Build
+        run: cmake --build build --config Release
+      - name: Publish Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{matrix.os}}-build
+          path: build
