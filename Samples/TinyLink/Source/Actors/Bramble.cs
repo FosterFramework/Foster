@@ -12,8 +12,8 @@ public class Bramble : Actor
 		Play("idle");
 	}
 
-    public override void OnPerformHit(Actor hitting) => Pop();
-    public override void OnWasHit(Actor by) => Pop();
+	public override void OnPerformHit(Actor hitting) => Pop();
+	public override void OnWasHit(Actor by) => Pop();
 
 	public void Pop()
 	{

@@ -29,27 +29,27 @@ public class Orb : Actor
 		}
 	}
 
-    public override void Update()
-    {
-        base.Update();
+	public override void Update()
+	{
+		base.Update();
 
 		var diff = (Target - Position).Normalized();
 		Velocity = diff * Speed;
-    }
+	}
 
-    public override void Destroyed()
-    {
+	public override void Destroyed()
+	{
 		Game.Create<Pop>(Position);
-    }
+	}
 
-    public override void OnWasHit(Actor by)
-    {
+	public override void OnWasHit(Actor by)
+	{
 		TowardsPlayer = !TowardsPlayer;
 		Speed += 40;
-    }
+	}
 
-    public override void OnPerformHit(Actor hitting)
-    {
+	public override void OnPerformHit(Actor hitting)
+	{
 		Game.Destroy(this);
-    }
+	}
 }

@@ -56,11 +56,11 @@ public class GhostFrog : Actor
 		SetState(States.Waiting);
 	}
 
-    public override void Added()
-    {
-        base.Added();
+	public override void Added()
+	{
+		base.Added();
 		home = Position;
-    }
+	}
 
 	private IEnumerator<float> WaitingRoutine()
 	{
@@ -273,9 +273,9 @@ public class GhostFrog : Actor
 		Game.Destroy(this);
 	}
 
-    public override void Update()
-    {
-        base.Update();
+	public override void Update()
+	{
+		base.Update();
 
 		var player = Game.GetFirst(Masks.Player);
 		if (player != null)
@@ -303,7 +303,7 @@ public class GhostFrog : Actor
 			Shift.Y = 0;
 
 		lastPosition = Position;
-    }
+	}
 
 	private void SetState(States nextState)
 	{
@@ -312,8 +312,8 @@ public class GhostFrog : Actor
 		routine = stateRoutines[(int)state]();
 	}
 
-    public override void OnWasHit(Actor by)
-    {
+	public override void OnWasHit(Actor by)
+	{
 		if (health > 0)
 		{
 			health--;
@@ -327,5 +327,5 @@ public class GhostFrog : Actor
 				SetState(States.ReadyingAttack);
 			}
 		}
-    }
+	}
 }

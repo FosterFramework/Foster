@@ -47,9 +47,9 @@ public class Player : Actor
 		Play("sword");
 	}
 
-    public override void Update()
-    {
-        base.Update();
+	public override void Update()
+	{
+		base.Update();
 
 		// update grounded state
 		var nowGrounded = Velocity.Y >= 0 && Grounded();
@@ -61,21 +61,21 @@ public class Player : Actor
 		var wasState = State;
 
 		// state control
-        switch (State)
-        {
-            case States.Normal:
+		switch (State)
+		{
+			case States.Normal:
 				NormalState();
-                break;
-            case States.Attack:
+				break;
+			case States.Attack:
 				AttackState();
-                break;
-            case States.Hurt:
+				break;
+			case States.Hurt:
 				HurtState();
-                break;
-            case States.Start:
+				break;
+			case States.Start:
 				StartState();
-                break;
-        }
+				break;
+		}
 
 		// ducking collider(s)
 		if (ducking && State != States.Normal)
@@ -135,7 +135,7 @@ public class Player : Actor
 		stateDuration += Time.Delta;
 		if (State != wasState)
 			stateDuration = 0.0f;
-    }
+	}
 
 	public void NormalState()
 	{
@@ -262,8 +262,8 @@ public class Player : Actor
 			State = States.Normal;
 	}
 
-    public override void OnWasHit(Actor by)
-    {
+	public override void OnWasHit(Actor by)
+	{
 		Game.Hitstun(0.1f);
 		Game.Shake(0.1f);
 
@@ -272,5 +272,5 @@ public class Player : Actor
 		Velocity = new Vector2(-Facing * 100, -80);
 		State = States.Hurt;
 		Health--;
-    }
+	}
 }

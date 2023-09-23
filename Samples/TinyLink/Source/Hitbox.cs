@@ -41,31 +41,31 @@ public readonly struct Hitbox
 	public bool Overlaps(in RectInt rect)
 		=> Overlaps(Point2.Zero, new Hitbox(rect));
 
-    public bool Overlaps(in Hitbox other) 
+	public bool Overlaps(in Hitbox other) 
 		=> Overlaps(Point2.Zero, other);
 
 	public bool Overlaps(in Point2 offset, in Hitbox other)
 	{
-        switch (Shape)
-        {
-            case Shapes.Rect:
-                switch (other.Shape)
-                {
-                    case Shapes.Rect: return RectToRect(rect + offset, other.rect);
-                    case Shapes.Grid: return RectToGrid(rect + offset, other.grid!);
-                }
-                break;
-            case Shapes.Grid:
-                switch (other.Shape)
-                {
-                    case Shapes.Rect: return RectToGrid(other.rect - offset, grid!);
-                    case Shapes.Grid: throw new NotImplementedException("Grid->Grid overlap not implemented!");
-                }
-                break;
-        }
+		switch (Shape)
+		{
+			case Shapes.Rect:
+				switch (other.Shape)
+				{
+					case Shapes.Rect: return RectToRect(rect + offset, other.rect);
+					case Shapes.Grid: return RectToGrid(rect + offset, other.grid!);
+				}
+				break;
+			case Shapes.Grid:
+				switch (other.Shape)
+				{
+					case Shapes.Rect: return RectToGrid(other.rect - offset, grid!);
+					case Shapes.Grid: throw new NotImplementedException("Grid->Grid overlap not implemented!");
+				}
+				break;
+		}
 
 		throw new NotImplementedException();
-    }
+	}
 
 	private static bool RectToRect(in RectInt a, in RectInt b)
 	{

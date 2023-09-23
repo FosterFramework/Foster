@@ -16,9 +16,9 @@ public class Mosquito : Actor
 		Play("fly");
 	}
 
-    public override void Update()
-    {
-        base.Update();
+	public override void Update()
+	{
+		base.Update();
 
 		if (Game.GetFirst(Masks.Player) is Actor player)
 		{
@@ -36,10 +36,10 @@ public class Mosquito : Actor
 		}
 
 		Velocity.Y = MathF.Sin(Timer * 4) * 10;
-    }
+	}
 
-    public override void OnWasHit(Actor by)
-    {
+	public override void OnWasHit(Actor by)
+	{
 		Health--;
 
 		if (Health <= 0)
@@ -52,5 +52,5 @@ public class Mosquito : Actor
 			var sign = MathF.Sign(Position.X - by.Position.X);
 			Velocity.X = sign * 140;
 		}
-    }
+	}
 }

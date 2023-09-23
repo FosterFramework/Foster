@@ -11,11 +11,11 @@ public class Pop : Actor
 		Depth = -20;
 	}
 
-    public override void Update()
-    {
-        base.Update();
+	public override void Update()
+	{
+		base.Update();
 
 		if (IsFinishedPlaying())
 			Game.Destroy(this);
-    }
+	}
 }

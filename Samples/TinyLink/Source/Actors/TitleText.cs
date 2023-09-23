@@ -8,11 +8,11 @@ namespace TinyLink;
 /// </summary>
 public class TitleText : Actor
 {
-    public override void Render(Batcher batcher)
-    {
+	public override void Render(Batcher batcher)
+	{
 		if (Assets.Font != null && Game.CurrentRoom != null)
 		{
 			batcher.Text(Assets.Font, Game.CurrentRoom.Text, Vector2.Zero, Vector2.One * 0.50f, Color.White);
 		}
-    }
+	}
 }

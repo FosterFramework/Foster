@@ -135,17 +135,17 @@ public class Manager : Module
 	private char tileTypePlacing;
 	private bool tilePlacing;
 
-    public override void Startup()
-    {
+	public override void Startup()
+	{
 		Assets.Load();
 		Controls.Init();
 		Factory.RegisterTypes();
 
 		game = new Game(cell);
-    }
+	}
 
-    public override void Update()
-    {
+	public override void Update()
+	{
 		// Misc. Hotkeys
 		if (Input.Keyboard.Pressed(Keys.F1) && game == null)
 			Reload();
@@ -189,17 +189,17 @@ public class Manager : Module
 			// draw to screen
 			batcher.PopMatrix();
 		}
-    }
+	}
 
-    public override void Render()
-    {
+	public override void Render()
+	{
 		// draw the main UI first
-        Graphics.Clear(0x2e1426);
+		Graphics.Clear(0x2e1426);
 		batcher.Render();
 
 		// draw game on top if it exists
 		game?.Render((RectInt)(WorkspaceRect.Inflate(-BoxPadding) * Scale));
-    }
+	}
 
 	private void Reload()
 	{

@@ -17,9 +17,9 @@ public class Spitter : Actor
 		Play("idle");
 	}
 
-    public override void Update()
-    {
-        base.Update();
+	public override void Update()
+	{
+		base.Update();
 
 		timer -= Time.Delta;
 		if (timer <= 0)
@@ -33,12 +33,12 @@ public class Spitter : Actor
 
 		if (IsPlaying("shoot") && IsFinishedPlaying())
 			Play("idle");
-    }
+	}
 
-    public override void OnWasHit(Actor by)
-    {
+	public override void OnWasHit(Actor by)
+	{
 		Game.Hitstun(0.1f);
 		Game.Destroy(this);
 		Game.Create<Pop>(Position + new Point2(0, -4));
-    }
+	}
 }

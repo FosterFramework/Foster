@@ -24,9 +24,9 @@ public class Door : Actor
 			Game.Create<Pop>(Position + new Point2(0, -8));
 	}
 
-    public override void Update()
-    {
-        base.Update();
+	public override void Update()
+	{
+		base.Update();
 
 		// wait to appear
 		if (!Visible)
@@ -56,5 +56,5 @@ public class Door : Actor
 				delay += Time.Delta;
 			}
 		}
-    }
+	}
 }

@@ -30,17 +30,17 @@ public class Game
 	public Point2 Cell => room?.Cell ?? Point2.Zero;
 	public Room? CurrentRoom => room;
 
-    public Game(Point2 start)
-    {
+	public Game(Point2 start)
+	{
 		if (Assets.Rooms.TryGetValue(start, out room))
 		{
 			Camera = new Vector2(room.Cell.X * Width, room.Cell.Y * Height);
 			LoadRoom(room);
 		}
-    }
+	}
 
-    public void Update()
-    {
+	public void Update()
+	{
 		// Don't run normal gameplay loop if no room is loaded
 		if (room == null)
 			return;
@@ -93,10 +93,10 @@ public class Game
 			nextRoom = null;
 			Hitstun(0.1f);
 		}
-    }
+	}
 
-    public void Render(in RectInt viewport)
-    {
+	public void Render(in RectInt viewport)
+	{
 		// draw gameplay to screen
 		{
 			Screen.Clear(0x150e22);
@@ -148,17 +148,17 @@ public class Game
 			Batcher.Render();
 			Batcher.Clear();
 		}
-    }
+	}
 
 	public T Create<T>(Point2? position = null) where T : Actor, new()
 	{
-        var instance = new T
-        {
-            Game = this,
-            Position = position ?? Point2.Zero
-        };
+		var instance = new T
+		{
+			Game = this,
+			Position = position ?? Point2.Zero
+		};
 		instance.Added();
-        Actors.Add(instance);
+		Actors.Add(instance);
 		return instance;
 	}
 

@@ -14,9 +14,9 @@ public class Bullet : Actor
 		Depth = -5;
 	}
 
-    public override void Update()
-    {
-        base.Update();
+	public override void Update()
+	{
+		base.Update();
 
 		Velocity.Y += Gravity * Time.Delta;
 
@@ -25,13 +25,13 @@ public class Bullet : Actor
 
 		if (Timer > 3.0f)
 			Game.Destroy(this);
-    }
+	}
 
-    public override void OnCollideX() => Game.Destroy(this);
-    public override void OnCollideY() => Velocity.Y = -60;
+	public override void OnCollideX() => Game.Destroy(this);
+	public override void OnCollideY() => Velocity.Y = -60;
 
-    public override void OnPerformHit(Actor hitting) => Pop();
-    public override void OnWasHit(Actor by) => Pop();
+	public override void OnPerformHit(Actor hitting) => Pop();
+	public override void OnWasHit(Actor by) => Pop();
 
 	public void Pop()
 	{

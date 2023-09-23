@@ -18,9 +18,9 @@ public class Blob : Actor
 		Play("fly");
 	}
 
-    public override void Update()
-    {
-        base.Update();
+	public override void Update()
+	{
+		base.Update();
 
 		Velocity.Y += 300 * Time.Delta;
 
@@ -57,10 +57,10 @@ public class Blob : Actor
 				Velocity.X = Facing * 40;
 			}
 		}
-    }
+	}
 
-    public override void OnWasHit(Actor by)
-    {
+	public override void OnWasHit(Actor by)
+	{
 		Health--;
 
 		if (Health <= 0)
@@ -73,5 +73,5 @@ public class Blob : Actor
 			var sign = MathF.Sign(Position.X - by.Position.X);
 			Velocity.X = sign * 120;
 		}
-    }
+	}
 }
