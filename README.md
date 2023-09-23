@@ -13,7 +13,12 @@ _★ very work in progress! likely to have frequent, breaking changes! please us
 
 ## dependencies
  - [dotnet 7.0](https://dotnet.microsoft.com/en-us/download/dotnet/7.0) and [C# 11](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-11)
- - [SDL2](https://github.com/libsdl-org/sdl) is the only external dependency, which is required by the Platform library. By default this is statically compiled.
+ - [SDL2](https://github.com/libsdl-org/sdl) is the only external dependency, which is required by the [Platform library](https://github.com/NoelFB/Foster/tree/main/Platform). By default this is statically compiled.
+
+## platform library
+ - The Platform library is a simple C library that implements native methods required to run the application.
+ - By defauly it is currently built for 64-bit Linux and Windows
+ - To add support for more platforms, you need to build the [Platform library](https://github.com/NoelFB/Foster/tree/main/Platform) and then include it in [Foster.Framework.csproj](https://github.com/NoelFB/Foster/blob/main/Framework/Foster.Framework.csproj#L27)
 
 ## rendering
  - implemented in OpenGL for Linux/Mac/Windows and D3D11 for Windows.
