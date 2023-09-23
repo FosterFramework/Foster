@@ -17,7 +17,7 @@ _★ very work in progress! likely to have frequent, breaking changes! please us
 
 ## platform library
  - The Platform library is a simple C library that implements native methods required to run the application.
- - By defauly it is currently built for 64-bit Linux, MacOS, and Windows
+ - By default it is currently built for 64-bit Linux, MacOS, and Windows
  - To add support for more platforms, you need to build the [Platform library](https://github.com/NoelFB/Foster/tree/main/Platform) and then include it in [Foster.Framework.csproj](https://github.com/NoelFB/Foster/blob/main/Framework/Foster.Framework.csproj#L27)
 
 ## rendering
