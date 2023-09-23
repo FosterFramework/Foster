@@ -89,9 +89,9 @@ public class Image : IDisposable
 
 	public Image(string file)
 	{
-        using var stream = File.OpenRead(file);
-        Load(stream);
-    }
+		using var stream = File.OpenRead(file);
+		Load(stream);
+	}
 
 	public Image(Stream stream)
 	{

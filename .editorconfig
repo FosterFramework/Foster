@@ -1,0 +1,18 @@
+# top-most EditorConfig file
+root = true
+
+# Unix-style newlines with a newline ending every file
+[*]
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# use tabs by default for C#/C code
+[*.{cs,hpp,cpp,c,h}]
+indent_style = tab
+indent_size = 4
+
+# use 2-spaces for csproj
+[*.{csproj,vbproj,vcxproj,vcxproj.filters,proj,nativeproj,locproj}]
+indent_style = space
+indent_size = 2

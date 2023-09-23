@@ -30,5 +30,5 @@ public readonly struct Facing : IEquatable<Facing>
 	public override bool Equals(object? obj) =>
 		obj != null && obj is Facing f && f == this;
 
-    public bool Equals(Facing other) => this == other;
+	public bool Equals(Facing other) => this == other;
 }

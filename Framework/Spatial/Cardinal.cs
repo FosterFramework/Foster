@@ -28,7 +28,7 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 	public Cardinal TurnLeft => new ((Value + 3) % 4);
 
 	public bool Horizontal => Value % 2 == 0;
-	public bool Vertical => Value % 2 == 1;    
+	public bool Vertical => Value % 2 == 1;	
 
 	public int X => Value switch
 		{
@@ -110,9 +110,9 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 		return y < 0 ? Up : Down;
 	}
 
-    public bool Equals(Cardinal other) => this == other;
+	public bool Equals(Cardinal other) => this == other;
 
-    public static IEnumerable<Cardinal> All
+	public static IEnumerable<Cardinal> All
 	{
 		get
 		{

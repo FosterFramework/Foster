@@ -193,12 +193,12 @@ public struct Quad : IConvexShape
 
 	public Rect BoundingRect()
 	{
-        var bounds = new Rect
-        {
-            X = Math.Min(a.X, Math.Min(b.X, Math.Min(c.X, d.X))),
-            Y = Math.Min(a.Y, Math.Min(b.Y, Math.Min(c.Y, d.Y)))
-        };
-        bounds.Width = Math.Max(a.X, Math.Max(b.X, Math.Max(c.X, d.X))) - bounds.X;
+		var bounds = new Rect
+		{
+			X = Math.Min(a.X, Math.Min(b.X, Math.Min(c.X, d.X))),
+			Y = Math.Min(a.Y, Math.Min(b.Y, Math.Min(c.Y, d.Y)))
+		};
+		bounds.Width = Math.Max(a.X, Math.Max(b.X, Math.Max(c.X, d.X))) - bounds.X;
 		bounds.Height = Math.Max(a.Y, Math.Max(b.Y, Math.Max(c.Y, d.Y))) - bounds.Y;
 		return bounds;
 	}
