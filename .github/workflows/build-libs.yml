@@ -29,6 +29,11 @@ jobs:
         uses: actions/checkout@v4.0.0
       - name: Get CMake
         uses: lukka/get-cmake@v3.27.4
+      - name: Setup Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install libsdl2-dev
       - name: CMake Configure
         run: cmake -B build -S Platform
       - name: CMake Build
