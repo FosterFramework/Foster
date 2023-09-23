@@ -19,8 +19,8 @@ jobs:
         include:
           - os: windows-latest
             lib: x64/FosterPlatform.dll
-          #- os: macos-latest
-          #  lib: osx/libFosterPlatform.dylib
+          - os: macos-latest
+            lib: osx/libFosterPlatform.dylib
           - os: ubuntu-latest
             lib: lib64/libFosterPlatform.so
     runs-on: ${{matrix.os}}
@@ -49,6 +49,11 @@ jobs:
         with:
           name: windows-latest-build
           path: Platform/libs/x64
+      - name: Download macos lib
+        uses: actions/download-artifact@v3
+        with:
+          name: macos-latest-build
+          path: Platform/libs/osx
       - name: Download ubuntu lib
         uses: actions/download-artifact@v3
         with:
