@@ -37,6 +37,14 @@ public unsafe struct ConvexPolygon : IConvexShape
 		SetPoint(pointCount, value);
 		pointCount++;
 	}
+	
+	public void RemovePointAt(int index)
+	{
+		Debug.Assert(index >= 0 && index < pointCount);
+		for (int i = index; i < pointCount - 1; i ++)
+			SetPoint(i, GetPoint(i + 1));
+		pointCount--;
+	}
 
 	public void SetPoint(int index, Vector2 position)
 	{
@@ -92,11 +100,25 @@ public unsafe struct ConvexPolygon : IConvexShape
 		}
 	}
 
-	public static ConvexPolygon Transform(in ConvexPolygon polygon, in Matrix3x2 matrix)
+	public static ConvexPolygon Transform(in ConvexPolygon polygon, in Matrix3x2 matrix, bool maintainWinding = false)
 	{
 		ConvexPolygon result = new();
-		for (int i = 0; i < polygon.Points; i ++)
-			result.AddPoint(Vector2.Transform(polygon.GetPoint(i), matrix));
+
+		// If we're flipping the Polygon we may need to reverse the points.
+		// This way the Polygon winding (clockwise or counter-clockwise) stays the same.
+		bool reverse = maintainWinding && MathF.Sign(matrix.M11) * MathF.Sign(matrix.M22) < 0;
+
+		if (reverse)
+		{
+			for (int i = 0; i < polygon.Points; i ++)
+				result.AddPoint(Vector2.Transform(polygon.GetPoint(polygon.Points - i - 1), matrix));
+		}
+		else
+		{
+			for (int i = 0; i < polygon.Points; i ++)
+				result.AddPoint(Vector2.Transform(polygon.GetPoint(i), matrix));
+		}
+
 		return result;
 	}
 

@@ -209,22 +209,33 @@ public struct Quad : IConvexShape
 	public override int GetHashCode()
 		=> HashCode.Combine(a, b, c, d);
 
-	public static Quad Transform(Vector2 a, Vector2 b, Vector2 c, Vector2 d, Matrix3x2 matrix)
+	public static Quad Transform(Vector2 a, Vector2 b, Vector2 c, Vector2 d, Matrix3x2 matrix, bool maintainWinding = false)
 	{
-		return new Quad(
-			Vector2.Transform(a, matrix),
-			Vector2.Transform(b, matrix),
-			Vector2.Transform(c, matrix),
-			Vector2.Transform(d, matrix));
+		return Transform(new Quad(a, b, c, d), matrix, maintainWinding);
 	}
 
-	public static Quad Transform(Quad quad, Matrix3x2 matrix)
+	public static Quad Transform(Quad quad, Matrix3x2 matrix, bool maintainWinding = false)
 	{
-		return new Quad(
-			Vector2.Transform(quad.a, matrix),
-			Vector2.Transform(quad.b, matrix),
-			Vector2.Transform(quad.c, matrix),
-			Vector2.Transform(quad.d, matrix));
+		// If we're flipping the Quad we may need to reverse the points.
+		// This way the Quad winding (clockwise or counter-clockwise) stays the same.
+		bool reverse = maintainWinding && MathF.Sign(matrix.M11) * MathF.Sign(matrix.M22) < 0;
+
+		if (reverse)
+		{
+			return new Quad(
+				Vector2.Transform(quad.d, matrix),
+				Vector2.Transform(quad.c, matrix),
+				Vector2.Transform(quad.b, matrix),
+				Vector2.Transform(quad.a, matrix));
+		}
+		else
+		{
+			return new Quad(
+				Vector2.Transform(quad.a, matrix),
+				Vector2.Transform(quad.b, matrix),
+				Vector2.Transform(quad.c, matrix),
+				Vector2.Transform(quad.d, matrix));
+		}
 	}
 
 	public static bool operator ==(Quad a, Quad b)
