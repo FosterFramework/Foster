@@ -17,16 +17,8 @@ public struct Line : IConvexShape
 		To = to;
 	}
 
-	public Rect Bounds
-	{
-		get
-		{
-			var rect = new Rect(Calc.Min(From.X, To.X), Calc.Min(From.Y, To.Y), 0, 0);
-			rect.Width = Calc.Max(From.X, To.X) - rect.X;
-			rect.Height = Calc.Max(From.X + To.X, To.Y) - rect.Y;
-			return rect;
-		}
-	}
+	public Rect Bounds => new Rect(From, To);
+	public float Length() => (To - From).Length();
 
 	public Vector2 GetAxis(int index)
 	{
