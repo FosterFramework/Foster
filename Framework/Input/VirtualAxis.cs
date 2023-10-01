@@ -7,9 +7,20 @@ public class VirtualAxis
 {
 	public enum Overlaps
 	{
-		CancelOut,
+		/// <summary>
+		/// Uses whichever input was pressed most recently
+		/// </summary>
+		TakeNewer,
+
+		/// <summary>
+		/// Uses whichever input was pressed longest ago
+		/// </summary>
 		TakeOlder,
-		TakeNewer
+
+		/// <summary>
+		/// Inputs cancel each other out
+		/// </summary>
+		CancelOut,
 	};
 
 	public interface INode
@@ -18,45 +29,24 @@ public class VirtualAxis
 		TimeSpan Timestamp { get; }
 	}
 
-	public class KeyNode : INode
+	public record KeyNode(Keys Key, bool Positive) : INode
 	{
-		public Keys Key;
-		public bool Positive;
-
-		public float Value(bool deadzone) => (Input.Keyboard.Down(Key) ? (Positive ? 1 : -1) : 0);
-		public TimeSpan Timestamp => Input.Keyboard.Timestamp(Key);
-
-		public KeyNode(Keys key, bool positive)
-		{
-			Key = key;
-			Positive = positive;
-		}
+		public float Value(bool deadzone) 
+			=> Input.Keyboard.Down(Key) ? (Positive ? 1 : -1) : 0;
+		public TimeSpan Timestamp
+			=> Input.Keyboard.Timestamp(Key);
 	}
 
-	public class ButtonNode : INode
+	public record ButtonNode(int Index, Buttons Button, bool Positive) : INode
 	{
-		public int Index;
-		public Buttons Button;
-		public bool Positive;
-
-		public float Value(bool deadzone) => (Input.Controllers[Index].Down(Button) ? (Positive ? 1 : -1) : 0);
-		public TimeSpan Timestamp => Input.Controllers[Index].Timestamp(Button);
-
-		public ButtonNode(int controller, Buttons button, bool positive)
-		{
-			Index = controller;
-			Button = button;
-			Positive = positive;
-		}
+		public float Value(bool deadzone)
+			=> Input.Controllers[Index].Down(Button) ? (Positive ? 1 : -1) : 0;
+		public TimeSpan Timestamp
+			=> Input.Controllers[Index].Timestamp(Button);
 	}
 
-	public class AxisNode : INode
+	public record AxisNode(int Index, Axes Axis, bool Positive, float Deadzone) : INode
 	{
-		public int Index;
-		public Axes Axis;
-		public bool Positive;
-		public float Deadzone;
-
 		public float Value(bool deadzone)
 		{
 			if (!deadzone || Math.Abs(Input.Controllers[Index].Axis(Axis)) >= Deadzone)
@@ -73,14 +63,6 @@ public class VirtualAxis
 				return Input.Controllers[Index].Timestamp(Axis);
 			}
 		}
-
-		public AxisNode(int controller, Axes axis, float deadzone, bool positive)
-		{
-			Index = controller;
-			Axis = axis;
-			Deadzone = deadzone;
-			Positive = positive;
-		}
 	}
 
 	public float Value => GetValue(true);
@@ -89,10 +71,8 @@ public class VirtualAxis
 	public int IntValue => Math.Sign(Value);
 	public int IntValueNoDeadzone => Math.Sign(ValueNoDeadzone);
 
-	public readonly List<INode> Nodes = new List<INode>();
-	public Overlaps OverlapBehaviour;
-
-	private const float EPSILON = 0.00001f;
+	public readonly List<INode> Nodes = new();
+	public Overlaps OverlapBehaviour = Overlaps.TakeNewer;
 
 	public VirtualAxis(Overlaps overlapBehaviour = Overlaps.CancelOut)
 	{
@@ -117,7 +97,7 @@ public class VirtualAxis
 				var time = Nodes[i].Timestamp;
 				var val = Nodes[i].Value(deadzone);
 
-				if (time > TimeSpan.Zero && Math.Abs(val) > EPSILON && time > timestamp)
+				if (time > TimeSpan.Zero && Math.Abs(val) > float.Epsilon && time > timestamp)
 				{
 					value = val;
 					timestamp = time;
@@ -132,7 +112,7 @@ public class VirtualAxis
 				var time = Nodes[i].Timestamp;
 				var val = Nodes[i].Value(deadzone);
 
-				if (time > TimeSpan.Zero && Math.Abs(val) > EPSILON && time < timestamp)
+				if (time > TimeSpan.Zero && Math.Abs(val) > float.Epsilon && time < timestamp)
 				{
 					value = val;
 					timestamp = time;
@@ -171,13 +151,13 @@ public class VirtualAxis
 
 	public VirtualAxis Add(int controller, Axes axis, float deadzone = 0f)
 	{
-		Nodes.Add(new AxisNode(controller, axis, deadzone, true));
+		Nodes.Add(new AxisNode(controller, axis, true, deadzone));
 		return this;
 	}
 
 	public VirtualAxis Add(int controller, Axes axis, bool inverse, float deadzone = 0f)
 	{
-		Nodes.Add(new AxisNode(controller, axis, deadzone, !inverse));
+		Nodes.Add(new AxisNode(controller, axis, !inverse, deadzone));
 		return this;
 	}
 
@@ -185,5 +165,4 @@ public class VirtualAxis
 	{
 		Nodes.Clear();
 	}
-
 }

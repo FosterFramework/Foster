@@ -11,12 +11,12 @@ public class VirtualStick
 	/// <summary>
 	/// The Horizontal Axis
 	/// </summary>
-	public VirtualAxis Horizontal;
+	public readonly VirtualAxis Horizontal = new();
 
 	/// <summary>
 	/// The Vertical Axis
 	/// </summary>
-	public VirtualAxis Vertical;
+	public readonly VirtualAxis Vertical = new();
 
 	/// <summary>
 	/// This Deadzone is applied to the Length of the combined Horizontal and Vertical axis values
@@ -61,15 +61,13 @@ public class VirtualStick
 
 	public VirtualStick(float circularDeadzone = 0f)
 	{
-		Horizontal = new VirtualAxis();
-		Vertical = new VirtualAxis();
 		CircularDeadzone = circularDeadzone;
 	}
 
 	public VirtualStick(VirtualAxis.Overlaps overlapBehaviour, float circularDeadzone = 0f)
 	{
-		Horizontal = new VirtualAxis(overlapBehaviour);
-		Vertical = new VirtualAxis(overlapBehaviour);
+		Horizontal.OverlapBehaviour = overlapBehaviour;
+		Vertical.OverlapBehaviour = overlapBehaviour;
 		CircularDeadzone = circularDeadzone;
 	}
 
@@ -105,6 +103,20 @@ public class VirtualStick
 	{
 		Horizontal.Add(controller, Axes.RightX, deadzoneHorizontal);
 		Vertical.Add(controller, Axes.RightY, deadzoneVertical);
+		return this;
+	}
+
+	public VirtualStick AddDPad(int controller)
+	{
+		Horizontal.Add(controller, Buttons.Left, Buttons.Right);
+		Vertical.Add(controller, Buttons.Up, Buttons.Down);
+		return this;
+	}
+
+	public VirtualStick AddArrowKeys()
+	{
+		Horizontal.Add(Keys.Left, Keys.Right);
+		Vertical.Add(Keys.Up, Keys.Down);
 		return this;
 	}
 

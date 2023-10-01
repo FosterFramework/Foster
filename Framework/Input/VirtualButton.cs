@@ -17,10 +17,8 @@ public class VirtualButton
 		void Update();
 	}
 
-	public class KeyNode : INode
+	public record KeyNode(Keys Key) : INode
 	{
-		public Keys Key;
-
 		public bool Pressed(float buffer, TimeSpan lastBufferConsumedTime)
 		{
 			if (Input.Keyboard.Pressed(Key))
@@ -39,17 +37,10 @@ public class VirtualButton
 		public bool Released => Input.Keyboard.Released(Key);
 		public bool Repeated(float delay, float interval) => Input.Keyboard.Repeated(Key, delay, interval);
 		public void Update() { }
-
-		public KeyNode(Keys key)
-		{
-			Key = key;
-		}
 	}
 
-	public class MouseButtonNode : INode
+	public record MouseButtonNode(MouseButtons MouseButton) : INode
 	{
-		public MouseButtons MouseButton;
-
 		public bool Pressed(float buffer, TimeSpan lastBufferConsumedTime)
 		{
 			if (Input.Mouse.Pressed(MouseButton))
@@ -68,18 +59,10 @@ public class VirtualButton
 		public bool Released => Input.Mouse.Released(MouseButton);
 		public bool Repeated(float delay, float interval) => Input.Mouse.Repeated(MouseButton, delay, interval);
 		public void Update() { }
-
-		public MouseButtonNode(MouseButtons mouseButton)
-		{
-			MouseButton = mouseButton;
-		}
 	}
 
-	public class ButtonNode : INode
+	public record ButtonNode(int Index, Buttons Button) : INode
 	{
-		public int Index;
-		public Buttons Button;
-
 		public bool Pressed(float buffer, TimeSpan lastBufferConsumedTime)
 		{
 			if (Input.Controllers[Index].Pressed(Button))
@@ -98,22 +81,11 @@ public class VirtualButton
 		public bool Released => Input.Controllers[Index].Released(Button);
 		public bool Repeated(float delay, float interval) => Input.Controllers[Index].Repeated(Button, delay, interval);
 		public void Update() { }
-
-		public ButtonNode(int controller, Buttons button)
-		{
-			Index = controller;
-			Button = button;
-		}
 	}
 
-	public class AxisNode : INode
+	public record AxisNode(int Index, Axes Axis, float Threshold) : INode
 	{
-		public int Index;
-		public Axes Axis;
-		public float Threshold;
-
 		private TimeSpan pressedTimestamp;
-		private const float AXIS_EPSILON = 0.00001f;
 
 		public bool Pressed(float buffer, TimeSpan lastBufferConsumedTime)
 		{
@@ -132,8 +104,8 @@ public class VirtualButton
 		{
 			get
 			{
-				if (Math.Abs(Threshold) <= AXIS_EPSILON)
-					return Math.Abs(Input.Controllers[Index].Axis(Axis)) > AXIS_EPSILON;
+				if (Math.Abs(Threshold) <= float.Epsilon)
+					return Math.Abs(Input.Controllers[Index].Axis(Axis)) > float.Epsilon;
 
 				if (Threshold < 0)
 					return Input.Controllers[Index].Axis(Axis) <= Threshold;
@@ -146,8 +118,8 @@ public class VirtualButton
 		{
 			get
 			{
-				if (Math.Abs(Threshold) <= AXIS_EPSILON)
-					return Math.Abs(Input.LastState.Controllers[Index].Axis(Axis)) > AXIS_EPSILON && Math.Abs(Input.Controllers[Index].Axis(Axis)) < AXIS_EPSILON;
+				if (Math.Abs(Threshold) <= float.Epsilon)
+					return Math.Abs(Input.LastState.Controllers[Index].Axis(Axis)) > float.Epsilon && Math.Abs(Input.Controllers[Index].Axis(Axis)) < float.Epsilon;
 
 				if (Threshold < 0)
 					return Input.LastState.Controllers[Index].Axis(Axis) <= Threshold && Input.Controllers[Index].Axis(Axis) > Threshold;
@@ -163,8 +135,8 @@ public class VirtualButton
 
 		private bool Pressed()
 		{
-			if (Math.Abs(Threshold) <= AXIS_EPSILON)
-				return (Math.Abs(Input.LastState.Controllers[Index].Axis(Axis)) < AXIS_EPSILON && Math.Abs(Input.Controllers[Index].Axis(Axis)) > AXIS_EPSILON);
+			if (Math.Abs(Threshold) <= float.Epsilon)
+				return (Math.Abs(Input.LastState.Controllers[Index].Axis(Axis)) < float.Epsilon && Math.Abs(Input.Controllers[Index].Axis(Axis)) > float.Epsilon);
 
 			if (Threshold < 0)
 				return (Input.LastState.Controllers[Index].Axis(Axis) > Threshold && Input.Controllers[Index].Axis(Axis) <= Threshold);
@@ -177,16 +149,9 @@ public class VirtualButton
 			if (Pressed())
 				pressedTimestamp = Input.Controllers[Index].Timestamp(Axis);
 		}
-
-		public AxisNode(int controller, Axes axis, float threshold)
-		{
-			Index = controller;
-			Axis = axis;
-			Threshold = threshold;
-		}
 	}
 
-	public readonly List<INode> Nodes = new List<INode>();
+	public readonly List<INode> Nodes = new();
 	public float RepeatDelay;
 	public float RepeatInterval;
 	public float Buffer;
@@ -296,5 +261,4 @@ public class VirtualButton
 		for (int i = 0; i < Nodes.Count; i ++)
 			Nodes[i].Update();
 	}
-
 }
