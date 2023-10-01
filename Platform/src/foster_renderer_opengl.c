@@ -1391,10 +1391,6 @@ void FosterDraw_OpenGL(FosterDrawCommand* command)
 	// Scissor
 	if (command->hasScissor != 0)
 	{
-		fgl.glDisable(GL_SCISSOR_TEST);
-	}
-	else
-	{
 		FosterRect scissor = command->scissor;
 		scissor.y = height - scissor.y - scissor.h;
 
@@ -1403,6 +1399,10 @@ void FosterDraw_OpenGL(FosterDrawCommand* command)
 
 		fgl.glEnable(GL_SCISSOR_TEST);
 		fgl.glScissor((GLint)scissor.x, (GLint)scissor.y, (GLint)scissor.w, (GLint)scissor.h);
+	}
+	else
+	{
+		fgl.glDisable(GL_SCISSOR_TEST);
 	}
 
 	// Draw the Mesh
