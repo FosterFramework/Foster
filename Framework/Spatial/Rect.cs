@@ -245,6 +245,9 @@ public struct Rect : IConvexShape, IEquatable<Rect>
 	public readonly Rect Inflate(float by)
 		=> new(X - by, Y - by, Width + by * 2, Height + by * 2);
 
+	public readonly Rect Inflate(float x, float y)
+		=> new(X - x, Y - y, Width + x * 2, Height + y * 2);
+
 	public readonly Rect Inflate(float left, float top, float right, float bottom)
 	{
 		var rect = new Rect(X, Y, Width, Height);
