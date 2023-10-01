@@ -199,9 +199,16 @@ public class Batcher : IDisposable
 	/// <param name="scissor">Optional Scissor Rectangle, which will clip any Scissor rectangles pushed to the Batcher.</param>
 	public void Render(Target? target = null, RectInt? viewport = null, RectInt? scissor = null)
 	{
-		Matrix4x4 matrix = target != null
-			? Matrix4x4.CreateOrthographicOffCenter(0, target.Width, target.Height, 0, 0, float.MaxValue)
-			: Matrix4x4.CreateOrthographicOffCenter(0, App.WidthInPixels, App.HeightInPixels, 0, 0, float.MaxValue);
+		Point2 size;
+
+		if (viewport.HasValue)
+			size = new Point2(viewport.Value.Width, viewport.Value.Height);
+		else if (target != null)
+			size = new Point2(target.Width,target.Height);
+		else
+			size = new Point2(App.WidthInPixels, App.HeightInPixels);
+
+		var matrix = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, 0, float.MaxValue);
 		Render(target, matrix, viewport, scissor);
 	}
 
