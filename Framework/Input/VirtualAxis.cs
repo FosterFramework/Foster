@@ -74,7 +74,7 @@ public class VirtualAxis
 	public readonly List<INode> Nodes = new();
 	public Overlaps OverlapBehaviour = Overlaps.TakeNewer;
 
-	public VirtualAxis(Overlaps overlapBehaviour = Overlaps.CancelOut)
+	public VirtualAxis(Overlaps overlapBehaviour = Overlaps.TakeNewer)
 	{
 		OverlapBehaviour = overlapBehaviour;
 	}
