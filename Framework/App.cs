@@ -1,8 +1,6 @@
 using System.Diagnostics;
 using System.Numerics;
-using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace Foster.Framework;
 
@@ -28,7 +26,7 @@ public static class App
 	/// <summary>
 	/// If the Application is currently running
 	/// </summary>
-	public static bool Running => Platform.FosterIsRunning();
+	public static bool Running { get; private set; } = false;
 
 	/// <summary>
 	/// If the Application is exiting. Call App.Exit() to exit the Application.
@@ -228,6 +226,7 @@ public static class App
 		Log.Info($"Platform: {RuntimeInformation.OSDescription} ({RuntimeInformation.OSArchitecture})");
 		Log.Info($"Framework: {RuntimeInformation.FrameworkDescription}");
 
+		Running = true;
 		MainThreadID = Thread.CurrentThread.ManagedThreadId;
 
 		if (fullscreen)
@@ -285,7 +284,7 @@ public static class App
 		started = true;
 
 		// begin normal game loop
-		while (Running && !Exiting)
+		while (!Exiting)
 			Tick();
 
 		// shutdown
@@ -295,6 +294,7 @@ public static class App
 		Platform.FosterShutdown();
 		Platform.FreeUTF8(name);
 		started = false;
+		Running = false;
 		Exiting = false;
 	}
 

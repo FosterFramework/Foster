@@ -62,12 +62,6 @@ void FosterLog_SDL(void *userdata, int category, SDL_LogPriority priority, const
 
 void FosterStartup(FosterDesc desc)
 {
-	if (fstate.running)
-	{
-		FosterLogError("Foster is already running");
-		return;
-	}
-
 	fstate.desc = desc;
 	fstate.flags = 0;
 	fstate.window = NULL;
