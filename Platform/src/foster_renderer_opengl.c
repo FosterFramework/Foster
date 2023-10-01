@@ -1389,7 +1389,7 @@ void FosterDraw_OpenGL(FosterDrawCommand* command)
 	}
 
 	// Scissor
-	if (!command->hasScissor != 0)
+	if (command->hasScissor != 0)
 	{
 		fgl.glDisable(GL_SCISSOR_TEST);
 	}
