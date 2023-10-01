@@ -14,6 +14,7 @@ endif()
 
 add_library(FosterPlatform SHARED
 	src/foster_platform.c
+	src/foster_image.c
 	src/foster_renderer.c
 	src/foster_renderer_d3d11.c
 	src/foster_renderer_opengl.c

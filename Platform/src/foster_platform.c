@@ -3,12 +3,6 @@
 #include "foster_internal.h"
 #include <SDL.h>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "third_party/stb_image.h"
-
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "third_party/stb_image_write.h"
-
 #define STBTT_STATIC
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "third_party/stb_truetype.h"
@@ -410,23 +404,6 @@ bool FosterGetFocused()
 	FOSTER_ASSERT_RUNNING_RET(FosterGetClipboard, false);
 	Uint32 flags = SDL_GetWindowFlags(fstate.window);
 	return (flags & (SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS)) != 0;
-}
-
-unsigned char* FosterImageLoad(const unsigned char* memory, int length, int* w, int* h)
-{
-    int c;
-    return stbi_load_from_memory(memory, length, w, h, &c, 4);
-}
-
-void FosterImageFree(unsigned char* data)
-{
-    stbi_image_free(data);
-}
-
-bool FosterImageWrite(FosterWriteFn* func, void* context, int w, int h, const void* data)
-{
-	// note: 'FosterWriteFn' and 'stbi_write_func' must be the same
-    return stbi_write_png_to_func((stbi_write_func*)func, context, w, h, 4, data, w * 4) != 0;
 }
 
 FosterFont* FosterFontInit(unsigned char* data, int length)
