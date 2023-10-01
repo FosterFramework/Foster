@@ -217,15 +217,15 @@ public static class Renderer
 		// draw imgui buffers to the screen
 		for (int i = 0; i < data.CmdListsCount; i++)
 		{
-			var list = data.NativePtr->CmdLists[i];
+			var list = data.CmdLists[i];
 
 			// update vertices
-			mesh.SetVertices(list->VtxBuffer.Data, list->VtxBuffer.Size, VertexFormat);
-			mesh.SetIndices(list->IdxBuffer.Data, list->IdxBuffer.Size, IndexFormat.Sixteen);
+			mesh.SetVertices(list.VtxBuffer.Data, list.VtxBuffer.Size, VertexFormat);
+			mesh.SetIndices(list.IdxBuffer.Data, list.IdxBuffer.Size, IndexFormat.Sixteen);
 
 			// draw each command
-			var commands = (ImDrawCmd*)list->CmdBuffer.Data;
-			for (ImDrawCmd* cmd = commands; cmd < commands + list->CmdBuffer.Size; cmd++)
+			var commands = (ImDrawCmd*)list.CmdBuffer.Data;
+			for (ImDrawCmd* cmd = commands; cmd < commands + list.CmdBuffer.Size; cmd++)
 			{
 				if (cmd->UserCallback != IntPtr.Zero)
 				{
