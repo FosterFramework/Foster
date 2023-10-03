@@ -9,6 +9,11 @@ _★ very work in progress! likely to have frequent, breaking changes! please us
 
 Check out [Discussons](https://github.com/NoelFB/Foster/discussions) or [Discord](https://discord.gg/K7tdFuP3Bg) to get involved.
 
+### Setup
+ - Either clone this repo and reference `Foster/Framework/Foster.Framework.csproj` from your own project,
+ - Or add a reference via the [NuGet package](https://www.nuget.org/packages/FosterFramework) `dotnet add package FosterFramework`
+ - You're done!
+
 ### Dependencies
  - [dotnet 7.0](https://dotnet.microsoft.com/en-us/download/dotnet/7.0) and [C# 11](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-11)
  - [SDL2](https://github.com/libsdl-org/sdl) is the only external dependency, which is required by the [Platform library](https://github.com/NoelFB/Foster/tree/main/Platform). By default this is statically compiled.
