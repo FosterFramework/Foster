@@ -69,15 +69,19 @@ namespace Foster.Framework
 
 		public static void Submit(in DrawCommand command)
 		{
+			IntPtr shader = IntPtr.Zero;
+			if (command.Material != null && command.Material.Shader != null && !command.Material.Shader.IsDisposed)
+				shader = command.Material.Shader.resource;
+
 			Debug.Assert(command.Target == null || !command.Target.IsDisposed, "Target is invalid");
 			Debug.Assert(command.Mesh != null && !command.Mesh.IsDisposed, "Mesh is Invalid");
-			Debug.Assert(command.Shader != null && !command.Shader.IsDisposed, "Mesh is Invalid");
+			Debug.Assert(shader != IntPtr.Zero, "Material Shader is Invalid");
 
 			Platform.FosterDrawCommand fc = new()
 			{
 				target = (command.Target != null && !command.Target.IsDisposed ? command.Target.resource : IntPtr.Zero),
 				mesh = (command.Mesh != null && !command.Mesh.IsDisposed ? command.Mesh.resource : IntPtr.Zero),
-				shader = (command.Shader != null && !command.Shader.IsDisposed ? command.Shader.resource : IntPtr.Zero),
+				shader = shader,
 				hasViewport = command.Viewport.HasValue ? 1 : 0,
 				hasScissor = command.Scissor.HasValue ? 1 : 0,
 				indexStart = command.MeshIndexStart,
@@ -104,6 +108,10 @@ namespace Foster.Framework
 				};
 			}
 
+			// apply material values before drawing
+			command.Material?.Apply();
+
+			// perform draw
 			Platform.FosterDraw(ref fc);
 		}
 

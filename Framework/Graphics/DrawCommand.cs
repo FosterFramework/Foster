@@ -12,7 +12,7 @@ public struct DrawCommand
 	/// <summary>
 	/// Material to use
 	/// </summary>
-	public Shader Shader;
+	public Material Material;
 
 	/// <summary>
 	/// Mesh to use
@@ -55,13 +55,13 @@ public struct DrawCommand
 	public RectInt? Scissor;
 
 	/// <summary>
-	/// Creates a Draw Command based on the given mesh and shader
+	/// Creates a Draw Command based on the given mesh and material
 	/// </summary>
-	public DrawCommand(Target? target, Mesh mesh, Shader shader)
+	public DrawCommand(Target? target, Mesh mesh, Material material)
 	{
 		Target = target;
 		Mesh = mesh;
-		Shader = shader;
+		Material = material;
 		MeshIndexStart = 0;
 		MeshIndexCount = mesh.IndexCount;
 		BlendMode = BlendMode.Premultiply;

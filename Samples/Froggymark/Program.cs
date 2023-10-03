@@ -26,7 +26,7 @@ class Game : Module
 	private Mesh mesh = new();
 	private Vertex[] vertexArray = new Vertex[DrawBatchSize * 4];
 	private Texture texture = null!;
-	private Shader shader = null!;
+	private Material material = null!;
 	private Batcher batcher = new();
 	private SpriteFont font = null!;
 	private FrameCounter frameCounter = new();
@@ -43,7 +43,8 @@ class Game : Module
 
 		font = new SpriteFont(Path.Join("Assets", "monogram.ttf"), 32);
 
-		shader = new Shader(ShaderDefinitions[Graphics.Renderer]);
+		var shader = new Shader(ShaderDefinitions[Graphics.Renderer]);
+		material = new Material(shader);
 
 		// We only need to initialize indices once, since we're only drawing quads
 		var indexArray = new int[DrawBatchSize * 6];
@@ -194,12 +195,12 @@ class Game : Module
 		if (from == 0)
 		{
 			var matrix = Matrix4x4.CreateOrthographicOffCenter(0, App.WidthInPixels, App.HeightInPixels, 0, 0, float.MaxValue);
-			shader["u_matrix"].Set(matrix);
-			shader["u_texture"].Set(texture);
-			shader["u_texture_sampler"].Set(new TextureSampler());
+			material.Set("u_matrix", matrix);
+			material.Set("u_texture", texture);
+			material.Set("u_texture_sampler", new TextureSampler());
 		}
 
-		DrawCommand command = new(null, mesh, shader)
+		DrawCommand command = new(null, mesh, material)
 		{
 			BlendMode = BlendMode.Premultiply,
 			MeshIndexStart = 0,

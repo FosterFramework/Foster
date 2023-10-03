@@ -1,23 +1,10 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Numerics;
 
 namespace Foster.Framework;
 
 public struct ShaderCreateInfo
 {
-	public readonly struct Attribute
-	{
-		public readonly string SemanticName;
-		public readonly int SemanticIndex;
-
-		public Attribute(string semanticName, int semanticIndex)
-		{
-			SemanticName = semanticName;
-			SemanticIndex = semanticIndex;
-		}
-	}
+	public readonly record struct Attribute(string SemanticName, int SemanticIndex);
 
 	/// <summary>
 	/// Vertex Shader Code
@@ -44,164 +31,15 @@ public struct ShaderCreateInfo
 
 public class Shader : IResource
 {
-	public class Uniform
-	{
-		public readonly string Name;
-		public readonly UniformType Type;
-		public readonly int ArrayElements;
-
-		private readonly Shader shader;
-		private readonly int index;
-		private readonly float[]? floatBuffer;
-		private readonly Texture?[]? textureBuffer;
-		private readonly TextureSampler[]? samplerBuffer;
-
-		internal Uniform(Shader shader, int index, string name, UniformType type, int arrayElements)
-		{
-			this.shader = shader;
-			this.index = index;
-			Name = name;
-			Type = type;
-			ArrayElements = arrayElements;
-
-			switch (type)
-			{
-				case UniformType.None:
-					break;
-				case UniformType.Float:
-					floatBuffer = new float[ArrayElements];
-					break;
-				case UniformType.Float2:
-					floatBuffer = new float[ArrayElements * 2];
-					break;
-				case UniformType.Float3:
-					floatBuffer = new float[ArrayElements * 3];
-					break;
-				case UniformType.Float4:
-					floatBuffer = new float[ArrayElements * 4];
-					break;
-				case UniformType.Mat3x2:
-					floatBuffer = new float[ArrayElements * 6];
-					break;
-				case UniformType.Mat4x4:
-					floatBuffer = new float[ArrayElements * 16];
-					break;
-				case UniformType.Texture2D:
-					textureBuffer = new Texture[ArrayElements];
-					break;
-				case UniformType.Sampler2D:
-					samplerBuffer = new TextureSampler[ArrayElements];
-					break;
-			}
-		}
-
-		public void Set(float value)
-			=> Set(stackalloc float[1] { value });
-
-		public void Set(Vector2 value)
-			=> Set(stackalloc float[2] { value.X, value.Y });
-
-		public void Set(Vector3 value)
-			=> Set(stackalloc float[3] { value.X, value.Y, value.Z });
-
-		public void Set(Vector4 value)
-			=> Set(stackalloc float[4] { value.X, value.Y, value.Z, value.W });
-
-		public void Set(Matrix3x2 value)
-			=> Set(stackalloc float[6] { value.M11, value.M12, value.M21, value.M22, value.M31, value.M32 });
-
-		public void Set(Matrix4x4 value)
-			=> Set(stackalloc float[16] { 
-				value.M11, value.M12, value.M13, value.M14, 
-				value.M21, value.M22, value.M23, value.M24,
-				value.M31, value.M32, value.M33, value.M34,
-				value.M41, value.M42, value.M43, value.M44,
-			});
-
-		public void Set(Color value)
-			=> Set(value.ToVector4());
-
-		public unsafe void Set(ReadOnlySpan<Vector2> value)
-		{
-			fixed (Vector2* ptr = value)
-				Set(new ReadOnlySpan<float>((float*)ptr, value.Length * 2));
-		}
-
-		public unsafe void Set(ReadOnlySpan<Vector3> value)
-		{
-			fixed (Vector3* ptr = value)
-				Set(new ReadOnlySpan<float>((float*)ptr, value.Length * 3));
-		}
-
-		public unsafe void Set(ReadOnlySpan<Vector4> value)
-		{
-			fixed (Vector4* ptr = value)
-				Set(new ReadOnlySpan<float>((float*)ptr, value.Length * 4));
-		}
-		
-		public void Set(ReadOnlySpan<Color> value)
-		{
-			Span<float> data = stackalloc float[value.Length * 4];
-			for (int i = 0, n = 0; i < value.Length; i ++, n += 4)
-			{
-				var vec4 = value[i].ToVector4();
-				data[n + 0] = vec4.X;
-				data[n + 1] = vec4.Y;
-				data[n + 2] = vec4.Z;
-				data[n + 3] = vec4.W;
-			}
-			Set(data);
-		}
-		
-		public unsafe void Set(ReadOnlySpan<float> values)
-		{
-			Debug.Assert(!shader.IsDisposed, "Shader is Disposed");
-			Debug.Assert(floatBuffer != null, "Uniform is not Float value type");
-
-			// get a sub span of the data equal to our maximum length
-			var subspan = values[0..Math.Min(values.Length, floatBuffer.Length)];
-
-			// copy to our internal buffer
-			subspan.CopyTo(floatBuffer);
-
-			// upload it
-			fixed (float* ptr = values)
-				Platform.FosterShaderSetUniform(shader.resource, index, ptr);
-		}
-
-		public unsafe void Set(Texture? texture, int index = 0)
-		{
-			Debug.Assert(!shader.IsDisposed, "Shader is Disposed");
-			Debug.Assert(textureBuffer != null, "Uniform is not Texture2D value type");
-
-			if (textureBuffer[index] != texture)
-			{
-				// assign the texture at that index
-				textureBuffer[index] = texture;
-
-				// create a list of IntPtr's using the Texture resources
-				IntPtr* ptr = stackalloc IntPtr[textureBuffer.Length];
-				for (int i = 0; i < textureBuffer.Length; i ++)
-					*(ptr + i) = (textureBuffer[i] is Texture tex && !tex.IsDisposed) ? tex.resource : IntPtr.Zero;
-					
-				// upload the list of textures
-				Platform.FosterShaderSetTexture(shader.resource, this.index, ptr);
-			}
-		}
-
-		public unsafe void Set(TextureSampler sampler, int index = 0)
-		{
-			Debug.Assert(!shader.IsDisposed, "Shader is Disposed");
-			Debug.Assert(samplerBuffer != null, "Uniform is not Sampler2D value type");
-
-			// assign the sampler at that index
-			samplerBuffer[index] = sampler;
-
-			// upload the list of samplers
-			fixed (TextureSampler* ptr = samplerBuffer)
-				Platform.FosterShaderSetSampler(shader.resource, this.index, ptr);
-		}
-	}
+	/// <summary>
+	/// Shader Uniform Entry
+	/// </summary>
+	public readonly record struct Uniform(
+		int Index,
+		string Name,
+		UniformType Type, 
+		int ArrayElements
+	);
 
 	/// <summary>
 	/// Optional Shader Name
@@ -257,7 +95,7 @@ public class Shader : IResource
 		{
 			var info = infos[i];
 			var name = Platform.ParseUTF8(info.name);
-			uniforms.Add(name, new (this, info.index, name, info.type, info.arrayElements));
+			uniforms.Add(name, new (info.index, name, info.type, info.arrayElements));
 		}
 
 		Uniforms = uniforms.AsReadOnly();
@@ -277,17 +115,17 @@ public class Shader : IResource
 	/// <summary>
 	/// Tries to get a Uniform from the Shader
 	/// </summary>
-	public bool TryGet(string name, [NotNullWhen(returnValue:true)] out Uniform? uniform)
+	public bool TryGet(string name, out Uniform uniform)
 		=> Uniforms.TryGetValue(name, out uniform);
 
 	/// <summary>
-	/// Gets a Uniform from the Shader, or returns null if not found.
+	/// Gets a Uniform from the Shader
 	/// </summary>
-	public Uniform? Get(string name)
+	public Uniform Get(string name)
 	{
 		if (Uniforms.TryGetValue(name, out var value))
 			return value;
-		return null;
+		return default;
 	}
 
 	/// <summary>

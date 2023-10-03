@@ -10,7 +10,7 @@ public static class Renderer
 	private static readonly VertexFormat VertexFormat;
 	private static IntPtr context;
 	private static Mesh? mesh = null;
-	private static Shader? shader = null;
+	private static Material? material = null;
 	private static Texture? fontTexture = null;
 	private static readonly List<Texture> boundTextures = new();
 	private static readonly List<Batcher> userBatches = new();
@@ -101,7 +101,7 @@ public static class Renderer
 
 		// create drawing resources
 		mesh = new Mesh();
-		shader = new Shader(ShaderInfo[Graphics.Renderer]);
+		material = new(new Shader(ShaderInfo[Graphics.Renderer]));
 	}
 
 	/// <summary>
@@ -195,7 +195,7 @@ public static class Renderer
 	/// </summary>
 	public static unsafe void Render()
 	{
-		if (mesh == null || shader == null)
+		if (mesh == null || material == null || material.Shader == null)
 			return;
 
 		var data = ImGui.GetDrawData();
@@ -205,14 +205,14 @@ public static class Renderer
 		var size = new Point2(App.WidthInPixels, App.HeightInPixels);
 
 		// create pass
-		var pass = new DrawCommand(null, mesh, shader);
+		var pass = new DrawCommand(null, mesh, material);
 		pass.BlendMode = new BlendMode(BlendOp.Add, BlendFactor.SrcAlpha, BlendFactor.OneMinusSrcAlpha);
 
 		// setup ortho matrix
 		Matrix4x4 mat =
 			Matrix4x4.CreateScale(data.FramebufferScale.X, data.FramebufferScale.Y, 1.0f) *
 			Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, 0.1f, 1000.0f);
-		shader["u_matrix"].Set(mat);
+		material.Set("u_matrix", mat);
 		
 		// draw imgui buffers to the screen
 		for (int i = 0; i < data.CmdListsCount; i++)
@@ -240,7 +240,7 @@ public static class Renderer
 					// set texture
 					var textureIndex = cmd->TextureId.ToInt32();
 					if (textureIndex < boundTextures.Count)
-						shader["u_texture"].Set(boundTextures[textureIndex]);
+						material.Set("u_texture", boundTextures[textureIndex]);
 
 					pass.MeshIndexStart = (int)cmd->IdxOffset;
 					pass.MeshIndexCount = (int)cmd->ElemCount;

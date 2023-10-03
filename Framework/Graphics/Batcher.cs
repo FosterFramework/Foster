@@ -74,12 +74,12 @@ public class Batcher : IDisposable
 	/// </summary>
 	public int BatchCount => batches.Count + (currentBatch.Elements > 0 ? 1 : 0);
 
-	private readonly ShaderState defaultShaderState = new();
+	private readonly MaterialState defaultMaterialState = new();
 	private readonly Stack<Matrix3x2> matrixStack = new();
 	private readonly Stack<RectInt?> scissorStack = new();
 	private readonly Stack<BlendMode> blendStack = new();
 	private readonly Stack<TextureSampler> samplerStack = new();
-	private readonly Stack<ShaderState> effectStack = new();
+	private readonly Stack<MaterialState> materialStack = new();
 	private readonly Stack<int> layerStack = new();
 	private readonly Stack<Color> modeStack = new();
 	private readonly List<Batch> batches = new();
@@ -89,6 +89,9 @@ public class Batcher : IDisposable
 	private Color mode = new(255, 0, 0, 0);
 	private bool dirty;
 
+	private readonly List<Material> materialPool = new();
+	private int materialPoolIndex;
+
 	private IntPtr vertexPtr = IntPtr.Zero;
 	private int vertexCount = 0;
 	private int vertexCapacity = 0;
@@ -97,26 +100,17 @@ public class Batcher : IDisposable
 	private int indexCount = 0;
 	private int indexCapacity = 0;
 
-	private readonly struct ShaderState
-	{
-		public readonly Shader Shader;
-		public readonly Shader.Uniform MatrixUniform;
-		public readonly Shader.Uniform TextureUniform;
-		public readonly Shader.Uniform SamplerUniform;
-
-		public ShaderState(Shader shader, string matrixUniformName, string textureUniformName, string samplerUniformName)
-		{
-			Shader = shader;
-			MatrixUniform = shader[matrixUniformName];
-			TextureUniform = shader[textureUniformName];
-			SamplerUniform = shader[samplerUniformName];
-		}
-	}
+	private readonly record struct MaterialState(
+		Material Material,
+		string MatrixUniform,
+		string TextureUniform,
+		string SamplerUniform
+	);
 
 	private struct Batch
 	{
 		public int Layer;
-		public ShaderState ShaderState;
+		public MaterialState MaterialState;
 		public BlendMode Blend;
 		public Texture? Texture;
 		public RectInt? Scissor;
@@ -125,10 +119,10 @@ public class Batcher : IDisposable
 		public int Elements;
 		public bool FlipVerticalUV;
 
-		public Batch(ShaderState shaderState, BlendMode blend, Texture? texture, TextureSampler sampler, int offset, int elements)
+		public Batch(MaterialState material, BlendMode blend, Texture? texture, TextureSampler sampler, int offset, int elements)
 		{
 			Layer = 0;
-			ShaderState = shaderState;
+			MaterialState = material;
 			Blend = blend;
 			Texture = texture;
 			Sampler = sampler;
@@ -142,7 +136,7 @@ public class Batcher : IDisposable
 	public Batcher()
 	{
 		DefaultShader ??= new Shader(ShaderDefaults.Batcher[Graphics.Renderer]);
-		defaultShaderState = new(DefaultShader, "u_matrix", "u_texture", "u_texture_sampler");
+		defaultMaterialState = new(new Material(DefaultShader), "u_matrix", "u_texture", "u_texture_sampler");
 		Clear();
 	}
 
@@ -166,6 +160,9 @@ public class Batcher : IDisposable
 			indexPtr = IntPtr.Zero;
 			indexCapacity = 0;
 		}
+
+		materialPool.Clear();
+		materialPoolIndex = 0;
 	}
 
 	/// <summary>
@@ -176,13 +173,14 @@ public class Batcher : IDisposable
 		vertexCount = 0;
 		indexCount = 0;
 		currentBatchInsert = 0;
-		currentBatch = new Batch(defaultShaderState, BlendMode.Premultiply, null, new(), 0, 0);
+		materialPoolIndex = 0;
+		currentBatch = new Batch(defaultMaterialState, BlendMode.Premultiply, null, new(), 0, 0);
 		mode = new Color(255, 0, 0, 0);
 		batches.Clear();
 		matrixStack.Clear();
 		scissorStack.Clear();
 		blendStack.Clear();
-		effectStack.Clear();
+		materialStack.Clear();
 		layerStack.Clear();
 		samplerStack.Clear();
 		modeStack.Clear();
@@ -262,11 +260,13 @@ public class Batcher : IDisposable
 			trimmed = batch.Scissor;
 
 		var texture = batch.Texture != null && !batch.Texture.IsDisposed ? batch.Texture : null;
-		batch.ShaderState.MatrixUniform.Set(matrix);
-		batch.ShaderState.TextureUniform.Set(texture);
-		batch.ShaderState.SamplerUniform.Set(batch.Sampler);
 
-		DrawCommand command = new(target, mesh, batch.ShaderState.Shader)
+		var mat = batch.MaterialState.Material;
+		mat.Set(batch.MaterialState.MatrixUniform, matrix);
+		mat.Set(batch.MaterialState.TextureUniform, texture);
+		mat.Set(batch.MaterialState.SamplerUniform, batch.Sampler);
+
+		DrawCommand command = new(target, mesh, mat)
 		{
 			Viewport = viewport,
 			Scissor = trimmed,
@@ -349,21 +349,17 @@ public class Batcher : IDisposable
 		currentBatchInsert = insert;
 	}
 
-	private void SetShader(ShaderState shaderState)
+	private void SetMaterial(MaterialState materialState)
 	{
 		if (currentBatch.Elements == 0)
 		{
-			currentBatch.ShaderState = shaderState;
+			currentBatch.MaterialState = materialState;
 		}
-		else if (
-			currentBatch.ShaderState.Shader != shaderState.Shader ||
-			currentBatch.ShaderState.MatrixUniform != shaderState.MatrixUniform ||
-			currentBatch.ShaderState.TextureUniform != shaderState.TextureUniform ||
-			currentBatch.ShaderState.SamplerUniform != shaderState.SamplerUniform)
+		else if (currentBatch.MaterialState != materialState)
 		{
 			batches.Insert(currentBatchInsert, currentBatch);
 
-			currentBatch.ShaderState = shaderState;
+			currentBatch.MaterialState = materialState;
 			currentBatch.Offset += currentBatch.Elements;
 			currentBatch.Elements = 0;
 			currentBatchInsert++;
@@ -423,29 +419,47 @@ public class Batcher : IDisposable
 	}
 
 	/// <summary>
-	/// Pushes a Shader to draw with
+	/// Pushes a Material to draw with
+	/// This clones the state of the Material, so changing it after pushing it
+	/// will not have an effect on the resulting draw.
 	/// </summary>
-	public void PushShader(Shader shader)
+	public void PushMaterial(Material material)
 	{
-		effectStack.Push(currentBatch.ShaderState);
-		SetShader(new(shader, "u_matrix", "u_texture", "u_texture_sampler"));
+		PushMaterial(material, 
+			defaultMaterialState.MatrixUniform, 
+			defaultMaterialState.TextureUniform, 
+			defaultMaterialState.SamplerUniform
+		);
 	}
 
 	/// <summary>
-	/// Pushes a Shader to draw with
+	/// Pushes a Material to draw with.
+	/// This clones the state of the Material, so changing it after pushing it
+	/// will not have an effect on the resulting draw.
 	/// </summary>
-	public void PushShader(Shader shader, string matrixUniform, string textureUniform, string samplerUniform)
+	public void PushMaterial(Material material, string matrixUniform, string textureUniform, string samplerUniform)
 	{
-		effectStack.Push(currentBatch.ShaderState);
-		SetShader(new(shader, matrixUniform, textureUniform, samplerUniform));
+		materialStack.Push(currentBatch.MaterialState);
+
+		// get a pooled material, or create a new one
+		Material? copy;
+		if (materialPoolIndex < materialPool.Count)
+			copy = materialPool[materialPoolIndex];
+		else
+			materialPool.Add(copy = new Material());
+		materialPoolIndex++;
+
+		// copy the values to our internal material & set it
+		material.CopyTo(copy);
+		SetMaterial(new(copy, matrixUniform, textureUniform, samplerUniform));
 	}
 
 	/// <summary>
-	/// Pops the current Shader
+	/// Pops the current Material
 	/// </summary>
-	public void PopShader()
+	public void PopMaterial()
 	{
-		SetShader(effectStack.Pop());
+		SetMaterial(materialStack.Pop());
 	}
 
 	/// <summary>
