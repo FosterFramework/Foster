@@ -268,15 +268,20 @@ public static class App
 		UserPath = Platform.ParseUTF8(Platform.FosterGetUserPath());
 		Graphics.Initialize();
 
+		// register & startup all modules in order
+		// this is in a loop in case a module registers more modules
+		// from within its own constructor/startup call.
 		while (registrations.Count > 0)
 		{
+			int from = modules.Count;
+
 			// create all registered modules
 			for (int i = 0; i < registrations.Count; i ++)
 				modules.Add(registrations[i].Invoke());
 			registrations.Clear();
 
 			// notify all modules we're now running
-			for (int i = 0; i < modules.Count; i ++)
+			for (int i = from; i < modules.Count; i ++)
 				modules[i].Startup();
 		}
 
