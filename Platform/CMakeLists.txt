@@ -7,6 +7,11 @@ if (WIN32)
 	option(FOSTER_D3D11_ENABLED "Make D3D11 Renderer available" ON)
 endif()
 
+# Set flag for building a universal binary on macOS 
+if(APPLE)
+	set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64")
+endif()
+
 # Default to Release build for library
 if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release)
