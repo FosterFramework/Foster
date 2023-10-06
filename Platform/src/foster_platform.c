@@ -408,6 +408,12 @@ bool FosterGetFocused()
 
 FosterFont* FosterFontInit(unsigned char* data, int length)
 {
+	if (stbtt_GetNumberOfFonts(data) <= 0)
+	{
+		FosterLogError("Unable to parse Font File");
+		return NULL;
+	}
+
 	stbtt_fontinfo* info = (stbtt_fontinfo*)SDL_malloc(sizeof(stbtt_fontinfo));
 
 	if (stbtt_InitFont(info, data, 0) == 0)
