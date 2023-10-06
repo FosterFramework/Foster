@@ -448,7 +448,7 @@ void FosterFontGetCharacter(FosterFont* font, int glyph, float scale, int* width
 {
 	stbtt_fontinfo* info = (stbtt_fontinfo*)font;
 
-	int adv, ox, oy, x0, y0, x1, y1;
+	int adv, ox, x0, y0, x1, y1;
 
 	stbtt_GetGlyphHMetrics(info, glyph, &adv, &ox);
 	stbtt_GetGlyphBitmapBox(info, glyph, scale, scale, &x0, &y0, &x1, &y1);
@@ -546,25 +546,25 @@ FosterShader* FosterShaderCreate(FosterShaderData* data)
 void FosterShaderGetUniforms(FosterShader* shader, FosterUniformInfo* output, int* count, int max)
 {
 	FOSTER_ASSERT_RUNNING(FosterShaderGetUniforms);
-	return fstate.device.shaderGetUniforms(shader, output, count, max);
+	fstate.device.shaderGetUniforms(shader, output, count, max);
 }
 
 void FosterShaderSetUniform(FosterShader* shader, int index, float* values)
 {
 	FOSTER_ASSERT_RUNNING(FosterShaderSetUniform);
-	return fstate.device.shaderSetUniform(shader, index, values);
+	fstate.device.shaderSetUniform(shader, index, values);
 }
 
 void FosterShaderSetTexture(FosterShader* shader, int index, FosterTexture** values)
 {
 	FOSTER_ASSERT_RUNNING(FosterShaderSetTexture);
-	return fstate.device.shaderSetTexture(shader, index, values);
+	fstate.device.shaderSetTexture(shader, index, values);
 }
 
 void FosterShaderSetSampler(FosterShader* shader, int index, FosterTextureSampler* values)
 {
 	FOSTER_ASSERT_RUNNING(FosterShaderSetSampler);
-	return fstate.device.shaderSetSampler(shader, index, values);
+	fstate.device.shaderSetSampler(shader, index, values);
 }
 
 void FosterShaderDestroy(FosterShader* shader)

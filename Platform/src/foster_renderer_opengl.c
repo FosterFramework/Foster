@@ -1,4 +1,3 @@
-#define FOSTER_OPENGL_ENABLED
 #ifdef FOSTER_OPENGL_ENABLED
 
 #include "foster_renderer.h"
