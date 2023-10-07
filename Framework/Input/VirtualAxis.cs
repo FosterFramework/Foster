@@ -19,51 +19,14 @@ public class VirtualAxis
 
 		/// <summary>
 		/// Inputs cancel each other out
-		/// </summary>
+		/// </summary>d
 		CancelOut,
 	};
 
-	public interface INode
-	{
-		float Value(bool deadzone);
-		TimeSpan Timestamp { get; }
-	}
-
-	public record KeyNode(Keys Key, bool Positive) : INode
-	{
-		public float Value(bool deadzone) 
-			=> Input.Keyboard.Down(Key) ? (Positive ? 1 : -1) : 0;
-		public TimeSpan Timestamp
-			=> Input.Keyboard.Timestamp(Key);
-	}
-
-	public record ButtonNode(int Index, Buttons Button, bool Positive) : INode
-	{
-		public float Value(bool deadzone)
-			=> Input.Controllers[Index].Down(Button) ? (Positive ? 1 : -1) : 0;
-		public TimeSpan Timestamp
-			=> Input.Controllers[Index].Timestamp(Button);
-	}
-
-	public record AxisNode(int Index, Axes Axis, bool Positive, float Deadzone) : INode
-	{
-		public float Value(bool deadzone)
-		{
-			if (!deadzone || Math.Abs(Input.Controllers[Index].Axis(Axis)) >= Deadzone)
-				return Input.Controllers[Index].Axis(Axis) * (Positive ? 1 : -1);
-			return 0f;
-		}
-
-		public TimeSpan Timestamp
-		{
-			get
-			{
-				if (Math.Abs(Input.Controllers[Index].Axis(Axis)) < Deadzone)
-					return TimeSpan.Zero;
-				return Input.Controllers[Index].Timestamp(Axis);
-			}
-		}
-	}
+	/// <summary>
+	/// Optional Virtual Axis name
+	/// </summary>
+	public readonly string Name;
 
 	public float Value => GetValue(true);
 	public float ValueNoDeadzone => GetValue(false);
@@ -71,53 +34,45 @@ public class VirtualAxis
 	public int IntValue => Math.Sign(Value);
 	public int IntValueNoDeadzone => Math.Sign(ValueNoDeadzone);
 
-	public readonly List<INode> Nodes = new();
+	public readonly VirtualButton Negative;
+	public readonly VirtualButton Positive;
+
 	public Overlaps OverlapBehaviour = Overlaps.TakeNewer;
 
-	public VirtualAxis(Overlaps overlapBehaviour = Overlaps.TakeNewer)
+	public VirtualAxis(string name, Overlaps overlapBehavior = Overlaps.TakeNewer)
 	{
-		OverlapBehaviour = overlapBehaviour;
+		Name = name;
+		Negative = new VirtualButton($"{name}/Negative");
+		Positive = new VirtualButton($"{name}/Positive");
+		OverlapBehaviour = overlapBehavior;
 	}
+
+	public VirtualAxis(Overlaps overlapBehaviour = Overlaps.TakeNewer)
+		: this("VirtualAxis", overlapBehaviour) {}
 
 	private float GetValue(bool deadzone)
 	{
 		var value = 0f;
+		var negativeValue = -(deadzone ? Negative.Value : Negative.ValueNoDeadzone);
+		var positiveValue = (deadzone ? Positive.Value : Positive.ValueNoDeadzone);
 
 		if (OverlapBehaviour == Overlaps.CancelOut)
 		{
-			foreach (var input in Nodes)
-				value += input.Value(deadzone);
-			value = Calc.Clamp(value, -1, 1);
+			value = Calc.Clamp(negativeValue + positiveValue, -1, 1);
 		}
 		else if (OverlapBehaviour == Overlaps.TakeNewer)
 		{
-			var timestamp = TimeSpan.Zero;
-			for (int i = 0; i < Nodes.Count; i++)
-			{
-				var time = Nodes[i].Timestamp;
-				var val = Nodes[i].Value(deadzone);
-
-				if (time > TimeSpan.Zero && Math.Abs(val) > float.Epsilon && time > timestamp)
-				{
-					value = val;
-					timestamp = time;
-				}
-			}
+			if (Negative.PressTimestamp > Positive.PressTimestamp)
+				value = negativeValue;
+			else
+				value = positiveValue;
 		}
 		else if (OverlapBehaviour == Overlaps.TakeOlder)
 		{
-			var timestamp = TimeSpan.Zero;
-			for (int i = 0; i < Nodes.Count; i++)
-			{
-				var time = Nodes[i].Timestamp;
-				var val = Nodes[i].Value(deadzone);
-
-				if (time > TimeSpan.Zero && Math.Abs(val) > float.Epsilon && time < timestamp)
-				{
-					value = val;
-					timestamp = time;
-				}
-			}
+			if (Negative.PressTimestamp < Positive.PressTimestamp)
+				value = negativeValue;
+			else
+				value = positiveValue;
 		}
 
 		return value;
@@ -125,44 +80,82 @@ public class VirtualAxis
 
 	public VirtualAxis Add(Keys negative, Keys positive)
 	{
-		Nodes.Add(new KeyNode(negative, false));
-		Nodes.Add(new KeyNode(positive, true));
+		Negative.Add(negative);
+		Positive.Add(positive);
 		return this;
 	}
 
-	public VirtualAxis Add(Keys key, bool isPositive)
+	public VirtualAxis AddPositive(Keys key)
 	{
-		Nodes.Add(new KeyNode(key, isPositive));
+		Positive.Add(key);
+		return this;
+	}
+
+	public VirtualAxis AddNegative(Keys key)
+	{
+		Positive.Add(key);
 		return this;
 	}
 
 	public VirtualAxis Add(int controller, Buttons negative, Buttons positive)
 	{
-		Nodes.Add(new ButtonNode(controller, negative, false));
-		Nodes.Add(new ButtonNode(controller, positive, true));
+		Negative.Add(controller, negative);
+		Positive.Add(controller, positive);
 		return this;
 	}
 
-	public VirtualAxis Add(int controller, Buttons button, bool isPositive)
+	public VirtualAxis AddPositive(int controller, Buttons button)
 	{
-		Nodes.Add(new ButtonNode(controller, button, isPositive));
+		Positive.Add(controller, button);
+		return this;
+	}
+
+	public VirtualAxis AddNegative(int controller, Buttons button)
+	{
+		Negative.Add(controller, button);
 		return this;
 	}
 
 	public VirtualAxis Add(int controller, Axes axis, float deadzone = 0f)
 	{
-		Nodes.Add(new AxisNode(controller, axis, true, deadzone));
+		Negative.Add(controller, axis, -1, deadzone);
+		Positive.Add(controller, axis, 1, deadzone);
 		return this;
 	}
 
-	public VirtualAxis Add(int controller, Axes axis, bool inverse, float deadzone = 0f)
+	public VirtualAxis AddPositive(int controller, Axes axis, int sign, float deadzone = 0f)
 	{
-		Nodes.Add(new AxisNode(controller, axis, !inverse, deadzone));
+		Positive.Add(controller, axis, sign, deadzone);
 		return this;
+	}
+
+	public VirtualAxis AddNegative(int controller, Axes axis, int sign, float deadzone = 0f)
+	{
+		Negative.Add(controller, axis, sign, deadzone);
+		return this;
+	}
+	
+	public void Consume()
+	{
+		Negative.Consume();
+		Positive.Consume();
+	}
+
+	public void ConsumePress()
+	{
+		Negative.ConsumePress();
+		Positive.ConsumePress();
+	}
+
+	public void ConsumeRelease()
+	{
+		Negative.ConsumeRelease();
+		Positive.ConsumeRelease();
 	}
 
 	public void Clear()
 	{
-		Nodes.Clear();
+		Negative.Clear();
+		Positive.Clear();
 	}
 }

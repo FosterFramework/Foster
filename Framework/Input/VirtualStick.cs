@@ -9,14 +9,19 @@ namespace Foster.Framework;
 public class VirtualStick
 {
 	/// <summary>
+	/// Optional Virtual Stick name
+	/// </summary>
+	public readonly string Name = string.Empty;
+
+	/// <summary>
 	/// The Horizontal Axis
 	/// </summary>
-	public readonly VirtualAxis Horizontal = new();
+	public readonly VirtualAxis Horizontal;
 
 	/// <summary>
 	/// The Vertical Axis
 	/// </summary>
-	public readonly VirtualAxis Vertical = new();
+	public readonly VirtualAxis Vertical;
 
 	/// <summary>
 	/// This Deadzone is applied to the Length of the combined Horizontal and Vertical axis values
@@ -59,16 +64,24 @@ public class VirtualStick
 	/// </summary>
 	public Point2 IntValueNoDeadzone => new Point2(Horizontal.IntValueNoDeadzone, Vertical.IntValueNoDeadzone);
 
-	public VirtualStick(float circularDeadzone = 0f)
+	public VirtualStick(string name, VirtualAxis.Overlaps overlapBehaviour, float circularDeadzone)
 	{
+		Name = name;
+		Horizontal = new($"{name}/Horizontal", overlapBehaviour);
+		Vertical = new($"{name}/Vertical", overlapBehaviour);
 		CircularDeadzone = circularDeadzone;
 	}
 
-	public VirtualStick(VirtualAxis.Overlaps overlapBehaviour, float circularDeadzone = 0f)
+	public VirtualStick(VirtualAxis.Overlaps overlapBehaviour, float circularDeadzone = 0)
+		: this("VirtualStick", overlapBehaviour, circularDeadzone)
 	{
-		Horizontal.OverlapBehaviour = overlapBehaviour;
-		Vertical.OverlapBehaviour = overlapBehaviour;
-		CircularDeadzone = circularDeadzone;
+
+	}
+
+	public VirtualStick(VirtualAxis.Overlaps overlapBehaviour = VirtualAxis.Overlaps.TakeNewer)
+		: this("VirtualStick", overlapBehaviour, 0.0f)
+	{
+		
 	}
 
 	public VirtualStick Add(Keys left, Keys right, Keys up, Keys down)
@@ -118,6 +131,24 @@ public class VirtualStick
 		Horizontal.Add(Keys.Left, Keys.Right);
 		Vertical.Add(Keys.Up, Keys.Down);
 		return this;
+	}
+	
+	public void Consume()
+	{
+		Horizontal.Consume();
+		Vertical.Consume();
+	}
+
+	public void ConsumePress()
+	{
+		Horizontal.ConsumePress();
+		Vertical.ConsumePress();
+	}
+
+	public void ConsumeRelease()
+	{
+		Horizontal.ConsumeRelease();
+		Vertical.ConsumeRelease();
 	}
 
 	public void Clear()
