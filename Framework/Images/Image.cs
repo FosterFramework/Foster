@@ -317,7 +317,7 @@ public class Image : IDisposable
 
 	public void CopyPixels(Image source, in RectInt sourceRect, Point2? destination, Func<Color, Color, Color>? blend = null)
 	{
-		CopyPixels(source.Data, source.Width, source.Height, sourceRect, destination ?? Point2.Zero);
+		CopyPixels(source.Data, source.Width, source.Height, sourceRect, destination ?? Point2.Zero, blend);
 	}
 
 	public void CopyPixels(Image source, Point2? destination, Func<Color, Color, Color>? blend = null)
