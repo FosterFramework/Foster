@@ -7,12 +7,13 @@ Foster is small cross-platform 2D game framework in C#.
 
 _★ very work in progress! likely to have frequent, breaking changes! please use at your own risk! ★_
 
-Check out [Discussons](https://github.com/NoelFB/Foster/discussions) or [Discord](https://discord.gg/K7tdFuP3Bg) to get involved.
+To use the framework either 
+ - add a refence to the [NuGet package](https://www.nuget.org/packages/FosterFramework) `dotnet add package FosterFramework`, 
+ - or clone this repository and add a reference to `Foster/Framework/Foster.Framework.csproj` in your own project.
 
-### Setup
- - Either clone this repo and reference `Foster/Framework/Foster.Framework.csproj` from your own project,
- - Or add a reference via the [NuGet package](https://www.nuget.org/packages/FosterFramework) `dotnet add package FosterFramework`
- - You're done!
+There is a [Samples](https://github.com/NoelFB/Foster-Samples) repo which contains various demos and examples which can help you get started.
+
+Check out [Discussons](https://github.com/NoelFB/Foster/discussions) or [Discord](https://discord.gg/K7tdFuP3Bg) to get involved.
 
 ### Dependencies
  - [dotnet 7.0](https://dotnet.microsoft.com/en-us/download/dotnet/7.0) and [C# 11](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-11)
