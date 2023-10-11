@@ -9,7 +9,7 @@ _★ very work in progress! likely to have frequent, breaking changes! please us
 
 To use the framework either 
  - add a refence to the [NuGet package](https://www.nuget.org/packages/FosterFramework), 
- - or clone this repository and add a reference to `Foster/Framework/Foster.Framework.csproj` in your own project.
+ - or clone this repository and add a reference to `Foster/Framework/Foster.Framework.csproj`.
 
 There is a [Samples](https://github.com/NoelFB/Foster-Samples) repo which contains various demos and examples which can help you get started.
 
