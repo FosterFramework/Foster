@@ -176,7 +176,7 @@ public struct Quad : IConvexShape
 		};
 	}
 
-	public int Axis => 4;
+	public int Axes => 4;
 
 	public Vector2 GetAxis(int index)
 	{

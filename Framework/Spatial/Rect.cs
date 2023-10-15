@@ -375,7 +375,7 @@ public struct Rect : IConvexShape, IEquatable<Rect>
 			_ => throw new IndexOutOfRangeException(),
 		};
 
-	public readonly int Axis => 2;
+	public readonly int Axes => 2;
 
 	public readonly Vector2 GetAxis(int index)
 		=> index switch
