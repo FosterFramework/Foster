@@ -1,9 +1,11 @@
 ﻿using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
 
+[StructLayout(LayoutKind.Sequential)]
 public unsafe struct ConvexPolygon : IConvexShape
 {
 	public const int MaxPoints = 32;
@@ -13,7 +15,7 @@ public unsafe struct ConvexPolygon : IConvexShape
 
 	public int Points
 	{
-		get => pointCount;
+		readonly get => pointCount;
 		set
 		{
 			Debug.Assert(value >= 0 && value < MaxPoints);
@@ -23,7 +25,7 @@ public unsafe struct ConvexPolygon : IConvexShape
 
 	public int Axis
 	{
-		get => pointCount;
+		readonly get => pointCount;
 		set
 		{
 			Debug.Assert(value >= 0 && value < MaxPoints);
@@ -54,7 +56,7 @@ public unsafe struct ConvexPolygon : IConvexShape
 		points[index * 2 + 1] = position.Y;
 	}
 
-	public Vector2 GetPoint(int index)
+	public readonly Vector2 GetPoint(int index)
 	{
 		Debug.Assert(index >= 0 && index < MaxPoints);
 
@@ -65,11 +67,11 @@ public unsafe struct ConvexPolygon : IConvexShape
 
 	public Vector2 this[int index]
 	{
-		get => GetPoint(index);
+		readonly get => GetPoint(index);
 		set => SetPoint(index, value);
 	}
 
-	public Vector2 GetAxis(int index)
+	public readonly Vector2 GetAxis(int index)
 	{
 		Debug.Assert(index >= 0 && index < MaxPoints);
 
@@ -77,10 +79,10 @@ public unsafe struct ConvexPolygon : IConvexShape
 		var b = GetPoint(index >= pointCount - 1 ? 0 : index + 1);
 		var normal = (b - a).Normalized();
 
-		return new Vector2(-normal.Y, normal.X);
+		return new(-normal.Y, normal.X);
 	}
 
-	public void Project(in Vector2 axis, out float min, out float max)
+	public readonly void Project(in Vector2 axis, out float min, out float max)
 	{
 		if (pointCount <= 0)
 		{
@@ -136,8 +138,8 @@ public unsafe struct ConvexPolygon : IConvexShape
 
 	public static bool operator !=(in ConvexPolygon a, in ConvexPolygon b) => !(a == b);
 
-	public override bool Equals(object? obj) => obj is ConvexPolygon value && value == this;
-	public override int GetHashCode()
+	public readonly override bool Equals(object? obj) => obj is ConvexPolygon value && value == this;
+	public readonly override int GetHashCode()
 	{
 		var hash = pointCount.GetHashCode();
 		for (int i = 0, n = pointCount * 2; i < n; i ++)
