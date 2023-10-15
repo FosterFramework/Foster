@@ -68,6 +68,18 @@ public struct Circle : IProjectable
 	}
 
 	/// <summary>
+	/// Checks whether we overlap the given line segment
+	/// </summary>
+	public readonly bool Overlaps(in Line line)
+		=> Vector2.DistanceSquared(Position, line.ClosestPoint(Position)) < Radius * Radius;
+
+	/// <summary>
+	/// Checkers whether we overlap the given triangle
+	/// </summary>
+	public readonly bool Overlaps(in Triangle tri)
+		=> tri.Contains(Position) || Overlaps(tri.AB) || Overlaps(tri.BC) || Overlaps(tri.CA);
+
+	/// <summary>
 	/// Checks if the Circle overlaps with a Convex Shape, and returns their pushout vector
 	/// </summary>
 	public readonly bool Overlaps<TConvex>(in TConvex shape, out Vector2 pushout)
