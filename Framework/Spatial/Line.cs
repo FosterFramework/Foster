@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
 
+[StructLayout(LayoutKind.Sequential)]
 public struct Line : IConvexShape
 {
 	public Vector2 From;
 	public Vector2 To;
 
-	public int Points => 2;
-	public int Axis => 1;
+	public readonly int Points => 2;
+	public readonly int Axis => 1;
 
 	public Line(Vector2 from, Vector2 to)
 	{
@@ -17,26 +19,24 @@ public struct Line : IConvexShape
 		To = to;
 	}
 
-	public Rect Bounds => new Rect(From, To);
-	public float Length() => (To - From).Length();
+	public readonly Rect Bounds => new(From, To);
+	public readonly float Length() => (To - From).Length();
 
-	public Vector2 GetAxis(int index)
+	public readonly Vector2 GetAxis(int index)
 	{
 		var axis = (To - From).Normalized();
 		return new Vector2(axis.Y, -axis.X);
 	}
 
-	public Vector2 GetPoint(int index)
-	{
-		return index switch
+	public readonly Vector2 GetPoint(int index)
+		=> index switch
 		{
 			0 => From,
 			1 => To,
 			_ => throw new IndexOutOfRangeException()
 		};
-	}
 
-	public void Project(in Vector2 axis, out float min, out float max)
+	public readonly void Project(in Vector2 axis, out float min, out float max)
 	{
 		min = float.MaxValue;
 		max = float.MinValue;
@@ -49,14 +49,7 @@ public struct Line : IConvexShape
 		max = Math.Max(dot, max);
 	}
 
-	static public Line operator +(Line a, Vector2 b)
-	{
-		return new Line(a.From + b, a.To + b);
-	}
-
-	static public Line operator -(Line a, Vector2 b)
-	{
-		return new Line(a.From - b, a.To - b);
-	}
+	static public Line operator +(Line a, Vector2 b) => new(a.From + b, a.To + b);
+	static public Line operator -(Line a, Vector2 b) => new(a.From - b, a.To - b);
 }
 

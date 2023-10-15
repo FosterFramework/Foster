@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
 
+[StructLayout(LayoutKind.Sequential)]
 public struct LineInt : IConvexShape
 {
 	public Point2 From;
 	public Point2 To;
 
-	public int Points => 2;
-	public int Axis => 1;
+	public readonly int Points => 2;
+	public readonly int Axis => 1;
 
 	public LineInt(Point2 from, Point2 to)
 	{
@@ -17,7 +19,7 @@ public struct LineInt : IConvexShape
 		To = to;
 	}
 
-	public RectInt Bounds
+	public readonly RectInt Bounds
 	{
 		get
 		{
@@ -28,23 +30,21 @@ public struct LineInt : IConvexShape
 		}
 	}
 
-	public Vector2 GetAxis(int index)
+	public readonly Vector2 GetAxis(int index)
 	{
 		var axis = (To - From).Normalized();
 		return new Vector2(axis.Y, -axis.X);
 	}
 
-	public Vector2 GetPoint(int index)
-	{
-		return index switch
+	public readonly Vector2 GetPoint(int index)
+		=> index switch
 		{
 			0 => From,
 			1 => To,
 			_ => throw new IndexOutOfRangeException()
 		};
-	}
 
-	public void Project(in Vector2 axis, out float min, out float max)
+	public readonly void Project(in Vector2 axis, out float min, out float max)
 	{
 		min = float.MaxValue;
 		max = float.MinValue;
@@ -57,13 +57,6 @@ public struct LineInt : IConvexShape
 		max = Math.Max(dot, max);
 	}
 
-	static public LineInt operator +(LineInt a, Point2 b)
-	{
-		return new LineInt(a.From + b, a.To + b);
-	}
-
-	static public LineInt operator -(LineInt a, Point2 b)
-	{
-		return new LineInt(a.From - b, a.To - b);
-	}
+	static public LineInt operator +(LineInt a, Point2 b) => new(a.From + b, a.To + b);
+	static public LineInt operator -(LineInt a, Point2 b) => new(a.From - b, a.To - b);
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace Foster.Framework;
@@ -8,6 +9,7 @@ namespace Foster.Framework;
 /// <summary>
 /// A 2D Rectangle
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public struct Rect : IConvexShape, IEquatable<Rect>
 {
 	public float X;

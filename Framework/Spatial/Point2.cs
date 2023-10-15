@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
 
 /// <summary>
 /// A 2D Integer Point
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public struct Point2 : IEquatable<Point2>
 {
 	public static readonly Point2 Zero = new(0, 0);

@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace Foster.Framework;
@@ -7,6 +8,7 @@ namespace Foster.Framework;
 /// <summary>
 /// A 2D Integer Rectangle
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public struct RectInt : IEquatable<RectInt>
 {
 	public int X;

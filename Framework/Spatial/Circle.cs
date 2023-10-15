@@ -1,10 +1,12 @@
 ﻿using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
 
 /// <summary>
 /// A 2D Circle
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public struct Circle : IProjectable
 {
 	/// <summary>

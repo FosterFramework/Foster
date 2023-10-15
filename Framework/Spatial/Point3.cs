@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
 
 /// <summary>
 /// A 3D Integer Point
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public struct Point3
 {
 
