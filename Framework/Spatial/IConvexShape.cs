@@ -19,9 +19,9 @@ public interface IConvexShape : IProjectable
 	public Vector2 GetPoint(int index);
 
 	/// <summary>
-	/// The number of axis of the Convex Shape
+	/// The number of axes of the Convex Shape
 	/// </summary>
-	public int Axis { get; }
+	public int Axes { get; }
 
 	/// <summary>
 	/// Gets a axis of the Convex Shape at the given index
@@ -45,7 +45,7 @@ public static class IConvexShape2DExt
 		var distance = float.MaxValue;
 
 		// check against axis
-		for (int i = 0; i < a.Axis; i++)
+		for (int i = 0; i < a.Axes; i++)
 		{
 			var axis = a.GetAxis(i);
 			if (!a.AxisOverlaps(b, axis, out float amount))
@@ -94,7 +94,7 @@ public static class IConvexShape2DExt
 
 		// a-axis
 		{
-			for (int i = 0; i < a.Axis; i++)
+			for (int i = 0; i < a.Axes; i++)
 			{
 				var axis = a.GetAxis(i);
 				if (!a.AxisOverlaps(b, axis, out float amount))
@@ -110,7 +110,7 @@ public static class IConvexShape2DExt
 
 		// b-axis
 		{
-			for (int i = 0; i < b.Axis; i++)
+			for (int i = 0; i < b.Axes; i++)
 			{
 				var axis = b.GetAxis(i);
 				if (!a.AxisOverlaps(b, axis, out float amount))

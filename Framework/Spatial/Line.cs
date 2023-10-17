@@ -11,7 +11,7 @@ public struct Line : IConvexShape
 	public Vector2 To;
 
 	public readonly int Points => 2;
-	public readonly int Axis => 1;
+	public readonly int Axes => 1;
 
 	public Line(Vector2 from, Vector2 to)
 	{
@@ -20,7 +20,8 @@ public struct Line : IConvexShape
 	}
 
 	public readonly Rect Bounds => new(From, To);
-	public readonly float Length() => (To - From).Length();
+	public readonly float Length => (To - From).Length();
+	public readonly Vector2 Normal => (To - From).Normalized();
 
 	public readonly Vector2 GetAxis(int index)
 	{

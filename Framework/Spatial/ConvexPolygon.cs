@@ -23,7 +23,7 @@ public unsafe struct ConvexPolygon : IConvexShape
 		}
 	}
 
-	public int Axis
+	public int Axes
 	{
 		readonly get => pointCount;
 		set

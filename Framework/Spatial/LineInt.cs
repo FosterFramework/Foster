@@ -11,7 +11,7 @@ public struct LineInt : IConvexShape
 	public Point2 To;
 
 	public readonly int Points => 2;
-	public readonly int Axis => 1;
+	public readonly int Axes => 1;
 
 	public LineInt(Point2 from, Point2 to)
 	{
