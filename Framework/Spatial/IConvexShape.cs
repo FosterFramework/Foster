@@ -62,6 +62,12 @@ public static class IConvexShape2DExt
 		for (int i = 0; i < a.Points; i++)
 		{
 			var axis = (a.GetPoint(i) - b.Position).Normalized();
+
+			// if the circle's center exactly overlaps with the point, the axis
+			// will be zero which is an invalid state, so just set it to unit-x
+			if (axis == Vector2.Zero)
+				axis = Vector2.UnitX;
+
 			if (!a.AxisOverlaps(b, axis, out float amount))
 				return false;
 
