@@ -347,8 +347,6 @@ public class Aseprite : Aseprite.IUserDataTarget
 						text = ReadString();
 					if ((flags & 2) != 0)
 						color = new Color(ReadByte(), ReadByte(), ReadByte(), ReadByte());
-					if ((flags & 4) != 0)
-						SkipTo(chunkEnd);
 
 					if (userDataTarget is IUserDataTarget target)
 					{
@@ -385,8 +383,10 @@ public class Aseprite : Aseprite.IUserDataTarget
 					var type = (CelType)ReadWord();
 					var zIndex = ReadShort();
 
+					// Compressed Tilemap not supported
 					if (type == CelType.CompressedTilemap)
 					{
+						Log.Warning("Aseprite Tilemaps are not supported");
 						SkipTo(chunkEnd);
 						continue;
 					}
@@ -397,6 +397,7 @@ public class Aseprite : Aseprite.IUserDataTarget
 
 					Skip(5);
 
+					// references an existing Cel instead of containing its own data
 					if (type == CelType.LinkedCel)
 					{
 						var linkedFrame = ReadWord();
@@ -441,12 +442,9 @@ public class Aseprite : Aseprite.IUserDataTarget
 					}
 
 					cel.Image = new Image(width, height, pixels);
-					SkipTo(chunkEnd);
 				}
-				else
-				{
-					SkipTo(chunkEnd);
-				}
+
+				SkipTo(chunkEnd);
 			}
 		}
 	}
@@ -523,6 +521,9 @@ public class Aseprite : Aseprite.IUserDataTarget
 		{
 			if (!layerFilter(layer))
 				continue;
+
+			if (layer.BlendMode != BlendMode.Normal)
+				Log.Warning("Aseprite BlendModes are not supported; Falling back to Normal");
 
 			for (int i = from; i < len; ++i)
 			{
