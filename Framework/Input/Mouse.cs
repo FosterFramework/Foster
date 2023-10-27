@@ -29,10 +29,7 @@ public class Mouse
 	public bool Down(MouseButtons button) => down[(int)button];
 	public bool Released(MouseButtons button) => released[(int)button];
 
-	public TimeSpan Timestamp(MouseButtons button)
-	{
-		return timestamp[(int)button];
-	}
+	public TimeSpan Timestamp(MouseButtons button) => timestamp[(int)button];
 
 	public bool Repeated(MouseButtons button, float delay, float interval)
 	{
