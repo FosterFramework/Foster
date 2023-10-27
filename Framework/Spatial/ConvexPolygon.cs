@@ -89,10 +89,7 @@ public unsafe struct ConvexPolygon : IConvexShape
 	public readonly Vector2 GetPoint(int index)
 	{
 		Debug.Assert(index >= 0 && index < MaxPoints);
-
-		return new Vector2(
-			points[index * 2 + 0], 
-			points[index * 2 + 1]);
+		return new(points[index * 2 + 0], points[index * 2 + 1]);
 	}
 
 	public Vector2 this[int index]
@@ -110,6 +107,14 @@ public unsafe struct ConvexPolygon : IConvexShape
 		var normal = (b - a).Normalized();
 
 		return new(-normal.Y, normal.X);
+	}
+
+	public readonly bool Contains(in Vector2 vec2)
+	{
+		int total = 0;
+		for (int i = 0; i < Points; i++)
+			total += Calc.Orient(GetPoint(i), GetPoint((i + 1) % Points), vec2);
+		return Math.Abs(total) == Points;
 	}
 
 	public readonly void Project(in Vector2 axis, out float min, out float max)
