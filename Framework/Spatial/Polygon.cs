@@ -1,5 +1,4 @@
-﻿using Foster.Framework;
-using System.Collections;
+﻿using System.Collections;
 using System.Numerics;
 using System.Runtime.InteropServices;
 

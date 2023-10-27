@@ -1285,6 +1285,9 @@ public class Batcher : IDisposable
 		}
 	}
 
+	public void CircleDashed(in Circle circle, float thickness, int steps, in Color color, float dashLength, float dashOffset)
+		=> CircleDashed(circle.Position, circle.Radius, thickness, steps, color, dashLength, dashOffset);
+
 	#endregion
 
 	#region Rect Line

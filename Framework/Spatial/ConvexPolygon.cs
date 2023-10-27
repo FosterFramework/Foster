@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
@@ -30,6 +29,37 @@ public unsafe struct ConvexPolygon : IConvexShape
 		{
 			Debug.Assert(value >= 0 && value < MaxPoints);
 			pointCount = value;
+		}
+	}
+
+	public readonly Rect Bounds
+	{
+		get
+		{
+			Rect bounds = new(this[0].X, this[0].Y, 0, 0);
+
+			for (int i = 1; i < Points; i++)
+			{
+				if (this[i].X < bounds.X)
+				{
+					bounds.Width += bounds.X - this[i].X;
+					bounds.X = this[i].X;
+				}
+
+				if (this[i].X > bounds.Right)
+					bounds.Width = this[i].X - bounds.X;
+
+				if (this[i].Y < bounds.Y)
+				{
+					bounds.Height += bounds.Y - this[i].Y;
+					bounds.Y = this[i].Y;
+				}
+
+				if (this[i].Y > bounds.Bottom)
+					bounds.Height = this[i].Y - bounds.Y;
+			}	
+
+			return bounds;
 		}
 	}
 	
