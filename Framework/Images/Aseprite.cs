@@ -1,5 +1,4 @@
 using System;
-using System.Drawing;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -65,15 +64,21 @@ public class Aseprite : Aseprite.IUserDataTarget
 		PingPongReverse = 3,
 	}
 
-	public struct UserData
+	public readonly struct AseUserData
 	{
-		public string? Text;
-		public Color? Color;
+		public readonly string Text = string.Empty;
+		public readonly Color Color = Color.Transparent;
+
+		public AseUserData(string text, Color color)
+		{
+			Text = text;
+			Color = color;
+		}
 	}
 
 	private interface IUserDataTarget
 	{
-		void SetUserData(UserData userData);
+		public AseUserData UserData { get; set; }
 	}
 
 	[Flags]
@@ -99,7 +104,7 @@ public class Aseprite : Aseprite.IUserDataTarget
 		public byte Opacity;
 		public string? Name;
 		public int TilesetIndex;
-		public UserData? UserData;
+		public AseUserData UserData { get; set; } = new();
 
 		public bool Visible => Flags.Has(LayerFlags.Visible);
 		public bool Editable => Flags.Has(LayerFlags.Editable);
@@ -108,19 +113,13 @@ public class Aseprite : Aseprite.IUserDataTarget
 		public bool PreferLinkedCels => Flags.Has(LayerFlags.PreferLinkedCels);
 		public bool DisplayCollapsed => Flags.Has(LayerFlags.DisplayCollapsed);
 		public bool Reference => Flags.Has(LayerFlags.Reference);
-
-		public void SetUserData(UserData userData) => UserData = userData;
-
-		public string? UserDataText => UserData?.Text;
 	}
 
 	public class Frame : IUserDataTarget
 	{
 		public int Duration;
 		public List<Cel> Cels = new();
-		public UserData? UserData;
-
-		public void SetUserData(UserData userData) => UserData = userData;
+		public AseUserData UserData { get; set; } = new();
 	}
 
 	public enum Format
@@ -145,7 +144,7 @@ public class Aseprite : Aseprite.IUserDataTarget
 		public byte Opacity;
 		public int ZIndex;
 		public Image? Image;
-		public UserData? UserData;
+		public AseUserData UserData { get; set; } = new();
 
 		public Cel(Layer layer, Point2 pos, byte opacity, int zIndex)
 		{
@@ -154,10 +153,6 @@ public class Aseprite : Aseprite.IUserDataTarget
 			Opacity = opacity;
 			ZIndex = zIndex;
 		}
-
-		public void SetUserData(UserData userData) => UserData = userData;
-
-		public string? UserDataText => UserData?.Text;
 	}
 
 	public class Tag
@@ -168,7 +163,7 @@ public class Aseprite : Aseprite.IUserDataTarget
 		public int Repeat;
 		public Color Color;
 		public string? Name;
-		public UserData? UserData;
+		public AseUserData UserData { get; set; } = new();
 	}
 
 	public class Slice : IUserDataTarget
@@ -183,17 +178,13 @@ public class Aseprite : Aseprite.IUserDataTarget
 
 		public string Name;
 		public Key[] Keys;
-		public UserData? UserData;
-
-		public string? UserDataText => UserData?.Text;
+		public AseUserData UserData { get; set; } = new();
 
 		public Slice(string name, int count)
 		{
 			Name = name;
 			Keys = new Key[count];
 		}
-
-		public void SetUserData(UserData userData) => UserData = userData;
 	}
 
 	public int Width;
@@ -203,11 +194,7 @@ public class Aseprite : Aseprite.IUserDataTarget
 	public Tag[] Tags = Array.Empty<Tag>();
 	public List<Slice> Slices = new();
 	public List<Layer> Layers = new();
-	public UserData? SpriteUserData;
-
-	public string? UserDataText => SpriteUserData?.Text;
-
-	public void SetUserData(UserData userData) => SpriteUserData = userData;
+	public AseUserData UserData { get; set; } = new();
 	
 	public Aseprite(string filePath)
 	{
@@ -223,23 +210,21 @@ public class Aseprite : Aseprite.IUserDataTarget
 
 	private void Load(BinaryReader bin)
 	{
+		// Shorthand methods to match Aseprite's naming convention
 		byte ReadByte() => bin.ReadByte();
 		ushort ReadWord() => bin.ReadUInt16();
 		short ReadShort() => bin.ReadInt16();
 		uint ReadDWord() => bin.ReadUInt32();
 		int ReadLong() => bin.ReadInt32();
 		string ReadString() => Encoding.UTF8.GetString(bin.ReadBytes(ReadWord()));
-		void Skip(int count)
-		{
-			while (count-- > 0)
-				bin.ReadByte();
-		}
+		void Skip(int count) => bin.BaseStream.Seek(count, SeekOrigin.Current);
+		void SkipTo(long chunkEnd) => bin.BaseStream.Seek(chunkEnd, SeekOrigin.Begin);
 
 		// Parse the file header
 		var fileSize = ReadDWord();
 		if (ReadWord() != 0xA5E0)
-			Log.Error("invalid aseprite file, magic number is wrong");
-		Frames = new Frame[ReadWord()];
+			throw new Exception("Invalid Aseprite file, magic number is wrong");
+		var frameCount = ReadWord();
 		Width = ReadWord();
 		Height = ReadWord();
 		var format = (Format)ReadWord();
@@ -247,9 +232,9 @@ public class Aseprite : Aseprite.IUserDataTarget
 		ReadWord(); // Speed (DEPRECATED)
 		ReadDWord(); // Set be 0
 		ReadDWord(); // Set be 0
-		var transparentColorIndex = ReadByte();
+		ReadByte(); // Transparent Color Index
 		Skip(3);
-		var colorCount = ReadWord();
+		ReadWord(); // Color Count
 		ReadByte(); // Pixel width
 		ReadByte(); // Pixel height
 		ReadShort(); // X position of the grid
@@ -258,21 +243,28 @@ public class Aseprite : Aseprite.IUserDataTarget
 		ReadWord(); // Grid height
 		Skip(84);
 
-		byte[] buffer = new byte[Width * Height * ((int)format / 8)];
+		// Create Frame array
+		Array.Resize(ref Frames, frameCount);
+		for (int i = 0; i < Frames.Length; i ++)
+			Frames[i] = new();
 
-		for (int f = 0; f < Frames.Length; ++f)
+		// Pixel buffer
+		var buffer = new byte[Width * Height * ((int)format / 8)];
+
+		foreach (var frame in Frames)
 		{
-			var frame = Frames[f] = new Frame();
 			IUserDataTarget? userDataTarget = frame;
 			int nextTagUserData = 0;
 
 			// Parse the frame header
 			ReadDWord(); // Bytes in this frame
 			if (ReadWord() != 0xF1FA)
-				Log.Error("frame magic number is incorrect");
+				throw new Exception("Invalid Aseprite file, frame magic number is wrong");
+			
 			int oldChunkCount = ReadWord();
 			frame.Duration = ReadWord();
 			Skip(2); // For future (set to zero)
+
 			int chunkCount = (int)ReadDWord();
 			if (chunkCount == 0)
 				chunkCount = oldChunkCount;
@@ -280,24 +272,24 @@ public class Aseprite : Aseprite.IUserDataTarget
 			// Parse all the frame chunks
 			for (int ch = 0; ch < chunkCount; ++ch)
 			{
-				long chunkStart = bin.BaseStream.Position;
+				var chunkStart = bin.BaseStream.Position;
 				var chunkSize = ReadDWord();
 				var chunkType = (ChunkType)ReadWord();
 				if (!Enum.IsDefined(chunkType))
 					chunkType = ChunkType.Unknown;
-
-				long chunkEnd = chunkStart + chunkSize;
-				void SkipChunk() => bin.BaseStream.Position = chunkEnd;
+				var chunkEnd = chunkStart + chunkSize;
 
 				if (chunkType == ChunkType.Palette)
 				{
-					int len = (int)ReadDWord();
-					if (Palette == null || len > Palette.Length)
-						Array.Resize(ref Palette, len);
-					int first = (int)ReadDWord();
-					int last = (int)ReadDWord();
+					var len = (int)ReadDWord();
+					var first = (int)ReadDWord();
+					var last = (int)ReadDWord();
 					Skip(8);
-					for (int i = first; i <= last; ++i)
+
+					if (len > Palette.Length)
+						Array.Resize(ref Palette, len);
+
+					for (var i = first; i <= last; ++i)
 					{
 						var flags = ReadWord();
 						Palette[i] = new Color(ReadByte(), ReadByte(), ReadByte(), ReadByte());
@@ -348,22 +340,23 @@ public class Aseprite : Aseprite.IUserDataTarget
 				}
 				else if (chunkType == ChunkType.UserData)
 				{
-					var userData = new UserData();
+					var text = string.Empty;
+					var color = Color.Transparent;
 					var flags = ReadDWord();
 					if ((flags & 1) != 0)
-						userData.Text = ReadString();
+						text = ReadString();
 					if ((flags & 2) != 0)
-						userData.Color = new Color(ReadByte(), ReadByte(), ReadByte(), ReadByte());
-					if ((flags & 4) != 0)
-						SkipChunk();
+						color = new Color(ReadByte(), ReadByte(), ReadByte(), ReadByte());
 
 					if (userDataTarget is IUserDataTarget target)
 					{
-						target.SetUserData(userData);
+						target.UserData = new(text, color);
 						userDataTarget = null;
 					}
-					else if (Tags is Tag[] tags && nextTagUserData < tags.Length)
-						tags[nextTagUserData++].UserData = userData;
+					else if (nextTagUserData < Tags.Length)
+					{
+						Tags[nextTagUserData++].UserData = new(text, color);
+					}
 				}
 				else if (chunkType == ChunkType.Layer)
 				{
@@ -390,9 +383,11 @@ public class Aseprite : Aseprite.IUserDataTarget
 					var type = (CelType)ReadWord();
 					var zIndex = ReadShort();
 
+					// Compressed Tilemap not supported
 					if (type == CelType.CompressedTilemap)
 					{
-						SkipChunk();
+						Log.Warning("Aseprite Tilemaps are not supported");
+						SkipTo(chunkEnd);
 						continue;
 					}
 
@@ -402,19 +397,21 @@ public class Aseprite : Aseprite.IUserDataTarget
 
 					Skip(5);
 
+					// references an existing Cel instead of containing its own data
 					if (type == CelType.LinkedCel)
 					{
 						var linkedFrame = ReadWord();
-						Cel linkedCel = Frames[linkedFrame].Cels.Find(c => c.Layer == layer)!;
+						var linkedCel = Frames[linkedFrame].Cels.Find(c => c.Layer == layer)!;
 						cel.Image = linkedCel.Image;
+						SkipTo(chunkEnd);
 						continue;
 					}
 
 					var width = (int)ReadWord();
 					var height = (int)ReadWord();
 					var pixels = new Color[width * height];
+					var decompressedLen = width * height * ((int)format / 8);
 
-					int decompressedLen = width * height * ((int)format / 8);
 					if (buffer.Length < decompressedLen)
 						Array.Resize(ref buffer, decompressedLen);
 
@@ -440,18 +437,14 @@ public class Aseprite : Aseprite.IUserDataTarget
 							break;
 						case Format.Indexed:
 							for (int i = 0; i < pixels.Length; ++i)
-								pixels[i] = Palette![buffer[i]];
+								pixels[i] = Palette[buffer[i]];
 							break;
 					}
 
 					cel.Image = new Image(width, height, pixels);
+				}
 
-					SkipChunk();
-				}
-				else
-				{
-					SkipChunk();
-				}
+				SkipTo(chunkEnd);
 			}
 		}
 	}
@@ -528,6 +521,9 @@ public class Aseprite : Aseprite.IUserDataTarget
 		{
 			if (!layerFilter(layer))
 				continue;
+
+			if (layer.BlendMode != BlendMode.Normal)
+				Log.Warning("Aseprite BlendModes are not supported; Falling back to Normal");
 
 			for (int i = from; i < len; ++i)
 			{
