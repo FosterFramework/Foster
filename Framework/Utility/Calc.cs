@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Numerics;
@@ -54,23 +53,17 @@ public static class Calc
 	#region Enums
 
 	public static int EnumCount<T>() where T : struct, Enum
-	{
-		return Enum.GetValues<T>().Length;
-	}
+		=> Enum.GetValues<T>().Length;
 
 	#endregion
 
 	#region Binary  Operations
 
 	public static bool IsBitSet(byte b, int pos)
-	{
-		return (b & (1 << pos)) != 0;
-	}
+		=> (b & (1 << pos)) != 0;
 
 	public static bool IsBitSet(int b, int pos)
-	{
-		return (b & (1 << pos)) != 0;
-	}
+		=> (b & (1 << pos)) != 0;
 
 	#endregion
 
@@ -144,11 +137,10 @@ public static class Calc
 		=> a + (b - a) * .5f;
 
 	public static bool SignsMatch(float a, float b)
-	{
-		return Math.Sign(a) == Math.Sign(b);
-	}
+		=> Math.Sign(a) == Math.Sign(b);
 
-	public static float Squared(this float v) => v * v;
+	public static float Squared(this float v)
+		=> v * v;
 
 	/// <summary>
 	/// Get the area of a triangle
@@ -188,34 +180,22 @@ public static class Calc
 		=> MathF.Abs(Vector2.Dot(a, b));
 
 	public static T Min<T>(T a, T b) where T : IComparable<T>
-	{
-		if (a.CompareTo(b) < 0)
-			return a;
-		return b;
-	}
+		=> a.CompareTo(b) < 0 ? a : b;
+
 	public static T Min<T>(T a, T b, T c) where T : IComparable<T>
-	{
-		return Min(Min(a, b), c);
-	}
+		=> Min(Min(a, b), c);
+
 	public static T Min<T>(T a, T b, T c, T d) where T : IComparable<T>
-	{
-		return Min(Min(Min(a, b), c), d);
-	}
+		=> Min(Min(Min(a, b), c), d);
 
 	public static T Max<T>(T a, T b) where T : IComparable<T>
-	{
-		if (a.CompareTo(b) > 0)
-			return a;
-		return b;
-	}
+		=> a.CompareTo(b) > 0 ? a : b;
+
 	public static T Max<T>(T a, T b, T c) where T : IComparable<T>
-	{
-		return Max(Max(a, b), c);
-	}
+		=> Max(Max(a, b), c);
+
 	public static T Max<T>(T a, T b, T c, T d) where T : IComparable<T>
-	{
-		return Max(Max(Max(a, b), c), d);
-	}
+		=> Max(Max(Max(a, b), c), d);
 
 	/// <summary>
 	/// Move toward a target value without passing it
@@ -300,12 +280,7 @@ public static class Calc
 		if (maxMagnitudeDelta > 0f)
 			len = Approach(len, target.Length(), maxMagnitudeDelta);
 
-		return Calc.AngleToVector(angle, len);
-	}
-
-	public static float Lerp(float a, float b, float percent)
-	{
-		return (a + (b - a) * percent);
+		return AngleToVector(angle, len);
 	}
 
 	/// <summary>
@@ -331,16 +306,20 @@ public static class Calc
 	{
 		return Math.Min(Math.Max(value, 0), 1);
 	}
+	
 	/// <summary>
-	/// Rounds a number to <see cref="int"/>. Always round using this!
+	/// Shorthand to MathF.Round but returns an Integer
 	/// </summary>
-	public static int Round(float v) => (int)Math.Round(v);
+	public static int Round(float v) => (int)MathF.Round(v);
+	
+	/// <summary>
+	/// Shorthand to MathF.Floor but returns an Integer
+	/// </summary>
+	public static int Floor(float v) => (int)MathF.Floor(v);
 
 	/// <summary>
-	/// Floors a number to <see cref="int"/>. Always floor using this!
+	/// Converts a value from 0 to 1, to 0 to 1 to 0
 	/// </summary>
-	public static int Floor(float v) => (int)Math.Floor(v);
-
 	public static float YoYo(float value)
 	{
 		if (value <= .5f)
@@ -349,35 +328,32 @@ public static class Calc
 			return 1 - ((value - .5f) * 2);
 	}
 
+	/// <summary>
+	/// Remaps a value from min-max, to newMin-newMax
+	/// </summary>
 	public static float Map(float val, float min, float max, float newMin = 0, float newMax = 1)
-	{
-		return ((val - min) / (max - min)) * (newMax - newMin) + newMin;
-	}
+		=> ((val - min) / (max - min)) * (newMax - newMin) + newMin;
 
-	public static float SineMap(float counter, float newMin, float newMax)
-	{
-		return Map((float)Math.Sin(counter), -1, 1, newMin, newMax);
-	}
-
+	/// <summary>
+	/// Remaps a value from min-max, to newMin-newMax, but clamps the value within the given range
+	/// </summary>
 	public static float ClampedMap(float val, float min, float max, float newMin = 0, float newMax = 1)
-	{
-		return Clamp((val - min) / (max - min), 0, 1) * (newMax - newMin) + newMin;
-	}
+		=> Clamp((val - min) / (max - min), 0, 1) * (newMax - newMin) + newMin;
+
+	/// <summary>
+	/// Remaps the given Sin(radians) value
+	/// </summary>
+	public static float SineMap(float radians, float newMin, float newMax)
+		=> Map(MathF.Sin(radians), -1, 1, newMin, newMax);
 
 	public static float Angle(Vector2 vec)
-	{
-		return MathF.Atan2(vec.Y, vec.X);
-	}
+		=> MathF.Atan2(vec.Y, vec.X);
 
 	public static float Angle(Vector2 from, Vector2 to)
-	{
-		return MathF.Atan2(to.Y - from.Y, to.X - from.X);
-	}
+		=> MathF.Atan2(to.Y - from.Y, to.X - from.X);
 
 	public static Vector2 AngleToVector(float angle, float length = 1)
-	{
-		return new Vector2(MathF.Cos(angle) * length, MathF.Sin(angle) * length);
-	}
+		=> new (MathF.Cos(angle) * length, MathF.Sin(angle) * length);
 
 	public static float AngleApproach(float val, float target, float maxMove)
 	{
@@ -388,23 +364,22 @@ public static class Calc
 	}
 
 	public static float AngleLerp(float startAngle, float endAngle, float percent)
-	{
-		return startAngle + AngleDiff(startAngle, endAngle) * percent;
-	}
+		=> startAngle + AngleDiff(startAngle, endAngle) * percent;
 
 	public static float AngleDiff(float radiansA, float radiansB)
-	{
-		return ((radiansB - radiansA - PI) % TAU + TAU) % TAU - PI;
-	}
+		=> ((radiansB - radiansA - PI) % TAU + TAU) % TAU - PI;
 
 	public static float AbsAngleDiff(float radiansA, float radiansB) 
 		=> MathF.Abs(AngleDiff(radiansA, radiansB));
 
-	public static float AngleWrap(float radians) => (radians + TAU) % TAU;
+	public static float AngleWrap(float radians)
+		=> (radians + TAU) % TAU;
 
-	public static float AngleReflectOnX(float radians) => AngleWrap(-radians);
+	public static float AngleReflectOnX(float radians)
+		=> AngleWrap(-radians);
 
-	public static float AngleReflectOnY(float radians) => AngleWrap(HalfPI - (radians - HalfPI));
+	public static float AngleReflectOnY(float radians)
+		=> AngleWrap(HalfPI - (radians - HalfPI));
 
 	public static float Snap(float value, float snapTo)
 		=> MathF.Round(value / snapTo) * snapTo;
@@ -431,10 +406,9 @@ public static class Calc
 		return x;
 	}
 
+	// TODO: should this use float.Epsilon?
 	public static bool Approx(float a, float b)
-	{
-		return MathF.Abs(a - b) <= 0.001f; 
-	}
+		=> MathF.Abs(a - b) <= 0.001f;
 
 	#endregion
 
@@ -481,7 +455,9 @@ public static class Calc
 		if (points.Count < 3)
 			return;
 
-		Span<int> list = (points.Count < 1000 ? stackalloc int[points.Count] : new int[points.Count]);
+		Span<int> list = points.Count < 1000 
+			? stackalloc int[points.Count] 
+			: new int[points.Count];
 
 		if (Area() > 0)
 		{
@@ -688,15 +664,8 @@ public static class Calc
 		return false;
 	}
 
-	public static void Assert(bool condition, string message)
-		=> Debug.Assert(condition, message);
-
 	public static void Swap<T>(ref T a, ref T b)
-	{
-		T temp = a;
-		a = b;
-		b = temp;
-	}
+		=> (b, a) = (a, b);
 
 	#endregion
 
@@ -757,25 +726,20 @@ public static class Calc
 
 	#region Interpolation
 
+	public static float Lerp(float a, float b, float percent)
+		=> (a + (b - a) * percent);
+
 	public static float Bezier(float a, float b, float c, float t)
-	{
-		return Lerp(Lerp(a, b, t), Lerp(b, c, t), t);
-	}
+		=> Lerp(Lerp(a, b, t), Lerp(b, c, t), t);
 
 	public static float Bezier(float a, float b, float c, float d, float t)
-	{
-		return Bezier(Lerp(a, b, t), Lerp(b, c, t), Lerp(c, d, t), t);
-	}
+		=> Bezier(Lerp(a, b, t), Lerp(b, c, t), Lerp(c, d, t), t);
 
 	public static Vector2 Bezier(Vector2 a, Vector2 b, Vector2 c, float t)
-	{
-		return Vector2.Lerp(Vector2.Lerp(a, b, t), Vector2.Lerp(b, c, t), t);
-	}
+		=> Vector2.Lerp(Vector2.Lerp(a, b, t), Vector2.Lerp(b, c, t), t);
 
 	public static Vector2 Bezier(Vector2 a, Vector2 b, Vector2 c, Vector2 d, float t)
-	{
-		return Bezier(Vector2.Lerp(a, b, t), Vector2.Lerp(b, c, t), Vector2.Lerp(c, d, t), t);
-	}
+		=> Bezier(Vector2.Lerp(a, b, t), Vector2.Lerp(b, c, t), Vector2.Lerp(c, d, t), t);
 
 	public static float SmoothDamp(float current, float target, ref float velocity, float smoothTime, float maxSpeed, float deltaTime)
 	{
