@@ -119,6 +119,9 @@ public struct Circle : IProjectable
 	public static bool operator ==(in Circle a, in Circle b) => a.Position == b.Position && a.Radius == b.Radius;
 	public static bool operator !=(in Circle a, in Circle b) => !(a == b);
 
+	public static Circle operator +(in Circle a, in Vector2 b) => new(a.Position + b, a.Radius);
+	public static Circle operator -(in Circle a, in Vector2 b) => new(a.Position - b, a.Radius);
+
 	public readonly override bool Equals(object? obj) => obj is Circle circle && circle == this;
 	public readonly override int GetHashCode() => HashCode.Combine(Position, Radius);
 }

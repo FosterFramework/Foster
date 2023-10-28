@@ -95,7 +95,7 @@ public class Polygon : IEnumerable<Vector2>
 		}
 	}
 
-	public void Move(in Vector2 offset)
+	public Polygon Move(in Vector2 offset)
 	{
 		if (offset != Vector2.Zero && vertices.Count > 0)
 		{
@@ -104,6 +104,8 @@ public class Polygon : IEnumerable<Vector2>
 			trianglesDirty = true;
 			CalculateBounds();
 		}
+
+		return this;
 	}
 
 	public Vector2 Center

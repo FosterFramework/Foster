@@ -173,6 +173,28 @@ public unsafe struct ConvexPolygon : IConvexShape
 
 	public static bool operator !=(in ConvexPolygon a, in ConvexPolygon b) => !(a == b);
 
+	public static ConvexPolygon operator +(in ConvexPolygon a, in Vector2 b)
+	{
+		ConvexPolygon result = a;
+		for (int i = 0; i < result.pointCount * 2; i += 2)
+		{
+			result.points[i] += b.X;
+			result.points[i + 1] += b.Y;
+		}
+		return result;
+	}
+
+	public static ConvexPolygon operator -(in ConvexPolygon a, in Vector2 b)
+	{
+		ConvexPolygon result = a;
+		for (int i = 0; i < result.pointCount * 2; i += 2)
+		{
+			result.points[i] -= b.X;
+			result.points[i + 1] -= b.Y;
+		}
+		return result;
+	}
+
 	public readonly override bool Equals(object? obj) => obj is ConvexPolygon value && value == this;
 	public readonly override int GetHashCode()
 	{
