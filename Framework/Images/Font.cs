@@ -40,7 +40,7 @@ public class Font : IDisposable
 
 	public Font(string path)
 	{
-		using var stream = File.Open(path, FileMode.Open);
+		using var stream = File.OpenRead(path);
 		Load(stream);
 	}
 
