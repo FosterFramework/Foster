@@ -41,90 +41,79 @@ public struct Point2 : IEquatable<Point2>
 	/// <summary>
 	/// Gets the Length of the Point
 	/// </summary>
-	public float Length()
-	{
-		return new Vector2(X, Y).Length();
-	}
+	public readonly float Length() => new Vector2(X, Y).Length();
 
 	/// <summary>
 	/// Gets the Length Squared of the Point
 	/// </summary>
-	public float LengthSquared()
-	{
-		return new Vector2(X, Y).LengthSquared();
-	}
+	public readonly float LengthSquared() => new Vector2(X, Y).LengthSquared();
 
 	/// <summary>
 	/// Gets the Normalized Vector of the Point
 	/// </summary>
-	public Vector2 Normalized()
-	{
-		return new Vector2(X, Y).Normalized();
-	}
+	public readonly Vector2 Normalized() => new Vector2(X, Y).Normalized();
 
 	/// <summary>
 	/// Floors both axes of the Point2 to the given interval
 	/// </summary>
-	public Point2 FloorTo(int interval)
-	{
-		return (this / interval) * interval;
-	}
+	public readonly Point2 FloorTo(int interval) => (this / interval) * interval;
+
+	/// <summary>
+	/// Floors both axes of the Point2 to the given intervals
+	/// </summary>
+	public readonly Point2 FloorTo(in Point2 intervals)
+		=> new((X / intervals.X) * intervals.X, (Y / intervals.Y) * intervals.Y);
 
 	/// <summary>
 	/// Rounds both axes of the Point2 to the given interval
 	/// </summary>
-	public Point2 RoundTo(int interval)
-	{
-		return (this / (float)interval).RoundToPoint2() * interval;
-	}
+	public readonly Point2 RoundTo(int interval) => (this / (float)interval).RoundToPoint2() * interval;
+
+	/// <summary>
+	/// Rounds both axes of the Point2 to the given intervals
+	/// </summary>
+	public readonly Point2 RoundTo(in Point2 intervals)
+		=> new(Calc.Round(X / (float)intervals.X) * intervals.X, Calc.Round(Y / (float)intervals.Y) * intervals.Y);
 
 	/// <summary>
 	/// Returns a Point2 with the X-value of this Point2, but zero Y
 	/// </summary>
-	public Point2 OnlyX()
-	{
-		return new(X, 0);
-	}
+	public readonly Point2 OnlyX() => new(X, 0);
 
 	/// <summary>
 	/// Returns a Point2 with the Y-value of this Point2, but zero X
 	/// </summary>
-	public Point2 OnlyY()
-	{
-		return new(0, Y);
-	}
+	public readonly Point2 OnlyY() => new(0, Y);
 
 	/// <summary>
 	/// Turns a Point2 to its right perpendicular
 	/// </summary>
-	public Point2 TurnRight() => new(-Y, X);
+	public readonly Point2 TurnRight() => new(-Y, X);
 
 	/// <summary>
 	/// Turns a Point2 to its left perpendicular
 	/// </summary>
-	public Point2 TurnLeft() => new(Y, -X);
+	public readonly Point2 TurnLeft() => new(Y, -X);
 
 	/// <summary>
 	/// Clamps the point inside the provided range.
 	/// </summary>
-	public Point2 Clamp(in Point2 min, in Point2 max) =>
-		new Point2(Calc.Clamp(X, min.X, max.X), Calc.Clamp(Y, min.Y, max.Y));
+	public readonly Point2 Clamp(in Point2 min, in Point2 max) =>
+		new(Calc.Clamp(X, min.X, max.X), Calc.Clamp(Y, min.Y, max.Y));
 
 	/// <summary>
 	/// Clamps the point inside the bounding rectangle.
 	/// </summary>
-	public Point2 Clamp(in RectInt bounds) =>
+	public readonly Point2 Clamp(in RectInt bounds) =>
 		Clamp(bounds.TopLeft, bounds.BottomRight);
 
-	public override bool Equals(object? obj) => (obj is Point2 other) && (other == this);
+	public readonly override bool Equals(object? obj) => (obj is Point2 other) && (other == this);
 
-	public bool Equals(Point2 other) => (X == other.X && Y == other.Y);
+	public readonly bool Equals(Point2 other) => (X == other.X && Y == other.Y);
 
-	public override int GetHashCode()
-		=> HashCode.Combine(X, Y);
+	public readonly override int GetHashCode() => HashCode.Combine(X, Y);
 
-	public override string ToString()
-		=> $"[{X}, {Y}]";
+	public readonly override string ToString() => $"[{X}, {Y}]";
 
 	public static Point2 Min(Point2 a, Point2 b) => new(Math.Min(a.X, b.X), Math.Min(a.Y, b.Y));
 	public static Point2 Min(Point2 a, Point2 b, Point2 c) => new(Calc.Min(a.X, b.X, c.X), Calc.Min(a.Y, b.Y, c.Y));
