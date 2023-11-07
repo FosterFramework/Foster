@@ -17,7 +17,11 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release)
 endif()
 
-add_library(FosterPlatform SHARED
+# Define target name
+set (TARGET_NAME FosterPlatform)
+
+add_library(${TARGET_NAME} SHARED
+	include/foster_platform.h
 	src/foster_platform.c
 	src/foster_image.c
 	src/foster_renderer.c
@@ -25,7 +29,7 @@ add_library(FosterPlatform SHARED
 	src/foster_renderer_opengl.c
 )
 
-target_include_directories(FosterPlatform
+target_include_directories(${TARGET_NAME}
 	PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
 )
@@ -42,7 +46,7 @@ else()
 endif()
 
 # Output libs to platform-specific library
-set_target_properties(FosterPlatform
+set_target_properties(${TARGET_NAME}
 	PROPERTIES
 	ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
 	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
@@ -52,25 +56,38 @@ set_target_properties(FosterPlatform
 	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
 )
 
+if (MSVC)
+    # Set warning level 3
+    target_compile_options(${TARGET_NAME} PRIVATE /W3)
+
+    # Warnings as Errors Enabled
+    target_compile_options(${TARGET_NAME} PRIVATE /WX)
+endif()
+
+if(WIN32)
+    target_compile_definitions(${TARGET_NAME} PRIVATE _UNICODE UNICODE _CRT_SECURE_NO_WARNINGS)
+    target_compile_definitions(${TARGET_NAME} PRIVATE NOMINMAX)
+endif ()
+
 # tracks which libraries we need to link, depends on Options above
 set(LIBS "")
 
 # use the OpenGL Renderer Backend
 if (FOSTER_OPENGL_ENABLED)
-	add_compile_definitions(FOSTER_OPENGL_ENABLED)
+	target_compile_definitions(${TARGET_NAME} PRIVATE FOSTER_OPENGL_ENABLED)
 endif()
 
 # use the D3D11 Renderer Backend
 if (FOSTER_D3D11_ENABLED)
-	add_compile_definitions(FOSTER_D3D11_ENABLED)
+	target_compile_definitions(${TARGET_NAME} PRIVATE FOSTER_D3D11_ENABLED)
 	set(LIBS ${LIBS} d3d11.lib dxguid.lib D3Dcompiler.lib)
 endif()
 
 # Emscripten can import SDL2 directly
 if (EMSCRIPTEN)
 	
-	set_target_properties(FosterPlatform PROPERTIES COMPILE_FLAGS "-s USE_SDL=2")
-	target_link_libraries(FosterPlatform "-s USE_SDL=2 -s USE_WEBGL2=1")
+	set_target_properties(${TARGET_NAME} PROPERTIES COMPILE_FLAGS "-s USE_SDL=2")
+	target_link_libraries(${TARGET_NAME} "-s USE_SDL=2 -s USE_WEBGL2=1")
 
 # Pull SDL2 from its Github repo
 else()
@@ -84,7 +101,7 @@ else()
 		FetchContent_Declare(
 			SDL2
 			GIT_REPOSITORY https://github.com/libsdl-org/SDL
-			GIT_TAG release-2.28.2
+			GIT_TAG release-2.28.5
 			GIT_PROGRESS TRUE
 		)
 		FetchContent_MakeAvailable(SDL2)
@@ -94,11 +111,11 @@ else()
 
 	# statically link SDL2 since we're building it ourselve
 	set(LIBS ${LIBS} ${FOSTER_SDL2_LIBS})
-	target_include_directories(FosterPlatform PRIVATE ${FOSTER_SDL2_INCLUDE})
+	target_include_directories(${TARGET_NAME} PRIVATE ${FOSTER_SDL2_INCLUDE})
 endif()
 
 # Tell SDL it's going to be a shared lib
 set_property(TARGET ${FOSTER_SDL2_LIBS} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 # Link SDL
-target_link_libraries(FosterPlatform PRIVATE ${LIBS})
+target_link_libraries(${TARGET_NAME} PRIVATE ${LIBS})
