@@ -141,7 +141,7 @@ internal static class Platform
 		public IntPtr target;
 		public FosterRect clip;
 		public Color color;
-		public int depth;
+		public float depth;
 		public int stencil;
 		public ClearMask mask;
 	}

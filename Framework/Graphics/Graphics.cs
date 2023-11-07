@@ -53,7 +53,7 @@ namespace Foster.Framework
 		/// <summary>
 		/// Clears the Back Buffer
 		/// </summary>
-		public static void Clear(Color color, int depth, int stencil, ClearMask mask)
+		public static void Clear(Color color, float depth, int stencil, ClearMask mask)
 		{
 			Platform.FosterClearCommand clear = new()
 			{

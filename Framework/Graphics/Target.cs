@@ -85,7 +85,7 @@ public class Target : IResource
 	/// <summary>
 	/// Clears the Target
 	/// </summary>
-	public void Clear(Color color, int depth, int stencil, ClearMask mask)
+	public void Clear(Color color, float depth, int stencil, ClearMask mask)
 	{
 		Debug.Assert(!IsDisposed, "Target is Disposed");
 
