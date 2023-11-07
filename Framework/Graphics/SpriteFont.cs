@@ -96,7 +96,7 @@ public class SpriteFont
 
 	public SpriteFont(string path, float size, ReadOnlySpan<int> codepoints)
 	{
-		var font = new Font(path);
+		using var font = new Font(path);
 		InitializeFromFont(font, size, codepoints);
 	}
 
@@ -105,7 +105,7 @@ public class SpriteFont
 
 	public SpriteFont(Stream stream, float size, ReadOnlySpan<int> codepoints)
 	{
-		var font = new Font(stream);
+		using var font = new Font(stream);
 		InitializeFromFont(font, size, codepoints);
 	}
 
