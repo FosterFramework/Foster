@@ -45,12 +45,12 @@ public struct Subtexture
 	/// <summary>
 	/// The Draw Width of the Subtexture
 	/// </summary>
-	public float Width => Frame.Width;
+	public readonly float Width => Frame.Width;
 
 	/// <summary>
 	/// The Draw Height of the Subtexture
 	/// </summary>
-	public float Height => Frame.Height;
+	public readonly float Height => Frame.Height;
 
 	public Subtexture()
 	{
@@ -105,7 +105,7 @@ public struct Subtexture
 		}
 	}
 
-	public (Rect Source, Rect Frame) GetClip(in Rect clip)
+	public readonly (Rect Source, Rect Frame) GetClip(in Rect clip)
 	{
 		(Rect Source, Rect Frame) result;
 
@@ -119,12 +119,12 @@ public struct Subtexture
 		return result;
 	}
 
-	public (Rect Source, Rect Frame) GetClip(float x, float y, float w, float h)
+	public readonly (Rect Source, Rect Frame) GetClip(float x, float y, float w, float h)
 	{
 		return GetClip(new Rect(x, y, w, h));
 	}
 
-	public Subtexture GetClipSubtexture(Rect clip)
+	public readonly Subtexture GetClipSubtexture(in Rect clip)
 	{
 		var (source, frame) = GetClip(clip);
 		return new Subtexture(Texture, source, frame);
