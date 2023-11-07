@@ -513,7 +513,7 @@ typedef struct FosterClearCommand
 	FosterTarget* target;
 	FosterRect clip;
 	FosterColor color;
-	int depth;
+	float depth;
 	int stencil;
 	FosterClearMask mask;
 } FosterClearCommand;

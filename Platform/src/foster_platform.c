@@ -176,7 +176,7 @@ void FosterPollEvents()
 		}
 		else if (event.type == SDL_MOUSEWHEEL)
 		{
-			fstate.desc.onMouseWheel(event.wheel.x, event.wheel.y);
+			fstate.desc.onMouseWheel((float)event.wheel.x, (float)event.wheel.y);
 		}
 		// Keyboard
 		else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)
