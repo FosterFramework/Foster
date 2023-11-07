@@ -8,7 +8,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Title>Foster</Title>
     <Product>Foster</Product>
-    <Version>0.1.4-alpha</Version>
+    <Version>0.1.5-alpha</Version>
     <Authors>Noel Berry</Authors>
     <Description>A small 2D cross-platform Game Framework</Description>
     <RepositoryType>git</RepositoryType>

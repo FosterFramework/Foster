@@ -23,6 +23,7 @@ public struct Color : IEquatable<Color>
 	public static readonly Color Green = new(0x00ff00);
 	public static readonly Color Blue = new(0x0000ff);
 	public static readonly Color Yellow = new(0xffff00);
+	public static readonly Color CornflowerBlue = new(0x6495ed);
 
 	public byte R;
 	public byte G;

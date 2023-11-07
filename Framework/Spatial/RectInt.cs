@@ -243,6 +243,15 @@ public struct RectInt : IEquatable<RectInt>
 	public readonly RectInt Inflate(in Point2 by)
 		=> Inflate(by.X, by.Y);
 
+	public readonly Rect Inflate(float by)
+		=> new(X - by, Y - by, Width + by * 2, Height + by * 2);
+
+	public readonly Rect Inflate(float byX, float byY)
+		=> new(X - byX, Y - byY, Width + byX * 2, Height + byY * 2);
+
+	public readonly Rect Inflate(in Vector2 by)
+		=> Inflate(by.X, by.Y);
+
 	public readonly RectInt MultiplyX(int scale)
 	{
 		var r = new RectInt(X * scale, Y, Width * scale, Height);

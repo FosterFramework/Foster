@@ -210,19 +210,33 @@ public class VirtualButton
 	/// <summary>
 	/// Consumes the press, and VirtualButton.Pressed will return false until the next Press
 	/// </summary>
-	public void ConsumePress()
+	/// <returns>True if there was a Press to consume</returns>
+	public bool ConsumePress()
 	{
-		Pressed = false;
-		PressConsumed = true;
+		if (Pressed)
+		{
+			Pressed = false;
+			PressConsumed = true;
+			return true;
+		}
+		else
+			return false;
 	}
 
 	/// <summary>
-	/// Consumes the release, and VirtualButton.Released will return false until the next Press
+	/// Consumes the release, and VirtualButton.Released will return false until the next Release
 	/// </summary>
-	public void ConsumeRelease()
+	/// <returns>True if there was a Release to consume</returns>
+	public bool ConsumeRelease()
 	{
-		Released = false;
-		ReleaseConsumed = true;
+		if (Released)
+		{
+			Released = false;
+			ReleaseConsumed = true;
+			return true;
+		}
+		else
+			return false;
 	}
 
 	[Obsolete("Use VirtualButton.ConsumePress() instead")]
@@ -250,6 +264,10 @@ public class VirtualButton
 		{
 			ReleaseConsumed = false;
 			ReleaseTimestamp = Time.Duration;
+		}
+		else if (!ReleaseConsumed && ReleaseTimestamp > TimeSpan.Zero && (Time.Duration - ReleaseTimestamp).TotalSeconds < Buffer)
+		{
+			Released = true;
 		}
 
 		if (Down && (Time.Duration - PressTimestamp).TotalSeconds > RepeatDelay)

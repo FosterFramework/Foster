@@ -38,6 +38,11 @@ public struct Circle : IProjectable
 	}
 
 	/// <summary>
+	/// Calculate the area of the circle
+	/// </summary>
+	public readonly float Area => MathF.PI * Radius * Radius;
+
+	/// <summary>
 	/// Checks if the Vector2 is in the Circle
 	/// </summary>
 	public readonly bool Contains(in Vector2 point)
@@ -105,8 +110,17 @@ public struct Circle : IProjectable
 		max = Vector2.Dot(Position + axis * Radius, axis);
 	}
 
+	/// <summary>
+	/// Return a new circle with the radius inflated by the given amount
+	/// </summary>
+	public readonly Circle Inflate(float addRadius)
+		=> new(Position, Radius + addRadius);
+
 	public static bool operator ==(in Circle a, in Circle b) => a.Position == b.Position && a.Radius == b.Radius;
 	public static bool operator !=(in Circle a, in Circle b) => !(a == b);
+
+	public static Circle operator +(in Circle a, in Vector2 b) => new(a.Position + b, a.Radius);
+	public static Circle operator -(in Circle a, in Vector2 b) => new(a.Position - b, a.Radius);
 
 	public readonly override bool Equals(object? obj) => obj is Circle circle && circle == this;
 	public readonly override int GetHashCode() => HashCode.Combine(Position, Radius);

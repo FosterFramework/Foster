@@ -1249,12 +1249,21 @@ public class Batcher : IDisposable
 
 	public void CircleLine(in Vector2 center, float radius, float thickness, int steps, in Color color)
 	{
-		var last = Calc.AngleToVector(0, radius);
+		var innerRadius = radius - thickness;
+		if (innerRadius <= 0)
+		{
+			Circle(center, radius, steps, color);
+			return;
+		}
 
+		var last = Calc.AngleToVector(0);
 		for (int i = 1; i <= steps; i++)
 		{
-			var next = Calc.AngleToVector((i / (float)steps) * Calc.TAU, radius);
-			Line(center + last, center + next, thickness, color);
+			var next = Calc.AngleToVector((i / (float)steps) * Calc.TAU);
+			Quad(
+				center + last * innerRadius, center + last * radius,
+				center + next * radius, center + next * innerRadius,
+				color);
 			last = next;
 		}
 	}
@@ -1275,6 +1284,9 @@ public class Batcher : IDisposable
 			last = next;
 		}
 	}
+
+	public void CircleDashed(in Circle circle, float thickness, int steps, in Color color, float dashLength, float dashOffset)
+		=> CircleDashed(circle.Position, circle.Radius, thickness, steps, color, dashLength, dashOffset);
 
 	#endregion
 
