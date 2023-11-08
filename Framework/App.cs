@@ -215,6 +215,16 @@ public static class App
 	}
 
 	/// <summary>
+	/// Runs the Application with the given Module automatically registered.
+	/// Functionally the same as calling Register<T>() followed by Run()
+	/// </summary>
+	public static void Run<T>(string applicationName, int width, int height, bool fullscreen = false) where T : Module, new()
+	{
+		Register<T>();
+		Run(applicationName, width, height, fullscreen);
+	}
+
+	/// <summary>
 	/// Runs the Application
 	/// </summary>
 	public static void Run(string applicationName, int width, int height, bool fullscreen = false)
