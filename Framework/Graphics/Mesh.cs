@@ -6,7 +6,7 @@ namespace Foster.Framework;
 public class Mesh : IResource
 {
 	public string Name { get; set; } = string.Empty;
-	public bool IsDisposed => isDisposed;
+	public bool IsDisposed => disposed;
 
 	/// <summary>
 	/// Number of Vertices in the Mesh
@@ -29,18 +29,19 @@ public class Mesh : IResource
 	public VertexFormat? VertexFormat { get; private set; }
 
 	internal IntPtr resource;
-	internal bool isDisposed = false;
+	internal bool disposed = false;
 
 	public Mesh()
 	{
 		resource = Platform.FosterMeshCreate();
 		if (resource == IntPtr.Zero)
 			throw new Exception("Failed to create Mesh");
+		Graphics.Resources.RegisterAllocated(this, resource, Platform.FosterMeshDestroy);
 	}
 
 	~Mesh()
 	{
-		Dispose();
+		Dispose(false);
 	}
 
 	private static IndexFormat GetIndexFormat<T>()
@@ -245,10 +246,16 @@ public class Mesh : IResource
 
 	public void Dispose()
 	{
-		if (!isDisposed)
+		Dispose(true);
+		GC.SuppressFinalize(this);
+	}
+
+	private void Dispose(bool disposing)
+	{
+		if (!disposed)
 		{
-			isDisposed = true;
-			Graphics.QueueDeleteResource(resource, Platform.FosterMeshDestroy);
+			disposed = true;
+			Graphics.Resources.RequestDelete(resource);
 		}
 	}
 }

@@ -16,7 +16,7 @@ public class Texture : IResource
 	/// <summary>
 	/// If the Texture has been disposed
 	/// </summary>
-	public bool IsDisposed => isDisposed;
+	public bool IsDisposed => disposed;
 
 	/// <summary>
 	/// Gets the Width of the Texture
@@ -49,7 +49,7 @@ public class Texture : IResource
 	public int MemorySize => Width * Height * Format.Size();
 
 	internal readonly IntPtr resource;
-	internal bool isDisposed = false;
+	internal bool disposed = false;
 
 	public Texture(int width, int height, TextureFormat format = TextureFormat.Color)
 	{
@@ -64,6 +64,8 @@ public class Texture : IResource
 		Height = height;
 		Format = format;
 		IsTargetAttachment = false;
+
+		Graphics.Resources.RegisterAllocated(this, resource, Platform.FosterTextureDestroy);
 	}
 
 	public Texture(int width, int height, ReadOnlySpan<Color> pixels)
@@ -96,7 +98,7 @@ public class Texture : IResource
 	~Texture()
 	{
 		if (!IsTargetAttachment)
-			Dispose();
+			Dispose(false);
 	}
 
 	/// <summary>
@@ -137,10 +139,16 @@ public class Texture : IResource
 	{
 		Debug.Assert(!IsTargetAttachment, "Cannot Dispose a Texture that is part of a Target");
 
-		if (!IsTargetAttachment && !isDisposed)
+		Dispose(true);
+		GC.SuppressFinalize(this);
+	}
+
+	private void Dispose(bool disposing)
+	{
+		if (!disposed && !IsTargetAttachment)
 		{
-			isDisposed = true;
-			Graphics.QueueDeleteResource(resource, Platform.FosterTextureDestroy);
+			disposed = true;
+			Graphics.Resources.RequestDelete(resource);
 		}
 	}
 }

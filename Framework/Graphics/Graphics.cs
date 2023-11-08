@@ -115,40 +115,108 @@ namespace Foster.Framework
 			Platform.FosterDraw(ref fc);
 		}
 
-		/// <summary>
-		/// Resource deletion queue.
-		/// TODO: This should be handled by the C platform renderer instead
-		/// </summary>
-		private static Queue<(IntPtr Resource, Action<IntPtr> Delete)> resourceDeleteQueue = new();
-
-		/// <summary>
-		/// Delete any resources that are queue'd up for deletion
-		/// </summary>
-		internal static void Step()
+		internal static class Resources
 		{
-			lock (resourceDeleteQueue)
+			public delegate void FreeFn(IntPtr resource);
+
+			private readonly record struct Allocated(WeakReference<IResource> Managed, IntPtr Handle, FreeFn Free);
+			private static readonly Dictionary<IntPtr, Allocated> allocated = new();
+			private static readonly Queue<IntPtr> freeing = new();
+
+			/// <summary>
+			/// Registers a graphical resource so that it can be claned up later
+			/// </summary>
+			public static void RegisterAllocated(IResource managed, IntPtr handle, FreeFn free)
 			{
-				while (resourceDeleteQueue.Count > 0)
+				Allocated alloc = new (new(managed), handle, free);
+				lock (allocated)
+					allocated.Add(handle, alloc);
+			}
+
+			/// <summary>
+			/// Requests that a graphical resource be deleted.
+			/// Running on the main thread performs the resource deletion
+			/// immediately, otherwise it is deferred to be run later
+			/// on the main thread.
+			/// </summary>
+			public static void RequestDelete(IntPtr handle)
+			{
+				if (Thread.CurrentThread.ManagedThreadId == App.MainThreadID)
 				{
-					var it = resourceDeleteQueue.Dequeue();
-					it.Delete(it.Resource);
+					PerformDelete(handle);
+				}
+				else
+				{
+					lock (freeing)
+						freeing.Enqueue(handle);
 				}
 			}
-		}
 
-		/// <summary>
-		/// Delete a Graphical resource, but ensure it's on the main thread
-		/// </summary>
-		internal static void QueueDeleteResource(IntPtr ptr, Action<IntPtr> deleteMethod)
-		{
-			if (Thread.CurrentThread.ManagedThreadId == App.MainThreadID)
+			/// <summary>
+			/// Deletes all resources that have requested deletion.
+			/// This should only be run from the Main thread.
+			/// </summary>
+			public static void DeleteRequested()
 			{
-				deleteMethod(ptr);
+				Debug.Assert(Thread.CurrentThread.ManagedThreadId == App.MainThreadID);
+
+				lock (freeing)
+				{
+					while (freeing.Count > 0)
+						PerformDelete(freeing.Dequeue());
+				}
 			}
-			else
+
+			/// <summary>
+			/// Deletes all remaining allocated resources.
+			/// This should only be run from the Main thread during Application shutdown.
+			/// </summary>
+			public static void DeleteAllocated()
 			{
-				lock (resourceDeleteQueue)
-					resourceDeleteQueue.Enqueue((ptr, deleteMethod));
+				Debug.Assert(Thread.CurrentThread.ManagedThreadId == App.MainThreadID);
+
+				var disposing = new List<IResource>();
+
+				// Find all managed objects and make sure they have been disposed.
+				lock (allocated)
+				{
+					foreach (var alloc in allocated.Values)
+					{
+						if (alloc.Managed.TryGetTarget(out var target))
+							disposing.Add(target);
+					}
+				}
+
+				// We intentionally call their Dispose method (instead of just
+				// calling PerformDelete on their handle) as this makes sure the
+				// managed object itself knows that it is Disposed. This way, if
+				// you run the Application multiple times but reference a managed
+				// resource from a previous run, it will be properly marked as Disposed.
+				foreach (var it in disposing)
+					it.Dispose();
+
+				DeleteRequested();
+			}
+
+			/// <summary>
+			/// Performs the actual resource deletion if it has not already run.
+			/// </summary>
+			private static void PerformDelete(IntPtr handle)
+			{
+				Allocated? alloc = null;
+
+				// remove from the allocated list
+				lock (allocated)
+				{
+					if (allocated.TryGetValue(handle, out var value))
+					{
+						alloc = value;
+						allocated.Remove(handle);
+					}
+				}
+
+				if (alloc is Allocated it)
+					it.Free(it.Handle);
 			}
 		}
 	}

@@ -135,7 +135,8 @@ public class Batcher : IDisposable
 
 	public Batcher()
 	{
-		DefaultShader ??= new Shader(ShaderDefaults.Batcher[Graphics.Renderer]);
+		if (DefaultShader == null || DefaultShader.IsDisposed)
+			DefaultShader = new Shader(ShaderDefaults.Batcher[Graphics.Renderer]);
 		defaultMaterialState = new(new Material(DefaultShader), "u_matrix", "u_texture", "u_texture_sampler");
 		Clear();
 	}

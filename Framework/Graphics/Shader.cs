@@ -49,7 +49,7 @@ public class Shader : IResource
 	/// <summary>
 	/// If the Shader is disposed
 	/// </summary>
-	public bool IsDisposed => isDisposed;
+	public bool IsDisposed => disposed;
 
 	/// <summary>
 	/// Dictionary of Uniforms in the Shader
@@ -57,7 +57,7 @@ public class Shader : IResource
 	public readonly ReadOnlyDictionary<string, Uniform> Uniforms;
 
 	internal readonly IntPtr resource;
-	internal bool isDisposed = false;
+	internal bool disposed = false;
 
 	public Shader(in ShaderCreateInfo createInfo)
 	{
@@ -99,11 +99,12 @@ public class Shader : IResource
 		}
 
 		Uniforms = uniforms.AsReadOnly();
+		Graphics.Resources.RegisterAllocated(this, resource, Platform.FosterShaderDestroy);
 	}
 
 	~Shader()
 	{
-		Dispose();
+		Dispose(false);
 	}
 
 	/// <summary>
@@ -139,10 +140,16 @@ public class Shader : IResource
 	/// </summary>
 	public void Dispose()
 	{
-		if (!isDisposed)
+		Dispose(true);
+		GC.SuppressFinalize(this);
+	}
+
+	private void Dispose(bool disposing)
+	{
+		if (!disposed)
 		{
-			isDisposed = true;
-			Graphics.QueueDeleteResource(resource, Platform.FosterShaderDestroy);
+			disposed = true;
+			Graphics.Resources.RequestDelete(resource);
 		}
 	}
 }

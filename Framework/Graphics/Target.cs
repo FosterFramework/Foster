@@ -18,7 +18,7 @@ public class Target : IResource
 	/// <summary>
 	/// Ii the Target has been disposed.
 	/// </summary>
-	public bool IsDisposed => isDisposed;
+	public bool IsDisposed => disposed;
 
 	/// <summary>
 	/// The Width of the Target.
@@ -41,7 +41,7 @@ public class Target : IResource
 	public readonly ReadOnlyCollection<Texture> Attachments;
 
 	internal readonly IntPtr resource;
-	internal bool isDisposed = false;
+	internal bool disposed = false;
 
 	public Target(int width, int height)
 		: this(width, height, defaultFormats) { }
@@ -67,11 +67,12 @@ public class Target : IResource
 		}
 
 		Attachments = textures.AsReadOnly();
+		Graphics.Resources.RegisterAllocated(this, resource, Platform.FosterTargetDestroy);
 	}
 
 	~Target()
 	{
-		Dispose();
+		Dispose(false);
 	}
 
 	/// <summary>
@@ -107,14 +108,22 @@ public class Target : IResource
 	/// </summary>
 	public void Dispose()
 	{
-		if (!isDisposed)
-		{
-			isDisposed = true;
+		Dispose(true);
+		GC.SuppressFinalize(this);
+	}
 
-			foreach (var attachment in Attachments)
-				attachment.isDisposed = true;
-				
-			Graphics.QueueDeleteResource(resource, Platform.FosterTargetDestroy);
+	private void Dispose(bool disposing)
+	{
+		if (!disposed)
+		{
+			if (disposing)
+			{
+				foreach (var attachment in Attachments)
+					attachment.disposed = true;
+			}
+
+			Graphics.Resources.RequestDelete(resource);
+			disposed = true;
 		}
 	}
 
