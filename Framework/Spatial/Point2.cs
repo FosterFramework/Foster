@@ -147,9 +147,9 @@ public struct Point2 : IEquatable<Point2>
 	public static Vector2 operator *(Point2 point, float scaler) => new(point.X * scaler, point.Y * scaler);
 	public static Vector2 operator %(Point2 point, float scaler) => new(point.X % scaler, point.Y % scaler);
 
-	public static Point2 operator /(Point2 point, Point2 vector) => new(point.X / vector.X, point.Y / vector.Y);
-	public static Point2 operator *(Point2 point, Point2 vector) => new(point.X * vector.X, point.Y * vector.Y);
-	public static Point2 operator %(Point2 point, Point2 vector) => new(point.X % vector.X, point.Y % vector.Y);
+	public static Point2 operator /(Point2 a, Point2 b) => new(a.X / b.X, a.Y / b.Y);
+	public static Point2 operator *(Point2 a, Point2 b) => new(a.X * b.X, a.Y * b.Y);
+	public static Point2 operator %(Point2 a, Point2 b) => new(a.X % b.X, a.Y % b.Y);
 
 	public static Vector2 operator /(Point2 point, Vector2 vector) => new(point.X / vector.X, point.Y / vector.Y);
 	public static Vector2 operator *(Point2 point, Vector2 vector) => new(point.X * vector.X, point.Y * vector.Y);
