@@ -318,6 +318,11 @@ public static class Calc
 	public static int Floor(float v) => (int)MathF.Floor(v);
 
 	/// <summary>
+	/// Shorthand to MathF.Ceiling but returns an Integer
+	/// </summary>
+	public static int Ceil(float v) => (int)MathF.Ceiling(v);
+
+	/// <summary>
 	/// Converts a value from 0 to 1, to 0 to 1 to 0
 	/// </summary>
 	public static float YoYo(float value)
