@@ -342,6 +342,8 @@ typedef void (APIENTRY* DEBUGPROC)(GLenum source,
 GL_FUNCTIONS
 #undef GL_FUNC
 
+#define FOSTER_RECT_EQUAL(a, b) ((a).x == (b).x && (a).y == (b).y && (a).w == (b).w && (a).h == (b).h)
+
 typedef struct FosterTexure_OpenGL
 {
 	GLuint id;
@@ -406,6 +408,20 @@ typedef struct
 
 	// GL context
 	void* context;
+
+	// stored OpenGL state
+	int stateInitializing;
+	GLuint stateProgram;
+	GLuint stateFrameBuffer;
+	GLuint stateVertexArray;
+	int stateFrameBufferWidth;
+	int stateFrameBufferHeight;
+	int stateHasScissor;
+	FosterRect stateViewport;
+	FosterRect stateScissor;
+	FosterCompare stateCompare;
+	FosterCull stateCull;
+	FosterBlend stateBlend;
 
 	// info
 	int max_color_attachments;
@@ -622,6 +638,199 @@ GLuint FosterMeshAssignAttributes_OpenGL(GLuint buffer, GLenum bufferType, Foste
 	return format->stride;
 }
 
+void FosterBindFrameBuffer(FosterTarget_OpenGL* target)
+{
+	GLenum framebuffer = 0;
+
+	if (target == NULL)
+	{
+		framebuffer = 0;
+		FosterGetSizeInPixels(&fgl.stateFrameBufferWidth, &fgl.stateFrameBufferHeight);
+	}
+	else
+	{
+		framebuffer = target->id;
+		fgl.stateFrameBufferWidth = target->width;
+		fgl.stateFrameBufferHeight = target->height;
+	}
+
+	if (fgl.stateInitializing || fgl.stateFrameBuffer != framebuffer)
+		fgl.glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+	fgl.stateFrameBuffer = framebuffer;
+}
+
+void FosterBindProgram(GLuint id)
+{
+	if (fgl.stateInitializing || fgl.stateProgram != id)
+		fgl.glUseProgram(id);
+	fgl.stateProgram = id;
+}
+
+void FosterBindArray(GLuint id)
+{
+	if (fgl.stateInitializing || fgl.stateVertexArray != id)
+		fgl.glBindVertexArray(id);
+	fgl.stateVertexArray = id;
+}
+
+void FosterSetViewport(int enabled, FosterRect rect)
+{
+	FosterRect viewport;
+
+	if (enabled)
+	{
+		viewport = rect;
+		viewport.y = fgl.stateFrameBufferHeight - viewport.y - viewport.h;
+	}
+	else
+	{
+		viewport.x = 0; viewport.y = 0;
+		viewport.w = fgl.stateFrameBufferWidth;
+		viewport.h = fgl.stateFrameBufferHeight;
+	}
+
+	if (fgl.stateInitializing || !FOSTER_RECT_EQUAL(viewport, fgl.stateViewport))
+	{
+		fgl.glViewport((GLint)viewport.x, (GLint)viewport.y, (GLint)viewport.w, (GLint)viewport.h);
+		fgl.stateViewport = viewport;
+	}
+}
+
+void FosterSetScissor(int enabled, FosterRect rect)
+{
+	// get input scissor first
+	FosterRect scissor = rect;
+	scissor.y = fgl.stateFrameBufferHeight - scissor.y - scissor.h;
+	if (scissor.w < 0) scissor.w = 0;
+	if (scissor.h < 0) scissor.h = 0;
+
+	// toggle scissor
+	if (fgl.stateInitializing ||
+		enabled != fgl.stateHasScissor ||
+		(enabled && !FOSTER_RECT_EQUAL(scissor, fgl.stateScissor)))
+	{
+		if (enabled)
+		{
+			if (!fgl.stateHasScissor)
+				fgl.glEnable(GL_SCISSOR_TEST);
+			fgl.glScissor((GLint)scissor.x, (GLint)scissor.y, (GLint)scissor.w, (GLint)scissor.h);
+			fgl.stateScissor = scissor;
+		}
+		else
+		{
+			fgl.glDisable(GL_SCISSOR_TEST);
+		}
+
+		fgl.stateHasScissor = enabled;
+	}
+}
+
+void FosterSetBlend(const FosterBlend* blend)
+{
+	if (fgl.stateInitializing ||
+		fgl.stateBlend.colorOp != blend->colorOp ||
+		fgl.stateBlend.alphaOp != blend->alphaOp)
+	{
+		GLenum colorOp = FosterBlendOpToGL(blend->colorOp);
+		GLenum alphaOp = FosterBlendOpToGL(blend->alphaOp);
+		fgl.glBlendEquationSeparate(colorOp, alphaOp);
+	}
+
+	if (fgl.stateInitializing ||
+		fgl.stateBlend.colorSrc != blend->colorSrc ||
+		fgl.stateBlend.colorDst != blend->colorDst ||
+		fgl.stateBlend.alphaSrc != blend->alphaSrc ||
+		fgl.stateBlend.alphaDst != blend->alphaDst)
+	{
+		GLenum colorSrc = FosterBlendFactorToGL(blend->colorSrc);
+		GLenum colorDst = FosterBlendFactorToGL(blend->colorDst);
+		GLenum alphaSrc = FosterBlendFactorToGL(blend->alphaSrc);
+		GLenum alphaDst = FosterBlendFactorToGL(blend->alphaDst);
+		fgl.glBlendFuncSeparate(colorSrc, colorDst, alphaSrc, alphaDst);
+	}
+
+	if (fgl.stateInitializing || fgl.stateBlend.mask != blend->mask)
+	{
+		fgl.glColorMask(
+			((int)blend->mask & (int)FOSTER_BLEND_MASK_R),
+			((int)blend->mask & (int)FOSTER_BLEND_MASK_G),
+			((int)blend->mask & (int)FOSTER_BLEND_MASK_B),
+			((int)blend->mask & (int)FOSTER_BLEND_MASK_A));
+	}
+
+	if (fgl.stateInitializing || fgl.stateBlend.rgba != blend->rgba)
+	{
+		unsigned char r = blend->rgba >> 24;
+		unsigned char g = blend->rgba >> 16;
+		unsigned char b = blend->rgba >> 8;
+		unsigned char a = blend->rgba;
+
+		fgl.glBlendColor(
+			r / 255.0f,
+			g / 255.0f,
+			b / 255.0f,
+			a / 255.0f);
+	}
+
+	fgl.stateBlend = *blend;
+}
+
+void FosterSetCompare(FosterCompare compare)
+{
+	if (fgl.stateInitializing || compare != fgl.stateCompare)
+	{
+		if (compare == FOSTER_COMPARE_NONE)
+		{
+			fgl.glDisable(GL_DEPTH_TEST);
+		}
+		else
+		{
+			if (fgl.stateCompare == FOSTER_COMPARE_NONE)
+				fgl.glEnable(GL_DEPTH_TEST);
+
+			switch (compare)
+			{
+			case FOSTER_COMPARE_NONE: break;
+			case FOSTER_COMPARE_ALWAYS: fgl.glDepthFunc(GL_ALWAYS); break;
+			case FOSTER_COMPARE_EQUAL: fgl.glDepthFunc(GL_EQUAL); break;
+			case FOSTER_COMPARE_GREATER: fgl.glDepthFunc(GL_GREATER); break;
+			case FOSTER_COMPARE_GREATOR_OR_EQUAL: fgl.glDepthFunc(GL_GEQUAL); break;
+			case FOSTER_COMPARE_LESS: fgl.glDepthFunc(GL_LESS); break;
+			case FOSTER_COMPARE_LESS_OR_EQUAL: fgl.glDepthFunc(GL_LEQUAL); break;
+			case FOSTER_COMPARE_NEVER: fgl.glDepthFunc(GL_NEVER); break;
+			case FOSTER_COMPARE_NOT_EQUAL: fgl.glDepthFunc(GL_NOTEQUAL); break;
+			}
+		}
+	}
+
+	fgl.stateCompare = compare;
+}
+
+void FosterSetCull(FosterCull cull)
+{
+	if (fgl.stateInitializing || cull != fgl.stateCull)
+	{
+		if (cull == FOSTER_CULL_NONE)
+		{
+			fgl.glDisable(GL_CULL_FACE);
+		}
+		else
+		{
+			if (fgl.stateCull == FOSTER_CULL_NONE)
+				fgl.glEnable(GL_CULL_FACE);
+
+			switch (cull)
+			{
+			case FOSTER_CULL_NONE: break;
+			case FOSTER_CULL_BACK: fgl.glCullFace(GL_BACK); break;
+			case FOSTER_CULL_FRONT: fgl.glCullFace(GL_FRONT); break;
+			}
+		}
+	}
+
+	fgl.stateCull = cull;
+}
+
 void FosterPrepare_OpenGL()
 {
 	FosterState* state = FosterGetState();
@@ -690,6 +899,23 @@ bool FosterInitialize_OpenGL()
 	// info.instancing = true;
 	// info.origin_bottom_left = true;
 	// info.max_texture_size = max_texture_size;
+
+	// Blend State is always enabled
+	fgl.glEnable(GL_BLEND);
+
+	// set default starting state
+	fgl.stateInitializing = 1;
+	FosterRect zeroRect = { 0 };
+	FosterBlend zeroBlend = { 0 };
+	FosterBindProgram(0);
+	FosterBindFrameBuffer(NULL);
+	FosterBindArray(0);
+	FosterSetViewport(0, zeroRect);
+	FosterSetScissor(0, zeroRect);
+	FosterSetBlend(&zeroBlend);
+	FosterSetCull(FOSTER_CULL_NONE);
+	FosterSetCompare(FOSTER_COMPARE_NONE);
+	fgl.stateInitializing = 0;
 
 	// log
 	FosterLogInfo("OpenGL: v%s, %s", fgl.glGetString(GL_VERSION), fgl.glGetString(GL_RENDERER));
@@ -814,6 +1040,7 @@ FosterTarget* FosterTargetCreate_OpenGL(int width, int height, FosterTextureForm
 			for (int j = 0; j < i; j ++)
 				FosterTextureDestroy_OpenGL((FosterTexture*)tex);
 			FosterLogError("Failed to create Target Attachment");
+			FosterBindFrameBuffer(NULL);
 			return NULL;
 		}
 
@@ -829,6 +1056,10 @@ FosterTarget* FosterTargetCreate_OpenGL(int width, int height, FosterTextureForm
 		}
 	}
 
+	// since we manually set the framebuffer above, clear buffer assignment to maintain correct state
+	FosterBindFrameBuffer(NULL);
+
+	// create result
 	FosterTarget_OpenGL* tar = (FosterTarget_OpenGL*)SDL_malloc(sizeof(FosterTarget_OpenGL));
 	*tar = result;
 	return (FosterTarget*)tar;
@@ -1037,7 +1268,7 @@ void FosterShaderSetUniform_OpenGL(FosterShader* shader, int index, float* value
 		return;
 	}
 
-	fgl.glUseProgram(it->id);
+	FosterBindProgram(it->id);
 
 	FosterUniform_OpenGL* uniform = it->uniforms + index;
 
@@ -1153,19 +1384,18 @@ FosterMesh* FosterMeshCreate_OpenGL()
 void FosterMeshSetVertexFormat_OpenGL(FosterMesh* mesh, FosterVertexFormat* format)
 {
 	FosterMesh_OpenGL* it = (FosterMesh_OpenGL*)mesh;
+	FosterBindArray(it->id);
 
-	fgl.glBindVertexArray(it->id);
 	if (it->vertexBuffer == 0)
 		fgl.glGenBuffers(1, &(it->vertexBuffer));
 	FosterMeshAssignAttributes_OpenGL(it->vertexBuffer, GL_ARRAY_BUFFER, format, 0);
-	fgl.glBindVertexArray(0);
 }
 
 void FosterMeshSetVertexData_OpenGL(FosterMesh* mesh, void* data, int dataSize, int dataDestOffset)
 {
 	FosterMesh_OpenGL* it = (FosterMesh_OpenGL*)mesh;
+	FosterBindArray(it->id);
 
-	fgl.glBindVertexArray(it->id);
 	if (it->vertexBuffer == 0)
 		fgl.glGenBuffers(1, &(it->vertexBuffer));
 	fgl.glBindBuffer(GL_ARRAY_BUFFER, it->vertexBuffer);
@@ -1180,7 +1410,6 @@ void FosterMeshSetVertexData_OpenGL(FosterMesh* mesh, void* data, int dataSize, 
 
 	// fill data at the offset
 	fgl.glBufferSubData(GL_ARRAY_BUFFER, dataDestOffset, dataSize, data);
-	fgl.glBindVertexArray(0);
 }
 
 void FosterMeshSetIndexFormat_OpenGL(FosterMesh* mesh, FosterIndexFormat format)
@@ -1206,7 +1435,8 @@ void FosterMeshSetIndexFormat_OpenGL(FosterMesh* mesh, FosterIndexFormat format)
 void FosterMeshSetIndexData_OpenGL(FosterMesh* mesh, void* data, int dataSize, int dataDestOffset)
 {
 	FosterMesh_OpenGL* it = (FosterMesh_OpenGL*)mesh;
-	fgl.glBindVertexArray(it->id);
+	FosterBindArray(it->id);
+
 	if (it->indexBuffer == 0)
 		fgl.glGenBuffers(1, &(it->indexBuffer));
 	fgl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, it->indexBuffer);
@@ -1221,7 +1451,6 @@ void FosterMeshSetIndexData_OpenGL(FosterMesh* mesh, void* data, int dataSize, i
 
 	// fill data from the offset
 	fgl.glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, dataDestOffset, dataSize, data);
-	fgl.glBindVertexArray(0);
 }
 
 void FosterMeshDestroy_OpenGL(FosterMesh* mesh)
@@ -1245,26 +1474,20 @@ void FosterDraw_OpenGL(FosterDrawCommand* command)
 	FosterTarget_OpenGL* target = (FosterTarget_OpenGL*)command->target;
 	FosterShader_OpenGL* shader = (FosterShader_OpenGL*)command->shader;
 	FosterMesh_OpenGL* mesh = (FosterMesh_OpenGL*)command->mesh;
-	int width, height;
 
-	// Bind the Target
-	if (command->target == NULL)
-	{
-		fgl.glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		FosterGetSizeInPixels(&width, &height);
-	}
-	else if (command->target)
-	{
-		fgl.glBindFramebuffer(GL_FRAMEBUFFER, target->id);
-		width = target->width;
-		height = target->height;
-	}
+	// Set State
+	FosterBindFrameBuffer(target);
+	FosterBindProgram(shader->id);
+	FosterBindArray(mesh->id);
+	FosterSetBlend(&command->blend);
+	FosterSetCompare(command->compare);
+	FosterSetCull(command->cull);
+	FosterSetViewport(command->hasViewport, command->viewport);
+	FosterSetScissor(command->hasScissor, command->scissor);
 
-	// Use the Shader
+	// Update Texture Uniforms & Samplers
 	{
 		GLuint textureSlots[FOSTER_MAX_UNIFORM_TEXTURES];
-
-		fgl.glUseProgram(shader->id);
 
 		// bind textures & update samplers
 		int slot = 0;
@@ -1300,115 +1523,9 @@ void FosterDraw_OpenGL(FosterDrawCommand* command)
 		}
 	}
 
-	// Blend Mode
-	{
-		GLenum colorOp = FosterBlendOpToGL(command->blend.colorOp);
-		GLenum alphaOp = FosterBlendOpToGL(command->blend.alphaOp);
-		GLenum colorSrc = FosterBlendFactorToGL(command->blend.colorSrc);
-		GLenum colorDst = FosterBlendFactorToGL(command->blend.colorDst);
-		GLenum alphaSrc = FosterBlendFactorToGL(command->blend.alphaSrc);
-		GLenum alphaDst = FosterBlendFactorToGL(command->blend.alphaDst);
-
-		fgl.glEnable(GL_BLEND);
-		fgl.glBlendEquationSeparate(colorOp, alphaOp);
-		fgl.glBlendFuncSeparate(colorSrc, colorDst, alphaSrc, alphaDst);
-
-		fgl.glColorMask(
-			((int)command->blend.mask & (int)FOSTER_BLEND_MASK_R),
-			((int)command->blend.mask & (int)FOSTER_BLEND_MASK_G),
-			((int)command->blend.mask & (int)FOSTER_BLEND_MASK_B),
-			((int)command->blend.mask & (int)FOSTER_BLEND_MASK_A));
-
-		unsigned char r = command->blend.rgba >> 24;
-		unsigned char g = command->blend.rgba >> 16;
-		unsigned char b = command->blend.rgba >> 8;
-		unsigned char a = command->blend.rgba;
-
-		fgl.glBlendColor(
-			r / 255.0f,
-			g / 255.0f,
-			b / 255.0f,
-			a / 255.0f);
-	}
-
-	// Depth Function
-	{
-		if (command->compare == FOSTER_COMPARE_NONE)
-		{
-			fgl.glDisable(GL_DEPTH_TEST);
-		}
-		else
-		{
-			fgl.glEnable(GL_DEPTH_TEST);
-
-			switch (command->compare)
-			{
-			case FOSTER_COMPARE_NONE: break;
-			case FOSTER_COMPARE_ALWAYS: fgl.glDepthFunc(GL_ALWAYS); break;
-			case FOSTER_COMPARE_EQUAL: fgl.glDepthFunc(GL_EQUAL); break;
-			case FOSTER_COMPARE_GREATER: fgl.glDepthFunc(GL_GREATER); break;
-			case FOSTER_COMPARE_GREATOR_OR_EQUAL: fgl.glDepthFunc(GL_GEQUAL); break;
-			case FOSTER_COMPARE_LESS: fgl.glDepthFunc(GL_LESS); break;
-			case FOSTER_COMPARE_LESS_OR_EQUAL: fgl.glDepthFunc(GL_LEQUAL); break;
-			case FOSTER_COMPARE_NEVER: fgl.glDepthFunc(GL_NEVER); break;
-			case FOSTER_COMPARE_NOT_EQUAL: fgl.glDepthFunc(GL_NOTEQUAL); break;
-			}
-		}
-	}
-
-	// Cull Mode
-	{
-		if (command->cull == FOSTER_CULL_NONE)
-		{
-			fgl.glDisable(GL_CULL_FACE);
-		}
-		else
-		{
-			fgl.glEnable(GL_CULL_FACE);
-
-			switch (command->cull)
-			{
-			case FOSTER_CULL_NONE: break;
-			case FOSTER_CULL_BACK: fgl.glCullFace(GL_BACK); break;
-			case FOSTER_CULL_FRONT: fgl.glCullFace(GL_FRONT); break;
-			}
-		}
-	}
-
-	// Viewport
-	if (command->hasViewport != 0)
-	{
-		FosterRect viewport = command->viewport;
-		viewport.y = height - viewport.y - viewport.h;
-		fgl.glViewport((GLint)viewport.x, (GLint)viewport.y, (GLint)viewport.w, (GLint)viewport.h);
-	}
-	else
-	{
-		fgl.glViewport(0, 0, (GLint)width, (GLint)height);
-	}
-
-	// Scissor
-	if (command->hasScissor != 0)
-	{
-		FosterRect scissor = command->scissor;
-		scissor.y = height - scissor.y - scissor.h;
-
-		if (scissor.w < 0) scissor.w = 0;
-		if (scissor.h < 0) scissor.h = 0;
-
-		fgl.glEnable(GL_SCISSOR_TEST);
-		fgl.glScissor((GLint)scissor.x, (GLint)scissor.y, (GLint)scissor.w, (GLint)scissor.h);
-	}
-	else
-	{
-		fgl.glDisable(GL_SCISSOR_TEST);
-	}
-
 	// Draw the Mesh
 	{
 		int64_t indexStartPtr = mesh->indexSize * command->indexStart;
-
-		fgl.glBindVertexArray(mesh->id);
 
 		if (command->instanceCount > 0)
 		{
@@ -1427,32 +1544,14 @@ void FosterDraw_OpenGL(FosterDrawCommand* command)
 				mesh->indexFormat,
 				(void*)indexStartPtr);
 		}
-
-		fgl.glBindVertexArray(0);
 	}
 }
 
 void FosterClear_OpenGL(FosterClearCommand* command)
 {
-	int width, height;
-
-	if (command->target == NULL)
-	{
-		fgl.glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		FosterGetSizeInPixels(&width, &height);
-	}
-	else
-	{
-		FosterTarget_OpenGL* tar = (FosterTarget_OpenGL*)command->target;
-		width = tar->width;
-		height = tar->height;
-		fgl.glBindFramebuffer(GL_FRAMEBUFFER, tar->id);
-	}
-
-	FosterRect viewport = command->clip;
-	viewport.y = height - viewport.y - viewport.h;
-	fgl.glViewport((GLint)viewport.x, (GLint)viewport.y, (GLint)viewport.w, (GLint)viewport.h);
-	fgl.glDisable(GL_SCISSOR_TEST);
+	FosterBindFrameBuffer((FosterTarget_OpenGL*)command->target);
+	FosterSetViewport(1, command->clip);
+	FosterSetScissor(0, fgl.stateScissor);
 
 	int clear = 0;
 
