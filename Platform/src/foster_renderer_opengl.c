@@ -353,6 +353,14 @@ typedef struct FosterTexure_OpenGL
 	GLenum glInternalFormat;
 	GLenum glFormat;
 	GLenum glType;
+	FosterTextureSampler sampler;
+	
+	// Because Shader uniforms assign textures, it's possible for the user to
+	// dispose of a texture but still have it assigned in a shader. Thus we use
+	// a simple ref counter to determine when it's safe to delete the wrapping
+	// texture class.
+	int refCount;
+	int disposed;
 } FosterTexture_OpenGL;
 
 typedef struct FosterTarget_OpenGL
@@ -379,7 +387,7 @@ typedef struct FosterShader_OpenGL
 	GLint uniformCount;
 	GLint samplerCount;
 	FosterUniform_OpenGL* uniforms;
-	GLuint textures[FOSTER_MAX_UNIFORM_TEXTURES];
+	FosterTexture_OpenGL* textures[FOSTER_MAX_UNIFORM_TEXTURES];
 	FosterTextureSampler samplers[FOSTER_MAX_UNIFORM_TEXTURES];
 } FosterShader_OpenGL;
 
@@ -411,6 +419,8 @@ typedef struct
 
 	// stored OpenGL state
 	int stateInitializing;
+	int stateActiveTextureSlot;
+	GLuint stateTextureSlots[FOSTER_MAX_UNIFORM_TEXTURES];
 	GLuint stateProgram;
 	GLuint stateFrameBuffer;
 	GLuint stateVertexArray;
@@ -673,6 +683,80 @@ void FosterBindArray(GLuint id)
 	fgl.stateVertexArray = id;
 }
 
+void FosterBindTexture(int slot, GLuint id)
+{
+	if (fgl.stateActiveTextureSlot != slot)
+	{
+		fgl.glActiveTexture(GL_TEXTURE0);
+		fgl.stateActiveTextureSlot = slot;
+	}
+
+	if (fgl.stateTextureSlots[slot] != id)
+		fgl.glBindTexture(GL_TEXTURE_2D, id);
+}
+
+// Same as FosterBindTexture, except it the resulting global state doesn't
+// necessarily have the slot active or texture bound, if no changes were required.
+void FosterEnsureTextureSlotIs(int slot, GLuint id)
+{
+	if (fgl.stateTextureSlots[slot] != id)
+	{
+		if (fgl.stateActiveTextureSlot != slot)
+		{
+			fgl.glActiveTexture(GL_TEXTURE0 + slot);
+			fgl.stateActiveTextureSlot = slot;
+		}
+
+		fgl.glBindTexture(GL_TEXTURE_2D, id);
+	}
+}
+
+void FosterSetTextureSampler(FosterTexture_OpenGL* tex, FosterTextureSampler sampler)
+{
+	if (!tex->disposed && (
+		tex->sampler.filter != sampler.filter ||
+		tex->sampler.wrapX != sampler.wrapX ||
+		tex->sampler.wrapY != sampler.wrapY))
+	{
+		FosterBindTexture(0, tex->id);
+
+		if (tex->sampler.filter != sampler.filter)
+		{
+			fgl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, FosterFilterToGL(sampler.filter));
+			fgl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, FosterFilterToGL(sampler.filter));
+		}
+
+		if (tex->sampler.wrapX != sampler.wrapX)
+			fgl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, FosterWrapToGL(sampler.wrapX));
+
+		if (tex->sampler.wrapY != sampler.wrapY)
+			fgl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, FosterWrapToGL(sampler.wrapY));
+		
+		tex->sampler = sampler;
+	}
+}
+
+void FosterTextureReturnReference(FosterTexture_OpenGL* texture)
+{
+	if (texture != NULL)
+	{
+		texture->refCount--;
+		if (texture->refCount <= 0)
+		{
+			if (!texture->disposed)
+				FosterLogError("Texture is being free'd without deleting its GPU Texture Data");
+			SDL_free(texture);
+		}
+	}
+}
+
+FosterTexture_OpenGL* FosterTextureRequestReference(FosterTexture_OpenGL* texture)
+{
+	if (texture != NULL)
+		texture->refCount++;
+	return texture;
+}
+
 void FosterSetViewport(int enabled, FosterRect rect)
 {
 	FosterRect viewport;
@@ -917,6 +1001,12 @@ bool FosterInitialize_OpenGL()
 	FosterSetCompare(FOSTER_COMPARE_NONE);
 	fgl.stateInitializing = 0;
 
+	// zero out texture state
+	fgl.stateActiveTextureSlot = 0;
+	fgl.glActiveTexture(GL_TEXTURE0);
+	for (int i = 0; i < FOSTER_MAX_UNIFORM_TEXTURES; i ++)
+		fgl.stateTextureSlots[i] = 0;
+
 	// log
 	FosterLogInfo("OpenGL: v%s, %s", fgl.glGetString(GL_VERSION), fgl.glGetString(GL_RENDERER));
 	return true;
@@ -951,6 +1041,11 @@ FosterTexture* FosterTextureCreate_OpenGL(int width, int height, FosterTextureFo
 	result.glInternalFormat = GL_RED;
 	result.glFormat = GL_RED;
 	result.glType = GL_UNSIGNED_BYTE;
+	result.refCount = 1;
+	result.disposed = 0;
+	result.sampler.filter = -1;
+	result.sampler.wrapX = -1;
+	result.sampler.wrapY = -1;
 
 	if (width > fgl.max_texture_size || height > fgl.max_texture_size)
 	{
@@ -987,8 +1082,7 @@ FosterTexture* FosterTextureCreate_OpenGL(int width, int height, FosterTextureFo
 		return NULL;
 	}
 
-	fgl.glActiveTexture(GL_TEXTURE0);
-	fgl.glBindTexture(GL_TEXTURE_2D, result.id);
+	FosterBindTexture(0, result.id);
 	fgl.glTexImage2D(GL_TEXTURE_2D, 0, result.glInternalFormat, width, height, 0, result.glFormat, result.glType, NULL);
 
 	tex = (FosterTexture_OpenGL*)SDL_malloc(sizeof(FosterTexture_OpenGL));
@@ -999,24 +1093,27 @@ FosterTexture* FosterTextureCreate_OpenGL(int width, int height, FosterTextureFo
 void FosterTextureSetData_OpenGL(FosterTexture* texture, void* data, int length)
 {
 	FosterTexture_OpenGL* tex = (FosterTexture_OpenGL*)texture;
-	fgl.glActiveTexture(GL_TEXTURE0);
-	fgl.glBindTexture(GL_TEXTURE_2D, tex->id);
+	FosterBindTexture(0, tex->id);
 	fgl.glTexImage2D(GL_TEXTURE_2D, 0, tex->glInternalFormat, tex->width, tex->height, 0, tex->glFormat, tex->glType, data);
 }
 
 void FosterTextureGetData_OpenGL(FosterTexture* texture, void* data, int length)
 {
 	FosterTexture_OpenGL* tex = (FosterTexture_OpenGL*)texture;
-	fgl.glActiveTexture(GL_TEXTURE0);
-	fgl.glBindTexture(GL_TEXTURE_2D, tex->id);
+	FosterBindTexture(0, tex->id);
 	fgl.glGetTexImage(GL_TEXTURE_2D, 0, tex->glInternalFormat, tex->glType, data);
 }
 
 void FosterTextureDestroy_OpenGL(FosterTexture* texture)
 {
 	FosterTexture_OpenGL* tex = (FosterTexture_OpenGL*)texture;
-	fgl.glDeleteTextures(1, &tex->id);
-	SDL_free(tex);
+
+	if (!tex->disposed)
+	{
+		tex->disposed = 1;
+		fgl.glDeleteTextures(1, &tex->id);
+		FosterTextureReturnReference(tex);
+	}
 }
 
 FosterTarget* FosterTargetCreate_OpenGL(int width, int height, FosterTextureFormat* attachments, int attachmentCount)
@@ -1161,10 +1258,10 @@ FosterShader* FosterShaderCreate_OpenGL(FosterShaderData* data)
 
 	for (int i = 0; i < FOSTER_MAX_UNIFORM_TEXTURES; i ++)
 	{
-		shader->textures[i] = 0;
-		shader->samplers[i].filter = GL_LINEAR;
-		shader->samplers[i].wrapX = GL_CLAMP_TO_EDGE;
-		shader->samplers[i].wrapY = GL_CLAMP_TO_EDGE;
+		shader->textures[i] = NULL;
+		shader->samplers[i].filter = FOSTER_TEXTURE_FILTER_LINEAR;
+		shader->samplers[i].wrapX = FOSTER_TEXTURE_WRAP_CLAMP_TO_EDGE;
+		shader->samplers[i].wrapY = FOSTER_TEXTURE_WRAP_CLAMP_TO_EDGE;
 	}
 
 	// query uniforms and cache them
@@ -1316,8 +1413,9 @@ void FosterShaderSetTexture_OpenGL(FosterShader* shader, int index, FosterTextur
 
 	for (int i = 0; i < uniform->glSize && uniform->samplerIndex + i < FOSTER_MAX_UNIFORM_TEXTURES; i ++)
 	{
-		FosterTexture_OpenGL* tex = (FosterTexture_OpenGL*)values[i];
-		it->textures[uniform->samplerIndex + i] = (tex == NULL ? 0 : tex->id);
+		int index = uniform->samplerIndex + i;
+		FosterTextureReturnReference(it->textures[index]);
+		it->textures[index] = FosterTextureRequestReference((FosterTexture_OpenGL*)values[i]);
 	}
 }
 
@@ -1346,6 +1444,9 @@ void FosterShaderDestroy_OpenGL(FosterShader* shader)
 {
 	FosterShader_OpenGL* it = (FosterShader_OpenGL*)shader;
 	fgl.glDeleteProgram(it->id);
+
+	for (int i = 0; i < FOSTER_MAX_UNIFORM_TEXTURES; i ++)
+		FosterTextureReturnReference(it->textures[i]);
 
 	for (int i = 0; i < it->uniformCount; i ++)
 	{
@@ -1489,7 +1590,15 @@ void FosterDraw_OpenGL(FosterDrawCommand* command)
 	{
 		GLuint textureSlots[FOSTER_MAX_UNIFORM_TEXTURES];
 
-		// bind textures & update samplers
+		// update samplers
+		for (int i = 0; i < FOSTER_MAX_UNIFORM_TEXTURES; i ++)
+		{
+			FosterTexture_OpenGL* tex = shader->textures[i];
+			if (shader->textures[i] != NULL)
+				FosterSetTextureSampler(shader->textures[i], shader->samplers[i]);
+		}
+
+		// bind textures
 		int slot = 0;
 		for (int i = 0; i < shader->uniformCount; i ++)
 		{
@@ -1500,15 +1609,11 @@ void FosterDraw_OpenGL(FosterDrawCommand* command)
 			// bind textures & update sampler state
 			for (int n = 0; n < uniform->glSize && slot < FOSTER_MAX_UNIFORM_TEXTURES; n ++)
 			{
-				int index = uniform->samplerIndex + n;
-				if (shader->textures[index] != 0)
+				FosterTexture_OpenGL* tex = shader->textures[uniform->samplerIndex + n];
+
+				if (tex != NULL && !tex->disposed)
 				{
-					fgl.glActiveTexture(GL_TEXTURE0 + slot);
-					fgl.glBindTexture(GL_TEXTURE_2D, shader->textures[index]);
-					fgl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, FosterFilterToGL(shader->samplers[index].filter));
-					fgl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, FosterFilterToGL(shader->samplers[index].filter));
-					fgl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, FosterWrapToGL(shader->samplers[index].wrapX));
-					fgl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, FosterWrapToGL(shader->samplers[index].wrapY));
+					FosterEnsureTextureSlotIs(slot, tex->id);
 					textureSlots[n] = slot;
 					slot++;
 				}
