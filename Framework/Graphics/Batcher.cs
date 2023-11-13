@@ -629,12 +629,11 @@ public class Batcher : IDisposable
 		Quad(from + perp, from - perp, to - perp, to + perp, color);
 	}
 
-	public void QuadLines(in Vector2 a, in Vector2 b, in Vector2 c, in Vector2 d, float thickness, in Color color)
+	public void Line(in Vector2 from, in Vector2 to, float thickness, in Color fromColor, in Color toColor)
 	{
-		Line(a, b, thickness, color);
-		Line(b, c, thickness, color);
-		Line(c, d, thickness, color);
-		Line(d, a, thickness, color);
+		var normal = (to - from).Normalized();
+		var perp = new Vector2(-normal.Y, normal.X) * thickness * .5f;
+		Quad(from + perp, from - perp, to - perp, to + perp, fromColor, fromColor, toColor, toColor);
 	}
 
 	#endregion
@@ -788,6 +787,18 @@ public class Batcher : IDisposable
 		vertexCount += 4;
 	}
 
+	public void QuadLine(in Vector2 a, in Vector2 b, in Vector2 c, in Vector2 d, float thickness, in Color color)
+	{
+		Line(a, b, thickness, color);
+		Line(b, c, thickness, color);
+		Line(c, d, thickness, color);
+		Line(d, a, thickness, color);
+	}
+
+	[Obsolete("Use QuadLine instead")]
+	public void QuadLines(in Vector2 a, in Vector2 b, in Vector2 c, in Vector2 d, float thickness, in Color color)
+		=> QuadLine(a, b, c, d, thickness, color);
+
 	#endregion
 
 	#region Triangle
@@ -940,6 +951,29 @@ public class Batcher : IDisposable
 			new Vector2(x + width, y + height),
 			new Vector2(x, y + height),
 			c0, c1, c2, c3);
+	}
+	
+	public void RectLine(in Rect rect, float t, Color color)
+	{
+		if (t > 0)
+		{
+			var tx = Math.Min(t, rect.Width / 2f);
+			var ty = Math.Min(t, rect.Height / 2f);
+
+			Rect(rect.X, rect.Y, rect.Width, ty, color);
+			Rect(rect.X, rect.Bottom - ty, rect.Width, ty, color);
+			Rect(rect.X, rect.Y + ty, tx, rect.Height - ty * 2, color);
+			Rect(rect.Right - tx, rect.Y + ty, tx, rect.Height - ty * 2, color);
+		}
+	}
+
+	public void RectDashed(Rect rect, float thickness, in Color color, float dashLength, float dashOffset)
+	{
+		rect = rect.Inflate(-thickness / 2);
+		LineDashed(rect.TopLeft, rect.TopRight, thickness, color, dashLength, dashOffset);
+		LineDashed(rect.TopRight, rect.BottomRight, thickness, color, dashLength, dashOffset);
+		LineDashed(rect.BottomRight, rect.BottomLeft, thickness, color, dashLength, dashOffset);
+		LineDashed(rect.BottomLeft, rect.TopLeft, thickness, color, dashLength, dashOffset);
 	}
 
 	#endregion
@@ -1173,19 +1207,6 @@ public class Batcher : IDisposable
 
 	#endregion
 
-	#region Dashed Rect
-
-	public void RectDashed(Rect rect, float thickness, in Color color, float dashLength, float dashOffset)
-	{
-		rect = rect.Inflate(-thickness / 2);
-		LineDashed(rect.TopLeft, rect.TopRight, thickness, color, dashLength, dashOffset);
-		LineDashed(rect.TopRight, rect.BottomRight, thickness, color, dashLength, dashOffset);
-		LineDashed(rect.BottomRight, rect.BottomLeft, thickness, color, dashLength, dashOffset);
-		LineDashed(rect.BottomLeft, rect.TopLeft, thickness, color, dashLength, dashOffset);
-	}
-
-	#endregion
-
 	#region Circle
 
 	public void SemiCircle(in Vector2 center, float startRadians, float endRadians, float radius, int steps, in Color color)
@@ -1288,24 +1309,6 @@ public class Batcher : IDisposable
 
 	public void CircleDashed(in Circle circle, float thickness, int steps, in Color color, float dashLength, float dashOffset)
 		=> CircleDashed(circle.Position, circle.Radius, thickness, steps, color, dashLength, dashOffset);
-
-	#endregion
-
-	#region Rect Line
-
-	public void RectLine(in Rect rect, float t, Color color)
-	{
-		if (t > 0)
-		{
-			var tx = Math.Min(t, rect.Width / 2f);
-			var ty = Math.Min(t, rect.Height / 2f);
-
-			Rect(rect.X, rect.Y, rect.Width, ty, color);
-			Rect(rect.X, rect.Bottom - ty, rect.Width, ty, color);
-			Rect(rect.X, rect.Y + ty, tx, rect.Height - ty * 2, color);
-			Rect(rect.Right - tx, rect.Y + ty, tx, rect.Height - ty * 2, color);
-		}
-	}
 
 	#endregion
 
