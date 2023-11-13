@@ -244,8 +244,9 @@ public class Material
 			}
 
 			// apply each uniform value
-			foreach (var uniform in uniforms)
+			for (var i = 0; i < uniforms.Count; i++)
 			{
+				var uniform = uniforms[i];
 				if (IsFloat(uniform.Type))
 				{
 					Platform.FosterShaderSetUniform(id, uniform.Index, floatPtr + uniform.BufferStart);
@@ -267,10 +268,13 @@ public class Material
 	/// </summary>
 	private Uniform Get(string uniform)
 	{
-		foreach (var it in uniforms)
+		for (var i = 0; i < uniforms.Count; i++)
+		{
+			var it = uniforms[i];
 			if (it.Name == uniform)
 				return it;
-			
+		}
+
 		Debug.Assert(false, $"Uniform '{uniform}' does not exist");
 		return default;
 	}
