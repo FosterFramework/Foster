@@ -75,7 +75,7 @@ public class Packer
 	/// <summary>
 	/// Edge pixels are copied into the padding (requires <see cref="Padding"/> >= 2) <br/>
 	/// </summary>
-	public bool DuplicateEdges { get; set; }
+	public bool DuplicateEdges = false;
 
 	/// <summary>
 	/// Power of Two
