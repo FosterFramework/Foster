@@ -392,6 +392,12 @@ typedef enum FosterLogging
 	FOSTER_LOGGING_NONE
 } FosterLogging;
 
+typedef enum FosterImageWriteFormat
+{
+	FOSTER_IMAGE_WRITE_FORMAT_PNG,
+	FOSTER_IMAGE_WRITE_FORMAT_QOI,
+} FosterImageWriteFormat;
+
 typedef void (FOSTER_CALL * FosterLogFn)(const char *msg);
 typedef void (FOSTER_CALL * FosterExitRequestFn)();
 typedef void (FOSTER_CALL * FosterOnTextFn)(const char* txt);
@@ -558,7 +564,7 @@ FOSTER_API unsigned char* FosterImageLoad(const unsigned char* memory, int lengt
 
 FOSTER_API void FosterImageFree(unsigned char* data);
 
-FOSTER_API bool FosterImageWrite(FosterWriteFn* func, void* context, int w, int h, const void* data);
+FOSTER_API bool FosterImageWrite(FosterWriteFn* func, void* context, FosterImageWriteFormat format, int w, int h, const void* data);
 
 FOSTER_API FosterFont* FosterFontInit(unsigned char* data, int length);
 
