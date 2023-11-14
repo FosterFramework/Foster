@@ -73,6 +73,11 @@ public class Packer
 	public int Padding = 1;
 
 	/// <summary>
+	/// Edge pixels are copied into the padding (requires <see cref="Padding"/> >= 2) <br/>
+	/// </summary>
+	public bool DuplicateEdges = false;
+
+	/// <summary>
 	/// Power of Two
 	/// </summary>
 	public bool PowerOfTwo = false;
@@ -123,7 +128,8 @@ public class Packer
 
 	public int Add(string name, string path)
 	{
-		return Add(name, new Image(path));
+		using var image = new Image(path);
+		return Add(name, image);
 	}
 
 	public int Add(string name, int width, int height, ReadOnlySpan<Color> pixels)
@@ -190,7 +196,7 @@ public class Packer
 					for (int y = top; y < bottom; y++)
 						source.Hash = ((source.Hash << 5) + source.Hash) + (int)pixels[x + y * stride].RGBA;
 
-				for (int i = 0; i < sources.Count; i ++)
+				for (int i = 0; i < sources.Count; i++)
 					if (sources[i].Hash == source.Hash)
 					{
 						source.DuplicateOf = sources[i].Index;
@@ -266,6 +272,7 @@ public class Packer
 			new PackingNode[nodeCount]);
 
 		var padding = Math.Max(0, Padding);
+		var halfPadding = padding / 2;
 
 		// using pointer operations here was faster
 		fixed (PackingNode* nodes = buffer)
@@ -336,8 +343,8 @@ public class Packer
 					node->Right = ResetNode(nodePtr++, node->Rect.X + w, node->Rect.Y, node->Rect.Width - w, h);
 
 					var it = sources[packed];
-					it.Packed.X = node->Rect.X;
-					it.Packed.Y = node->Rect.Y;
+					it.Packed.X = node->Rect.X + halfPadding;
+					it.Packed.Y = node->Rect.Y + halfPadding;
 					sources[packed] = it;
 
 					packed++;
@@ -374,13 +381,22 @@ public class Packer
 						if (source.DuplicateOf.HasValue)
 							continue;
 
-						result.Entries.Add(new (source.Index, source.Name, page, source.Packed, source.Frame));
+						result.Entries.Add(new(source.Index, source.Name, page, source.Packed, source.Frame));
 
 						if (source.Empty || source.BufferLength <= 0)
 							continue;
 
 						var data = sourceBuffer.AsSpan(source.BufferIndex, source.BufferLength);
 						bmp.CopyPixels(data, source.Packed.Width, source.Packed.Height, source.Packed.Position);
+
+						if (DuplicateEdges && padding >= 2)
+						{
+							var p = source.Packed;
+							bmp.CopyPixels(bmp, new RectInt(p.Position, new Point2(1, p.Height)), p.Position + new Point2(-1, 0)); // L
+							bmp.CopyPixels(bmp, new RectInt(p.Position + new Point2(p.Width - 1, 0), new Point2(1, p.Height)), p.Position + new Point2(p.Width, 0)); // R
+							bmp.CopyPixels(bmp, new RectInt(p.Position + new Point2(-1, 0), new Point2(p.Width + 2, 1)), p.Position + new Point2(-1, -1)); // T
+							bmp.CopyPixels(bmp, new RectInt(p.Position + new Point2(-1, p.Height - 1), new Point2(p.Width + 2, 1)), p.Position + new Point2(-1, p.Height)); // B
+						}
 					}
 				}
 
@@ -399,8 +415,8 @@ public class Packer
 
 				foreach (var entry in result.Entries)
 					if (entry.Index == source.DuplicateOf.Value)
-					{   
-						result.Entries.Add(new (source.Index, source.Name, entry.Page, entry.Source, entry.Frame));
+					{
+						result.Entries.Add(new(source.Index, source.Name, entry.Page, entry.Source, entry.Frame));
 						break;
 					}
 			}
@@ -441,5 +457,4 @@ public class Packer
 		sources.Clear();
 		sourceBufferIndex = 0;
 	}
-
 }
