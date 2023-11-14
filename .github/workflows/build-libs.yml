@@ -44,6 +44,7 @@ jobs:
           name: ${{matrix.os}}-build
           path: Platform/libs/${{matrix.lib}}
   UpdateLibs:
+    if: github.ref == 'refs/heads/main'
     needs: [Build]
     runs-on: windows-latest
     steps:
