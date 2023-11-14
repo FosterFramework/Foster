@@ -16,6 +16,7 @@
 
 bool FosterImage_TestQOI(const unsigned char* data, int length);
 unsigned char* FosterImage_LoadQOI(const unsigned char* data, int length, int* w, int * h);
+bool FosterImage_WriteQOI(FosterWriteFn* func, void* context, int w, int h, const void* data);
 
 unsigned char* FosterImageLoad(const unsigned char* data, int length, int* w, int* h)
 {
@@ -37,20 +38,28 @@ void FosterImageFree(unsigned char* data)
 	stbi_image_free(data);
 }
 
-bool FosterImageWrite(FosterWriteFn* func, void* context, int w, int h, const void* data)
+bool FosterImageWrite(FosterWriteFn* func, void* context, FosterImageWriteFormat format, int w, int h, const void* data)
 {
 	// note: 'FosterWriteFn' and 'stbi_write_func' must be the same
-	return stbi_write_png_to_func((stbi_write_func*)func, context, w, h, 4, data, w * 4) != 0;
+	switch (format)
+	{
+	case FOSTER_IMAGE_WRITE_FORMAT_PNG:
+		return stbi_write_png_to_func((stbi_write_func*)func, context, w, h, 4, data, w * 4) != 0;
+	case FOSTER_IMAGE_WRITE_FORMAT_QOI:
+		return FosterImage_WriteQOI(func, context, w, h, data);
+	}
+	return false;
 }
 
 bool FosterImage_TestQOI(const unsigned char* data, int length)
 {
-	if (length < 4)
+	if (length < QOI_HEADER_SIZE)
 		return false;
 
-	for (int i = 0; i < SDL_max(4, length); i ++)
-		if (data[i] != "qoif"[i])
-			return false;
+	int p = 0;
+	unsigned int magic = qoi_read_32(data, &p);
+	if (magic != QOI_MAGIC)
+		return false;
 
 	return true;
 }
@@ -72,4 +81,20 @@ unsigned char* FosterImage_LoadQOI(const unsigned char* data, int length, int* w
 		*h = 0;
 		return NULL;
 	}
+}
+
+bool FosterImage_WriteQOI(FosterWriteFn* func, void* context, int w, int h, const void* data)
+{
+	qoi_desc desc = { w, h, 4, 1 };
+	int length;
+	void* encoded = qoi_encode(data, &desc, &length);
+
+	if (encoded != NULL)
+	{
+		((stbi_write_func*)func)(context, encoded, length);
+		QOI_FREE(encoded);
+		return true;
+	}
+
+	return false;
 }
