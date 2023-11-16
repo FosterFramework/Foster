@@ -50,7 +50,7 @@ public class Image : IDisposable
 	/// <summary>
 	/// Gets a Pointer of the pixel data held by the Image
 	/// </summary>
-	public unsafe IntPtr Pointer => ptr;
+	public IntPtr Pointer => ptr;
 
 	private IntPtr ptr;
 	private GCHandle handle;
@@ -165,7 +165,7 @@ public class Image : IDisposable
 	}
 
 	/// <summary>
-	/// Writes the image to a PNG file
+	/// Writes the image to a QOI file
 	/// </summary>
 	public void WriteQoi(string path)
 	{
