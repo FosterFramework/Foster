@@ -29,7 +29,7 @@ public static class App
 	public static bool Running { get; private set; } = false;
 
 	/// <summary>
-	/// If the Application is exiting. Call App.Exit() to exit the Application.
+	/// If the Application is exiting. Call <see cref="App.Exit"/> to exit the Application.
 	/// </summary>
 	public static bool Exiting { get; private set; } = false;
 
@@ -187,7 +187,7 @@ public static class App
 
 	/// <summary>
 	/// What action to perform when the user requests for the Application to exit.
-	/// If not assigned, the default behavior is to call App.Exit();
+	/// If not assigned, the default behavior is to call <see cref="App.Exit"/>.
 	/// </summary>
 	public static Action? OnExitRequested;
 
@@ -216,7 +216,7 @@ public static class App
 
 	/// <summary>
 	/// Runs the Application with the given Module automatically registered.
-	/// Functionally the same as calling Register<T>() followed by Run()
+	/// Functionally the same as calling <see cref="Register{T}"/> followed by <see cref="Run(string, int, int, bool)"/>
 	/// </summary>
 	public static void Run<T>(string applicationName, int width, int height, bool fullscreen = false) where T : Module, new()
 	{
