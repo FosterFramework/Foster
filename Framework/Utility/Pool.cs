@@ -12,7 +12,7 @@ public interface IPoolable
 }
 
 /// <summary>
-/// Simple static Object pool, call Return(instance) to return objects to the pool.
+/// Simple static Object pool, call <see cref="Return(T)"/> to return objects to the pool.
 /// </summary>
 public static class Pool<T> where T : class, new()
 {
@@ -140,12 +140,12 @@ public static class FramePool
 {
 	/// <summary>
 	/// Action to perform when stepping to the next frame.
-	/// FramePool<T> registers its NextFrame function with this event.
+	/// <see cref="FramePool{T}"/> registers its NextFrame function with this event.
 	/// </summary>
 	internal static event Action? nextFrame;
 
 	/// <summary>
-	/// Shorthand to Generic FramePool<T>.Get.
+	/// Shorthand to Generic <see cref="FramePool{T}.Get"/>.
 	/// </summary>
 	public static T Get<T>() where T : class, new()
 	{

@@ -33,12 +33,12 @@ public struct Color : IEquatable<Color>
 	/// <summary>
 	/// Gets the Color Value in a RGBA 32-bit unsigned integer
 	/// </summary>
-	public uint RGBA => ((uint)R << 24) | ((uint)G << 16) | ((uint)B << 8) | (uint)A;
+	public readonly uint RGBA => ((uint)R << 24) | ((uint)G << 16) | ((uint)B << 8) | (uint)A;
 
 	/// <summary>
 	/// The Color Value in a ABGR 32-bit unsigned integer
 	/// </summary>
-	public uint ABGR => ((uint)A << 24) | ((uint)B << 16) | ((uint)G << 8) | (uint)R;
+	public readonly uint ABGR => ((uint)A << 24) | ((uint)B << 16) | ((uint)G << 8) | (uint)R;
 
 	/// <summary>
 	/// Creates a color given the int32 RGB data
@@ -112,7 +112,7 @@ public struct Color : IEquatable<Color>
 	/// Premultiplies the color value based on its Alpha component
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public Color Premultiply()
+	public readonly Color Premultiply()
 	{
 		byte a = A;
 		return new Color((byte)(R * a / 255), (byte)(G * a / 255), (byte)(B * a / 255), a);
@@ -121,39 +121,32 @@ public struct Color : IEquatable<Color>
 	/// <summary>
 	/// Converts the Color to a Vector4
 	/// </summary>
-	public Vector4 ToVector4()
-	{
-		return new Vector4(R / 255f, G / 255f, B / 255f, A / 255f);
-	}
+	public readonly Vector4 ToVector4()
+		=> new(R / 255f, G / 255f, B / 255f, A / 255f);
 
 	/// <summary>
 	/// Converts the Color to a Vector3
 	/// </summary>
-	public Vector3 ToVector3()
-	{
-		return new Vector3(R / 255f, G / 255f, B / 255f);
-	}
+	public readonly Vector3 ToVector3()
+		=> new(R / 255f, G / 255f, B / 255f);
 
-	public override bool Equals(object? obj)
-	{
-		return (obj is Color other) && (this == other);
-	}
+	public override readonly bool Equals(object? obj)
+		=> (obj is Color other) && (this == other);
 
-	public override int GetHashCode()
-	{
-		return (int)RGBA;
-	}
+	public readonly bool Equals(Color other)
+		=> this == other;
 
-	public override string ToString()
-	{
-		return ($"[{R}, {G}, {B}, {A}]");
-	}
+	public override readonly int GetHashCode()
+		=> (int)RGBA;
+
+	public override readonly string ToString()
+		=> ($"[{R}, {G}, {B}, {A}]");
 
 	/// <summary>
 	/// Returns a Hex String representation of the Color's given components
 	/// </summary>
 	/// <param name="components">The Components, in any order. ex. "RGBA" or "RGB" or "ARGB"</param>
-	public void ToHexString(ReadOnlySpan<char> components, Span<char> destination)
+	public readonly void ToHexString(ReadOnlySpan<char> components, Span<char> destination)
 	{
 		Debug.Assert(destination.Length >= components.Length * 2);
 
@@ -191,7 +184,7 @@ public struct Color : IEquatable<Color>
 	/// Returns a Hex String representation of the Color's given components
 	/// </summary>
 	/// <param name="components">The Components, in any order. ex. "RGBA" or "RGB" or "ARGB"</param>
-	public string ToHexString(ReadOnlySpan<char> components)
+	public readonly string ToHexString(ReadOnlySpan<char> components)
 	{
 		Span<char> dest = stackalloc char[components.Length * 2];
 		ToHexString(components, dest);
@@ -201,7 +194,7 @@ public struct Color : IEquatable<Color>
 	/// <summary>
 	/// Returns an RGB Hex string representation of the Color
 	/// </summary>
-	public string ToHexStringRGB()
+	public readonly string ToHexStringRGB()
 	{
 		return ToHexString("RGB");
 	}
@@ -209,7 +202,7 @@ public struct Color : IEquatable<Color>
 	/// <summary>
 	/// Returns an RGBA Hex string representation of the Color
 	/// </summary>
-	public string ToHexStringRGBA()
+	public readonly string ToHexStringRGBA()
 	{
 		return ToHexString("RGBA");
 	}
@@ -290,27 +283,16 @@ public struct Color : IEquatable<Color>
 		);
 	}
 
-	public bool Equals(Color other)
-	{
-		return this == other;
-	}
-
 	/// <summary>
 	/// Implicitely converts an int32 to a Color, ex 0xffffff
 	/// This does not include Alpha values
 	/// </summary>
-	public static implicit operator Color(int color)
-	{
-		return new Color(color);
-	}
+	public static implicit operator Color(int color) => new(color);
 
 	/// <summary>
 	/// Implicitely converts an uint32 to a Color, ex 0xffffffff
 	/// </summary>
-	public static implicit operator Color(uint color)
-	{
-		return new Color(color);
-	}
+	public static implicit operator Color(uint color) => new(color);
 
 	/// <summary>
 	/// Multiplies a Color by a scaler

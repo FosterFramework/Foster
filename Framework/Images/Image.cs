@@ -50,7 +50,7 @@ public class Image : IDisposable
 	/// <summary>
 	/// Gets a Pointer of the pixel data held by the Image
 	/// </summary>
-	public unsafe IntPtr Pointer => ptr;
+	public IntPtr Pointer => ptr;
 
 	private IntPtr ptr;
 	private GCHandle handle;
@@ -161,6 +161,28 @@ public class Image : IDisposable
 	/// </summary>
 	public void WritePng(Stream stream)
 	{
+		Write(stream, ImageWriteFormat.Png);
+	}
+
+	/// <summary>
+	/// Writes the image to a QOI file
+	/// </summary>
+	public void WriteQoi(string path)
+	{
+		using var stream = File.Create(path);
+		WriteQoi(stream);
+	}
+
+	/// <summary>
+	/// Write the image to QOI
+	/// </summary>
+	public void WriteQoi(Stream stream)
+	{
+		Write(stream, ImageWriteFormat.Qoi);
+	}
+
+	private void Write(Stream stream, ImageWriteFormat format)
+	{
 		static unsafe void Write(IntPtr context, IntPtr data, int size)
 		{
 			var stream = GCHandle.FromIntPtr(context).Target as Stream;
@@ -169,7 +191,7 @@ public class Image : IDisposable
 		}
 
 		GCHandle handle = GCHandle.Alloc(stream);
-		Platform.FosterImageWrite(Write, GCHandle.ToIntPtr(handle), Width, Height, ptr);
+		Platform.FosterImageWrite(Write, GCHandle.ToIntPtr(handle), format, Width, Height, ptr);
 		handle.Free();
 	}
 

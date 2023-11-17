@@ -2,13 +2,13 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Title>Foster</Title>
     <Product>Foster</Product>
-    <Version>0.1.5-alpha</Version>
+    <Version>0.1.6-alpha</Version>
     <Authors>Noel Berry</Authors>
     <Description>A small 2D cross-platform Game Framework</Description>
     <RepositoryType>git</RepositoryType>

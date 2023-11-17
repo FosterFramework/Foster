@@ -4,7 +4,7 @@ using System.Numerics;
 namespace Foster.Framework;
 
 /// <summary>
-/// A left/right struct, where left < 0 and right >= 0.
+/// A left/right struct, where left &lt; 0 and right >= 0.
 /// Useful for 2D Platformers.
 /// </summary>
 public readonly struct Facing : IEquatable<Facing>

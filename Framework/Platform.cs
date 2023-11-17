@@ -204,7 +204,7 @@ internal static class Platform
 	[DllImport(DLL)]
 	public static extern void FosterImageFree(IntPtr data);
 	[DllImport(DLL)]
-	public static extern bool FosterImageWrite(FosterWriteFn func, IntPtr context, int w, int h, IntPtr data);
+	public static extern bool FosterImageWrite(FosterWriteFn func, IntPtr context, ImageWriteFormat format, int w, int h, IntPtr data);
 	[DllImport(DLL)]
 	public static extern IntPtr FosterFontInit(IntPtr data, int length);
 	[DllImport(DLL)]
