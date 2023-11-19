@@ -170,7 +170,7 @@ public class Image : IDisposable
 	public void WriteQoi(string path)
 	{
 		using var stream = File.Create(path);
-		WritePng(stream);
+		WriteQoi(stream);
 	}
 
 	/// <summary>
