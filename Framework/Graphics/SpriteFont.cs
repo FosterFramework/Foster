@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Numerics;
 
 namespace Foster.Framework;
@@ -38,6 +37,9 @@ public class SpriteFont
 		public override int GetHashCode() => HashCode.Combine(First, Second);
 	}
 
+	/// <summary>
+	/// Set of ASCII character unicode values
+	/// </summary>
 	public static readonly int[] Ascii;
 
 	/// <summary>
@@ -252,8 +254,16 @@ public class SpriteFont
 		return height - LineGap;
 	}
 
-	public Character this[int codepoint]  => characters[codepoint];
-	public Character this[char ch]  => characters[(int)ch];
+	public Vector2 SizeOf(ReadOnlySpan<char> text)
+	{
+		return new Vector2(
+			WidthOf(text),
+			HeightOf(text)
+		);
+	}
+
+	public Character this[int codepoint] => characters[codepoint];
+	public Character this[char ch] => characters[ch];
 
 	public void AddCharacter(in Character character)
 	{
