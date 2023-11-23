@@ -119,12 +119,12 @@ public static class Input
 	/// <summary>
 	/// Invoked by the Application platform when a Key state is changed
 	/// </summary>
-	internal static void OnKey(int key, bool pressed)
+	internal static void OnKey(int key, byte pressed)
 	{
 		if (key < 0 || key >= Keyboard.MaxKeys)
 			throw new ArgumentOutOfRangeException(nameof(key), "Value is out of Range for supported keys");
 
-		if (pressed)
+		if (pressed != 0)
 		{
 			nextState.Keyboard.down[key] = true;
 			nextState.Keyboard.pressed[key] = true;
@@ -140,12 +140,12 @@ public static class Input
 	/// <summary>
 	/// Invoked by the Application platform when a Mouse Button state is changed
 	/// </summary>
-	internal static void OnMouseButton(int button, bool pressed)
+	internal static void OnMouseButton(int button, byte pressed)
 	{
 		if (button < 0 || button >= Mouse.MaxButtons)
 			throw new ArgumentOutOfRangeException(nameof(button), "Value is out of Range for supported mouse buttons");
 
-		if (pressed)
+		if (pressed != 0)
 		{
 			nextState.Mouse.down[button] = true;
 			nextState.Mouse.pressed[button] = true;
@@ -181,10 +181,10 @@ public static class Input
 	/// <summary>
 	/// Invoked by the Application platform when a Controller is connected
 	/// </summary>
-	internal static void OnControllerConnect(int index, IntPtr name, int buttonCount, int axisCount, bool isGamepad, ushort vendor, ushort product, ushort version)
+	internal static void OnControllerConnect(int index, IntPtr name, int buttonCount, int axisCount, byte isGamepad, ushort vendor, ushort product, ushort version)
 	{
 		if (index >= 0 && index < InputState.MaxControllers)
-			nextState.Controllers[index].Connect(Platform.ParseUTF8(name), buttonCount, axisCount, isGamepad, vendor, product, version);
+			nextState.Controllers[index].Connect(Platform.ParseUTF8(name), buttonCount, axisCount, isGamepad != 0, vendor, product, version);
 	}
 
 	/// <summary>
@@ -199,11 +199,11 @@ public static class Input
 	/// <summary>
 	/// Invoked by the Application platform when a Controller Button state is changed
 	/// </summary>
-	internal static void OnControllerButton(int index, int button, bool pressed)
+	internal static void OnControllerButton(int index, int button, byte pressed)
 	{
 		if (index >= 0 && index < InputState.MaxControllers && button < Controller.MaxButtons)
 		{
-			if (pressed)
+			if (pressed != 0)
 			{
 				nextState.Controllers[index].down[button] = true;
 				nextState.Controllers[index].pressed[button] = true;

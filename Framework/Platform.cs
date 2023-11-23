@@ -26,10 +26,10 @@ internal static class Platform
 	public delegate void FosterOnTextFn(IntPtr cstr);
 	
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public delegate void FosterOnKeyFn(int key, bool pressed);
+	public delegate void FosterOnKeyFn(int key, byte pressed);
 	
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public delegate void FosterOnMouseButtonFn(int button, bool pressed);
+	public delegate void FosterOnMouseButtonFn(int button, byte pressed);
 	
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate void FosterOnMouseMoveFn(float posX, float posY);
@@ -38,13 +38,13 @@ internal static class Platform
 	public delegate void FosterOnMouseWheelFn(float offsetX, float offsetY);
 	
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public delegate void FosterOnControllerConnectFn(int index, IntPtr name, int buttonCount, int axisCount, bool isGamepad, ushort vendor, ushort product, ushort version);
+	public delegate void FosterOnControllerConnectFn(int index, IntPtr name, int buttonCount, int axisCount, byte isGamepad, ushort vendor, ushort product, ushort version);
 	
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate void FosterOnControllerDisconnectFn(int index);
 	
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public delegate void FosterOnControllerButtonFn(int index, int button, bool pressed);
+	public delegate void FosterOnControllerButtonFn(int index, int button, byte pressed);
 	
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate void FosterOnControllerAxisFn(int index, int axis, float value);
@@ -180,7 +180,7 @@ internal static class Platform
 	[DllImport(DLL)]
 	public static extern void FosterShutdown();
 	[DllImport(DLL)]
-	public static extern bool FosterIsRunning();
+	public static extern byte FosterIsRunning();
 	[DllImport(DLL)]
 	public static extern void FosterSetTitle(string title);
 	[DllImport(DLL)]
@@ -198,13 +198,13 @@ internal static class Platform
 	[DllImport(DLL)]
 	public static extern IntPtr FosterGetClipboard();
 	[DllImport(DLL)]
-	public static extern bool FosterGetFocused();
+	public static extern byte FosterGetFocused();
 	[DllImport(DLL)]
 	public static extern IntPtr FosterImageLoad(IntPtr memory, int length, out int w, out int h);
 	[DllImport(DLL)]
 	public static extern void FosterImageFree(IntPtr data);
 	[DllImport(DLL)]
-	public static extern bool FosterImageWrite(FosterWriteFn func, IntPtr context, ImageWriteFormat format, int w, int h, IntPtr data);
+	public static extern byte FosterImageWrite(FosterWriteFn func, IntPtr context, ImageWriteFormat format, int w, int h, IntPtr data);
 	[DllImport(DLL)]
 	public static extern IntPtr FosterFontInit(IntPtr data, int length);
 	[DllImport(DLL)]

@@ -65,7 +65,7 @@ public static class App
 	/// <summary>
 	/// Returns whether the Application Window is currently Focused or not.
 	/// </summary>
-	public static bool Focused => Platform.FosterGetFocused();
+	public static bool Focused => Platform.FosterGetFocused() != 0;
 
 	/// <summary>
 	/// The Window width, which isn't necessarily the size in Pixels depending on the Platform.
