@@ -1,7 +1,7 @@
 #ifndef FOSTER_H
 #define FOSTER_H
 
-#include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 // Export API
@@ -21,6 +21,8 @@
 #define FOSTER_MAX_UNIFORM_NAME 64
 #define FOSTER_MAX_UNIFORM_TEXTURES 32
 #define FOSTER_MAX_CONTROLLERS 32
+
+typedef uint8_t FosterBool;
 
 typedef enum FosterRenderers
 {
@@ -401,13 +403,13 @@ typedef enum FosterImageWriteFormat
 typedef void (FOSTER_CALL * FosterLogFn)(const char *msg);
 typedef void (FOSTER_CALL * FosterExitRequestFn)();
 typedef void (FOSTER_CALL * FosterOnTextFn)(const char* txt);
-typedef void (FOSTER_CALL * FosterOnKeyFn)(int key, bool pressed);
-typedef void (FOSTER_CALL * FosterOnMouseButtonFn)(int button, bool pressed);
+typedef void (FOSTER_CALL * FosterOnKeyFn)(int key, FosterBool pressed);
+typedef void (FOSTER_CALL * FosterOnMouseButtonFn)(int button, FosterBool pressed);
 typedef void (FOSTER_CALL * FosterOnMouseMoveFn)(float posX, float posY);
 typedef void (FOSTER_CALL * FosterOnMouseWheelFn)(float offsetX, float offsetY);
-typedef void (FOSTER_CALL * FosterOnControllerConnectFn)(int index, const char* name, int buttonCount, int axisCount, bool isGamepad, uint16_t vendor, uint16_t product, uint16_t version);
+typedef void (FOSTER_CALL * FosterOnControllerConnectFn)(int index, const char* name, int buttonCount, int axisCount, FosterBool isGamepad, uint16_t vendor, uint16_t product, uint16_t version);
 typedef void (FOSTER_CALL * FosterOnControllerDisconnectFn)(int index);
-typedef void (FOSTER_CALL * FosterOnControllerButtonFn)(int index, int button, bool pressed);
+typedef void (FOSTER_CALL * FosterOnControllerButtonFn)(int index, int button, FosterBool pressed);
 typedef void (FOSTER_CALL * FosterOnControllerAxisFn)(int index, int axis, float value);
 typedef void (FOSTER_CALL * FosterWriteFn)(void *context, void *data, int size);
 
@@ -540,7 +542,7 @@ FOSTER_API void FosterEndFrame();
 
 FOSTER_API void FosterShutdown();
 
-FOSTER_API bool FosterIsRunning();
+FOSTER_API FosterBool FosterIsRunning();
 
 FOSTER_API void FosterSetTitle(const char* title);
 
@@ -558,13 +560,13 @@ FOSTER_API void FosterSetClipboard(const char* cstr);
 
 FOSTER_API const char* FosterGetClipboard();
 
-FOSTER_API bool FosterGetFocused();
+FOSTER_API FosterBool FosterGetFocused();
 
 FOSTER_API unsigned char* FosterImageLoad(const unsigned char* memory, int length, int* w, int* h);
 
 FOSTER_API void FosterImageFree(unsigned char* data);
 
-FOSTER_API bool FosterImageWrite(FosterWriteFn* func, void* context, FosterImageWriteFormat format, int w, int h, const void* data);
+FOSTER_API FosterBool FosterImageWrite(FosterWriteFn* func, void* context, FosterImageWriteFormat format, int w, int h, const void* data);
 
 FOSTER_API FosterFont* FosterFontInit(unsigned char* data, int length);
 

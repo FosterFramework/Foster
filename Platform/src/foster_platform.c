@@ -317,7 +317,7 @@ void FosterShutdown()
 	SDL_DestroyWindow(fstate.window);
 }
 
-bool FosterIsRunning()
+FosterBool FosterIsRunning()
 {
 	return fstate.running;
 }
@@ -399,7 +399,7 @@ const char* FosterGetClipboard()
 	return fstate.clipboardText;
 }
 
-bool FosterGetFocused()
+FosterBool FosterGetFocused()
 {
 	FOSTER_ASSERT_RUNNING_RET(FosterGetClipboard, false);
 	Uint32 flags = SDL_GetWindowFlags(fstate.window);

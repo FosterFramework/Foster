@@ -2,6 +2,7 @@
 #define FOSTER_RENDERER_H
 
 #include "foster_platform.h"
+#include <stdbool.h>
 
 typedef struct FosterRenderDevice
 {
