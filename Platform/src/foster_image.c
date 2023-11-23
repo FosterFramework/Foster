@@ -38,7 +38,7 @@ void FosterImageFree(unsigned char* data)
 	stbi_image_free(data);
 }
 
-bool FosterImageWrite(FosterWriteFn* func, void* context, FosterImageWriteFormat format, int w, int h, const void* data)
+FosterBool FosterImageWrite(FosterWriteFn* func, void* context, FosterImageWriteFormat format, int w, int h, const void* data)
 {
 	// note: 'FosterWriteFn' and 'stbi_write_func' must be the same
 	switch (format)
