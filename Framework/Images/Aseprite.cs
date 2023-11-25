@@ -208,6 +208,11 @@ public class Aseprite : Aseprite.IUserDataTarget
 		Load(bin);
 	}
 
+	public Aseprite(Stream stream)
+	{
+		using var bin = new BinaryReader(stream);
+		Load(bin);
+	}
 	private void Load(BinaryReader bin)
 	{
 		// Shorthand methods to match Aseprite's naming convention
