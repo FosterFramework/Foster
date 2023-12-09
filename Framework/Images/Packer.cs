@@ -10,51 +10,41 @@ public class Packer
 	/// <summary>
 	/// A single packed Entry
 	/// </summary>
-	public struct Entry
-	{
+	public readonly record struct Entry
+	(	
 		/// <summary>
 		/// Index when added to the Packer
 		/// </summary>
-		public int Index;
-
+		int Index, 
+		
 		/// <summary>
 		/// The Name of the Entry
 		/// </summary>
-		public string Name;
-
+		string Name, 
+		
 		/// <summary>
 		/// The corresponding image page of the Entry
 		/// </summary>
-		public int Page;
-
+		int Page, 
+		
 		/// <summary>
 		/// The Source Rectangle
 		/// </summary>
-		public RectInt Source;
-
+		RectInt Source, 
+		
 		/// <summary>
 		/// The Frame Rectangle. This is the size of the image before it was packed
 		/// </summary>
-		public RectInt Frame;
-
-		public Entry(int index, string name, int page, RectInt source, RectInt frame)
-		{
-			Index = index;
-			Name = name;
-			Page = page;
-			Source = source;
-			Frame = frame;
-		}
-	}
+		RectInt Frame
+	);
 
 	/// <summary>
 	/// Stores the Packed result of the Packer
 	/// </summary>
-	public readonly struct Output
+	public readonly struct Output()
 	{
-		public readonly List<Image> Pages = new();
-		public readonly List<Entry> Entries = new();
-		public Output() { }
+		public readonly List<Image> Pages = [];
+		public readonly List<Entry> Entries = [];
 	}
 
 	/// <summary>
@@ -93,26 +83,20 @@ public class Packer
 	/// </summary>
 	public int SourceImageCount => sources.Count;
 
-	private struct Source
+	private struct Source(int index, string name)
 	{
-		public int Index;
+		public int Index = index;
 		public int Hash;
-		public string Name;
+		public string Name = name;
 		public RectInt Packed;
 		public RectInt Frame;
 		public int BufferIndex;
 		public int BufferLength;
 		public int? DuplicateOf;
-		public bool Empty => Packed.Width <= 0 || Packed.Height <= 0;
-
-		public Source(int index, string name)
-		{
-			Index = index;
-			Name = name;
-		}
+		public readonly bool Empty => Packed.Width <= 0 || Packed.Height <= 0;
 	}
 
-	private readonly List<Source> sources = new();
+	private readonly List<Source> sources = [];
 	private Color[] sourceBuffer = new Color[32];
 	private int sourceBufferIndex = 0;
 
