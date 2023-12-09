@@ -78,7 +78,11 @@ public static class App
 			Platform.FosterGetSize(out int w, out _);
 			return w;
 		}
-		set => Platform.FosterSetSize(value, Height);
+		set
+		{
+			Platform.FosterSetSize(value, Height);
+			Platform.FosterSetCentered();
+		}
 	}
 
 	/// <summary>
@@ -92,7 +96,11 @@ public static class App
 			Platform.FosterGetSize(out _, out int h);
 			return h;
 		}
-		set => Platform.FosterSetSize(Width, value);
+		set
+		{
+			Platform.FosterSetSize(Width, value);
+			Platform.FosterSetCentered();
+		}
 	}
 
 	/// <summary>
@@ -106,7 +114,11 @@ public static class App
 			Platform.FosterGetSize(out int w, out int h);
 			return new(w, h);
 		}
-		set => Platform.FosterSetSize(value.X, value.Y);
+		set
+		{
+			Platform.FosterSetSize(value.X, value.Y);
+			Platform.FosterSetCentered();
+		}
 	}
 
 	/// <summary>

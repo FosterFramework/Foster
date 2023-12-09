@@ -192,6 +192,8 @@ internal static class Platform
 	[DllImport(DLL)]
 	public static extern void FosterSetFlags(FosterFlags flags);
 	[DllImport(DLL)]
+	public static extern void FosterSetCentered();
+	[DllImport(DLL)]
 	public static extern IntPtr FosterGetUserPath();
 	[DllImport(DLL)]
 	public static extern void FosterSetClipboard(string ptr);
