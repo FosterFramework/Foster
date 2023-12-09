@@ -78,6 +78,11 @@ public static class App
 			Platform.FosterGetSize(out int w, out _);
 			return w;
 		}
+		set
+		{
+			Platform.FosterSetSize(value, Height);
+			Platform.FosterSetCentered();
+		}
 	}
 
 	/// <summary>
@@ -90,6 +95,29 @@ public static class App
 		{
 			Platform.FosterGetSize(out _, out int h);
 			return h;
+		}
+		set
+		{
+			Platform.FosterSetSize(Width, value);
+			Platform.FosterSetCentered();
+		}
+	}
+
+	/// <summary>
+	/// The Window size, which isn't necessarily the size in Pixels depending on the Platform.
+	/// Use SizeInPixels to get the drawable size.
+	/// </summary>
+	public static Point2 Size
+	{
+		get
+		{
+			Platform.FosterGetSize(out int w, out int h);
+			return new(w, h);
+		}
+		set
+		{
+			Platform.FosterSetSize(value.X, value.Y);
+			Platform.FosterSetCentered();
 		}
 	}
 
@@ -114,6 +142,18 @@ public static class App
 		{
 			Platform.FosterGetSizeInPixels(out _, out int h);
 			return h;
+		}
+	}
+
+	/// <summary>
+	/// The Size of the Window in Pixels
+	/// </summary>
+	public static Point2 SizeInPixels
+	{
+		get
+		{
+			Platform.FosterGetSizeInPixels(out int w, out int h);
+			return new(w, h);
 		}
 	}
 

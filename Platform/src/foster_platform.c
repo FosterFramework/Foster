@@ -368,6 +368,12 @@ void FosterSetFlags(FosterFlags flags)
 	}
 }
 
+void FosterSetCentered()
+{
+	FOSTER_ASSERT_RUNNING(FosterSetCentered);
+	SDL_SetWindowPosition(fstate.window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+}
+
 const char* FosterGetUserPath()
 {
 	FOSTER_ASSERT_RUNNING_RET(FosterGetUserPath, NULL);

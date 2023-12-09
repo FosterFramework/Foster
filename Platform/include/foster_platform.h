@@ -554,6 +554,8 @@ FOSTER_API void FosterGetSizeInPixels(int* width, int* height);
 
 FOSTER_API void FosterSetFlags(FosterFlags flags);
 
+FOSTER_API void FosterSetCentered();
+
 FOSTER_API const char* FosterGetUserPath();
 
 FOSTER_API void FosterSetClipboard(const char* cstr);
