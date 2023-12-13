@@ -1026,6 +1026,11 @@ void FosterFrameBegin_OpenGL()
 void FosterFrameEnd_OpenGL()
 {
 	FosterState* state = FosterGetState();
+
+	// bind 0 to the frame buffer as per SDL's suggestion for macOS:
+	// https://wiki.libsdl.org/SDL2/SDL_GL_SwapWindow#remarks
+	FosterBindFrameBuffer(NULL);
+
 	SDL_GL_SwapWindow(state->window);
 }
 
