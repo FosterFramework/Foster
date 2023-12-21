@@ -408,6 +408,9 @@ public struct Rect : IConvexShape, IEquatable<Rect>
 
 		return rect;
 	}
+
+	public static Rect Centered(in Vector2 center, float width, float height)
+		=> new(center.X - width / 2, center.Y - height / 2, width, height);
 	
 	public static Rect Transform(in Rect rect, in Matrix3x2 matrix)
 	{
