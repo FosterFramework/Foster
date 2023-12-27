@@ -360,6 +360,9 @@ void FosterSetFlags(FosterFlags flags)
 		SDL_SetWindowResizable(fstate.window, 
 			FOSTER_CHECK(flags, FOSTER_FLAG_RESIZABLE) ? SDL_TRUE : SDL_FALSE);
 
+		// mouse visible
+		SDL_ShowCursor(FOSTER_CHECK(flags, FOSTER_FLAG_MOUSE_VISIBLE) ? SDL_ENABLE : SDL_DISABLE);
+
 		// vsync
 		if (fstate.device.renderer == FOSTER_RENDERER_OPENGL)
 			SDL_GL_SetSwapInterval(FOSTER_CHECK(flags, FOSTER_FLAG_VSYNC) ? 1 : 0);
