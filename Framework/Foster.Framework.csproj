@@ -12,9 +12,9 @@
     <Authors>Noel Berry</Authors>
     <Description>A small 2D cross-platform Game Framework</Description>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/NoelFB/Foster</RepositoryUrl>
+    <RepositoryUrl>https://github.com/FosterFramework/Foster</RepositoryUrl>
     <PackageId>FosterFramework</PackageId>
-    <PackageProjectUrl>https://github.com/NoelFB/Foster</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/FosterFramework/Foster</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageOutputPath>$(SolutionDir)artifacts/</PackageOutputPath>
