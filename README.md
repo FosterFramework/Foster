@@ -31,5 +31,5 @@ Check out [Discussons](https://github.com/FosterFramework/Foster/discussions) or
 
 ### Notes
  - Taken a lot of inspiration from other Frameworks and APIs, namely [FNA](https://fna-xna.github.io/).
- - This is the second iteration of this library. The first [can be found here](https://github.com/FosterFramework/fosterold).
+ - This is the second iteration of this library. The first [can be found here](https://github.com/NoelFB/fosterold).
  - Contributions are welcome! However, anything that adds external dependencies or complicates the build process will not be accepted.
