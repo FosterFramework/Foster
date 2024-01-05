@@ -127,7 +127,7 @@ public class Controller
 				return Gamepads.DualShock4;
 			
 			if (id == 0x4c05e60c)
-				return Gamepads.DualShock5;
+				return Gamepads.DualSense;
 
 			if (id == 0x7e050920 || id == 0x7e053003)
 				return Gamepads.Nintendo;
