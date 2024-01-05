@@ -7,6 +7,6 @@ public enum Gamepads
 {
 	Xbox,
 	DualShock4,
-	DualShock5,
+	DualSense,
 	Nintendo
 }
