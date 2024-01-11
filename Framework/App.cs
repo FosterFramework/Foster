@@ -80,8 +80,11 @@ public static class App
 		}
 		set
 		{
-			Platform.FosterSetSize(value, Height);
-			Platform.FosterSetCentered();
+			if (Width != value)
+			{
+				Platform.FosterSetSize(value, Height);
+				Platform.FosterSetCentered();
+			}
 		}
 	}
 
@@ -98,8 +101,11 @@ public static class App
 		}
 		set
 		{
-			Platform.FosterSetSize(Width, value);
-			Platform.FosterSetCentered();
+			if (Height != value)
+			{
+				Platform.FosterSetSize(Width, value);
+				Platform.FosterSetCentered();
+			}
 		}
 	}
 
@@ -116,8 +122,11 @@ public static class App
 		}
 		set
 		{
-			Platform.FosterSetSize(value.X, value.Y);
-			Platform.FosterSetCentered();
+			if (Size != value)
+			{
+				Platform.FosterSetSize(value.X, value.Y);
+				Platform.FosterSetCentered();
+			}
 		}
 	}
 
