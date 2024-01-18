@@ -131,6 +131,7 @@ internal static class Platform
 		public int indexCount;
 		public int instanceCount;
 		public DepthCompare compare;
+		public int depthMask;
 		public CullMode cull;
 		public BlendMode blend;
 	}

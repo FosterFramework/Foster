@@ -21,20 +21,12 @@ public class Batcher : IDisposable
 	/// The Vertex Layout used for Sprite Batching
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential, Pack = 1)]
-	public struct Vertex : IVertex
+	public struct Vertex(Vector2 position, Vector2 texcoord, Color color, Color mode) : IVertex
 	{
-		public Vector2 Pos;
-		public Vector2 Tex;
-		public Color Col;
-		public Color Mode;  // R = Multiply, G = Wash, B = Fill, A = Padding
-
-		public Vertex(Vector2 position, Vector2 texcoord, Color color, Color mode)
-		{
-			Pos = position;
-			Tex = texcoord;
-			Col = color;
-			Mode = mode;
-		}
+		public Vector2 Pos = position;
+		public Vector2 Tex = texcoord;
+		public Color Col = color;
+		public Color Mode = mode;  // R = Multiply, G = Wash, B = Fill, A = Padding
 
 		public readonly VertexFormat Format => VertexFormat;
 	}
@@ -273,7 +265,10 @@ public class Batcher : IDisposable
 			Scissor = trimmed,
 			BlendMode = batch.Blend,
 			MeshIndexStart = batch.Offset * 3,
-			MeshIndexCount = batch.Elements * 3
+			MeshIndexCount = batch.Elements * 3,
+			DepthMask = false,
+			DepthCompare = DepthCompare.None,
+			CullMode = CullMode.None
 		};
 		command.Submit();
 	}

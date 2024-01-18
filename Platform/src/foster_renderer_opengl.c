@@ -432,6 +432,7 @@ typedef struct
 	FosterCompare stateCompare;
 	FosterCull stateCull;
 	FosterBlend stateBlend;
+	int stateDepthMask;
 
 	// info
 	int max_color_attachments;
@@ -890,6 +891,19 @@ void FosterSetCompare(FosterCompare compare)
 	fgl.stateCompare = compare;
 }
 
+void FosterSetDepthMask(int depthMask)
+{
+	if (fgl.stateInitializing || depthMask != fgl.stateDepthMask)
+	{
+		if (depthMask)
+			fgl.glDepthMask(1);
+		else
+			fgl.glDepthMask(0);
+	}
+
+	fgl.stateDepthMask = depthMask;
+}
+
 void FosterSetCull(FosterCull cull)
 {
 	if (fgl.stateInitializing || cull != fgl.stateCull)
@@ -999,6 +1013,7 @@ bool FosterInitialize_OpenGL()
 	FosterSetBlend(&zeroBlend);
 	FosterSetCull(FOSTER_CULL_NONE);
 	FosterSetCompare(FOSTER_COMPARE_NONE);
+	FosterSetDepthMask(0);
 	fgl.stateInitializing = 0;
 
 	// zero out texture state
@@ -1587,6 +1602,7 @@ void FosterDraw_OpenGL(FosterDrawCommand* command)
 	FosterBindArray(mesh->id);
 	FosterSetBlend(&command->blend);
 	FosterSetCompare(command->compare);
+	FosterSetDepthMask(command->depthMask);
 	FosterSetCull(command->cull);
 	FosterSetViewport(command->hasViewport, command->viewport);
 	FosterSetScissor(command->hasScissor, command->scissor);
@@ -1674,6 +1690,8 @@ void FosterClear_OpenGL(FosterClearCommand* command)
 		
 	if ((command->mask & FOSTER_CLEAR_MASK_DEPTH) == FOSTER_CLEAR_MASK_DEPTH)
 	{
+		FosterSetDepthMask(1);
+
 		clear |= GL_DEPTH_BUFFER_BIT;
 		if (fgl.glClearDepth)
 			fgl.glClearDepth(command->depth);

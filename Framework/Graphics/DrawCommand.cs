@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace Foster.Framework;
 
-public struct DrawCommand
+public struct DrawCommand()
 {
 	/// <summary>
 	/// Render Target. If not assigned, will target the Back Buffer
@@ -32,43 +32,44 @@ public struct DrawCommand
 	/// <summary>
 	/// The Render State Blend Mode
 	/// </summary>
-	public BlendMode BlendMode;
+	public BlendMode BlendMode = BlendMode.Premultiply;
 
 	/// <summary>
 	/// The Render State Culling Mode
 	/// </summary>
-	public CullMode CullMode;
+	public CullMode CullMode = CullMode.None;
 
 	/// <summary>
 	/// The Render State Depth comparison Function
 	/// </summary>
-	public DepthCompare DepthCompare;
+	public DepthCompare DepthCompare = DepthCompare.Never;
+
+	/// <summary>
+	/// If Writing to the Depth Buffer is enabled
+	/// </summary>
+	public bool DepthMask = true;
 
 	/// <summary>
 	/// Render Viewport
 	/// </summary>
-	public RectInt? Viewport;
+	public RectInt? Viewport = null;
 
 	/// <summary>
 	/// The Render State Scissor Rectangle
 	/// </summary>
-	public RectInt? Scissor;
+	public RectInt? Scissor = null;
 
 	/// <summary>
 	/// Creates a Draw Command based on the given mesh and material
 	/// </summary>
 	public DrawCommand(Target? target, Mesh mesh, Material material)
+		: this()
 	{
 		Target = target;
 		Mesh = mesh;
 		Material = material;
 		MeshIndexStart = 0;
 		MeshIndexCount = mesh.IndexCount;
-		BlendMode = BlendMode.Premultiply;
-		CullMode = CullMode.None;
-		DepthCompare = DepthCompare.None;
-		Viewport = null;
-		Scissor = null;
 	}
 
 	public readonly void Submit()

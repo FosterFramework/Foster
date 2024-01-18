@@ -512,6 +512,7 @@ typedef struct FosterDrawCommand
 	int indexCount;
 	int instanceCount;
 	FosterCompare compare;
+	int depthMask;
 	FosterCull cull;
 	FosterBlend blend;
 } FosterDrawCommand;

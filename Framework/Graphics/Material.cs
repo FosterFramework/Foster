@@ -189,6 +189,19 @@ public class Material
 		}
 		Set(uniform, data);
 	}
+	
+	public void Set(string uniform, ReadOnlySpan<Matrix4x4> value)
+	{
+		Span<float> data = stackalloc float[value.Length * 16];
+		for (int i = 0, n = 0; i < value.Length; i ++, n += 16)
+		{
+			data[n + 0] = value[i].M11; data[n + 1] = value[i].M12; data[n + 2] = value[i].M13; data[n + 3] = value[i].M14; 
+			data[n + 4] = value[i].M21; data[n + 5] = value[i].M22; data[n + 6] = value[i].M23; data[n + 7] = value[i].M24;
+			data[n + 8] = value[i].M31; data[n + 9] = value[i].M32; data[n +10] = value[i].M33; data[n +11] = value[i].M34;
+			data[n +12] = value[i].M41; data[n +13] = value[i].M42; data[n +14] = value[i].M43; data[n +15] = value[i].M44;
+		}
+		Set(uniform, data);
+	}
 
 	public unsafe void Set(string uniform, ReadOnlySpan<float> values)
 	{
