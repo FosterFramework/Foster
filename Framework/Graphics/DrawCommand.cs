@@ -42,12 +42,12 @@ public struct DrawCommand()
 	/// <summary>
 	/// The Render State Depth comparison Function
 	/// </summary>
-	public DepthCompare DepthCompare = DepthCompare.Never;
+	public DepthCompare DepthCompare = DepthCompare.Always;
 
 	/// <summary>
 	/// If Writing to the Depth Buffer is enabled
 	/// </summary>
-	public bool DepthMask = true;
+	public bool DepthMask = false;
 
 	/// <summary>
 	/// Render Viewport
