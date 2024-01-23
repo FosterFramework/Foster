@@ -48,8 +48,11 @@ public class Target : IResource
 
 	public Target(int width, int height, TextureFormat[] attachments)
 	{
-		Debug.Assert(width > 0 && height > 0, "Target width and height must be larger than 0");
-		Debug.Assert(attachments != null && attachments.Length > 0, "Target needs at least 1 color attachment");
+		if (width <= 0 || height <= 0)
+			throw new ArgumentException("Target width and height must be larger than 0");
+
+		if (attachments == null || attachments.Length <= 0)
+			throw new ArgumentException("Target needs at least 1 color attachment");
 
 		resource = Platform.FosterTargetCreate(width, height, attachments, attachments.Length);
 		if (resource == IntPtr.Zero)
@@ -88,7 +91,8 @@ public class Target : IResource
 	/// </summary>
 	public void Clear(Color color, float depth, int stencil, ClearMask mask)
 	{
-		Debug.Assert(!IsDisposed, "Target is Disposed");
+		if (IsDisposed)
+			throw new Exception("Resource is Disposed");
 
 		Platform.FosterClearCommand clear = new()
 		{

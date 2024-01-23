@@ -93,7 +93,8 @@ public class Font : IDisposable
 	/// </summary>
 	public float GetScale(float size)
 	{
-		Debug.Assert(fontPtr != IntPtr.Zero, "Invalid Font");
+		if (fontPtr == IntPtr.Zero)
+			throw new Exception("Trying to use an invalid Font");
 		return Platform.FosterFontGetScale(fontPtr, size);
 	}
 
@@ -122,7 +123,8 @@ public class Font : IDisposable
 	/// </summary>
 	public float GetKerningBetweenGlyphs(int glyph1, int glyph2, float scale)
 	{
-		Debug.Assert(fontPtr != IntPtr.Zero, "Invalid Font");
+		if (fontPtr == IntPtr.Zero)
+			throw new Exception("Trying to use an invalid Font");
 		return Platform.FosterFontGetKerning(fontPtr, glyph1, glyph2, scale);
 	}
 
@@ -131,7 +133,8 @@ public class Font : IDisposable
 	/// </summary>
 	public Character GetCharacter(char ch, float scale)
 	{
-		Debug.Assert(fontPtr != IntPtr.Zero, "Invalid Font");
+		if (fontPtr == IntPtr.Zero)
+			throw new Exception("Trying to use an invalid Font");
 		return GetCharacterOfGlyph(GetGlyphIndex(ch), scale);
 	}
 
@@ -140,7 +143,8 @@ public class Font : IDisposable
 	/// </summary>
 	public Character GetCharacter(int codepoint, float scale)
 	{
-		Debug.Assert(fontPtr != IntPtr.Zero, "Invalid Font");
+		if (fontPtr == IntPtr.Zero)
+			throw new Exception("Trying to use an invalid Font");
 		return GetCharacterOfGlyph(GetGlyphIndex(codepoint), scale);
 	}
 	
@@ -149,7 +153,8 @@ public class Font : IDisposable
 	/// </summary>
 	public Character GetCharacterOfGlyph(int glyphIndex, float scale)
 	{
-		Debug.Assert(fontPtr != IntPtr.Zero, "Invalid Font");
+		if (fontPtr == IntPtr.Zero)
+			throw new Exception("Trying to use an invalid Font");
 		
 		Platform.FosterFontGetCharacter(fontPtr, glyphIndex, scale,
 			out int width, out int height, out float advance, out float offsetX, out float offsetY, out int visible);
@@ -192,7 +197,8 @@ public class Font : IDisposable
 	/// </summary>
 	public bool GetPixels(in Character character, Span<Color> destination)
 	{
-		Debug.Assert(fontPtr != IntPtr.Zero, "Invalid Font");
+		if (fontPtr == IntPtr.Zero)
+			throw new Exception("Trying to use an invalid Font");
 
 		if (!character.Visible)
 			return false;

@@ -148,7 +148,8 @@ public struct Color : IEquatable<Color>
 	/// <param name="components">The Components, in any order. ex. "RGBA" or "RGB" or "ARGB"</param>
 	public readonly void ToHexString(ReadOnlySpan<char> components, Span<char> destination)
 	{
-		Debug.Assert(destination.Length >= components.Length * 2);
+		if (destination.Length < components.Length * 2)
+			throw new ArgumentOutOfRangeException(nameof(destination));
 
 		const string HEX = "0123456789ABCDEF";
 

@@ -212,7 +212,8 @@ public class Batcher : IDisposable
 	/// <param name="scissor">Optional Scissor Rectangle, which will clip any Scissor rectangles pushed to the Batcher.</param>
 	public void Render(Target? target, Matrix4x4 matrix, RectInt? viewport = null, RectInt? scissor = null)
 	{
-		Debug.Assert(target == null || !target.IsDisposed, "Target is disposed");
+		if (target != null && target.IsDisposed)
+			throw new Exception("Target is disposed");
 
 		if (indexPtr == IntPtr.Zero || vertexPtr == IntPtr.Zero)
 			return;

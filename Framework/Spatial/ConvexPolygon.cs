@@ -75,7 +75,8 @@ public unsafe struct ConvexPolygon : IConvexShape, IEnumerable<Vector2>
 
 	public readonly Vector2 GetAxis(int index)
 	{
-		Debug.Assert(index >= 0 && index < MaxPoints);
+		if (index < 0 || index >= MaxPoints)
+			throw new ArgumentOutOfRangeException(nameof(index));
 
 		var a = Vertices[index];
 		var b = Vertices[index >= Vertices.Count - 1 ? 0 : index + 1];

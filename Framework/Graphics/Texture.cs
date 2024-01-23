@@ -106,7 +106,8 @@ public class Texture : IResource
 	/// </summary>
 	public unsafe void SetData<T>(ReadOnlySpan<T> data) where T : struct
 	{
-		Debug.Assert(!IsDisposed, "Texture is Disposed");
+		if (IsDisposed)
+			throw new Exception("Resource is Disposed");
 		
 		if (Marshal.SizeOf<T>() * data.Length < MemorySize)
 			throw new Exception("Data Buffer is smaller than the Size of the Texture");
@@ -123,7 +124,8 @@ public class Texture : IResource
 	/// </summary>
 	public unsafe void GetData<T>(Span<T> data) where T : struct
 	{
-		Debug.Assert(!IsDisposed, "Texture is Disposed");
+		if (IsDisposed)
+			throw new Exception("Resource is Disposed");
 
 		if (Marshal.SizeOf<T>() * data.Length < MemorySize)
 			throw new Exception("Data Buffer is smaller than the Size of the Texture");
@@ -137,7 +139,8 @@ public class Texture : IResource
 
 	public void Dispose()
 	{
-		Debug.Assert(!IsTargetAttachment, "Cannot Dispose a Texture that is part of a Target");
+		if (IsTargetAttachment)
+			throw new InvalidOperationException("Cannot Dispose a Texture that is part of a Target. Instead, Dispose the Target.");
 
 		Dispose(true);
 		GC.SuppressFinalize(this);

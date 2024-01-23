@@ -86,7 +86,8 @@ public class Mesh : IResource
 	/// </summary>
 	public unsafe void SetIndices(IntPtr data, int count, IndexFormat format)
 	{
-		Debug.Assert(!IsDisposed, "Mesh is Disposed");
+		if (IsDisposed)
+			throw new Exception("Resource is Disposed");
 
 		IndexCount = count;
 
@@ -111,8 +112,8 @@ public class Mesh : IResource
 	/// </summary>
 	public unsafe void SetSubIndices<T>(int offset, ReadOnlySpan<T> indices) where T : struct
 	{
-		Debug.Assert(IndexFormat.HasValue && IndexFormat.Value == GetIndexFormat<T>(),
-			"Index Format mismatch; SetSubIndices must use the existing Format set in SetIndices");
+		if (!IndexFormat.HasValue || IndexFormat.Value != GetIndexFormat<T>())
+			throw new Exception("Index Format mismatch; SetSubIndices must use the existing Format set in SetIndices");
 
 		fixed (byte* ptr = MemoryMarshal.AsBytes(indices))
 		{
@@ -127,8 +128,11 @@ public class Mesh : IResource
 	/// </summary>
 	public unsafe void SetSubIndices(int offset, IntPtr data, int count)
 	{
-		Debug.Assert(!IsDisposed, "Mesh is Disposed");
-		Debug.Assert(IndexFormat.HasValue, "Must call SetIndices before SetSubIndices");
+		if (IsDisposed)
+			throw new Exception("Resource is Disposed");
+
+		if (!IndexFormat.HasValue)
+			throw new Exception("Must call SetIndices before SetSubIndices");
 
 		if (offset + count > IndexCount)
 			throw new Exception("SetSubIndices is out of range of the existing Index Buffer");
@@ -175,7 +179,8 @@ public class Mesh : IResource
 	/// </summary>
 	public unsafe void SetVertices(IntPtr data, int count, VertexFormat format)
 	{
-		Debug.Assert(!IsDisposed, "Mesh is Disposed");
+		if (IsDisposed)
+			throw new Exception("Resource is Disposed");
 
 		VertexCount = count;
 
@@ -230,8 +235,11 @@ public class Mesh : IResource
 	/// </summary>
 	public unsafe void SetSubVertices(int offset, IntPtr data, int count)
 	{
-		Debug.Assert(!IsDisposed, "Mesh is Disposed");
-		Debug.Assert(VertexFormat.HasValue, "Must call SetVertices before SetSubVertices");
+		if (IsDisposed)
+			throw new Exception("Resource is Disposed");
+
+		if (!VertexFormat.HasValue)
+			throw new Exception("Must call SetVertices before SetSubVertices");
 
 		if (offset + count > VertexCount)
 			throw new Exception("SetSubVertices is out of range of the existing Vertex Buffer");
