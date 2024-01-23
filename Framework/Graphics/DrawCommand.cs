@@ -42,7 +42,7 @@ public struct DrawCommand()
 	/// <summary>
 	/// The Render State Depth comparison Function
 	/// </summary>
-	public DepthCompare DepthCompare = DepthCompare.Always;
+	public DepthCompare DepthCompare = DepthCompare.None;
 
 	/// <summary>
 	/// If Writing to the Depth Buffer is enabled
