@@ -201,7 +201,7 @@ public static class Input
 	/// </summary>
 	internal static void OnControllerButton(int index, int button, byte pressed)
 	{
-		if (index >= 0 && index < InputState.MaxControllers && button < Controller.MaxButtons)
+		if (index >= 0 && index < InputState.MaxControllers && button >= 0 && button < Controller.MaxButtons)
 		{
 			if (pressed != 0)
 			{
@@ -222,7 +222,7 @@ public static class Input
 	/// </summary>
 	internal static void OnControllerAxis(int index, int axis, float value)
 	{
-		if (index >= 0 && index < InputState.MaxControllers && axis < Controller.MaxAxis)
+		if (index >= 0 && index < InputState.MaxControllers && axis >= 0 && axis < Controller.MaxAxis)
 		{
 			nextState.Controllers[index].axis[axis] = value;
 			nextState.Controllers[index].axisTimestamp[axis] = Time.Duration;
