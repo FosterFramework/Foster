@@ -9,33 +9,33 @@ public static class Ease
 {
 	public delegate float Easer(float t);
 
-	public static readonly Easer Linear = (float t) => { return t; };
+	public static readonly Easer Linear = (float t) => t;
 
-	public static readonly Easer SineIn = (float t) => { return -(float)Math.Cos(Calc.HalfPI * t) + 1; };
-	public static readonly Easer SineOut = (float t) => { return (float)Math.Sin(Calc.HalfPI * t); };
-	public static readonly Easer SineInOut = (float t) => { return -(float)Math.Cos(Calc.HalfPI * t) / 2f + .5f; };
+	public static readonly Easer SineIn = (float t) => -(float)Math.Cos(Calc.HalfPI * t) + 1;
+	public static readonly Easer SineOut = (float t) => (float)Math.Sin(Calc.HalfPI * t);
+	public static readonly Easer SineInOut = (float t) => -(MathF.Cos(MathF.PI * t) - 1f) / 2f;
 
-	public static readonly Easer QuadIn = (float t) => { return t * t; };
+	public static readonly Easer QuadIn = (float t) => t * t;
 	public static readonly Easer QuadOut = Invert(QuadIn);
 	public static readonly Easer QuadInOut = Follow(QuadIn, QuadOut);
 
-	public static readonly Easer CubeIn = (float t) => { return t * t * t; };
+	public static readonly Easer CubeIn = (float t) => t * t * t;
 	public static readonly Easer CubeOut = Invert(CubeIn);
 	public static readonly Easer CubeInOut = Follow(CubeIn, CubeOut);
 
-	public static readonly Easer QuintIn = (float t) => { return t * t * t * t * t; };
+	public static readonly Easer QuintIn = (float t) => t * t * t * t * t;
 	public static readonly Easer QuintOut = Invert(QuintIn);
 	public static readonly Easer QuintInOut = Follow(QuintIn, QuintOut);
 
-	public static readonly Easer ExpoIn = (float t) => { return (float)Math.Pow(2, 10 * (t - 1)); };
+	public static readonly Easer ExpoIn = (float t) => (float)Math.Pow(2, 10 * (t - 1));
 	public static readonly Easer ExpoOut = Invert(ExpoIn);
 	public static readonly Easer ExpoInOut = Follow(ExpoIn, ExpoOut);
 
-	public static readonly Easer BackIn = (float t) => { return t * t * (2.70158f * t - 1.70158f); };
+	public static readonly Easer BackIn = (float t) => t * t * (2.70158f * t - 1.70158f);
 	public static readonly Easer BackOut = Invert(BackIn);
 	public static readonly Easer BackInOut = Follow(BackIn, BackOut);
 
-	public static readonly Easer BigBackIn = (float t) => { return t * t * (4f * t - 3f); };
+	public static readonly Easer BigBackIn = (float t) => t * t * (4f * t - 3f);
 	public static readonly Easer BigBackOut = Invert(BigBackIn);
 	public static readonly Easer BigBackInOut = Follow(BigBackIn, BigBackOut);
 
