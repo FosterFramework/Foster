@@ -260,6 +260,7 @@ typedef char             GLchar;
 	GL_FUNC(GetTexImage, void, GLenum target, GLint level, GLenum format, GLenum type, void* data) \
 	GL_FUNC(DrawElements, void, GLenum mode, GLint count, GLenum type, void* indices) \
 	GL_FUNC(DrawElementsInstanced, void, GLenum mode, GLint count, GLenum type, void* indices, GLint amount) \
+	GL_FUNC(DrawBuffers, void, GLsizei n, const GLenum* bufs) \
 	GL_FUNC(DeleteTextures, void, GLint n, GLuint* textures) \
 	GL_FUNC(DeleteRenderbuffers, void, GLint n, GLuint* renderbuffers) \
 	GL_FUNC(DeleteFramebuffers, void, GLint n, GLuint* textures) \
@@ -368,6 +369,7 @@ typedef struct FosterTarget_OpenGL
 	GLuint id;
 	int width;
 	int height;
+	int color_attachments;
 	FosterTexture_OpenGL* attachments[FOSTER_MAX_TARGET_ATTACHMENTS];
 } FosterTarget_OpenGL;
 
@@ -666,7 +668,23 @@ void FosterBindFrameBuffer(FosterTarget_OpenGL* target)
 	}
 
 	if (fgl.stateInitializing || fgl.stateFrameBuffer != framebuffer)
+	{
+		GLenum attachments[FOSTER_MAX_TARGET_ATTACHMENTS] = {};
+
 		fgl.glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+		if (target != NULL)
+		{
+			for (int i = 0; i < target->color_attachments; i ++)
+				attachments[i] = GL_COLOR_ATTACHMENT0 + i;
+			fgl.glDrawBuffers(target->color_attachments, attachments);
+		}
+		else
+		{
+			attachments[0] = GL_COLOR_ATTACHMENT0;
+			fgl.glDrawBuffers(1, attachments);
+		}
+	}
 	fgl.stateFrameBuffer = framebuffer;
 }
 
@@ -1142,6 +1160,7 @@ FosterTarget* FosterTargetCreate_OpenGL(int width, int height, FosterTextureForm
 	result.id = 0;
 	result.width = width;
 	result.height = height;
+	result.color_attachments = 0;
 	for (int i = 0; i < FOSTER_MAX_TARGET_ATTACHMENTS; i ++)
 		result.attachments[i] = NULL;
 
@@ -1169,7 +1188,8 @@ FosterTarget* FosterTargetCreate_OpenGL(int width, int height, FosterTextureForm
 		}
 		else
 		{
-			fgl.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, tex->id, 0);
+			fgl.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + result.color_attachments, GL_TEXTURE_2D, tex->id, 0);
+			result.color_attachments++;
 		}
 	}
 
