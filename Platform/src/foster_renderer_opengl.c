@@ -354,6 +354,7 @@ typedef struct FosterTexure_OpenGL
 	GLenum glInternalFormat;
 	GLenum glFormat;
 	GLenum glType;
+	GLenum glAttachment;
 	FosterTextureSampler sampler;
 	
 	// Because Shader uniforms assign textures, it's possible for the user to
@@ -369,7 +370,8 @@ typedef struct FosterTarget_OpenGL
 	GLuint id;
 	int width;
 	int height;
-	int color_attachments;
+	int attachmentCount;
+	int colorAttachmentCount;
 	FosterTexture_OpenGL* attachments[FOSTER_MAX_TARGET_ATTACHMENTS];
 } FosterTarget_OpenGL;
 
@@ -665,26 +667,16 @@ void FosterBindFrameBuffer(FosterTarget_OpenGL* target)
 		framebuffer = target->id;
 		fgl.stateFrameBufferWidth = target->width;
 		fgl.stateFrameBufferHeight = target->height;
+
+		// figure out draw buffers
+		GLenum attachments[4];
+		for (int i = 0; i < target->colorAttachmentCount; i ++)
+			attachments[i] = GL_COLOR_ATTACHMENT0 + i;
+		fgl.glDrawBuffers(target->colorAttachmentCount, attachments);
 	}
 
 	if (fgl.stateInitializing || fgl.stateFrameBuffer != framebuffer)
-	{
-		GLenum attachments[FOSTER_MAX_TARGET_ATTACHMENTS] = {};
-
 		fgl.glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-
-		if (target != NULL)
-		{
-			for (int i = 0; i < target->color_attachments; i ++)
-				attachments[i] = GL_COLOR_ATTACHMENT0 + i;
-			fgl.glDrawBuffers(target->color_attachments, attachments);
-		}
-		else
-		{
-			attachments[0] = GL_COLOR_ATTACHMENT0;
-			fgl.glDrawBuffers(1, attachments);
-		}
-	}
 	fgl.stateFrameBuffer = framebuffer;
 }
 
@@ -1160,7 +1152,8 @@ FosterTarget* FosterTargetCreate_OpenGL(int width, int height, FosterTextureForm
 	result.id = 0;
 	result.width = width;
 	result.height = height;
-	result.color_attachments = 0;
+	result.attachmentCount = attachmentCount;
+	result.colorAttachmentCount = 0;
 	for (int i = 0; i < FOSTER_MAX_TARGET_ATTACHMENTS; i ++)
 		result.attachments[i] = NULL;
 
@@ -1184,13 +1177,15 @@ FosterTarget* FosterTargetCreate_OpenGL(int width, int height, FosterTextureForm
 
 		if (attachments[i] == FOSTER_TEXTURE_FORMAT_DEPTH24_STENCIL8)
 		{
-			fgl.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, tex->id, 0);
+			tex->glAttachment = GL_DEPTH_STENCIL_ATTACHMENT;
 		}
 		else
 		{
-			fgl.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + result.color_attachments, GL_TEXTURE_2D, tex->id, 0);
-			result.color_attachments++;
+			tex->glAttachment = GL_COLOR_ATTACHMENT0 + result.colorAttachmentCount;
+			result.colorAttachmentCount++;
 		}
+
+		fgl.glFramebufferTexture2D(GL_FRAMEBUFFER, tex->glAttachment, GL_TEXTURE_2D, tex->id, 0);
 	}
 
 	// since we manually set the framebuffer above, clear buffer assignment to maintain correct state
