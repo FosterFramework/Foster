@@ -1249,6 +1249,7 @@ FosterShader* FosterShaderCreate_OpenGL(FosterShaderData* data)
 		GLint params;
 		fgl.glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &params);
 
+		// validate shader
 		if (!params)
 		{
 			fgl.glDeleteShader(vertexShader);
@@ -1272,6 +1273,7 @@ FosterShader* FosterShaderCreate_OpenGL(FosterShaderData* data)
 		GLint params;
 		fgl.glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &params);
 
+		// validate shader
 		if (!params)
 		{
 			fgl.glDeleteShader(vertexShader);
@@ -1297,6 +1299,7 @@ FosterShader* FosterShaderCreate_OpenGL(FosterShaderData* data)
 	fgl.glDeleteShader(vertexShader);
 	fgl.glDeleteShader(fragmentShader);
 
+	// validate link status
 	GLint linkResult;
 	fgl.glGetProgramiv(id, GL_LINK_STATUS, &linkResult);
 
