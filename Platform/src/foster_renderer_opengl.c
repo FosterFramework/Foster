@@ -221,6 +221,8 @@ typedef char             GLchar;
 #define GL_DEBUG_SEVERITY_NOTIFICATION 0x826B
 #define GL_DEBUG_OUTPUT 0x92E0
 #define GL_DEBUG_OUTPUT_SYNCHRONOUS 0x8242
+#define GL_COMPILE_STATUS 0x8B81
+#define GL_LINK_STATUS 0x8B82
 
 // OpenGL Functions
 #define GL_FUNCTIONS \
@@ -1244,11 +1246,19 @@ FosterShader* FosterShaderCreate_OpenGL(FosterShaderData* data)
 		fgl.glCompileShader(vertexShader);
 		fgl.glGetShaderInfoLog(vertexShader, 1024, &logLength, log);
 
-		if (logLength > 0)
+		GLint params;
+		fgl.glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &params);
+
+		if (!params)
 		{
 			fgl.glDeleteShader(vertexShader);
-			FosterLogError("%s", log);
+			if (logLength > 0)
+				FosterLogError("%s", log);
 			return NULL;
+		}
+		else if (logLength > 0)
+		{
+			FosterLogInfo("%s", log);
 		}
 	}
 
@@ -1259,12 +1269,20 @@ FosterShader* FosterShaderCreate_OpenGL(FosterShaderData* data)
 		fgl.glCompileShader(fragmentShader);
 		fgl.glGetShaderInfoLog(fragmentShader, 1024, &logLength, log);
 
-		if (logLength > 0)
+		GLint params;
+		fgl.glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &params);
+
+		if (!params)
 		{
 			fgl.glDeleteShader(vertexShader);
 			fgl.glDeleteShader(fragmentShader);
-			FosterLogError("%s", log);
+			if (logLength > 0)
+				FosterLogError("%s", log);
 			return NULL;
+		}
+		else if (logLength > 0)
+		{
+			FosterLogInfo("%s", log);
 		}
 	}
 
@@ -1279,10 +1297,18 @@ FosterShader* FosterShaderCreate_OpenGL(FosterShaderData* data)
 	fgl.glDeleteShader(vertexShader);
 	fgl.glDeleteShader(fragmentShader);
 
-	if (logLength > 0)
+	GLint linkResult;
+	fgl.glGetProgramiv(id, GL_LINK_STATUS, &linkResult);
+
+	if (!linkResult)
 	{
-		FosterLogError("%s", log);
+		if (logLength > 0)
+			FosterLogError("%s", log);
 		return NULL;
+	}
+	else if (logLength > 0)
+	{
+		FosterLogInfo("%s", log);
 	}
 
 	FosterShader_OpenGL* shader = (FosterShader_OpenGL*)SDL_malloc(sizeof(FosterShader_OpenGL));
