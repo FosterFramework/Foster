@@ -667,16 +667,27 @@ void FosterBindFrameBuffer(FosterTarget_OpenGL* target)
 		framebuffer = target->id;
 		fgl.stateFrameBufferWidth = target->width;
 		fgl.stateFrameBufferHeight = target->height;
-
-		// figure out draw buffers
-		GLenum attachments[4];
-		for (int i = 0; i < target->colorAttachmentCount; i ++)
-			attachments[i] = GL_COLOR_ATTACHMENT0 + i;
-		fgl.glDrawBuffers(target->colorAttachmentCount, attachments);
 	}
 
 	if (fgl.stateInitializing || fgl.stateFrameBuffer != framebuffer)
+	{
+		GLenum attachments[4];
 		fgl.glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+		// figure out draw buffers
+		if (target == NULL)
+		{
+			attachments[0] = GL_BACK;
+			fgl.glDrawBuffers(1, attachments);
+		}
+		else
+		{
+			for (int i = 0; i < target->colorAttachmentCount; i ++)
+				attachments[i] = GL_COLOR_ATTACHMENT0 + i;
+			fgl.glDrawBuffers(target->colorAttachmentCount, attachments);
+		}
+
+	}
 	fgl.stateFrameBuffer = framebuffer;
 }
 
