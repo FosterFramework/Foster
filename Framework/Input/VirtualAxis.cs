@@ -97,7 +97,7 @@ public class VirtualAxis
 
 	public VirtualAxis AddNegative(Keys key)
 	{
-		Positive.Add(key);
+		Negative.Add(key);
 		return this;
 	}
 
