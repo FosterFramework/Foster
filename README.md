@@ -3,7 +3,7 @@
 </p>
 
 # Foster
-Foster is small cross-platform 2D game framework in C#.
+Foster is a small cross-platform 2D game framework in C#.
 
 _★ very work in progress! likely to have frequent, breaking changes! please use at your own risk! ★_
 
@@ -11,7 +11,7 @@ To use the framework either
  - add a refence to the [NuGet package](https://www.nuget.org/packages/FosterFramework), 
  - or clone this repository and add a reference to `Foster/Framework/Foster.Framework.csproj`.
 
-There is a [Samples](https://github.com/FosterFramework/Samples) repo which contains various demos and examples which can help you get started.
+There is a [Samples](https://github.com/FosterFramework/Samples) repo which contains various demos and examples that can help you get started.
 
 Check out [Discussons](https://github.com/FosterFramework/Foster/discussions) or [Discord](https://discord.gg/K7tdFuP3Bg) to get involved.
 
@@ -21,7 +21,7 @@ Check out [Discussons](https://github.com/FosterFramework/Foster/discussions) or
 
 ### Platform Library
  - The [Platform library](https://github.com/FosterFramework/Foster/tree/main/Platform) is a C library that implements native methods required to run the application.
- - By default it is currently built for 64-bit Linux, MacOS, and Windows through [Github Actions](https://github.com/FosterFramework/Foster/actions/workflows/build-libs.yml).
+ - By default, it is currently being built for 64-bit Linux, MacOS, and Windows through [Github Actions](https://github.com/FosterFramework/Foster/actions/workflows/build-libs.yml).
  - To add support for more platforms, you need to build the [Platform library](https://github.com/FosterFramework/Foster/tree/main/Platform) and then include it in [Foster.Framework.csproj](https://github.com/FosterFramework/Foster/blob/main/Framework/Foster.Framework.csproj#L27)
 
 ### Rendering
