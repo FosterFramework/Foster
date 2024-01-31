@@ -347,7 +347,7 @@ GL_FUNCTIONS
 
 #define FOSTER_RECT_EQUAL(a, b) ((a).x == (b).x && (a).y == (b).y && (a).w == (b).w && (a).h == (b).h)
 
-typedef struct FosterTexure_OpenGL
+typedef struct FosterTexture_OpenGL
 {
 	GLuint id;
 	int width;
@@ -358,7 +358,7 @@ typedef struct FosterTexure_OpenGL
 	GLenum glType;
 	GLenum glAttachment;
 	FosterTextureSampler sampler;
-	
+
 	// Because Shader uniforms assign textures, it's possible for the user to
 	// dispose of a texture but still have it assigned in a shader. Thus we use
 	// a simple ref counter to determine when it's safe to delete the wrapping
@@ -416,12 +416,12 @@ typedef struct FosterMesh_OpenGL
 typedef struct
 {
 	// GL function pointers
-	#define GL_FUNC(name, ret, ...) gl ## name ## Fn gl ## name;
+#define GL_FUNC(name, ret, ...) gl ## name ## Fn gl ## name;
 	GL_FUNCTIONS
-	#undef GL_FUNC
+#undef GL_FUNC
 
-	// GL context
-	void* context;
+		// GL context
+		void* context;
 
 	// stored OpenGL state
 	int stateInitializing;
@@ -430,6 +430,8 @@ typedef struct
 	GLuint stateProgram;
 	GLuint stateFrameBuffer;
 	GLuint stateVertexArray;
+	GLuint stateArrayBuffer;
+	GLuint stateElementBuffer;
 	int stateFrameBufferWidth;
 	int stateFrameBufferHeight;
 	int stateHasScissor;
@@ -499,11 +501,11 @@ GLenum FosterWrapToGL(FosterTextureWrap wrap)
 {
 	switch (wrap)
 	{
-		case FOSTER_TEXTURE_WRAP_REPEAT: return GL_REPEAT;
-		case FOSTER_TEXTURE_WRAP_MIRRORED_REPEAT: return GL_MIRRORED_REPEAT;
-		case FOSTER_TEXTURE_WRAP_CLAMP_TO_BORDER: return GL_CLAMP_TO_EDGE;
-		case FOSTER_TEXTURE_WRAP_CLAMP_TO_EDGE: return GL_CLAMP_TO_EDGE;
-		default: return GL_REPEAT;
+	case FOSTER_TEXTURE_WRAP_REPEAT: return GL_REPEAT;
+	case FOSTER_TEXTURE_WRAP_MIRRORED_REPEAT: return GL_MIRRORED_REPEAT;
+	case FOSTER_TEXTURE_WRAP_CLAMP_TO_BORDER: return GL_CLAMP_TO_EDGE;
+	case FOSTER_TEXTURE_WRAP_CLAMP_TO_EDGE: return GL_CLAMP_TO_EDGE;
+	default: return GL_REPEAT;
 	}
 }
 
@@ -511,9 +513,9 @@ GLenum FosterFilterToGL(FosterTextureFilter filter)
 {
 	switch (filter)
 	{
-		case FOSTER_TEXTURE_FILTER_NEAREST: return GL_NEAREST;
-		case FOSTER_TEXTURE_FILTER_LINEAR: return GL_LINEAR;
-		default: return GL_NEAREST;
+	case FOSTER_TEXTURE_FILTER_NEAREST: return GL_NEAREST;
+	case FOSTER_TEXTURE_FILTER_LINEAR: return GL_LINEAR;
+	default: return GL_NEAREST;
 	}
 }
 
@@ -577,7 +579,26 @@ FosterUniformType FosterUniformTypeFromGL(GLenum value)
 GLuint FosterMeshAssignAttributes_OpenGL(GLuint buffer, GLenum bufferType, FosterVertexFormat* format, GLint divisor)
 {
 	// bind
-	fgl.glBindBuffer(bufferType, buffer);
+	switch (bufferType)
+	{
+	case GL_ARRAY_BUFFER:
+		if (fgl.stateArrayBuffer != buffer)
+		{
+			fgl.glBindBuffer(bufferType, buffer);
+			fgl.stateArrayBuffer = buffer;
+		}
+		break;
+	case GL_ELEMENT_ARRAY_BUFFER:
+		if (fgl.stateElementBuffer != buffer)
+		{
+			fgl.glBindBuffer(bufferType, buffer);
+			fgl.stateElementBuffer = buffer;
+		}
+		break;
+	default:
+		fgl.glBindBuffer(bufferType, buffer);
+		break;
+	}
 
 	// TODO: disable existing enabled attributes?
 	// ...
@@ -684,7 +705,7 @@ void FosterBindFrameBuffer(FosterTarget_OpenGL* target)
 		}
 		else
 		{
-			for (int i = 0; i < target->colorAttachmentCount; i ++)
+			for (int i = 0; i < target->colorAttachmentCount; i++)
 				attachments[i] = GL_COLOR_ATTACHMENT0 + i;
 			fgl.glDrawBuffers(target->colorAttachmentCount, attachments);
 		}
@@ -716,7 +737,10 @@ void FosterBindTexture(int slot, GLuint id)
 	}
 
 	if (fgl.stateTextureSlots[slot] != id)
+	{
 		fgl.glBindTexture(GL_TEXTURE_2D, id);
+		fgl.stateTextureSlots[slot] = id;
+	}
 }
 
 // Same as FosterBindTexture, except it the resulting global state doesn't
@@ -732,6 +756,7 @@ void FosterEnsureTextureSlotIs(int slot, GLuint id)
 		}
 
 		fgl.glBindTexture(GL_TEXTURE_2D, id);
+		fgl.stateTextureSlots[slot] = id;
 	}
 }
 
@@ -755,7 +780,7 @@ void FosterSetTextureSampler(FosterTexture_OpenGL* tex, FosterTextureSampler sam
 
 		if (tex->sampler.wrapY != sampler.wrapY)
 			fgl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, FosterWrapToGL(sampler.wrapY));
-		
+
 		tex->sampler = sampler;
 	}
 }
@@ -957,23 +982,23 @@ void FosterPrepare_OpenGL()
 	FosterState* state = FosterGetState();
 	state->windowCreateFlags |= SDL_WINDOW_OPENGL;
 
-	#ifdef __EMSCRIPTEN__
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-	#else
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
-		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+#ifdef __EMSCRIPTEN__
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#else
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-		// TODO:
-		// This should be controlled via the gfx api somehow?
-		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
-	#endif
+	// TODO:
+	// This should be controlled via the gfx api somehow?
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+#endif
 }
 
 bool FosterInitialize_OpenGL()
@@ -990,17 +1015,17 @@ bool FosterInitialize_OpenGL()
 	SDL_GL_MakeCurrent(state->window, fgl.context);
 
 	// bind opengl functions
-	#define GL_FUNC(name, ...) fgl.gl ## name = (gl ## name ## Fn)(SDL_GL_GetProcAddress("gl" #name));
+#define GL_FUNC(name, ...) fgl.gl ## name = (gl ## name ## Fn)(SDL_GL_GetProcAddress("gl" #name));
 	GL_FUNCTIONS
-	#undef GL_FUNC
+#undef GL_FUNC
 
-	// bind debug message callback
-	if (fgl.glDebugMessageCallback != NULL && state->desc.logging != FOSTER_LOGGING_NONE)
-	{
-		fgl.glEnable(GL_DEBUG_OUTPUT);
-		fgl.glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-		fgl.glDebugMessageCallback(FosterMessage_OpenGL, NULL);
-	}
+		// bind debug message callback
+		if (fgl.glDebugMessageCallback != NULL && state->desc.logging != FOSTER_LOGGING_NONE)
+		{
+			fgl.glEnable(GL_DEBUG_OUTPUT);
+			fgl.glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+			fgl.glDebugMessageCallback(FosterMessage_OpenGL, NULL);
+		}
 
 	// get opengl info
 	fgl.glGetIntegerv(0x8CDF, &fgl.max_color_attachments);
@@ -1042,7 +1067,7 @@ bool FosterInitialize_OpenGL()
 	// zero out texture state
 	fgl.stateActiveTextureSlot = 0;
 	fgl.glActiveTexture(GL_TEXTURE0);
-	for (int i = 0; i < FOSTER_MAX_UNIFORM_TEXTURES; i ++)
+	for (int i = 0; i < FOSTER_MAX_UNIFORM_TEXTURES; i++)
 		fgl.stateTextureSlots[i] = 0;
 
 	// log
@@ -1167,7 +1192,7 @@ FosterTarget* FosterTargetCreate_OpenGL(int width, int height, FosterTextureForm
 	result.height = height;
 	result.attachmentCount = attachmentCount;
 	result.colorAttachmentCount = 0;
-	for (int i = 0; i < FOSTER_MAX_TARGET_ATTACHMENTS; i ++)
+	for (int i = 0; i < FOSTER_MAX_TARGET_ATTACHMENTS; i++)
 		result.attachments[i] = NULL;
 
 	fgl.glGenFramebuffers(1, &result.id);
@@ -1179,7 +1204,7 @@ FosterTarget* FosterTargetCreate_OpenGL(int width, int height, FosterTextureForm
 
 		if (tex == NULL)
 		{
-			for (int j = 0; j < i; j ++)
+			for (int j = 0; j < i; j++)
 				FosterTextureDestroy_OpenGL((FosterTexture*)tex);
 			FosterLogError("Failed to create Target Attachment");
 			FosterBindFrameBuffer(NULL);
@@ -1220,7 +1245,7 @@ void FosterTargetDestroy_OpenGL(FosterTarget* target)
 {
 	FosterTarget_OpenGL* tar = (FosterTarget_OpenGL*)target;
 
-	for (int i = 0; i < FOSTER_MAX_TARGET_ATTACHMENTS; i ++)
+	for (int i = 0; i < FOSTER_MAX_TARGET_ATTACHMENTS; i++)
 	{
 		if (tar->attachments[i] != NULL)
 			FosterTextureDestroy_OpenGL((FosterTexture*)tar->attachments[i]);
@@ -1331,7 +1356,7 @@ FosterShader* FosterShaderCreate_OpenGL(FosterShaderData* data)
 	shader->uniformCount = 0;
 	shader->uniforms = NULL;
 
-	for (int i = 0; i < FOSTER_MAX_UNIFORM_TEXTURES; i ++)
+	for (int i = 0; i < FOSTER_MAX_UNIFORM_TEXTURES; i++)
 	{
 		shader->textures[i] = NULL;
 		shader->samplers[i].filter = FOSTER_TEXTURE_FILTER_LINEAR;
@@ -1373,7 +1398,7 @@ FosterShader* FosterShaderCreate_OpenGL(FosterShaderData* data)
 			// allocate enough room for the name
 			uniform->name = (char*)SDL_malloc(nameLen + 8);
 			SDL_strlcpy(uniform->name, nameBuf, nameLen + 1);
-			
+
 			// get GL location
 			uniform->glLocation = fgl.glGetUniformLocation(id, uniform->name);
 
@@ -1397,7 +1422,7 @@ void FosterShaderGetUniforms_OpenGL(FosterShader* shader, FosterUniformInfo* out
 
 	int t = 0;
 
-	for (int i = 0; t < max && i < it->uniformCount; i ++)
+	for (int i = 0; t < max && i < it->uniformCount; i++)
 	{
 		FosterUniform_OpenGL* uniform = it->uniforms + i;
 
@@ -1486,7 +1511,7 @@ void FosterShaderSetTexture_OpenGL(FosterShader* shader, int index, FosterTextur
 		return;
 	}
 
-	for (int i = 0; i < uniform->glSize && uniform->samplerIndex + i < FOSTER_MAX_UNIFORM_TEXTURES; i ++)
+	for (int i = 0; i < uniform->glSize && uniform->samplerIndex + i < FOSTER_MAX_UNIFORM_TEXTURES; i++)
 	{
 		int index = uniform->samplerIndex + i;
 		FosterTextureReturnReference(it->textures[index]);
@@ -1511,7 +1536,7 @@ void FosterShaderSetSampler_OpenGL(FosterShader* shader, int index, FosterTextur
 		return;
 	}
 
-	for (int i = 0; i < uniform->glSize && uniform->samplerIndex + i < FOSTER_MAX_UNIFORM_TEXTURES; i ++)
+	for (int i = 0; i < uniform->glSize && uniform->samplerIndex + i < FOSTER_MAX_UNIFORM_TEXTURES; i++)
 		it->samplers[uniform->samplerIndex + i] = values[i];
 }
 
@@ -1520,10 +1545,10 @@ void FosterShaderDestroy_OpenGL(FosterShader* shader)
 	FosterShader_OpenGL* it = (FosterShader_OpenGL*)shader;
 	fgl.glDeleteProgram(it->id);
 
-	for (int i = 0; i < FOSTER_MAX_UNIFORM_TEXTURES; i ++)
+	for (int i = 0; i < FOSTER_MAX_UNIFORM_TEXTURES; i++)
 		FosterTextureReturnReference(it->textures[i]);
 
-	for (int i = 0; i < it->uniformCount; i ++)
+	for (int i = 0; i < it->uniformCount; i++)
 	{
 		SDL_free(it->uniforms[i].name);
 		SDL_free(it->uniforms[i].samplerName);
@@ -1573,8 +1598,16 @@ void FosterMeshSetVertexData_OpenGL(FosterMesh* mesh, void* data, int dataSize, 
 	FosterBindArray(it->id);
 
 	if (it->vertexBuffer == 0)
+	{
 		fgl.glGenBuffers(1, &(it->vertexBuffer));
-	fgl.glBindBuffer(GL_ARRAY_BUFFER, it->vertexBuffer);
+		fgl.glBindBuffer(GL_ARRAY_BUFFER, it->vertexBuffer);
+		fgl.stateArrayBuffer = it->vertexBuffer;
+	}
+	else if (fgl.stateArrayBuffer != it->vertexBuffer)
+	{
+		fgl.glBindBuffer(GL_ARRAY_BUFFER, it->vertexBuffer);
+		fgl.stateArrayBuffer = it->vertexBuffer;
+	}
 
 	// expand vertex buffer if needed
 	int totalSize = dataDestOffset + dataSize;
@@ -1614,9 +1647,16 @@ void FosterMeshSetIndexData_OpenGL(FosterMesh* mesh, void* data, int dataSize, i
 	FosterBindArray(it->id);
 
 	if (it->indexBuffer == 0)
+	{
 		fgl.glGenBuffers(1, &(it->indexBuffer));
-	fgl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, it->indexBuffer);
-
+		fgl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, it->indexBuffer);
+		fgl.stateElementBuffer = it->indexBuffer;
+	}
+	else if (fgl.stateElementBuffer != it->indexBuffer)
+	{
+		fgl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, it->indexBuffer);
+		fgl.stateElementBuffer = it->indexBuffer;
+	}
 	// expand buffer if needed
 	int totalSize = dataDestOffset + dataSize;
 	if (totalSize > it->indexBufferSize)
@@ -1667,7 +1707,7 @@ void FosterDraw_OpenGL(FosterDrawCommand* command)
 		GLuint textureSlots[FOSTER_MAX_UNIFORM_TEXTURES];
 
 		// update samplers
-		for (int i = 0; i < FOSTER_MAX_UNIFORM_TEXTURES; i ++)
+		for (int i = 0; i < FOSTER_MAX_UNIFORM_TEXTURES; i++)
 		{
 			FosterTexture_OpenGL* tex = shader->textures[i];
 			if (shader->textures[i] != NULL)
@@ -1676,14 +1716,14 @@ void FosterDraw_OpenGL(FosterDrawCommand* command)
 
 		// bind textures
 		int slot = 0;
-		for (int i = 0; i < shader->uniformCount; i ++)
+		for (int i = 0; i < shader->uniformCount; i++)
 		{
 			FosterUniform_OpenGL* uniform = shader->uniforms + i;
 			if (uniform->glType != GL_SAMPLER_2D)
 				continue;
 
 			// bind textures & update sampler state
-			for (int n = 0; n < uniform->glSize && slot < FOSTER_MAX_UNIFORM_TEXTURES; n ++)
+			for (int n = 0; n < uniform->glSize && slot < FOSTER_MAX_UNIFORM_TEXTURES; n++)
 			{
 				FosterTexture_OpenGL* tex = shader->textures[uniform->samplerIndex + n];
 
@@ -1742,7 +1782,7 @@ void FosterClear_OpenGL(FosterClearCommand* command)
 		fgl.glColorMask(true, true, true, true);
 		fgl.glClearColor(command->color.r / 255.0f, command->color.g / 255.0f, command->color.b / 255.0f, command->color.a / 255.0f);
 	}
-		
+
 	if ((command->mask & FOSTER_CLEAR_MASK_DEPTH) == FOSTER_CLEAR_MASK_DEPTH)
 	{
 		FosterSetDepthMask(1);
