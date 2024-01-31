@@ -149,10 +149,14 @@ internal static class Platform
 
 	public static unsafe string ParseUTF8(IntPtr s)
 	{
+		if (s == IntPtr.Zero)
+			return string.Empty;
+
 		byte* ptr = (byte*) s;
 		while (*ptr != 0)
 			ptr++;
-		return System.Text.Encoding.UTF8.GetString((byte*)s, (int)(ptr - (byte*)s));
+
+		return Encoding.UTF8.GetString((byte*)s, (int)(ptr - (byte*)s));
 	}
 
 	public static unsafe IntPtr ToUTF8(in string str)
