@@ -18,11 +18,17 @@ jobs:
       matrix:
         include:
           - os: windows-latest
+            arch: x64
             lib: x64/FosterPlatform.dll
           - os: macos-latest
+            arch: x64-arm64
             lib: osx/libFosterPlatform.dylib
           - os: ubuntu-latest
+            arch: x64
             lib: lib64/libFosterPlatform.so
+          - os: ubuntu-latest
+            arch: arm64
+            lib: libarm64/libFosterPlatform.so
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
@@ -30,18 +36,33 @@ jobs:
       - name: Get CMake
         uses: lukka/get-cmake@v3.27.4
       - name: Setup Linux dependencies
-        if: runner.os == 'Linux'
+        if: ${{ runner.os == 'Linux' && matrix.arch != 'arm64' }}
         run: |
           sudo apt-get update
           sudo apt-get install libsdl2-dev
+      - name: Setup Linux dependencies (arm64)
+        if: ${{ runner.os == 'Linux' && matrix.arch == 'arm64' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu
+          sudo sed -i "s/^deb/deb [arch=amd64,i386]/g" /etc/apt/sources.list
+          echo "deb [arch=arm64,armhf] http://ports.ubuntu.com/ $(lsb_release -s -c) main universe multiverse restricted" | sudo tee -a /etc/apt/sources.list
+          echo "deb [arch=arm64,armhf] http://ports.ubuntu.com/ $(lsb_release -s -c)-updates main universe multiverse restricted" | sudo tee -a /etc/apt/sources.list
+          sudo dpkg --add-architecture arm64
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-dev:arm64 libwayland-dev:arm64 libegl-dev:arm64 libdrm-dev:arm64 libxkbcommon-dev:arm64 libpulse-dev:arm64
       - name: CMake Configure
+        if: ${{ matrix.arch != 'arm64' }}
         run: cmake -B build -S Platform
+      - name: CMake Configure (arm64)
+        if: ${{ runner.os == 'Linux' && matrix.arch == 'arm64' }}
+        run: PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig cmake -B build -S Platform -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_SYSTEM_NAME=Linux
       - name: CMake Build
         run: cmake --build build --config Release
       - name: Publish Artifact
         uses: actions/upload-artifact@v3.1.3
         with:
-          name: ${{matrix.os}}-build
+          name: ${{matrix.os}}-${{matrix.arch}}-build
           path: Platform/libs/${{matrix.lib}}
   UpdateLibs:
     if: github.ref == 'refs/heads/main'
@@ -53,18 +74,23 @@ jobs:
       - name: Download windows lib
         uses: actions/download-artifact@v3
         with:
-          name: windows-latest-build
+          name: windows-latest-x64-build
           path: Platform/libs/x64
       - name: Download macos lib
         uses: actions/download-artifact@v3
         with:
-          name: macos-latest-build
+          name: macos-latest-x64-arm64-build
           path: Platform/libs/osx
       - name: Download ubuntu lib
         uses: actions/download-artifact@v3
         with:
-          name: ubuntu-latest-build
+          name: ubuntu-latest-x64-build
           path: Platform/libs/lib64
+      - name: Download ubuntu lib (arm64)
+        uses: actions/download-artifact@v3
+        with:
+          name: ubuntu-latest-arm64-build
+          path: Platform/libs/libarm64
       - name: Display structure of libs
         run: ls -R
         working-directory: Platform/libs
