@@ -469,23 +469,23 @@ void APIENTRY FosterMessage_OpenGL(GLenum source, GLenum type, GLuint id, GLenum
 
 	switch (type)
 	{
-		case GL_DEBUG_TYPE_ERROR: typeName = "ERROR"; break;
-		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: typeName = "DEPRECATED BEHAVIOR"; break;
-		case GL_DEBUG_TYPE_MARKER: typeName = "MARKER"; break;
-		case GL_DEBUG_TYPE_OTHER: typeName = "OTHER"; break;
-		case GL_DEBUG_TYPE_PERFORMANCE: typeName = "PEROFRMANCE"; break;
-		case GL_DEBUG_TYPE_POP_GROUP: typeName = "POP GROUP"; break;
-		case GL_DEBUG_TYPE_PORTABILITY: typeName = "PORTABILITY"; break;
-		case GL_DEBUG_TYPE_PUSH_GROUP: typeName = "PUSH GROUP"; break;
-		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: typeName = "UNDEFINED BEHAVIOR"; break;
+	case GL_DEBUG_TYPE_ERROR: typeName = "ERROR"; break;
+	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: typeName = "DEPRECATED BEHAVIOR"; break;
+	case GL_DEBUG_TYPE_MARKER: typeName = "MARKER"; break;
+	case GL_DEBUG_TYPE_OTHER: typeName = "OTHER"; break;
+	case GL_DEBUG_TYPE_PERFORMANCE: typeName = "PEROFRMANCE"; break;
+	case GL_DEBUG_TYPE_POP_GROUP: typeName = "POP GROUP"; break;
+	case GL_DEBUG_TYPE_PORTABILITY: typeName = "PORTABILITY"; break;
+	case GL_DEBUG_TYPE_PUSH_GROUP: typeName = "PUSH GROUP"; break;
+	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: typeName = "UNDEFINED BEHAVIOR"; break;
 	}
 
 	switch (severity)
 	{
-		case GL_DEBUG_SEVERITY_HIGH: severityName = "HIGH"; break;
-		case GL_DEBUG_SEVERITY_MEDIUM: severityName = "MEDIUM"; break;
-		case GL_DEBUG_SEVERITY_LOW: severityName = "LOW"; break;
-		case GL_DEBUG_SEVERITY_NOTIFICATION: severityName = "NOTIFICATION"; break;
+	case GL_DEBUG_SEVERITY_HIGH: severityName = "HIGH"; break;
+	case GL_DEBUG_SEVERITY_MEDIUM: severityName = "MEDIUM"; break;
+	case GL_DEBUG_SEVERITY_LOW: severityName = "LOW"; break;
+	case GL_DEBUG_SEVERITY_NOTIFICATION: severityName = "NOTIFICATION"; break;
 	}
 
 	if (type == GL_DEBUG_TYPE_ERROR)
@@ -501,11 +501,11 @@ GLenum FosterWrapToGL(FosterTextureWrap wrap)
 {
 	switch (wrap)
 	{
-		case FOSTER_TEXTURE_WRAP_REPEAT: return GL_REPEAT;
-		case FOSTER_TEXTURE_WRAP_MIRRORED_REPEAT: return GL_MIRRORED_REPEAT;
-		case FOSTER_TEXTURE_WRAP_CLAMP_TO_BORDER: return GL_CLAMP_TO_EDGE;
-		case FOSTER_TEXTURE_WRAP_CLAMP_TO_EDGE: return GL_CLAMP_TO_EDGE;
-		default: return GL_REPEAT;
+	case FOSTER_TEXTURE_WRAP_REPEAT: return GL_REPEAT;
+	case FOSTER_TEXTURE_WRAP_MIRRORED_REPEAT: return GL_MIRRORED_REPEAT;
+	case FOSTER_TEXTURE_WRAP_CLAMP_TO_BORDER: return GL_CLAMP_TO_EDGE;
+	case FOSTER_TEXTURE_WRAP_CLAMP_TO_EDGE: return GL_CLAMP_TO_EDGE;
+	default: return GL_REPEAT;
 	}
 }
 
@@ -513,9 +513,9 @@ GLenum FosterFilterToGL(FosterTextureFilter filter)
 {
 	switch (filter)
 	{
-		case FOSTER_TEXTURE_FILTER_NEAREST: return GL_NEAREST;
-		case FOSTER_TEXTURE_FILTER_LINEAR: return GL_LINEAR;
-		default: return GL_NEAREST;
+	case FOSTER_TEXTURE_FILTER_NEAREST: return GL_NEAREST;
+	case FOSTER_TEXTURE_FILTER_LINEAR: return GL_LINEAR;
+	default: return GL_NEAREST;
 	}
 }
 
@@ -523,12 +523,12 @@ GLenum FosterBlendOpToGL(FosterBlendOp operation)
 {
 	switch (operation)
 	{
-		case FOSTER_BLEND_OP_ADD: return GL_FUNC_ADD;
-		case FOSTER_BLEND_OP_SUBTRACT: return GL_FUNC_SUBTRACT;
-		case FOSTER_BLEND_OP_REVERSE_SUBTRACT: return GL_FUNC_REVERSE_SUBTRACT;
-		case FOSTER_BLEND_OP_MIN: return GL_MIN;
-		case FOSTER_BLEND_OP_MAX: return GL_MAX;
-		default: return GL_FUNC_ADD;
+	case FOSTER_BLEND_OP_ADD: return GL_FUNC_ADD;
+	case FOSTER_BLEND_OP_SUBTRACT: return GL_FUNC_SUBTRACT;
+	case FOSTER_BLEND_OP_REVERSE_SUBTRACT: return GL_FUNC_REVERSE_SUBTRACT;
+	case FOSTER_BLEND_OP_MIN: return GL_MIN;
+	case FOSTER_BLEND_OP_MAX: return GL_MAX;
+	default: return GL_FUNC_ADD;
 	};
 }
 
@@ -536,25 +536,25 @@ GLenum FosterBlendFactorToGL(FosterBlendFactor factor)
 {
 	switch (factor)
 	{
-		case FOSTER_BLEND_FACTOR_Zero: return GL_ZERO;
-		case FOSTER_BLEND_FACTOR_One: return GL_ONE;
-		case FOSTER_BLEND_FACTOR_SrcColor: return GL_SRC_COLOR;
-		case FOSTER_BLEND_FACTOR_OneMinusSrcColor: return GL_ONE_MINUS_SRC_COLOR;
-		case FOSTER_BLEND_FACTOR_DstColor: return GL_DST_COLOR;
-		case FOSTER_BLEND_FACTOR_OneMinusDstColor: return GL_ONE_MINUS_DST_COLOR;
-		case FOSTER_BLEND_FACTOR_SrcAlpha: return GL_SRC_ALPHA;
-		case FOSTER_BLEND_FACTOR_OneMinusSrcAlpha: return GL_ONE_MINUS_SRC_ALPHA;
-		case FOSTER_BLEND_FACTOR_DstAlpha: return GL_DST_ALPHA;
-		case FOSTER_BLEND_FACTOR_OneMinusDstAlpha: return GL_ONE_MINUS_DST_ALPHA;
-		case FOSTER_BLEND_FACTOR_ConstantColor: return GL_CONSTANT_COLOR;
-		case FOSTER_BLEND_FACTOR_OneMinusConstantColor: return GL_ONE_MINUS_CONSTANT_COLOR;
-		case FOSTER_BLEND_FACTOR_ConstantAlpha: return GL_CONSTANT_ALPHA;
-		case FOSTER_BLEND_FACTOR_OneMinusConstantAlpha: return GL_ONE_MINUS_CONSTANT_ALPHA;
-		case FOSTER_BLEND_FACTOR_SrcAlphaSaturate: return GL_SRC_ALPHA_SATURATE;
-		case FOSTER_BLEND_FACTOR_Src1Color: return GL_SRC1_COLOR;
-		case FOSTER_BLEND_FACTOR_OneMinusSrc1Color: return GL_ONE_MINUS_SRC1_COLOR;
-		case FOSTER_BLEND_FACTOR_Src1Alpha: return GL_SRC1_ALPHA;
-		case FOSTER_BLEND_FACTOR_OneMinusSrc1Alpha: return GL_ONE_MINUS_SRC1_ALPHA;
+	case FOSTER_BLEND_FACTOR_Zero: return GL_ZERO;
+	case FOSTER_BLEND_FACTOR_One: return GL_ONE;
+	case FOSTER_BLEND_FACTOR_SrcColor: return GL_SRC_COLOR;
+	case FOSTER_BLEND_FACTOR_OneMinusSrcColor: return GL_ONE_MINUS_SRC_COLOR;
+	case FOSTER_BLEND_FACTOR_DstColor: return GL_DST_COLOR;
+	case FOSTER_BLEND_FACTOR_OneMinusDstColor: return GL_ONE_MINUS_DST_COLOR;
+	case FOSTER_BLEND_FACTOR_SrcAlpha: return GL_SRC_ALPHA;
+	case FOSTER_BLEND_FACTOR_OneMinusSrcAlpha: return GL_ONE_MINUS_SRC_ALPHA;
+	case FOSTER_BLEND_FACTOR_DstAlpha: return GL_DST_ALPHA;
+	case FOSTER_BLEND_FACTOR_OneMinusDstAlpha: return GL_ONE_MINUS_DST_ALPHA;
+	case FOSTER_BLEND_FACTOR_ConstantColor: return GL_CONSTANT_COLOR;
+	case FOSTER_BLEND_FACTOR_OneMinusConstantColor: return GL_ONE_MINUS_CONSTANT_COLOR;
+	case FOSTER_BLEND_FACTOR_ConstantAlpha: return GL_CONSTANT_ALPHA;
+	case FOSTER_BLEND_FACTOR_OneMinusConstantAlpha: return GL_ONE_MINUS_CONSTANT_ALPHA;
+	case FOSTER_BLEND_FACTOR_SrcAlphaSaturate: return GL_SRC_ALPHA_SATURATE;
+	case FOSTER_BLEND_FACTOR_Src1Color: return GL_SRC1_COLOR;
+	case FOSTER_BLEND_FACTOR_OneMinusSrc1Color: return GL_ONE_MINUS_SRC1_COLOR;
+	case FOSTER_BLEND_FACTOR_Src1Alpha: return GL_SRC1_ALPHA;
+	case FOSTER_BLEND_FACTOR_OneMinusSrc1Alpha: return GL_ONE_MINUS_SRC1_ALPHA;
 	};
 
 	return GL_ZERO;
@@ -564,13 +564,13 @@ FosterUniformType FosterUniformTypeFromGL(GLenum value)
 {
 	switch (value)
 	{
-		case GL_FLOAT: return FOSTER_UNIFORM_TYPE_FLOAT;
-		case GL_FLOAT_VEC2: return FOSTER_UNIFORM_TYPE_FLOAT2;
-		case GL_FLOAT_VEC3: return FOSTER_UNIFORM_TYPE_FLOAT3;
-		case GL_FLOAT_VEC4: return FOSTER_UNIFORM_TYPE_FLOAT4;
-		case GL_FLOAT_MAT3x2: return FOSTER_UNIFORM_TYPE_MAT3X2;
-		case GL_FLOAT_MAT4: return FOSTER_UNIFORM_TYPE_MAT4X4;
-		case GL_SAMPLER_2D: return FOSTER_UNIFORM_TYPE_SAMPLER2D;
+	case GL_FLOAT: return FOSTER_UNIFORM_TYPE_FLOAT;
+	case GL_FLOAT_VEC2: return FOSTER_UNIFORM_TYPE_FLOAT2;
+	case GL_FLOAT_VEC3: return FOSTER_UNIFORM_TYPE_FLOAT3;
+	case GL_FLOAT_VEC4: return FOSTER_UNIFORM_TYPE_FLOAT4;
+	case GL_FLOAT_MAT3x2: return FOSTER_UNIFORM_TYPE_MAT3X2;
+	case GL_FLOAT_MAT4: return FOSTER_UNIFORM_TYPE_MAT4X4;
+	case GL_SAMPLER_2D: return FOSTER_UNIFORM_TYPE_SAMPLER2D;
 	};
 
 	return FOSTER_UNIFORM_TYPE_NONE;
@@ -581,23 +581,23 @@ GLuint FosterMeshAssignAttributes_OpenGL(GLuint buffer, GLenum bufferType, Foste
 	// bind
 	switch (bufferType)
 	{
-		case GL_ARRAY_BUFFER:
-			if (fgl.stateArrayBuffer != buffer)
-			{
-				fgl.glBindBuffer(bufferType, buffer);
-				fgl.stateArrayBuffer = buffer;
-			}
-			break;
-		case GL_ELEMENT_ARRAY_BUFFER:
-			if (fgl.stateElementBuffer != buffer)
-			{
-				fgl.glBindBuffer(bufferType, buffer);
-				fgl.stateElementBuffer = buffer;
-			}
-			break;
-		default:
+	case GL_ARRAY_BUFFER:
+		if (fgl.stateArrayBuffer != buffer)
+		{
 			fgl.glBindBuffer(bufferType, buffer);
-			break;
+			fgl.stateArrayBuffer = buffer;
+		}
+		break;
+	case GL_ELEMENT_ARRAY_BUFFER:
+		if (fgl.stateElementBuffer != buffer)
+		{
+			fgl.glBindBuffer(bufferType, buffer);
+			fgl.stateElementBuffer = buffer;
+		}
+		break;
+	default:
+		fgl.glBindBuffer(bufferType, buffer);
+		break;
 	}
 
 	// TODO: disable existing enabled attributes?
@@ -614,56 +614,56 @@ GLuint FosterMeshAssignAttributes_OpenGL(GLuint buffer, GLenum bufferType, Foste
 
 		switch (element.type)
 		{
-			case FOSTER_VERTEX_TYPE_FLOAT:
-				type = GL_FLOAT;
-				componentSize = 4;
-				components = 1;
-				break;
-			case FOSTER_VERTEX_TYPE_FLOAT2:
-				type = GL_FLOAT;
-				componentSize = 4;
-				components = 2;
-				break;
-			case FOSTER_VERTEX_TYPE_FLOAT3:
-				type = GL_FLOAT;
-				componentSize = 4;
-				components = 3;
-				break;
-			case FOSTER_VERTEX_TYPE_FLOAT4:
-				type = GL_FLOAT;
-				componentSize = 4;
-				components = 4;
-				break;
-			case FOSTER_VERTEX_TYPE_BYTE4:
-				type = GL_BYTE;
-				componentSize = 1;
-				components = 4;
-				break;
-			case FOSTER_VERTEX_TYPE_UBYTE4:
-				type = GL_UNSIGNED_BYTE;
-				componentSize = 1;
-				components = 4;
-				break;
-			case FOSTER_VERTEX_TYPE_SHORT2:
-				type = GL_SHORT;
-				componentSize = 2;
-				components = 2;
-				break;
-			case FOSTER_VERTEX_TYPE_USHORT2:
-				type = GL_UNSIGNED_SHORT;
-				componentSize = 2;
-				components = 2;
-				break;
-			case FOSTER_VERTEX_TYPE_SHORT4:
-				type = GL_SHORT;
-				componentSize = 2;
-				components = 4;
-				break;
-			case FOSTER_VERTEX_TYPE_USHORT4:
-				type = GL_UNSIGNED_SHORT;
-				componentSize = 2;
-				components = 4;
-				break;
+		case FOSTER_VERTEX_TYPE_FLOAT:
+			type = GL_FLOAT;
+			componentSize = 4;
+			components = 1;
+			break;
+		case FOSTER_VERTEX_TYPE_FLOAT2:
+			type = GL_FLOAT;
+			componentSize = 4;
+			components = 2;
+			break;
+		case FOSTER_VERTEX_TYPE_FLOAT3:
+			type = GL_FLOAT;
+			componentSize = 4;
+			components = 3;
+			break;
+		case FOSTER_VERTEX_TYPE_FLOAT4:
+			type = GL_FLOAT;
+			componentSize = 4;
+			components = 4;
+			break;
+		case FOSTER_VERTEX_TYPE_BYTE4:
+			type = GL_BYTE;
+			componentSize = 1;
+			components = 4;
+			break;
+		case FOSTER_VERTEX_TYPE_UBYTE4:
+			type = GL_UNSIGNED_BYTE;
+			componentSize = 1;
+			components = 4;
+			break;
+		case FOSTER_VERTEX_TYPE_SHORT2:
+			type = GL_SHORT;
+			componentSize = 2;
+			components = 2;
+			break;
+		case FOSTER_VERTEX_TYPE_USHORT2:
+			type = GL_UNSIGNED_SHORT;
+			componentSize = 2;
+			components = 2;
+			break;
+		case FOSTER_VERTEX_TYPE_SHORT4:
+			type = GL_SHORT;
+			componentSize = 2;
+			components = 4;
+			break;
+		case FOSTER_VERTEX_TYPE_USHORT4:
+			type = GL_UNSIGNED_SHORT;
+			componentSize = 2;
+			components = 4;
+			break;
 		}
 
 		GLuint location = (GLuint)(element.index);
@@ -923,15 +923,15 @@ void FosterSetCompare(FosterCompare compare)
 
 			switch (compare)
 			{
-				case FOSTER_COMPARE_NONE: break;
-				case FOSTER_COMPARE_ALWAYS: fgl.glDepthFunc(GL_ALWAYS); break;
-				case FOSTER_COMPARE_EQUAL: fgl.glDepthFunc(GL_EQUAL); break;
-				case FOSTER_COMPARE_GREATER: fgl.glDepthFunc(GL_GREATER); break;
-				case FOSTER_COMPARE_GREATOR_OR_EQUAL: fgl.glDepthFunc(GL_GEQUAL); break;
-				case FOSTER_COMPARE_LESS: fgl.glDepthFunc(GL_LESS); break;
-				case FOSTER_COMPARE_LESS_OR_EQUAL: fgl.glDepthFunc(GL_LEQUAL); break;
-				case FOSTER_COMPARE_NEVER: fgl.glDepthFunc(GL_NEVER); break;
-				case FOSTER_COMPARE_NOT_EQUAL: fgl.glDepthFunc(GL_NOTEQUAL); break;
+			case FOSTER_COMPARE_NONE: break;
+			case FOSTER_COMPARE_ALWAYS: fgl.glDepthFunc(GL_ALWAYS); break;
+			case FOSTER_COMPARE_EQUAL: fgl.glDepthFunc(GL_EQUAL); break;
+			case FOSTER_COMPARE_GREATER: fgl.glDepthFunc(GL_GREATER); break;
+			case FOSTER_COMPARE_GREATOR_OR_EQUAL: fgl.glDepthFunc(GL_GEQUAL); break;
+			case FOSTER_COMPARE_LESS: fgl.glDepthFunc(GL_LESS); break;
+			case FOSTER_COMPARE_LESS_OR_EQUAL: fgl.glDepthFunc(GL_LEQUAL); break;
+			case FOSTER_COMPARE_NEVER: fgl.glDepthFunc(GL_NEVER); break;
+			case FOSTER_COMPARE_NOT_EQUAL: fgl.glDepthFunc(GL_NOTEQUAL); break;
 			}
 		}
 	}
@@ -967,9 +967,9 @@ void FosterSetCull(FosterCull cull)
 
 			switch (cull)
 			{
-				case FOSTER_CULL_NONE: break;
-				case FOSTER_CULL_BACK: fgl.glCullFace(GL_BACK); break;
-				case FOSTER_CULL_FRONT: fgl.glCullFace(GL_FRONT); break;
+			case FOSTER_CULL_NONE: break;
+			case FOSTER_CULL_BACK: fgl.glCullFace(GL_BACK); break;
+			case FOSTER_CULL_FRONT: fgl.glCullFace(GL_FRONT); break;
 			}
 		}
 	}
@@ -1123,24 +1123,24 @@ FosterTexture* FosterTextureCreate_OpenGL(int width, int height, FosterTextureFo
 
 	switch (format)
 	{
-		case FOSTER_TEXTURE_FORMAT_R8:
-			result.glInternalFormat = GL_RED;
-			result.glFormat = GL_RED;
-			result.glType = GL_UNSIGNED_BYTE;
-			break;
-		case FOSTER_TEXTURE_FORMAT_R8G8B8A8:
-			result.glInternalFormat = GL_RGBA;
-			result.glFormat = GL_RGBA;
-			result.glType = GL_UNSIGNED_BYTE;
-			break;
-		case FOSTER_TEXTURE_FORMAT_DEPTH24_STENCIL8:
-			result.glInternalFormat = GL_DEPTH24_STENCIL8;
-			result.glFormat = GL_DEPTH_STENCIL;
-			result.glType = GL_UNSIGNED_INT_24_8;
-			break;
-		default:
-			FosterLogError("Invalid Texture Format (%i)", format);
-			return NULL;
+	case FOSTER_TEXTURE_FORMAT_R8:
+		result.glInternalFormat = GL_RED;
+		result.glFormat = GL_RED;
+		result.glType = GL_UNSIGNED_BYTE;
+		break;
+	case FOSTER_TEXTURE_FORMAT_R8G8B8A8:
+		result.glInternalFormat = GL_RGBA;
+		result.glFormat = GL_RGBA;
+		result.glType = GL_UNSIGNED_BYTE;
+		break;
+	case FOSTER_TEXTURE_FORMAT_DEPTH24_STENCIL8:
+		result.glInternalFormat = GL_DEPTH24_STENCIL8;
+		result.glFormat = GL_DEPTH_STENCIL;
+		result.glType = GL_UNSIGNED_INT_24_8;
+		break;
+	default:
+		FosterLogError("Invalid Texture Format (%i)", format);
+		return NULL;
 	}
 
 	fgl.glGenTextures(1, &result.id);
@@ -1471,24 +1471,24 @@ void FosterShaderSetUniform_OpenGL(FosterShader* shader, int index, float* value
 
 	switch (uniform->glType)
 	{
-		case GL_FLOAT:
-			fgl.glUniform1fv(uniform->glLocation, (GLint)uniform->glSize, values);
-			return;
-		case GL_FLOAT_VEC2:
-			fgl.glUniform2fv(uniform->glLocation, (GLint)uniform->glSize, values);
-			return;
-		case GL_FLOAT_VEC3:
-			fgl.glUniform3fv(uniform->glLocation, (GLint)uniform->glSize, values);
-			return;
-		case GL_FLOAT_VEC4:
-			fgl.glUniform4fv(uniform->glLocation, (GLint)uniform->glSize, values);
-			return;
-		case GL_FLOAT_MAT3x2:
-			fgl.glUniformMatrix3x2fv(uniform->glLocation, (GLint)uniform->glSize, 0, values);
-			return;
-		case GL_FLOAT_MAT4:
-			fgl.glUniformMatrix4fv(uniform->glLocation, (GLint)uniform->glSize, 0, values);
-			return;
+	case GL_FLOAT:
+		fgl.glUniform1fv(uniform->glLocation, (GLint)uniform->glSize, values);
+		return;
+	case GL_FLOAT_VEC2:
+		fgl.glUniform2fv(uniform->glLocation, (GLint)uniform->glSize, values);
+		return;
+	case GL_FLOAT_VEC3:
+		fgl.glUniform3fv(uniform->glLocation, (GLint)uniform->glSize, values);
+		return;
+	case GL_FLOAT_VEC4:
+		fgl.glUniform4fv(uniform->glLocation, (GLint)uniform->glSize, values);
+		return;
+	case GL_FLOAT_MAT3x2:
+		fgl.glUniformMatrix3x2fv(uniform->glLocation, (GLint)uniform->glSize, 0, values);
+		return;
+	case GL_FLOAT_MAT4:
+		fgl.glUniformMatrix4fv(uniform->glLocation, (GLint)uniform->glSize, 0, values);
+		return;
 	}
 
 	FosterLogError("Failed to set uniform '%s', unsupported type '%i'", uniform->name, uniform->glType);
@@ -1627,17 +1627,17 @@ void FosterMeshSetIndexFormat_OpenGL(FosterMesh* mesh, FosterIndexFormat format)
 
 	switch (format)
 	{
-		case FOSTER_INDEX_FORMAT_SIXTEEN:
-			it->indexFormat = GL_UNSIGNED_SHORT;
-			it->indexSize = 2;
-			break;
-		case FOSTER_INDEX_FORMAT_THIRTY_TWO:
-			it->indexFormat = GL_UNSIGNED_INT;
-			it->indexSize = 4;
-			break;
-		default:
-			FosterLogError("Invalid Index Format '%i'", format);
-			break;
+	case FOSTER_INDEX_FORMAT_SIXTEEN:
+		it->indexFormat = GL_UNSIGNED_SHORT;
+		it->indexSize = 2;
+		break;
+	case FOSTER_INDEX_FORMAT_THIRTY_TWO:
+		it->indexFormat = GL_UNSIGNED_INT;
+		it->indexSize = 4;
+		break;
+	default:
+		FosterLogError("Invalid Index Format '%i'", format);
+		break;
 	}
 }
 
