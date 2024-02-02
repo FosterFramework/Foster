@@ -32,8 +32,14 @@
       <Link>FosterPlatform.dll</Link>
     </Content>
     <Content Include="$(NativeLibsDir)lib64\libFosterPlatform.so">
-      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux'))">PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\linux-x64\native</PackagePath>
+      <Pack>True</Pack>
+      <Link>libFosterPlatform.so</Link>
+    </Content>
+    <Content Include="$(NativeLibsDir)libarm64\libFosterPlatform.so">
+      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">PreserveNewest</CopyToOutputDirectory>
+      <PackagePath>runtimes\linux-arm64\native</PackagePath>
       <Pack>True</Pack>
       <Link>libFosterPlatform.so</Link>
     </Content>
