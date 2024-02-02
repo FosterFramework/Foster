@@ -195,6 +195,8 @@ internal static class Platform
 	[DllImport(DLL)]
 	public static extern void FosterGetSizeInPixels(out int width, out int height);
 	[DllImport(DLL)]
+	public static extern void FosterGetDisplaySize(out int width, out int height);
+	[DllImport(DLL)]
 	public static extern void FosterSetFlags(FosterFlags flags);
 	[DllImport(DLL)]
 	public static extern void FosterSetCentered();
