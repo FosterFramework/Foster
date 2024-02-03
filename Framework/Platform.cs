@@ -61,9 +61,6 @@ internal static class Platform
 		public int height;
 		public Renderers renderer;
 		public FosterFlags flags;
-		public FosterLogFn onLogInfo;
-		public FosterLogFn onLogWarn;
-		public FosterLogFn onLogError;
 		public FosterExitRequestFn onExitRequest;
 		public FosterOnTextFn onText;
 		public FosterOnKeyFn onKey;
@@ -74,7 +71,6 @@ internal static class Platform
 		public FosterOnControllerDisconnectFn onControllerDisconnect;
 		public FosterOnControllerButtonFn onControllerButton;
 		public FosterOnControllerAxisFn onControllerAxis;
-		public int logging;
 	}
 
 	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
@@ -152,7 +148,7 @@ internal static class Platform
 		byte* ptr = (byte*) s;
 		while (*ptr != 0)
 			ptr++;
-		return System.Text.Encoding.UTF8.GetString((byte*)s, (int)(ptr - (byte*)s));
+		return Encoding.UTF8.GetString((byte*)s, (int)(ptr - (byte*)s));
 	}
 
 	public static unsafe IntPtr ToUTF8(in string str)
@@ -170,6 +166,14 @@ internal static class Platform
 		Marshal.FreeHGlobal(ptr);
 	}
 
+	static Platform()
+	{
+		// initialize logging immediately
+		FosterRegisterLogMethods(Log.Info, Log.Warning, Log.Error, 0);
+	}
+
+	[DllImport(DLL)]
+	public static extern void FosterRegisterLogMethods(FosterLogFn info, FosterLogFn warn, FosterLogFn error, int level);
 	[DllImport(DLL)]
 	public static extern void FosterStartup(FosterDesc desc);
 	[DllImport(DLL)]

@@ -38,7 +38,7 @@ void FosterLog_SDL(void *userdata, int category, SDL_LogPriority priority, const
 	{
 		case SDL_LOG_PRIORITY_VERBOSE:
 		case SDL_LOG_PRIORITY_DEBUG:
-			if (fstate.desc.logging == FOSTER_LOGGING_ALL)
+			if (fstate.logLevel == FOSTER_LOGGING_ALL)
 				FosterLogInfo("%s", message);
 			break;
 		case SDL_LOG_PRIORITY_INFO:
@@ -77,8 +77,8 @@ void FosterStartup(FosterDesc desc)
 	FosterLogInfo("SDL: v%i.%i.%i", version.major, version.minor, version.patch);
 
 	// track SDL output
-	if (desc.logging != FOSTER_LOGGING_NONE && 
-		(fstate.desc.onLogInfo || fstate.desc.onLogWarn || fstate.desc.onLogError))
+	if (fstate.logLevel != FOSTER_LOGGING_NONE && 
+		(fstate.logInfo || fstate.logWarn || fstate.logError))
 	{
 		SDL_LogSetOutputFunction(FosterLog_SDL, NULL);
 	}
@@ -138,6 +138,14 @@ void FosterStartup(FosterDesc desc)
 	// toggle flags & show window
 	FosterSetFlags(fstate.desc.flags);
 	SDL_ShowWindow(fstate.window);
+}
+
+void FosterRegisterLogMethods(FosterLogFn logInfo, FosterLogFn logWarn, FosterLogFn logError, FosterLogging logLevel)
+{
+	fstate.logInfo = logInfo;
+	fstate.logWarn = logWarn;
+	fstate.logError = logError;
+	fstate.logLevel = logLevel;
 }
 
 void FosterBeginFrame()
@@ -638,8 +646,8 @@ void FosterClear(FosterClearCommand* clear)
 
 void FosterLogInfo(const char* fmt, ...)
 {
-	if (fstate.desc.logging == FOSTER_LOGGING_NONE ||
-		fstate.desc.onLogInfo == NULL)
+	if (fstate.logLevel == FOSTER_LOGGING_NONE ||
+		fstate.logInfo == NULL)
 		return;
 		
 	char msg[FOSTER_MAX_MESSAGE_SIZE];
@@ -648,13 +656,13 @@ void FosterLogInfo(const char* fmt, ...)
 	SDL_vsnprintf(msg, sizeof(msg), fmt, ap);
 	va_end(ap);
 
-	fstate.desc.onLogInfo(msg);
+	fstate.logInfo(msg);
 }
 
 void FosterLogWarn(const char* fmt, ...)
 {
-	if (fstate.desc.logging == FOSTER_LOGGING_NONE ||
-		fstate.desc.onLogWarn == NULL)
+	if (fstate.logLevel == FOSTER_LOGGING_NONE ||
+		fstate.logWarn == NULL)
 		return;
 
 	char msg[FOSTER_MAX_MESSAGE_SIZE];
@@ -663,13 +671,13 @@ void FosterLogWarn(const char* fmt, ...)
 	SDL_vsnprintf(msg, sizeof(msg), fmt, ap);
 	va_end(ap);
 
-	fstate.desc.onLogWarn(msg);
+	fstate.logWarn(msg);
 }
 
 void FosterLogError(const char* fmt, ...)
 {
-	if (fstate.desc.logging == FOSTER_LOGGING_NONE ||
-		fstate.desc.onLogError == NULL)
+	if (fstate.logLevel == FOSTER_LOGGING_NONE ||
+		fstate.logError == NULL)
 		return;
 
 	char msg[FOSTER_MAX_MESSAGE_SIZE];
@@ -678,7 +686,7 @@ void FosterLogError(const char* fmt, ...)
 	SDL_vsnprintf(msg, sizeof(msg), fmt, ap);
 	va_end(ap);
 
-	fstate.desc.onLogError(msg);
+	fstate.logError(msg);
 }
 
 int FosterFindJoystickIndexSDL(SDL_Joystick** joysticks, SDL_JoystickID instanceID)

@@ -426,9 +426,6 @@ typedef struct FosterDesc
 	int height;
 	FosterRenderers renderer;
 	FosterFlags flags;
-	FosterLogFn onLogInfo;
-	FosterLogFn onLogWarn;
-	FosterLogFn onLogError;
 	FosterExitRequestFn onExitRequest;
 	FosterOnTextFn onText;
 	FosterOnKeyFn onKey;
@@ -439,7 +436,6 @@ typedef struct FosterDesc
 	FosterOnControllerDisconnectFn onControllerDisconnect;
 	FosterOnControllerButtonFn onControllerButton;
 	FosterOnControllerAxisFn onControllerAxis;
-	FosterLogging logging;
 } FosterDesc;
 
 typedef struct FosterRect
@@ -534,6 +530,8 @@ extern "C" {
 #endif
 
 FOSTER_API void FosterStartup(FosterDesc desc);
+
+FOSTER_API void FosterRegisterLogMethods(FosterLogFn logInfo, FosterLogFn logWarn, FosterLogFn logErr, FosterLogging level);
 
 FOSTER_API void FosterBeginFrame();
 
