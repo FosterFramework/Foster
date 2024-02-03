@@ -169,10 +169,15 @@ internal static class Platform
 		Marshal.FreeHGlobal(ptr);
 	}
 
+	// need to store static references otherwise the delegates will get collected
+	private static readonly FosterLogFn logInfo = Log.Info;
+	private static readonly FosterLogFn logWarn = Log.Warning;
+	private static readonly FosterLogFn logErr = Log.Error;
+
 	static Platform()
 	{
 		// initialize logging immediately
-		FosterRegisterLogMethods(Log.Info, Log.Warning, Log.Error, 0);
+		FosterRegisterLogMethods(logInfo, logWarn, logErr, 0);
 	}
 
 	[DllImport(DLL)]
