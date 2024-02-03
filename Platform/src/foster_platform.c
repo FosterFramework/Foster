@@ -85,7 +85,12 @@ void FosterStartup(FosterDesc desc)
 
 	// Make us DPI aware on Windows
 	SDL_SetHint(SDL_HINT_WINDOWS_DPI_AWARENESS, "permonitorv2");
-	//SDL_SetHint(SDL_HINT_WINDOWS_DPI_SCALING, "1"); 
+
+	// use physical button layout, not labels
+	SDL_SetHint(SDL_HINT_GAMECONTROLLER_USE_BUTTON_LABELS, "0");
+
+	// by default allow controller presses while unfocused, let game decide if it should handle them
+	SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 
 	// initialize SDL
 	int sdl_init_flags = SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER;
@@ -902,10 +907,10 @@ FosterButtons FosterGetButtonFromSDL(SDL_GameControllerButton button)
 	switch (button)
 	{
 	case SDL_CONTROLLER_BUTTON_INVALID: return FOSTER_BUTTON_NONE;
-	case SDL_CONTROLLER_BUTTON_A: return FOSTER_BUTTON_A;
-	case SDL_CONTROLLER_BUTTON_B: return FOSTER_BUTTON_B;
-	case SDL_CONTROLLER_BUTTON_X: return FOSTER_BUTTON_X;
-	case SDL_CONTROLLER_BUTTON_Y: return FOSTER_BUTTON_Y;
+	case SDL_CONTROLLER_BUTTON_A: return FOSTER_BUTTON_SOUTH;
+	case SDL_CONTROLLER_BUTTON_B: return FOSTER_BUTTON_EAST;
+	case SDL_CONTROLLER_BUTTON_X: return FOSTER_BUTTON_WEST;
+	case SDL_CONTROLLER_BUTTON_Y: return FOSTER_BUTTON_NORTH;
 	case SDL_CONTROLLER_BUTTON_BACK: return FOSTER_BUTTON_BACK;
 	case SDL_CONTROLLER_BUTTON_GUIDE: return FOSTER_BUTTON_SELECT;
 	case SDL_CONTROLLER_BUTTON_START: return FOSTER_BUTTON_START;

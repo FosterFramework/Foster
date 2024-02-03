@@ -6,10 +6,11 @@
 public enum Buttons
 {
 	None = -1,
-	A = 0,
-	B = 1,
-	X = 2,
-	Y = 3,
+
+	South = 0,
+	East = 1,
+	West = 2,
+	North = 3,
 	Back = 4,
 	Select = 5,
 	Start = 6,
@@ -20,6 +21,11 @@ public enum Buttons
 	Up = 11,
 	Down = 12,
 	Left = 13,
-	Right = 14
+	Right = 14,
+
+	[Obsolete("Use Buttons.South")] A = 0,
+	[Obsolete("Use Buttons.East")]  B = 1,
+	[Obsolete("Use Buttons.West")]  X = 2,
+	[Obsolete("Use Buttons.North")] Y = 3,
 }
 
