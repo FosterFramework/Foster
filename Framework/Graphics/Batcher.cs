@@ -1638,7 +1638,8 @@ public class Batcher : IDisposable
 				if (last != 0)
 					at.X += font.GetKerning(last, ch.Codepoint);
 
-				Image(ch.Subtexture, at + ch.Offset, color);
+				if (ch.Subtexture.Texture != null)
+					Image(ch.Subtexture, at + ch.Offset, color);
 
 				last = ch.Codepoint;
 				at.X += ch.Advance;
