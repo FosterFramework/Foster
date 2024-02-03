@@ -330,6 +330,10 @@ public static class App
 		accumulator = TimeSpan.Zero;
 		timer.Restart();
 
+		// poll events once, so input has controller state before Startup
+		Platform.FosterPollEvents();
+		Input.Step();
+
 		// register & startup all modules in order
 		// this is in a loop in case a module registers more modules
 		// from within its own constructor/startup call.

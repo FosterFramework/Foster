@@ -66,6 +66,7 @@ typedef char             GLchar;
 #define GL_CCW 0x0901
 #define GL_FRONT 0x0404
 #define GL_BACK 0x0405
+#define GL_BACK_LEFT 0x0402
 #define GL_FRONT_AND_BACK 0x0408
 #define GL_CULL_FACE 0x0B44
 #define GL_POLYGON_OFFSET_FILL 0x8037
@@ -679,7 +680,7 @@ void FosterBindFrameBuffer(FosterTarget_OpenGL* target)
 		// figure out draw buffers
 		if (target == NULL)
 		{
-			attachments[0] = GL_BACK;
+			attachments[0] = GL_BACK_LEFT;
 			fgl.glDrawBuffers(1, attachments);
 		}
 		else

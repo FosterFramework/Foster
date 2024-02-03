@@ -354,6 +354,19 @@ void FosterGetSizeInPixels(int* width, int* height)
 	SDL_GetWindowSizeInPixels(fstate.window, width, height);
 }
 
+void FosterGetDisplaySize(int* width, int* height)
+{
+	FOSTER_ASSERT_RUNNING(FosterGetDisplaySize);
+
+	int index = SDL_GetWindowDisplayIndex(fstate.window);
+
+	SDL_DisplayMode mode;
+	SDL_GetCurrentDisplayMode(index, &mode);
+
+	*width  = mode.w;
+	*height = mode.h;
+}
+
 void FosterSetFlags(FosterFlags flags)
 {
 	FOSTER_ASSERT_RUNNING(FosterSetFlags);

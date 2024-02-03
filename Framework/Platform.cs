@@ -145,6 +145,9 @@ internal static class Platform
 
 	public static unsafe string ParseUTF8(IntPtr s)
 	{
+		if (s == IntPtr.Zero)
+			return string.Empty;
+
 		byte* ptr = (byte*) s;
 		while (*ptr != 0)
 			ptr++;
@@ -194,6 +197,8 @@ internal static class Platform
 	public static extern void FosterGetSize(out int width, out int height);
 	[DllImport(DLL)]
 	public static extern void FosterGetSizeInPixels(out int width, out int height);
+	[DllImport(DLL)]
+	public static extern void FosterGetDisplaySize(out int width, out int height);
 	[DllImport(DLL)]
 	public static extern void FosterSetFlags(FosterFlags flags);
 	[DllImport(DLL)]

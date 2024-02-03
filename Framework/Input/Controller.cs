@@ -103,6 +103,9 @@ public class Controller
 		IsGamepad = other.IsGamepad;
 		Buttons = other.Buttons;
 		Axes = other.Axes;
+		Product = other.Product;
+		Vendor = other.Vendor;
+		Version = other.Version;
 
 		Array.Copy(other.pressed, 0, pressed, 0, pressed.Length);
 		Array.Copy(other.down, 0, down, 0, pressed.Length);
