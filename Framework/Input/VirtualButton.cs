@@ -6,7 +6,7 @@ namespace Foster.Framework;
 /// </summary>
 public class VirtualButton
 {
-	public delegate bool ConditionFn(VirtualButton button);
+	public delegate bool ConditionFn(VirtualButton button, IBinding binding);
 
 	public interface IBinding
 	{
@@ -317,7 +317,7 @@ public class VirtualButton
 	private bool GetPressed()
 	{
 		foreach (var it in Bindings)
-			if (it.IsPressed && (it.Enabled?.Invoke(this) ?? true))
+			if (it.IsPressed && (it.Enabled?.Invoke(this, it) ?? true))
 				return true;
 		return false;
 	}
@@ -325,7 +325,7 @@ public class VirtualButton
 	private bool GetDown()
 	{
 		foreach (var it in Bindings)
-			if (it.IsDown && (it.Enabled?.Invoke(this) ?? true))
+			if (it.IsDown && (it.Enabled?.Invoke(this, it) ?? true))
 				return true;
 		return false;
 	}
@@ -333,7 +333,7 @@ public class VirtualButton
 	private bool GetReleased()
 	{
 		foreach (var it in Bindings)
-			if (it.IsReleased && (it.Enabled?.Invoke(this) ?? true))
+			if (it.IsReleased && (it.Enabled?.Invoke(this, it) ?? true))
 				return true;
 		return false;
 	}
@@ -342,7 +342,7 @@ public class VirtualButton
 	{
 		float highest = 0.0f;
 		foreach (var it in Bindings)
-			if (it.Enabled?.Invoke(this) ?? true)
+			if (it.Enabled?.Invoke(this, it) ?? true)
 				highest = MathF.Max(highest, it.Value);
 		return highest;
 	}
