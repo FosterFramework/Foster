@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
+﻿
 namespace Foster.Framework;
 
 /// <summary>
@@ -8,6 +6,8 @@ namespace Foster.Framework;
 /// </summary>
 public class VirtualButton
 {
+	public delegate bool ConditionFn(VirtualButton button, IBinding binding);
+
 	public interface IBinding
 	{
 		public bool IsPressed { get; }
@@ -15,6 +15,7 @@ public class VirtualButton
 		public bool IsReleased { get; }
 		public float Value { get; }
 		public float ValueNoDeadzone { get; }
+		public ConditionFn? Enabled { get; set; }
 	}
 
 	public record KeyBinding(Keys Key) : IBinding
@@ -24,15 +25,7 @@ public class VirtualButton
 		public bool IsReleased => Input.Keyboard.Released(Key);
 		public float Value => IsDown ? 1.0f : 0.0f;
 		public float ValueNoDeadzone => IsDown ? 1.0f : 0.0f;
-	}
-
-	public record ButtonBinding(int Controller, Buttons Button) : IBinding
-	{
-		public bool IsPressed => Input.Controllers[Controller].Pressed(Button);
-		public bool IsDown => Input.Controllers[Controller].Down(Button);
-		public bool IsReleased => Input.Controllers[Controller].Released(Button);
-		public float Value => IsDown ? 1.0f : 0.0f;
-		public float ValueNoDeadzone => IsDown ? 1.0f : 0.0f;
+		public ConditionFn? Enabled { get; set; }
 	}
 
 	public record MouseBinding(MouseButtons Button) : IBinding
@@ -42,6 +35,17 @@ public class VirtualButton
 		public bool IsReleased => Input.Mouse.Released(Button);
 		public float Value => IsDown ? 1.0f : 0.0f;
 		public float ValueNoDeadzone => IsDown ? 1.0f : 0.0f;
+		public ConditionFn? Enabled { get; set; }
+	}
+
+	public record ButtonBinding(int Controller, Buttons Button) : IBinding
+	{
+		public bool IsPressed => Input.Controllers[Controller].Pressed(Button);
+		public bool IsDown => Input.Controllers[Controller].Down(Button);
+		public bool IsReleased => Input.Controllers[Controller].Released(Button);
+		public float Value => IsDown ? 1.0f : 0.0f;
+		public float ValueNoDeadzone => IsDown ? 1.0f : 0.0f;
+		public ConditionFn? Enabled { get; set; }
 	}
 
 	public record AxisBinding(int Controller, Axes Axis, int Sign, float Deadzone) : IBinding
@@ -51,6 +55,7 @@ public class VirtualButton
 		public bool IsReleased => GetValue(Input.State, Deadzone) <= 0 && GetValue(Input.LastState, Deadzone) > 0;
 		public float Value => GetValue(Input.State, Deadzone);
 		public float ValueNoDeadzone => GetValue(Input.State, 0);
+		public ConditionFn? Enabled { get; set; }
 
 		private float GetValue(InputState state, float deadzone)
 		{
@@ -183,6 +188,33 @@ public class VirtualButton
 		return this;
 	}
 
+	public VirtualButton Add(ConditionFn condition, params Keys[] keys)
+	{
+		foreach (var key in keys)
+			Bindings.Add(new KeyBinding(key) { Enabled = condition });
+		return this;
+	}
+
+	public VirtualButton Add(ConditionFn condition, params MouseButtons[] buttons)
+	{
+		foreach (var button in buttons)
+			Bindings.Add(new MouseBinding(button) { Enabled = condition });
+		return this;
+	}
+
+	public VirtualButton Add(ConditionFn condition, int controller, params Buttons[] buttons)
+	{
+		foreach (var button in buttons)
+			Bindings.Add(new ButtonBinding(controller, button) { Enabled = condition });
+		return this;
+	}
+
+	public VirtualButton Add(ConditionFn condition, int controller, Axes axis, int sign, float threshold)
+	{
+		Bindings.Add(new AxisBinding(controller, axis, sign, threshold) { Enabled = condition });
+		return this;
+	}
+
 	/// <summary>
 	/// Clears all the Bindings
 	/// </summary>
@@ -285,7 +317,7 @@ public class VirtualButton
 	private bool GetPressed()
 	{
 		foreach (var it in Bindings)
-			if (it.IsPressed)
+			if (it.IsPressed && (it.Enabled?.Invoke(this, it) ?? true))
 				return true;
 		return false;
 	}
@@ -293,7 +325,7 @@ public class VirtualButton
 	private bool GetDown()
 	{
 		foreach (var it in Bindings)
-			if (it.IsDown)
+			if (it.IsDown && (it.Enabled?.Invoke(this, it) ?? true))
 				return true;
 		return false;
 	}
@@ -301,7 +333,7 @@ public class VirtualButton
 	private bool GetReleased()
 	{
 		foreach (var it in Bindings)
-			if (it.IsReleased)
+			if (it.IsReleased && (it.Enabled?.Invoke(this, it) ?? true))
 				return true;
 		return false;
 	}
@@ -310,7 +342,8 @@ public class VirtualButton
 	{
 		float highest = 0.0f;
 		foreach (var it in Bindings)
-			highest = MathF.Max(highest, it.Value);
+			if (it.Enabled?.Invoke(this, it) ?? true)
+				highest = MathF.Max(highest, it.Value);
 		return highest;
 	}
 }

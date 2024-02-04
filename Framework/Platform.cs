@@ -61,9 +61,6 @@ internal static class Platform
 		public int height;
 		public Renderers renderer;
 		public FosterFlags flags;
-		public FosterLogFn onLogInfo;
-		public FosterLogFn onLogWarn;
-		public FosterLogFn onLogError;
 		public FosterExitRequestFn onExitRequest;
 		public FosterOnTextFn onText;
 		public FosterOnKeyFn onKey;
@@ -74,7 +71,6 @@ internal static class Platform
 		public FosterOnControllerDisconnectFn onControllerDisconnect;
 		public FosterOnControllerButtonFn onControllerButton;
 		public FosterOnControllerAxisFn onControllerAxis;
-		public int logging;
 	}
 
 	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
@@ -149,10 +145,13 @@ internal static class Platform
 
 	public static unsafe string ParseUTF8(IntPtr s)
 	{
+		if (s == IntPtr.Zero)
+			return string.Empty;
+
 		byte* ptr = (byte*) s;
 		while (*ptr != 0)
 			ptr++;
-		return System.Text.Encoding.UTF8.GetString((byte*)s, (int)(ptr - (byte*)s));
+		return Encoding.UTF8.GetString((byte*)s, (int)(ptr - (byte*)s));
 	}
 
 	public static unsafe IntPtr ToUTF8(in string str)
@@ -170,6 +169,19 @@ internal static class Platform
 		Marshal.FreeHGlobal(ptr);
 	}
 
+	// need to store static references otherwise the delegates will get collected
+	private static readonly FosterLogFn logInfo = Log.Info;
+	private static readonly FosterLogFn logWarn = Log.Warning;
+	private static readonly FosterLogFn logErr = Log.Error;
+
+	static Platform()
+	{
+		// initialize logging immediately
+		FosterRegisterLogMethods(logInfo, logWarn, logErr, 0);
+	}
+
+	[DllImport(DLL)]
+	public static extern void FosterRegisterLogMethods(FosterLogFn info, FosterLogFn warn, FosterLogFn error, int level);
 	[DllImport(DLL)]
 	public static extern void FosterStartup(FosterDesc desc);
 	[DllImport(DLL)]
@@ -190,6 +202,8 @@ internal static class Platform
 	public static extern void FosterGetSize(out int width, out int height);
 	[DllImport(DLL)]
 	public static extern void FosterGetSizeInPixels(out int width, out int height);
+	[DllImport(DLL)]
+	public static extern void FosterGetDisplaySize(out int width, out int height);
 	[DllImport(DLL)]
 	public static extern void FosterSetFlags(FosterFlags flags);
 	[DllImport(DLL)]

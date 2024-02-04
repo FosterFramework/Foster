@@ -234,10 +234,10 @@ typedef enum FosterMouse
 typedef enum FosterButtons
 {
 	FOSTER_BUTTON_NONE = -1,
-	FOSTER_BUTTON_A = 0,
-	FOSTER_BUTTON_B = 1,
-	FOSTER_BUTTON_X = 2,
-	FOSTER_BUTTON_Y = 3,
+	FOSTER_BUTTON_SOUTH = 0,
+	FOSTER_BUTTON_EAST = 1,
+	FOSTER_BUTTON_WEST = 2,
+	FOSTER_BUTTON_NORTH = 3,
 	FOSTER_BUTTON_BACK = 4,
 	FOSTER_BUTTON_SELECT = 5,
 	FOSTER_BUTTON_START = 6,
@@ -426,9 +426,6 @@ typedef struct FosterDesc
 	int height;
 	FosterRenderers renderer;
 	FosterFlags flags;
-	FosterLogFn onLogInfo;
-	FosterLogFn onLogWarn;
-	FosterLogFn onLogError;
 	FosterExitRequestFn onExitRequest;
 	FosterOnTextFn onText;
 	FosterOnKeyFn onKey;
@@ -439,7 +436,6 @@ typedef struct FosterDesc
 	FosterOnControllerDisconnectFn onControllerDisconnect;
 	FosterOnControllerButtonFn onControllerButton;
 	FosterOnControllerAxisFn onControllerAxis;
-	FosterLogging logging;
 } FosterDesc;
 
 typedef struct FosterRect
@@ -535,6 +531,8 @@ extern "C" {
 
 FOSTER_API void FosterStartup(FosterDesc desc);
 
+FOSTER_API void FosterRegisterLogMethods(FosterLogFn logInfo, FosterLogFn logWarn, FosterLogFn logErr, FosterLogging level);
+
 FOSTER_API void FosterBeginFrame();
 
 FOSTER_API void FosterPollEvents();
@@ -552,6 +550,8 @@ FOSTER_API void FosterSetSize(int width, int height);
 FOSTER_API void FosterGetSize(int* width, int* height);
 
 FOSTER_API void FosterGetSizeInPixels(int* width, int* height);
+
+FOSTER_API void FosterGetDisplaySize(int* width, int* height);
 
 FOSTER_API void FosterSetFlags(FosterFlags flags);
 

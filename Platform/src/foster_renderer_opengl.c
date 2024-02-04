@@ -66,6 +66,7 @@ typedef char             GLchar;
 #define GL_CCW 0x0901
 #define GL_FRONT 0x0404
 #define GL_BACK 0x0405
+#define GL_BACK_LEFT 0x0402
 #define GL_FRONT_AND_BACK 0x0408
 #define GL_CULL_FACE 0x0B44
 #define GL_POLYGON_OFFSET_FILL 0x8037
@@ -457,12 +458,12 @@ static FosterOpenGLState fgl;
 // debug callback
 void APIENTRY FosterMessage_OpenGL(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
 {
-    if (FosterGetState()->desc.logging != FOSTER_LOGGING_ALL)
-    {
-        if (severity == GL_DEBUG_SEVERITY_NOTIFICATION &&
-            type == GL_DEBUG_TYPE_OTHER)
-            return;
-    }
+	if (FosterGetState()->logLevel != FOSTER_LOGGING_ALL)
+	{
+		if (severity == GL_DEBUG_SEVERITY_NOTIFICATION &&
+			type == GL_DEBUG_TYPE_OTHER)
+			return;
+	}
 
     const char* typeName = "";
     const char* severityName = "";
@@ -697,18 +698,18 @@ void FosterBindFrameBuffer(FosterTarget_OpenGL* target)
         GLenum attachments[4];
         fgl.glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
-        // figure out draw buffers
-        if (target == NULL)
-        {
-            attachments[0] = GL_BACK;
-            fgl.glDrawBuffers(1, attachments);
-        }
-        else
-        {
-            for (int i = 0; i < target->colorAttachmentCount; i++)
-                attachments[i] = GL_COLOR_ATTACHMENT0 + i;
-            fgl.glDrawBuffers(target->colorAttachmentCount, attachments);
-        }
+		// figure out draw buffers
+		if (target == NULL)
+		{
+			attachments[0] = GL_BACK_LEFT;
+			fgl.glDrawBuffers(1, attachments);
+		}
+		else
+		{
+			for (int i = 0; i < target->colorAttachmentCount; i ++)
+				attachments[i] = GL_COLOR_ATTACHMENT0 + i;
+			fgl.glDrawBuffers(target->colorAttachmentCount, attachments);
+		}
 
     }
     fgl.stateFrameBuffer = framebuffer;
@@ -1019,13 +1020,13 @@ bool FosterInitialize_OpenGL()
     GL_FUNCTIONS
 #undef GL_FUNC
 
-    // bind debug message callback
-    if (fgl.glDebugMessageCallback != NULL && state->desc.logging != FOSTER_LOGGING_NONE)
-    {
-        fgl.glEnable(GL_DEBUG_OUTPUT);
-        fgl.glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-        fgl.glDebugMessageCallback(FosterMessage_OpenGL, NULL);
-    }
+	// bind debug message callback
+	if (fgl.glDebugMessageCallback != NULL && state->logLevel != FOSTER_LOGGING_NONE)
+	{
+		fgl.glEnable(GL_DEBUG_OUTPUT);
+		fgl.glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+		fgl.glDebugMessageCallback(FosterMessage_OpenGL, NULL);
+	}
 
     // get opengl info
     fgl.glGetIntegerv(0x8CDF, &fgl.max_color_attachments);

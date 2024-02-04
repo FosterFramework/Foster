@@ -303,10 +303,6 @@ public static class App
 			height = height,
 			renderer = renderer,
 			flags = App.flags,
-			logging = 0,
-			onLogInfo = Log.Info,
-			onLogWarn = Log.Warning,
-			onLogError = Log.Error,
 			onText = Input.OnText,
 			onKey = Input.OnKey,
 			onMouseButton = Input.OnMouseButton,
@@ -334,6 +330,10 @@ public static class App
 		lastTime = TimeSpan.Zero;
 		accumulator = TimeSpan.Zero;
 		timer.Restart();
+
+		// poll events once, so input has controller state before Startup
+		Platform.FosterPollEvents();
+		Input.Step();
 
 		// register & startup all modules in order
 		// this is in a loop in case a module registers more modules

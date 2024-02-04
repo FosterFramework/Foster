@@ -18,6 +18,10 @@ typedef struct
 	SDL_GameController* gamepads[FOSTER_MAX_CONTROLLERS];
 	char* clipboardText;
 	char* userPath;
+	FosterLogFn logInfo;
+	FosterLogFn logWarn;
+	FosterLogFn logError;
+	FosterLogging logLevel;
 } FosterState;
 
 FosterState* FosterGetState();
