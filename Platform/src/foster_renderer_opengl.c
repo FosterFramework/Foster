@@ -334,12 +334,12 @@ typedef char             GLchar;
 
 // Debug Function Delegate
 typedef void (APIENTRY* DEBUGPROC)(GLenum source,
-                                   GLenum type,
-                                   GLuint id,
-                                   GLenum severity,
-                                   GLsizei length,
-                                   const GLchar* message,
-                                   const void* userParam);
+    GLenum type,
+    GLuint id,
+    GLenum severity,
+    GLsizei length,
+    const GLchar* message,
+    const void* userParam);
 
 // GL Function Typedefs
 #define GL_FUNC(name, ret, ...) typedef ret (*gl ## name ## Fn) (__VA_ARGS__);
@@ -465,116 +465,116 @@ void APIENTRY FosterMessage_OpenGL(GLenum source, GLenum type, GLuint id, GLenum
 			return;
 	}
 
-    const char* typeName = "";
-    const char* severityName = "";
+	const char* typeName = "";
+	const char* severityName = "";
 
-    switch (type)
-    {
-        case GL_DEBUG_TYPE_ERROR: typeName = "ERROR"; break;
-        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: typeName = "DEPRECATED BEHAVIOR"; break;
-        case GL_DEBUG_TYPE_MARKER: typeName = "MARKER"; break;
-        case GL_DEBUG_TYPE_OTHER: typeName = "OTHER"; break;
-        case GL_DEBUG_TYPE_PERFORMANCE: typeName = "PEROFRMANCE"; break;
-        case GL_DEBUG_TYPE_POP_GROUP: typeName = "POP GROUP"; break;
-        case GL_DEBUG_TYPE_PORTABILITY: typeName = "PORTABILITY"; break;
-        case GL_DEBUG_TYPE_PUSH_GROUP: typeName = "PUSH GROUP"; break;
-        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: typeName = "UNDEFINED BEHAVIOR"; break;
-    }
+	switch (type)
+	{
+	case GL_DEBUG_TYPE_ERROR: typeName = "ERROR"; break;
+	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: typeName = "DEPRECATED BEHAVIOR"; break;
+	case GL_DEBUG_TYPE_MARKER: typeName = "MARKER"; break;
+	case GL_DEBUG_TYPE_OTHER: typeName = "OTHER"; break;
+	case GL_DEBUG_TYPE_PERFORMANCE: typeName = "PEROFRMANCE"; break;
+	case GL_DEBUG_TYPE_POP_GROUP: typeName = "POP GROUP"; break;
+	case GL_DEBUG_TYPE_PORTABILITY: typeName = "PORTABILITY"; break;
+	case GL_DEBUG_TYPE_PUSH_GROUP: typeName = "PUSH GROUP"; break;
+	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: typeName = "UNDEFINED BEHAVIOR"; break;
+	}
 
-    switch (severity)
-    {
-        case GL_DEBUG_SEVERITY_HIGH: severityName = "HIGH"; break;
-        case GL_DEBUG_SEVERITY_MEDIUM: severityName = "MEDIUM"; break;
-        case GL_DEBUG_SEVERITY_LOW: severityName = "LOW"; break;
-        case GL_DEBUG_SEVERITY_NOTIFICATION: severityName = "NOTIFICATION"; break;
-    }
+	switch (severity)
+	{
+	case GL_DEBUG_SEVERITY_HIGH: severityName = "HIGH"; break;
+	case GL_DEBUG_SEVERITY_MEDIUM: severityName = "MEDIUM"; break;
+	case GL_DEBUG_SEVERITY_LOW: severityName = "LOW"; break;
+	case GL_DEBUG_SEVERITY_NOTIFICATION: severityName = "NOTIFICATION"; break;
+	}
 
-    if (type == GL_DEBUG_TYPE_ERROR)
-        FosterLogError("GL (%s:%s) %s", typeName, severityName, message);
-    else if (severity != GL_DEBUG_SEVERITY_NOTIFICATION)
-        FosterLogWarn("GL (%s:%s) %s", typeName, severityName, message);
-    else
-        FosterLogInfo("GL (%s) %s", typeName, message);
+	if (type == GL_DEBUG_TYPE_ERROR)
+		FosterLogError("GL (%s:%s) %s", typeName, severityName, message);
+	else if (severity != GL_DEBUG_SEVERITY_NOTIFICATION)
+		FosterLogWarn("GL (%s:%s) %s", typeName, severityName, message);
+	else
+		FosterLogInfo("GL (%s) %s", typeName, message);
 }
 
 // conversion methods
 GLenum FosterWrapToGL(FosterTextureWrap wrap)
 {
-    switch (wrap)
-    {
-        case FOSTER_TEXTURE_WRAP_REPEAT: return GL_REPEAT;
-        case FOSTER_TEXTURE_WRAP_MIRRORED_REPEAT: return GL_MIRRORED_REPEAT;
-        case FOSTER_TEXTURE_WRAP_CLAMP_TO_BORDER: return GL_CLAMP_TO_EDGE;
-        case FOSTER_TEXTURE_WRAP_CLAMP_TO_EDGE: return GL_CLAMP_TO_EDGE;
-        default: return GL_REPEAT;
-    }
+	switch (wrap)
+	{
+		case FOSTER_TEXTURE_WRAP_REPEAT: return GL_REPEAT;
+		case FOSTER_TEXTURE_WRAP_MIRRORED_REPEAT: return GL_MIRRORED_REPEAT;
+		case FOSTER_TEXTURE_WRAP_CLAMP_TO_BORDER: return GL_CLAMP_TO_EDGE;
+		case FOSTER_TEXTURE_WRAP_CLAMP_TO_EDGE: return GL_CLAMP_TO_EDGE;
+		default: return GL_REPEAT;
+	}
 }
 
 GLenum FosterFilterToGL(FosterTextureFilter filter)
 {
-    switch (filter)
-    {
-        case FOSTER_TEXTURE_FILTER_NEAREST: return GL_NEAREST;
-        case FOSTER_TEXTURE_FILTER_LINEAR: return GL_LINEAR;
-        default: return GL_NEAREST;
-    }
+	switch (filter)
+	{
+		case FOSTER_TEXTURE_FILTER_NEAREST: return GL_NEAREST;
+		case FOSTER_TEXTURE_FILTER_LINEAR: return GL_LINEAR;
+		default: return GL_NEAREST;
+	}
 }
 
 GLenum FosterBlendOpToGL(FosterBlendOp operation)
 {
-    switch (operation)
-    {
-        case FOSTER_BLEND_OP_ADD: return GL_FUNC_ADD;
-        case FOSTER_BLEND_OP_SUBTRACT: return GL_FUNC_SUBTRACT;
-        case FOSTER_BLEND_OP_REVERSE_SUBTRACT: return GL_FUNC_REVERSE_SUBTRACT;
-        case FOSTER_BLEND_OP_MIN: return GL_MIN;
-        case FOSTER_BLEND_OP_MAX: return GL_MAX;
-        default: return GL_FUNC_ADD;
-    };
+	switch (operation)
+	{
+	case FOSTER_BLEND_OP_ADD: return GL_FUNC_ADD;
+	case FOSTER_BLEND_OP_SUBTRACT: return GL_FUNC_SUBTRACT;
+	case FOSTER_BLEND_OP_REVERSE_SUBTRACT: return GL_FUNC_REVERSE_SUBTRACT;
+	case FOSTER_BLEND_OP_MIN: return GL_MIN;
+	case FOSTER_BLEND_OP_MAX: return GL_MAX;
+	default: return GL_FUNC_ADD;
+	};
 }
 
 GLenum FosterBlendFactorToGL(FosterBlendFactor factor)
 {
-    switch (factor)
-    {
-        case FOSTER_BLEND_FACTOR_Zero: return GL_ZERO;
-        case FOSTER_BLEND_FACTOR_One: return GL_ONE;
-        case FOSTER_BLEND_FACTOR_SrcColor: return GL_SRC_COLOR;
-        case FOSTER_BLEND_FACTOR_OneMinusSrcColor: return GL_ONE_MINUS_SRC_COLOR;
-        case FOSTER_BLEND_FACTOR_DstColor: return GL_DST_COLOR;
-        case FOSTER_BLEND_FACTOR_OneMinusDstColor: return GL_ONE_MINUS_DST_COLOR;
-        case FOSTER_BLEND_FACTOR_SrcAlpha: return GL_SRC_ALPHA;
-        case FOSTER_BLEND_FACTOR_OneMinusSrcAlpha: return GL_ONE_MINUS_SRC_ALPHA;
-        case FOSTER_BLEND_FACTOR_DstAlpha: return GL_DST_ALPHA;
-        case FOSTER_BLEND_FACTOR_OneMinusDstAlpha: return GL_ONE_MINUS_DST_ALPHA;
-        case FOSTER_BLEND_FACTOR_ConstantColor: return GL_CONSTANT_COLOR;
-        case FOSTER_BLEND_FACTOR_OneMinusConstantColor: return GL_ONE_MINUS_CONSTANT_COLOR;
-        case FOSTER_BLEND_FACTOR_ConstantAlpha: return GL_CONSTANT_ALPHA;
-        case FOSTER_BLEND_FACTOR_OneMinusConstantAlpha: return GL_ONE_MINUS_CONSTANT_ALPHA;
-        case FOSTER_BLEND_FACTOR_SrcAlphaSaturate: return GL_SRC_ALPHA_SATURATE;
-        case FOSTER_BLEND_FACTOR_Src1Color: return GL_SRC1_COLOR;
-        case FOSTER_BLEND_FACTOR_OneMinusSrc1Color: return GL_ONE_MINUS_SRC1_COLOR;
-        case FOSTER_BLEND_FACTOR_Src1Alpha: return GL_SRC1_ALPHA;
-        case FOSTER_BLEND_FACTOR_OneMinusSrc1Alpha: return GL_ONE_MINUS_SRC1_ALPHA;
-    };
+	switch (factor)
+	{
+	case FOSTER_BLEND_FACTOR_Zero: return GL_ZERO;
+	case FOSTER_BLEND_FACTOR_One: return GL_ONE;
+	case FOSTER_BLEND_FACTOR_SrcColor: return GL_SRC_COLOR;
+	case FOSTER_BLEND_FACTOR_OneMinusSrcColor: return GL_ONE_MINUS_SRC_COLOR;
+	case FOSTER_BLEND_FACTOR_DstColor: return GL_DST_COLOR;
+	case FOSTER_BLEND_FACTOR_OneMinusDstColor: return GL_ONE_MINUS_DST_COLOR;
+	case FOSTER_BLEND_FACTOR_SrcAlpha: return GL_SRC_ALPHA;
+	case FOSTER_BLEND_FACTOR_OneMinusSrcAlpha: return GL_ONE_MINUS_SRC_ALPHA;
+	case FOSTER_BLEND_FACTOR_DstAlpha: return GL_DST_ALPHA;
+	case FOSTER_BLEND_FACTOR_OneMinusDstAlpha: return GL_ONE_MINUS_DST_ALPHA;
+	case FOSTER_BLEND_FACTOR_ConstantColor: return GL_CONSTANT_COLOR;
+	case FOSTER_BLEND_FACTOR_OneMinusConstantColor: return GL_ONE_MINUS_CONSTANT_COLOR;
+	case FOSTER_BLEND_FACTOR_ConstantAlpha: return GL_CONSTANT_ALPHA;
+	case FOSTER_BLEND_FACTOR_OneMinusConstantAlpha: return GL_ONE_MINUS_CONSTANT_ALPHA;
+	case FOSTER_BLEND_FACTOR_SrcAlphaSaturate: return GL_SRC_ALPHA_SATURATE;
+	case FOSTER_BLEND_FACTOR_Src1Color: return GL_SRC1_COLOR;
+	case FOSTER_BLEND_FACTOR_OneMinusSrc1Color: return GL_ONE_MINUS_SRC1_COLOR;
+	case FOSTER_BLEND_FACTOR_Src1Alpha: return GL_SRC1_ALPHA;
+	case FOSTER_BLEND_FACTOR_OneMinusSrc1Alpha: return GL_ONE_MINUS_SRC1_ALPHA;
+	};
 
-    return GL_ZERO;
+	return GL_ZERO;
 }
 
 FosterUniformType FosterUniformTypeFromGL(GLenum value)
 {
-    switch (value)
-    {
-        case GL_FLOAT: return FOSTER_UNIFORM_TYPE_FLOAT;
-        case GL_FLOAT_VEC2: return FOSTER_UNIFORM_TYPE_FLOAT2;
-        case GL_FLOAT_VEC3: return FOSTER_UNIFORM_TYPE_FLOAT3;
-        case GL_FLOAT_VEC4: return FOSTER_UNIFORM_TYPE_FLOAT4;
-        case GL_FLOAT_MAT3x2: return FOSTER_UNIFORM_TYPE_MAT3X2;
-        case GL_FLOAT_MAT4: return FOSTER_UNIFORM_TYPE_MAT4X4;
-        case GL_SAMPLER_2D: return FOSTER_UNIFORM_TYPE_SAMPLER2D;
-    };
+	switch (value)
+	{
+	case GL_FLOAT: return FOSTER_UNIFORM_TYPE_FLOAT;
+	case GL_FLOAT_VEC2: return FOSTER_UNIFORM_TYPE_FLOAT2;
+	case GL_FLOAT_VEC3: return FOSTER_UNIFORM_TYPE_FLOAT3;
+	case GL_FLOAT_VEC4: return FOSTER_UNIFORM_TYPE_FLOAT4;
+	case GL_FLOAT_MAT3x2: return FOSTER_UNIFORM_TYPE_MAT3X2;
+	case GL_FLOAT_MAT4: return FOSTER_UNIFORM_TYPE_MAT4X4;
+	case GL_SAMPLER_2D: return FOSTER_UNIFORM_TYPE_SAMPLER2D;
+	};
 
-    return FOSTER_UNIFORM_TYPE_NONE;
+	return FOSTER_UNIFORM_TYPE_NONE;
 }
 
 GLuint FosterMeshAssignAttributes_OpenGL(GLuint buffer, GLenum bufferType, FosterVertexFormat* format, GLint divisor)
@@ -613,59 +613,59 @@ GLuint FosterMeshAssignAttributes_OpenGL(GLuint buffer, GLenum bufferType, Foste
         size_t componentSize = 0;
         int components = 1;
 
-        switch (element.type)
-        {
-            case FOSTER_VERTEX_TYPE_FLOAT:
-                type = GL_FLOAT;
-                componentSize = 4;
-                components = 1;
-                break;
-            case FOSTER_VERTEX_TYPE_FLOAT2:
-                type = GL_FLOAT;
-                componentSize = 4;
-                components = 2;
-                break;
-            case FOSTER_VERTEX_TYPE_FLOAT3:
-                type = GL_FLOAT;
-                componentSize = 4;
-                components = 3;
-                break;
-            case FOSTER_VERTEX_TYPE_FLOAT4:
-                type = GL_FLOAT;
-                componentSize = 4;
-                components = 4;
-                break;
-            case FOSTER_VERTEX_TYPE_BYTE4:
-                type = GL_BYTE;
-                componentSize = 1;
-                components = 4;
-                break;
-            case FOSTER_VERTEX_TYPE_UBYTE4:
-                type = GL_UNSIGNED_BYTE;
-                componentSize = 1;
-                components = 4;
-                break;
-            case FOSTER_VERTEX_TYPE_SHORT2:
-                type = GL_SHORT;
-                componentSize = 2;
-                components = 2;
-                break;
-            case FOSTER_VERTEX_TYPE_USHORT2:
-                type = GL_UNSIGNED_SHORT;
-                componentSize = 2;
-                components = 2;
-                break;
-            case FOSTER_VERTEX_TYPE_SHORT4:
-                type = GL_SHORT;
-                componentSize = 2;
-                components = 4;
-                break;
-            case FOSTER_VERTEX_TYPE_USHORT4:
-                type = GL_UNSIGNED_SHORT;
-                componentSize = 2;
-                components = 4;
-                break;
-        }
+		switch (element.type)
+		{
+		case FOSTER_VERTEX_TYPE_FLOAT:
+			type = GL_FLOAT;
+			componentSize = 4;
+			components = 1;
+			break;
+		case FOSTER_VERTEX_TYPE_FLOAT2:
+			type = GL_FLOAT;
+			componentSize = 4;
+			components = 2;
+			break;
+		case FOSTER_VERTEX_TYPE_FLOAT3:
+			type = GL_FLOAT;
+			componentSize = 4;
+			components = 3;
+			break;
+		case FOSTER_VERTEX_TYPE_FLOAT4:
+			type = GL_FLOAT;
+			componentSize = 4;
+			components = 4;
+			break;
+		case FOSTER_VERTEX_TYPE_BYTE4:
+			type = GL_BYTE;
+			componentSize = 1;
+			components = 4;
+			break;
+		case FOSTER_VERTEX_TYPE_UBYTE4:
+			type = GL_UNSIGNED_BYTE;
+			componentSize = 1;
+			components = 4;
+			break;
+		case FOSTER_VERTEX_TYPE_SHORT2:
+			type = GL_SHORT;
+			componentSize = 2;
+			components = 2;
+			break;
+		case FOSTER_VERTEX_TYPE_USHORT2:
+			type = GL_UNSIGNED_SHORT;
+			componentSize = 2;
+			components = 2;
+			break;
+		case FOSTER_VERTEX_TYPE_SHORT4:
+			type = GL_SHORT;
+			componentSize = 2;
+			components = 4;
+			break;
+		case FOSTER_VERTEX_TYPE_USHORT4:
+			type = GL_UNSIGNED_SHORT;
+			componentSize = 2;
+			components = 4;
+			break;
+		}
 
         GLuint location = (GLuint)(element.index);
         fgl.glEnableVertexAttribArray(location);
@@ -698,18 +698,18 @@ void FosterBindFrameBuffer(FosterTarget_OpenGL* target)
         GLenum attachments[4];
         fgl.glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
-		// figure out draw buffers
-		if (target == NULL)
-		{
-			attachments[0] = GL_BACK_LEFT;
-			fgl.glDrawBuffers(1, attachments);
-		}
-		else
-		{
-			for (int i = 0; i < target->colorAttachmentCount; i ++)
-				attachments[i] = GL_COLOR_ATTACHMENT0 + i;
-			fgl.glDrawBuffers(target->colorAttachmentCount, attachments);
-		}
+        // figure out draw buffers
+        if (target == NULL)
+        {
+            attachments[0] = GL_BACK_LEFT;
+            fgl.glDrawBuffers(1, attachments);
+        }
+        else
+        {
+            for (int i = 0; i < target->colorAttachmentCount; i ++)
+                attachments[i] = GL_COLOR_ATTACHMENT0 + i;
+            fgl.glDrawBuffers(target->colorAttachmentCount, attachments);
+        }
 
     }
     fgl.stateFrameBuffer = framebuffer;
@@ -983,23 +983,23 @@ void FosterPrepare_OpenGL()
     FosterState* state = FosterGetState();
     state->windowCreateFlags |= SDL_WINDOW_OPENGL;
 
-#ifdef __EMSCRIPTEN__
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-#else
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	#ifdef __EMSCRIPTEN__
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+	#else
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
+		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-    // TODO:
-    // This should be controlled via the gfx api somehow?
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
-#endif
+		// TODO:
+		// This should be controlled via the gfx api somehow?
+		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+	#endif
 }
 
 bool FosterInitialize_OpenGL()
@@ -1020,13 +1020,13 @@ bool FosterInitialize_OpenGL()
     GL_FUNCTIONS
 #undef GL_FUNC
 
-	// bind debug message callback
-	if (fgl.glDebugMessageCallback != NULL && state->logLevel != FOSTER_LOGGING_NONE)
-	{
-		fgl.glEnable(GL_DEBUG_OUTPUT);
-		fgl.glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-		fgl.glDebugMessageCallback(FosterMessage_OpenGL, NULL);
-	}
+    // bind debug message callback
+    if (fgl.glDebugMessageCallback != NULL && state->logLevel != FOSTER_LOGGING_NONE)
+    {
+        fgl.glEnable(GL_DEBUG_OUTPUT);
+        fgl.glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        fgl.glDebugMessageCallback(FosterMessage_OpenGL, NULL);
+    }
 
     // get opengl info
     fgl.glGetIntegerv(0x8CDF, &fgl.max_color_attachments);
@@ -1846,5 +1846,4 @@ bool FosterGetDevice_OpenGL(FosterRenderDevice* device)
 }
 
 #endif
-
 

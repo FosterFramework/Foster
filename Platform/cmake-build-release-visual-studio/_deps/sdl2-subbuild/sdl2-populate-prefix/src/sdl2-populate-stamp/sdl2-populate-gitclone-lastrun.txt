@@ -1,0 +1,15 @@
+# This is a generated file and its contents are an internal implementation detail.
+# The download step will be re-executed if anything in this file changes.
+# No other meaning or use of this file is supported.
+
+method=git
+command=C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/bin/cmake.exe;-P;C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-subbuild/sdl2-populate-prefix/tmp/sdl2-populate-gitclone.cmake
+source_dir=C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src
+work_dir=C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps
+repository=https://github.com/libsdl-org/SDL
+remote=origin
+init_submodules=TRUE
+recurse_submodules=--recursive
+submodules=
+CMP0097=NEW
+

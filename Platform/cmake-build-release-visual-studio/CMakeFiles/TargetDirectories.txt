@@ -1,0 +1,9 @@
+C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/FosterPlatform.dir
+C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/edit_cache.dir
+C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/rebuild_cache.dir
+C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-build/CMakeFiles/sdl_headers_copy.dir
+C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-build/CMakeFiles/SDL2main.dir
+C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-build/CMakeFiles/SDL2-static.dir
+C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-build/CMakeFiles/uninstall.dir
+C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-build/CMakeFiles/edit_cache.dir
+C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-build/CMakeFiles/rebuild_cache.dir

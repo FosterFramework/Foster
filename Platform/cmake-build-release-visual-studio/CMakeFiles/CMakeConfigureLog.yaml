@@ -1,0 +1,876 @@
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineSystem.cmake:211 (message)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      The system is: Windows - 10.0.22635 - AMD64
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+      Compiler: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.38.33130/bin/Hostx64/x64/cl.exe 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      Microsoft (R) C/C++ Optimizing Compiler Version 19.38.33134 for x64
+      Copyright (C) Microsoft Corporation.  All rights reserved.
+      
+      CMakeCCompilerId.c
+      Microsoft (R) Incremental Linker Version 14.38.33134.0
+      Copyright (C) Microsoft Corporation.  All rights reserved.
+      
+      /out:CMakeCCompilerId.exe 
+      CMakeCCompilerId.obj 
+      
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.exe"
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.obj"
+      
+      The C compiler identification is MSVC, found in:
+        C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/3.27.8/CompilerIdC/CMakeCCompilerId.exe
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:1155 (message)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:221 (CMAKE_DETERMINE_MSVC_SHOWINCLUDES_PREFIX)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Detecting C compiler /showIncludes prefix:
+        main.c
+        Note: including file: C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\ShowIncludes\\foo.h
+        
+      Found prefix "Note: including file: "
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCompilerABI.cmake:57 (try_compile)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Detecting C compiler ABI info"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-d6g1bg"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-d6g1bg"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_C_FLAGS_DEBUG: "/MDd /Zi /Ob0 /Od /RTC1"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+    buildResult:
+      variable: "CMAKE_C_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-d6g1bg'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_cdd2b
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_cdd2b.dir\\CMakeCCompilerABI.c.obj /FdCMakeFiles\\cmTC_cdd2b.dir\\ /FS -c C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\share\\cmake-3.27\\Modules\\CMakeCCompilerABI.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_cdd2b.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_cdd2b.dir\\CMakeCCompilerABI.c.obj  /out:cmTC_cdd2b.exe /implib:cmTC_cdd2b.lib /pdb:cmTC_cdd2b.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineSystem.cmake:211 (message)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      The system is: Windows - 10.0.22635 - AMD64
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+      Compiler: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.38.33130/bin/Hostx64/x64/cl.exe 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      Microsoft (R) C/C++ Optimizing Compiler Version 19.38.33134 for x64
+      Copyright (C) Microsoft Corporation.  All rights reserved.
+      
+      CMakeCCompilerId.c
+      Microsoft (R) Incremental Linker Version 14.38.33134.0
+      Copyright (C) Microsoft Corporation.  All rights reserved.
+      
+      /out:CMakeCCompilerId.exe 
+      CMakeCCompilerId.obj 
+      
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.exe"
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.obj"
+      
+      The C compiler identification is MSVC, found in:
+        C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/3.27.8/CompilerIdC/CMakeCCompilerId.exe
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:1155 (message)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:221 (CMAKE_DETERMINE_MSVC_SHOWINCLUDES_PREFIX)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Detecting C compiler /showIncludes prefix:
+        main.c
+        Note: including file: C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\ShowIncludes\\foo.h
+        
+      Found prefix "Note: including file: "
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCompilerABI.cmake:57 (try_compile)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Detecting C compiler ABI info"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-jdfqv3"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-jdfqv3"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_C_FLAGS_DEBUG: "/MDd /Zi /Ob0 /Od /RTC1"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+    buildResult:
+      variable: "CMAKE_C_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-jdfqv3'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_31176
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_31176.dir\\CMakeCCompilerABI.c.obj /FdCMakeFiles\\cmTC_31176.dir\\ /FS -c C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\share\\cmake-3.27\\Modules\\CMakeCCompilerABI.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_31176.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_31176.dir\\CMakeCCompilerABI.c.obj  /out:cmTC_31176.exe /implib:cmTC_31176.lib /pdb:cmTC_31176.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:9 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.38.33130/bin/Hostx64/x64/cl.exe 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      Microsoft (R) C/C++ Optimizing Compiler Version 19.38.33134 for x64
+      Copyright (C) Microsoft Corporation.  All rights reserved.
+      
+      CMakeCXXCompilerId.cpp
+      Microsoft (R) Incremental Linker Version 14.38.33134.0
+      Copyright (C) Microsoft Corporation.  All rights reserved.
+      
+      /out:CMakeCXXCompilerId.exe 
+      CMakeCXXCompilerId.obj 
+      
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.exe"
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.obj"
+      
+      The CXX compiler identification is MSVC, found in:
+        C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/3.27.8/CompilerIdCXX/CMakeCXXCompilerId.exe
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:1155 (message)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:221 (CMAKE_DETERMINE_MSVC_SHOWINCLUDES_PREFIX)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:9 (project)"
+    message: |
+      Detecting CXX compiler /showIncludes prefix:
+        main.c
+        Note: including file: C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\ShowIncludes\\foo.h
+        
+      Found prefix "Note: including file: "
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeDetermineCompilerABI.cmake:57 (try_compile)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:9 (project)"
+    checks:
+      - "Detecting CXX compiler ABI info"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-ohrhyl"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-ohrhyl"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /W3 /GR /EHsc"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+    buildResult:
+      variable: "CMAKE_CXX_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-ohrhyl'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_a4598
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP   /DWIN32 /D_WINDOWS /W3 /GR /EHsc  /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_a4598.dir\\CMakeCXXCompilerABI.cpp.obj /FdCMakeFiles\\cmTC_a4598.dir\\ /FS -c C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\share\\cmake-3.27\\Modules\\CMakeCXXCompilerABI.cpp
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_a4598.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_a4598.dir\\CMakeCXXCompilerABI.cpp.obj  /out:cmTC_a4598.exe /implib:cmTC_a4598.lib /pdb:cmTC_a4598.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckSymbolExists.cmake:140 (try_compile)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckSymbolExists.cmake:66 (__CHECK_SYMBOL_EXISTS_IMPL)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:82 (check_symbol_exists)"
+    checks:
+      - "Looking for __GLIBC__"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-cv759s"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-cv759s"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "LIBC_IS_GLIBC"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-cv759s'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_17f15
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_17f15.dir\\CheckSymbolExists.c.obj /FdCMakeFiles\\cmTC_17f15.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-cv759s\\CheckSymbolExists.c
+        FAILED: CMakeFiles/cmTC_17f15.dir/CheckSymbolExists.c.obj 
+        C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_17f15.dir\\CheckSymbolExists.c.obj /FdCMakeFiles\\cmTC_17f15.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-cv759s\\CheckSymbolExists.c
+        C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-cv759s\\CheckSymbolExists.c(8): error C2065: '__GLIBC__': undeclared identifier
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckCSourceCompiles.cmake:52 (cmake_check_source_compiles)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/cmake/CheckCPUArchitecture.cmake:17 (check_c_source_compiles)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/cmake/CheckCPUArchitecture.cmake:28 (_internal_check_cpu_architecture)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:139 (check_cpu_architecture)"
+    checks:
+      - "Performing Test CHECK_CPU_ARCHITECTURE_X86"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-g27t75"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-g27t75"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "CHECK_CPU_ARCHITECTURE_X86"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-g27t75'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_71c20
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo -DCHECK_CPU_ARCHITECTURE_X86  /DWIN32 /D_WINDOWS /W3  /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_71c20.dir\\src.c.obj /FdCMakeFiles\\cmTC_71c20.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-g27t75\\src.c
+        FAILED: CMakeFiles/cmTC_71c20.dir/src.c.obj 
+        C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo -DCHECK_CPU_ARCHITECTURE_X86  /DWIN32 /D_WINDOWS /W3  /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_71c20.dir\\src.c.obj /FdCMakeFiles\\cmTC_71c20.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-g27t75\\src.c
+        C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-g27t75\\src.c(8): error C2065: 'choke': undeclared identifier
+        C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-g27t75\\src.c(8): error C2143: syntax error: missing ';' before '}'
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckCSourceCompiles.cmake:52 (cmake_check_source_compiles)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/cmake/CheckCPUArchitecture.cmake:17 (check_c_source_compiles)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/cmake/CheckCPUArchitecture.cmake:30 (_internal_check_cpu_architecture)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:140 (check_cpu_architecture)"
+    checks:
+      - "Performing Test CHECK_CPU_ARCHITECTURE_X64"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-6vrj21"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-6vrj21"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "CHECK_CPU_ARCHITECTURE_X64"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-6vrj21'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_fc821
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo -DCHECK_CPU_ARCHITECTURE_X64  /DWIN32 /D_WINDOWS /W3  /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_fc821.dir\\src.c.obj /FdCMakeFiles\\cmTC_fc821.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6vrj21\\src.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_fc821.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_fc821.dir\\src.c.obj  /out:cmTC_fc821.exe /implib:cmTC_fc821.lib /pdb:cmTC_fc821.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckCSourceCompiles.cmake:52 (cmake_check_source_compiles)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/cmake/CheckCPUArchitecture.cmake:17 (check_c_source_compiles)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/cmake/CheckCPUArchitecture.cmake:32 (_internal_check_cpu_architecture)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:141 (check_cpu_architecture)"
+    checks:
+      - "Performing Test CHECK_CPU_ARCHITECTURE_ARM32"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-udvyb9"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-udvyb9"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "CHECK_CPU_ARCHITECTURE_ARM32"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-udvyb9'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_dca96
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo -DCHECK_CPU_ARCHITECTURE_ARM32  /DWIN32 /D_WINDOWS /W3  /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_dca96.dir\\src.c.obj /FdCMakeFiles\\cmTC_dca96.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-udvyb9\\src.c
+        FAILED: CMakeFiles/cmTC_dca96.dir/src.c.obj 
+        C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo -DCHECK_CPU_ARCHITECTURE_ARM32  /DWIN32 /D_WINDOWS /W3  /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_dca96.dir\\src.c.obj /FdCMakeFiles\\cmTC_dca96.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-udvyb9\\src.c
+        C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-udvyb9\\src.c(8): error C2065: 'choke': undeclared identifier
+        C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-udvyb9\\src.c(8): error C2143: syntax error: missing ';' before '}'
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckCSourceCompiles.cmake:52 (cmake_check_source_compiles)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/cmake/CheckCPUArchitecture.cmake:17 (check_c_source_compiles)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/cmake/CheckCPUArchitecture.cmake:34 (_internal_check_cpu_architecture)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:142 (check_cpu_architecture)"
+    checks:
+      - "Performing Test CHECK_CPU_ARCHITECTURE_ARM64"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-dxln71"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-dxln71"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "CHECK_CPU_ARCHITECTURE_ARM64"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-dxln71'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_28944
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo -DCHECK_CPU_ARCHITECTURE_ARM64  /DWIN32 /D_WINDOWS /W3  /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_28944.dir\\src.c.obj /FdCMakeFiles\\cmTC_28944.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-dxln71\\src.c
+        FAILED: CMakeFiles/cmTC_28944.dir/src.c.obj 
+        C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo -DCHECK_CPU_ARCHITECTURE_ARM64  /DWIN32 /D_WINDOWS /W3  /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_28944.dir\\src.c.obj /FdCMakeFiles\\cmTC_28944.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-dxln71\\src.c
+        C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-dxln71\\src.c(8): error C2065: 'choke': undeclared identifier
+        C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-dxln71\\src.c(8): error C2143: syntax error: missing ';' before '}'
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckCSourceCompiles.cmake:52 (cmake_check_source_compiles)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/cmake/CheckCPUArchitecture.cmake:17 (check_c_source_compiles)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/cmake/CheckCPUArchitecture.cmake:36 (_internal_check_cpu_architecture)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:143 (check_cpu_architecture)"
+    checks:
+      - "Performing Test CHECK_CPU_ARCHITECTURE_LOONGARCH64"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-41fvkz"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-41fvkz"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "CHECK_CPU_ARCHITECTURE_LOONGARCH64"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-41fvkz'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_9abd5
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo -DCHECK_CPU_ARCHITECTURE_LOONGARCH64  /DWIN32 /D_WINDOWS /W3  /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_9abd5.dir\\src.c.obj /FdCMakeFiles\\cmTC_9abd5.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-41fvkz\\src.c
+        FAILED: CMakeFiles/cmTC_9abd5.dir/src.c.obj 
+        C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo -DCHECK_CPU_ARCHITECTURE_LOONGARCH64  /DWIN32 /D_WINDOWS /W3  /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_9abd5.dir\\src.c.obj /FdCMakeFiles\\cmTC_9abd5.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-41fvkz\\src.c
+        C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-41fvkz\\src.c(8): error C2065: 'choke': undeclared identifier
+        C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-41fvkz\\src.c(8): error C2143: syntax error: missing ';' before '}'
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckIncludeFile.cmake:90 (try_compile)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:1019 (check_include_file)"
+    checks:
+      - "Looking for immintrin.h"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-ryt5ua"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-ryt5ua"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "HAVE_IMMINTRIN_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-ryt5ua'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_8ff67
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  -D_GNU_SOURCE=1 /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_8ff67.dir\\CheckIncludeFile.c.obj /FdCMakeFiles\\cmTC_8ff67.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-ryt5ua\\CheckIncludeFile.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_8ff67.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_8ff67.dir\\CheckIncludeFile.c.obj  /out:cmTC_8ff67.exe /implib:cmTC_8ff67.lib /pdb:cmTC_8ff67.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckIncludeFile.cmake:90 (try_compile)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:1180 (check_include_file)"
+    checks:
+      - "Looking for stdint.h"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-290unv"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-290unv"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "HAVE_STDINT_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-290unv'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_0d4e5
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  -D_GNU_SOURCE=1 /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_0d4e5.dir\\CheckIncludeFile.c.obj /FdCMakeFiles\\cmTC_0d4e5.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-290unv\\CheckIncludeFile.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_0d4e5.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_0d4e5.dir\\CheckIncludeFile.c.obj  /out:cmTC_0d4e5.exe /implib:cmTC_0d4e5.lib /pdb:cmTC_0d4e5.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckCSourceCompiles.cmake:52 (cmake_check_source_compiles)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:1782 (check_c_source_compiles)"
+    checks:
+      - "Performing Test HAVE_WIN32_CC"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-tqal0y"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-tqal0y"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "HAVE_WIN32_CC"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-tqal0y'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_137aa
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo -DHAVE_WIN32_CC  /DWIN32 /D_WINDOWS /W3  -D_GNU_SOURCE=1 /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_137aa.dir\\src.c.obj /FdCMakeFiles\\cmTC_137aa.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-tqal0y\\src.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_137aa.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_137aa.dir\\src.c.obj  /out:cmTC_137aa.exe /implib:cmTC_137aa.lib /pdb:cmTC_137aa.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckIncludeFile.cmake:90 (try_compile)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:1824 (check_include_file)"
+    checks:
+      - "Looking for d3d9.h"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-1n3j2p"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-1n3j2p"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "HAVE_D3D_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-1n3j2p'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_7a99e
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  -D_GNU_SOURCE=1 /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_7a99e.dir\\CheckIncludeFile.c.obj /FdCMakeFiles\\cmTC_7a99e.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-1n3j2p\\CheckIncludeFile.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_7a99e.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_7a99e.dir\\CheckIncludeFile.c.obj  /out:cmTC_7a99e.exe /implib:cmTC_7a99e.lib /pdb:cmTC_7a99e.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckIncludeFile.cmake:90 (try_compile)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:1825 (check_include_file)"
+    checks:
+      - "Looking for d3d11_1.h"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-7h8h3n"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-7h8h3n"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "HAVE_D3D11_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-7h8h3n'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_f83ae
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  -D_GNU_SOURCE=1 /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_f83ae.dir\\CheckIncludeFile.c.obj /FdCMakeFiles\\cmTC_f83ae.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-7h8h3n\\CheckIncludeFile.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_f83ae.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_f83ae.dir\\CheckIncludeFile.c.obj  /out:cmTC_f83ae.exe /implib:cmTC_f83ae.lib /pdb:cmTC_f83ae.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckCSourceCompiles.cmake:52 (cmake_check_source_compiles)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:1826 (check_c_source_compiles)"
+    checks:
+      - "Performing Test HAVE_D3D12_H"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-7p5uiu"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-7p5uiu"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "HAVE_D3D12_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-7p5uiu'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_ea689
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo -DHAVE_D3D12_H  /DWIN32 /D_WINDOWS /W3  -D_GNU_SOURCE=1 /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_ea689.dir\\src.c.obj /FdCMakeFiles\\cmTC_ea689.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-7p5uiu\\src.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_ea689.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_ea689.dir\\src.c.obj  /out:cmTC_ea689.exe /implib:cmTC_ea689.lib /pdb:cmTC_ea689.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckIncludeFile.cmake:90 (try_compile)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:1834 (check_include_file)"
+    checks:
+      - "Looking for ddraw.h"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-85lpv0"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-85lpv0"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "HAVE_DDRAW_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-85lpv0'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_25b2c
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  -D_GNU_SOURCE=1 /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_25b2c.dir\\CheckIncludeFile.c.obj /FdCMakeFiles\\cmTC_25b2c.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-85lpv0\\CheckIncludeFile.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_25b2c.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_25b2c.dir\\CheckIncludeFile.c.obj  /out:cmTC_25b2c.exe /implib:cmTC_25b2c.lib /pdb:cmTC_25b2c.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckIncludeFile.cmake:90 (try_compile)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:1835 (check_include_file)"
+    checks:
+      - "Looking for dsound.h"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-azy6df"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-azy6df"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "HAVE_DSOUND_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-azy6df'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_122d0
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  -D_GNU_SOURCE=1 /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_122d0.dir\\CheckIncludeFile.c.obj /FdCMakeFiles\\cmTC_122d0.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-azy6df\\CheckIncludeFile.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_122d0.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_122d0.dir\\CheckIncludeFile.c.obj  /out:cmTC_122d0.exe /implib:cmTC_122d0.lib /pdb:cmTC_122d0.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckIncludeFile.cmake:90 (try_compile)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:1836 (check_include_file)"
+    checks:
+      - "Looking for dinput.h"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-40t8t3"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-40t8t3"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "HAVE_DINPUT_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-40t8t3'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_5e15f
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  -D_GNU_SOURCE=1 /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_5e15f.dir\\CheckIncludeFile.c.obj /FdCMakeFiles\\cmTC_5e15f.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-40t8t3\\CheckIncludeFile.c
+        C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.22621.0\\um\\dinput.h: DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_5e15f.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_5e15f.dir\\CheckIncludeFile.c.obj  /out:cmTC_5e15f.exe /implib:cmTC_5e15f.lib /pdb:cmTC_5e15f.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckIncludeFile.cmake:90 (try_compile)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:1840 (check_include_file)"
+    checks:
+      - "Looking for dxgi.h"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-6e06u5"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-6e06u5"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "HAVE_DXGI_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-6e06u5'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_6e938
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  -D_GNU_SOURCE=1 /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_6e938.dir\\CheckIncludeFile.c.obj /FdCMakeFiles\\cmTC_6e938.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6e06u5\\CheckIncludeFile.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_6e938.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_6e938.dir\\CheckIncludeFile.c.obj  /out:cmTC_6e938.exe /implib:cmTC_6e938.lib /pdb:cmTC_6e938.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckCSourceCompiles.cmake:52 (cmake_check_source_compiles)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:1854 (check_c_source_compiles)"
+    checks:
+      - "Performing Test HAVE_XINPUT_H"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-djf3k4"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-djf3k4"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "HAVE_XINPUT_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-djf3k4'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_36b52
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo -DHAVE_XINPUT_H  /DWIN32 /D_WINDOWS /W3  -D_GNU_SOURCE=1 /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_36b52.dir\\src.c.obj /FdCMakeFiles\\cmTC_36b52.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-djf3k4\\src.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_36b52.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_36b52.dir\\src.c.obj  /out:cmTC_36b52.exe /implib:cmTC_36b52.lib /pdb:cmTC_36b52.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckCSourceCompiles.cmake:52 (cmake_check_source_compiles)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:1858 (check_c_source_compiles)"
+    checks:
+      - "Performing Test HAVE_WINDOWS_GAMING_INPUT_H"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-xy29wc"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-xy29wc"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "HAVE_WINDOWS_GAMING_INPUT_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-xy29wc'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_ac6ef
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo -DHAVE_WINDOWS_GAMING_INPUT_H  /DWIN32 /D_WINDOWS /W3  -D_GNU_SOURCE=1 /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_ac6ef.dir\\src.c.obj /FdCMakeFiles\\cmTC_ac6ef.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-xy29wc\\src.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_ac6ef.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_ac6ef.dir\\src.c.obj  /out:cmTC_ac6ef.exe /implib:cmTC_ac6ef.lib /pdb:cmTC_ac6ef.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckIncludeFile.cmake:90 (try_compile)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:1866 (check_include_file)"
+    checks:
+      - "Looking for tpcshrd.h"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-j84pbs"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-j84pbs"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "HAVE_TPCSHRD_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-j84pbs'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_219c0
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  -D_GNU_SOURCE=1 /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_219c0.dir\\CheckIncludeFile.c.obj /FdCMakeFiles\\cmTC_219c0.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-j84pbs\\CheckIncludeFile.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_219c0.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_219c0.dir\\CheckIncludeFile.c.obj  /out:cmTC_219c0.exe /implib:cmTC_219c0.lib /pdb:cmTC_219c0.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckIncludeFile.cmake:90 (try_compile)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:1867 (check_include_file)"
+    checks:
+      - "Looking for roapi.h"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-nh7t1h"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-nh7t1h"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "HAVE_ROAPI_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-nh7t1h'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_57169
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  -D_GNU_SOURCE=1 /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_57169.dir\\CheckIncludeFile.c.obj /FdCMakeFiles\\cmTC_57169.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-nh7t1h\\CheckIncludeFile.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_57169.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_57169.dir\\CheckIncludeFile.c.obj  /out:cmTC_57169.exe /implib:cmTC_57169.lib /pdb:cmTC_57169.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckIncludeFile.cmake:90 (try_compile)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:1868 (check_include_file)"
+    checks:
+      - "Looking for mmdeviceapi.h"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-e08i5p"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-e08i5p"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "HAVE_MMDEVICEAPI_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-e08i5p'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_7a3ee
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  -D_GNU_SOURCE=1 /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_7a3ee.dir\\CheckIncludeFile.c.obj /FdCMakeFiles\\cmTC_7a3ee.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-e08i5p\\CheckIncludeFile.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_7a3ee.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_7a3ee.dir\\CheckIncludeFile.c.obj  /out:cmTC_7a3ee.exe /implib:cmTC_7a3ee.lib /pdb:cmTC_7a3ee.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckIncludeFile.cmake:90 (try_compile)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:1869 (check_include_file)"
+    checks:
+      - "Looking for audioclient.h"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-0lr05n"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-0lr05n"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "HAVE_AUDIOCLIENT_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-0lr05n'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_cb7fa
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  -D_GNU_SOURCE=1 /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_cb7fa.dir\\CheckIncludeFile.c.obj /FdCMakeFiles\\cmTC_cb7fa.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-0lr05n\\CheckIncludeFile.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_cb7fa.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_cb7fa.dir\\CheckIncludeFile.c.obj  /out:cmTC_cb7fa.exe /implib:cmTC_cb7fa.lib /pdb:cmTC_cb7fa.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckIncludeFile.cmake:90 (try_compile)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:1870 (check_include_file)"
+    checks:
+      - "Looking for sensorsapi.h"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-s25rbb"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-s25rbb"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "HAVE_SENSORSAPI_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-s25rbb'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_07841
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  -D_GNU_SOURCE=1 /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_07841.dir\\CheckIncludeFile.c.obj /FdCMakeFiles\\cmTC_07841.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-s25rbb\\CheckIncludeFile.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_07841.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_07841.dir\\CheckIncludeFile.c.obj  /out:cmTC_07841.exe /implib:cmTC_07841.lib /pdb:cmTC_07841.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/super/AppData/Local/Programs/CLion/bin/cmake/win/x64/share/cmake-3.27/Modules/CheckIncludeFile.cmake:90 (try_compile)"
+      - "cmake-build-release-visual-studio/_deps/sdl2-src/CMakeLists.txt:1871 (check_include_file)"
+    checks:
+      - "Looking for shellscalingapi.h"
+    directories:
+      source: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-odvyhu"
+      binary: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-odvyhu"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/_deps/sdl2-src/cmake"
+    buildResult:
+      variable: "HAVE_SHELLSCALINGAPI_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/super/Downloads/dev_foster/Foster/Platform/cmake-build-release-visual-studio/CMakeFiles/CMakeScratch/TryCompile-odvyhu'
+        
+        Run Build Command(s): C:/Users/super/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe -v cmTC_8305d
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  -D_GNU_SOURCE=1 /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\\cmTC_8305d.dir\\CheckIncludeFile.c.obj /FdCMakeFiles\\cmTC_8305d.dir\\ /FS -c C:\\Users\\super\\Downloads\\dev_foster\\Foster\\Platform\\cmake-build-release-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-odvyhu\\CheckIncludeFile.c
+        [2/2] cmd.exe /C "cd . && C:\\Users\\super\\AppData\\Local\\Programs\\CLion\\bin\\cmake\\win\\x64\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_8305d.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1438~1.331\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_8305d.dir\\CheckIncludeFile.c.obj  /out:cmTC_8305d.exe /implib:cmTC_8305d.lib /pdb:cmTC_8305d.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+...

@@ -40,7 +40,7 @@ public struct Ease
 
 	#region Easers
 
-	public static readonly Ease Linear = new(t => t);
+	public static readonly Easer Linear = t => t;
 	public static readonly Ease Quad = new(t => t * t);
 	public static readonly Ease Cube = new(t => t * t * t);
 	public static readonly Ease Quart = new(t => t * t * t * t);
@@ -116,6 +116,53 @@ public struct Ease
 		else
 			return 1 - (eased - .5f) * 2;
 	}
+
+	#endregion
+
+	#region Obsolete Compatibility
+
+	// redirections to ease implementations
+	[Obsolete("Use Sine.In instead")]
+	public static readonly Easer SineIn = Sine.In;
+	[Obsolete("Use Sine.Out instead")]
+	public static readonly Easer SineOut = Sine.Out;
+	[Obsolete("Use Sine.InOut instead")]
+	public static readonly Easer SineInOut = Sine.InOut;
+
+	[Obsolete("Use Expo.In instead")]
+	public static readonly Easer ExpoIn = Expo.In;
+	[Obsolete("Use Expo.Out instead")]
+	public static readonly Easer ExpoOut = Expo.Out;
+	[Obsolete("Use Expo.InOut instead")]
+	public static readonly Easer ExpoInOut = Expo.InOut;
+
+	[Obsolete("Use Back.In instead")]
+	public static readonly Easer BackIn = Back.In;
+	[Obsolete("Use Back.Out instead")]
+	public static readonly Easer BackOut = Back.Out;
+	[Obsolete("Use Back.InOut instead")]
+	public static readonly Easer BackInOut = Back.InOut;
+
+	[Obsolete("Use BigBack.In instead")]
+	public static readonly Easer BigBackIn = BigBack.In;
+	[Obsolete("Use BigBack.Out instead")]
+	public static readonly Easer BigBackOut = BigBack.Out;
+	[Obsolete("Use BigBack.InOut instead")]
+	public static readonly Easer BigBackInOut = BigBack.InOut;
+
+	[Obsolete("Use Elastic.In instead")]
+	public static readonly Easer ElasticIn = Elastic.In;
+	[Obsolete("Use Elastic.Out instead")]
+	public static readonly Easer ElasticOut = Elastic.Out;
+	[Obsolete("Use Elastic.InOut instead")]
+	public static readonly Easer ElasticInOut = Elastic.InOut;
+
+	[Obsolete("Use Bounce.In instead")]
+	public static readonly Easer BounceIn = Bounce.In;
+	[Obsolete("Use Bounce.Out instead")]
+	public static readonly Easer BounceOut = Bounce.Out;
+	[Obsolete("Use Bounce.InOut instead")]
+	public static readonly Easer BounceInOut = Bounce.InOut;
 
 	#endregion
 }
