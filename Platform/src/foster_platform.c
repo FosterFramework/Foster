@@ -391,7 +391,11 @@ void FosterSetFlags(FosterFlags flags)
 
 		// vsync
 		if (fstate.device.renderer == FOSTER_RENDERER_OPENGL)
-			SDL_GL_SetSwapInterval(FOSTER_CHECK(flags, FOSTER_FLAG_VSYNC) ? 1 : 0);
+		{
+			int result = SDL_GL_SetSwapInterval(FOSTER_CHECK(flags, FOSTER_FLAG_VSYNC) ? 1 : 0);
+			if (result != 0)
+				FosterLogWarn("Setting V-Sync Failed: %s", SDL_GetError());
+		}
 
 		fstate.flags = flags;
 	}
