@@ -167,10 +167,9 @@ void FosterPollEvents()
 
 	// always update the mouse position state
 	{
-		int win_x, win_y, x, y;
-		SDL_GetWindowPosition(fstate.window, &win_x, &win_y);
-		SDL_GetGlobalMouseState(&x, &y);
-		fstate.desc.onMouseMove((float)(x - win_x), (float)(y - win_y));
+		int rel_x, rel_y;
+		SDL_GetMouseState(&rel_x, &rel_y);
+		fstate.desc.onMouseMove((float)(rel_x), (float)(rel_y));
 	}
 
 	SDL_Event event;
