@@ -1179,6 +1179,14 @@ void FosterTextureDestroy_OpenGL(FosterTexture* texture)
 
 	if (!tex->disposed)
 	{
+		// make sure this isn't bound anymore
+		for (int i = 0; i < FOSTER_MAX_UNIFORM_TEXTURES; i ++)
+		{
+			fgl.stateTextureSlots[i] == tex->id;
+			FosterBindTexture(i, 0);
+		}
+
+		// delete it
 		tex->disposed = 1;
 		fgl.glDeleteTextures(1, &tex->id);
 		FosterTextureReturnReference(tex);
@@ -1198,6 +1206,7 @@ FosterTarget* FosterTargetCreate_OpenGL(int width, int height, FosterTextureForm
 
 	fgl.glGenFramebuffers(1, &result.id);
 	fgl.glBindFramebuffer(GL_FRAMEBUFFER, result.id);
+	fgl.stateFrameBuffer = result.id;
 
 	for (int i = 0; i < attachmentCount; i++)
 	{
