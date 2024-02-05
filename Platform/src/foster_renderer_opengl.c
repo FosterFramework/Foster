@@ -14,24 +14,24 @@
 #endif
 
 // OpenGL Value Types
-typedef ptrdiff_t GLintptr;
-typedef ptrdiff_t GLsizeiptr;
-typedef unsigned int GLenum;
-typedef unsigned char GLboolean;
-typedef unsigned int GLbitfield;
-typedef void GLvoid;
-typedef signed char	GLbyte;	  /* 1-byte signed */
-typedef short GLshort;	 /* 2-byte signed */
-typedef int	GLint;	   /* 4-byte signed */
-typedef unsigned char GLubyte;	 /* 1-byte unsigned */
-typedef unsigned short GLushort;	/* 2-byte unsigned */
-typedef unsigned int GLuint;	  /* 4-byte unsigned */
-typedef int	GLsizei;	 /* 4-byte signed */
-typedef float GLfloat;	 /* single precision float */
-typedef float GLclampf;	/* single precision float in [0,1] */
-typedef double GLdouble;	/* double precision float */
-typedef double GLclampd;	/* double precision float in [0,1] */
-typedef char GLchar;
+typedef ptrdiff_t		GLintptr;
+typedef ptrdiff_t		GLsizeiptr;
+typedef unsigned int	GLenum;
+typedef unsigned char	GLboolean;
+typedef unsigned int	GLbitfield;
+typedef void			GLvoid;
+typedef signed char		GLbyte;	  /* 1-byte signed */
+typedef short			GLshort;	 /* 2-byte signed */
+typedef int				GLint;	   /* 4-byte signed */
+typedef unsigned char	GLubyte;	 /* 1-byte unsigned */
+typedef unsigned short	GLushort;	/* 2-byte unsigned */
+typedef unsigned int	GLuint;	  /* 4-byte unsigned */
+typedef int				GLsizei;	 /* 4-byte signed */
+typedef float			GLfloat;	 /* single precision float */
+typedef float			GLclampf;	/* single precision float in [0,1] */
+typedef double			GLdouble;	/* double precision float */
+typedef double			GLclampd;	/* double precision float in [0,1] */
+typedef char			GLchar;
 
 // OpenGL Constants
 #define GL_DONT_CARE 0x1100
@@ -450,9 +450,9 @@ typedef struct
 	int max_renderbuffer_size;
 	int max_samples;
 	int max_texture_image_units;
-int max_texture_size;
-
+	int max_texture_size;
 } FosterOpenGLState;
+
 static FosterOpenGLState fgl;
 
 // debug callback
@@ -764,9 +764,9 @@ void FosterEnsureTextureSlotIs(int slot, GLuint id)
 void FosterSetTextureSampler(FosterTexture_OpenGL* tex, FosterTextureSampler sampler)
 {
 	if (!tex->disposed && (
-			tex->sampler.filter != sampler.filter ||
-			tex->sampler.wrapX != sampler.wrapX ||
-			tex->sampler.wrapY != sampler.wrapY))
+		tex->sampler.filter != sampler.filter ||
+		tex->sampler.wrapX != sampler.wrapX ||
+		tex->sampler.wrapY != sampler.wrapY))
 	{
 		FosterBindTexture(0, tex->id);
 
@@ -886,10 +886,10 @@ void FosterSetBlend(const FosterBlend* blend)
 	if (fgl.stateInitializing || fgl.stateBlend.mask != blend->mask)
 	{
 		fgl.glColorMask(
-				((int)blend->mask & (int)FOSTER_BLEND_MASK_R),
-				((int)blend->mask & (int)FOSTER_BLEND_MASK_G),
-				((int)blend->mask & (int)FOSTER_BLEND_MASK_B),
-				((int)blend->mask & (int)FOSTER_BLEND_MASK_A));
+			((int)blend->mask & (int)FOSTER_BLEND_MASK_R),
+			((int)blend->mask & (int)FOSTER_BLEND_MASK_G),
+			((int)blend->mask & (int)FOSTER_BLEND_MASK_B),
+			((int)blend->mask & (int)FOSTER_BLEND_MASK_A));
 	}
 
 	if (fgl.stateInitializing || fgl.stateBlend.rgba != blend->rgba)
@@ -900,10 +900,10 @@ void FosterSetBlend(const FosterBlend* blend)
 		unsigned char a = blend->rgba;
 
 		fgl.glBlendColor(
-				r / 255.0f,
-				g / 255.0f,
-				b / 255.0f,
-				a / 255.0f);
+			r / 255.0f,
+			g / 255.0f,
+			b / 255.0f,
+			a / 255.0f);
 	}
 
 	fgl.stateBlend = *blend;
@@ -1017,7 +1017,7 @@ bool FosterInitialize_OpenGL()
 
 	// bind opengl functions
 	#define GL_FUNC(name, ...) fgl.gl ## name = (gl ## name ## Fn)(SDL_GL_GetProcAddress("gl" #name));
-		GL_FUNCTIONS
+	GL_FUNCTIONS
 	#undef GL_FUNC
 
 	// bind debug message callback
@@ -1384,7 +1384,7 @@ FosterShader* FosterShaderCreate_OpenGL(FosterShaderData* data)
 
 			// get the name & properties
 			GLsizei nameLen;
-			char	nameBuf[256];
+			char nameBuf[256];
 			fgl.glGetActiveUniform(id, i, 255, &nameLen, &uniform->glSize, &uniform->glType, nameBuf);
 
 			// array names end with "[0]", and we don't want that
@@ -1752,19 +1752,19 @@ void FosterDraw_OpenGL(FosterDrawCommand* command)
 		if (command->instanceCount > 0)
 		{
 			fgl.glDrawElementsInstanced(
-					GL_TRIANGLES,
-					(GLint)(command->indexCount),
-					mesh->indexFormat,
-					(void*)indexStartPtr,
-					(GLint)command->instanceCount);
+				GL_TRIANGLES,
+				(GLint)(command->indexCount),
+				mesh->indexFormat,
+				(void*)indexStartPtr,
+				(GLint)command->instanceCount);
 		}
 		else
 		{
 			fgl.glDrawElements(
-					GL_TRIANGLES,
-					(GLint)(command->indexCount),
-					mesh->indexFormat,
-					(void*)indexStartPtr);
+				GL_TRIANGLES,
+				(GLint)(command->indexCount),
+				mesh->indexFormat,
+				(void*)indexStartPtr);
 		}
 	}
 }
