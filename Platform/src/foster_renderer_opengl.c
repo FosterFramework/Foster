@@ -1182,8 +1182,8 @@ void FosterTextureDestroy_OpenGL(FosterTexture* texture)
 		// make sure this isn't bound anymore
 		for (int i = 0; i < FOSTER_MAX_UNIFORM_TEXTURES; i ++)
 		{
-			fgl.stateTextureSlots[i] == tex->id;
-			FosterBindTexture(i, 0);
+			if (fgl.stateTextureSlots[i] == tex->id)
+				FosterBindTexture(i, 0);
 		}
 
 		// delete it
