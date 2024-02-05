@@ -136,6 +136,13 @@ public struct Ease
 	[Obsolete("Use Expo.InOut instead")]
 	public static readonly Easer ExpoInOut = Expo.InOut;
 
+	[Obsolete("Use Quad.In instead")]
+	public static readonly Easer QuadIn = Quad.In;
+	[Obsolete("Use Quad.Out instead")]
+	public static readonly Easer QuadOut = Quad.Out;
+	[Obsolete("Use Quad.InOut instead")]
+	public static readonly Easer QuadInOut = Quad.InOut;
+
 	[Obsolete("Use Cube.In instead")]
 	public static readonly Easer CubeIn = Cube.In;
 	[Obsolete("Use Cube.Out instead")]
