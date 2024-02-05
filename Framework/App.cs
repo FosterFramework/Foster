@@ -265,9 +265,9 @@ public static class App
 
 	/// <summary>
 	/// Runs the Application with the given Module automatically registered.
-	/// Functionally the same as calling <see cref="Register{T}"/> followed by <see cref="Run(string, int, int, bool)"/>
+	/// Functionally the same as calling <see cref="Register{T}"/> followed by <see cref="Run(string, int, int, bool, Renderers)"/>
 	/// </summary>
-	public static void Run<T>(string applicationName, int width, int height, bool fullscreen = false) where T : Module, new()
+	public static void Run<T>(string applicationName, int width, int height, bool fullscreen = false, Renderers renderer = Renderers.None) where T : Module, new()
 	{
 		Register<T>();
 		Run(applicationName, width, height, fullscreen);
@@ -276,7 +276,7 @@ public static class App
 	/// <summary>
 	/// Runs the Application
 	/// </summary>
-	public static void Run(string applicationName, int width, int height, bool fullscreen = false)
+	public static void Run(string applicationName, int width, int height, bool fullscreen = false, Renderers renderer = Renderers.None)
 	{
 		Debug.Assert(!Running, "Application is already running");
 		Debug.Assert(!Exiting, "Application is still exiting");
@@ -301,6 +301,7 @@ public static class App
 			applicationName = name,
 			width = width,
 			height = height,
+			renderer = renderer,
 			flags = App.flags,
 			onText = Input.OnText,
 			onKey = Input.OnKey,
