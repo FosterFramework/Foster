@@ -59,11 +59,11 @@ public class Content
 	#region Directory
 	public virtual bool FileExists(string relativePath)
 	{
-		return File.Exists(CurrentDirectory + relativePath);
+		return File.Exists(Path.Combine(CurrentDirectory, relativePath));
 	}
 	public virtual bool DirectoryExists(string relativePath)
 	{
-		return Directory.Exists(CurrentDirectory + relativePath);
+		return Directory.Exists(Path.Combine(CurrentDirectory, relativePath));
 	}
 	public virtual bool Exists(string name)
 	{
@@ -97,17 +97,17 @@ public class Content
 
 	public virtual Stream OpenRead(string relativePath)
 	{
-		return File.OpenRead(CurrentDirectory + relativePath);
+		return File.OpenRead(Path.Combine(CurrentDirectory, relativePath));
 	}
 
 	public virtual byte[] ReadAllBytes(string relativePath)
 	{
-		return File.ReadAllBytes(CurrentDirectory + relativePath);
+		return File.ReadAllBytes(Path.Combine(CurrentDirectory, relativePath));
 	}
 
 	public virtual string ReadAllText(string relativePath)
 	{
-		return File.ReadAllText(CurrentDirectory + relativePath);
+		return File.ReadAllText(Path.Combine(CurrentDirectory, relativePath));
 	}
 
 	#endregion

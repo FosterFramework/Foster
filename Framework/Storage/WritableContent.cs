@@ -11,17 +11,17 @@ public class WritableContent : Content
 	#region Directory
 	public virtual void CreateDirectory(string path)
 	{
-		Directory.CreateDirectory(CurrentDirectory + path);
+		Directory.CreateDirectory(Path.Combine(CurrentDirectory, path));
 	}
 
 	public virtual void DeleteDirectory(string path, bool recursive)
 	{
-		Directory.Delete(CurrentDirectory + path, recursive);
+		Directory.Delete(Path.Combine(CurrentDirectory, path), recursive);
 	}
 
 	public virtual void DeleteFile(string path)
 	{
-		File.Delete(CurrentDirectory + path);
+		File.Delete(Path.Combine(CurrentDirectory, path));
 	}
 
 	#endregion
@@ -30,17 +30,17 @@ public class WritableContent : Content
 
 	public virtual Stream OpenWrite(string path)
 	{
-		return File.OpenWrite(CurrentDirectory + path);
+		return File.OpenWrite(Path.Combine(CurrentDirectory, path));
 	}
 
 	public virtual void WriteAllBytes(string path, byte[] bytes)
 	{
-		File.WriteAllBytes(CurrentDirectory + path, bytes);
+		File.WriteAllBytes(Path.Combine(CurrentDirectory, path), bytes);
 	}
 
 	public virtual void WriteAllText(string path, string text)
 	{
-		File.WriteAllText(CurrentDirectory + path, text);
+		File.WriteAllText(Path.Combine(CurrentDirectory, path), text);
 	}
 
 	#endregion
