@@ -29,6 +29,9 @@ jobs:
           - os: ubuntu-latest
             arch: arm64
             lib: libarm64/libFosterPlatform.so
+          - os: ubuntu-latest
+            arch: arm32
+            lib: libarm/libFosterPlatform.so
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
@@ -51,12 +54,26 @@ jobs:
           sudo dpkg --add-architecture arm64
           sudo apt-get update
           sudo apt-get install -y libsdl2-dev:arm64 libwayland-dev:arm64 libegl-dev:arm64 libdrm-dev:arm64 libxkbcommon-dev:arm64 libpulse-dev:arm64
+      - name: Setup Linux dependencies (arm32)
+        if: ${{ runner.os == 'Linux' && matrix.arch == 'arm32' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf binutils-arm-linux-gnueabihf
+          sudo sed -i "s/^deb/deb [arch=amd64,i386]/g" /etc/apt/sources.list
+          echo "deb [arch=arm64,armhf] http://ports.ubuntu.com/ $(lsb_release -s -c) main universe multiverse restricted" | sudo tee -a /etc/apt/sources.list
+          echo "deb [arch=arm64,armhf] http://ports.ubuntu.com/ $(lsb_release -s -c)-updates main universe multiverse restricted" | sudo tee -a /etc/apt/sources.list
+          sudo dpkg --add-architecture armhf
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-dev:armhf libwayland-dev:armhf libegl-dev:armhf libdrm-dev:armhf libxkbcommon-dev:armhf libpulse-dev:armhf
       - name: CMake Configure
-        if: ${{ matrix.arch != 'arm64' }}
+        if: ${{ matrix.arch != 'arm64' && matrix.arch != 'arm32' }}
         run: cmake -B build -S Platform
       - name: CMake Configure (arm64)
         if: ${{ runner.os == 'Linux' && matrix.arch == 'arm64' }}
         run: PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig cmake -B build -S Platform -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_SYSTEM_NAME=Linux
+      - name: CMake Configure (arm32)
+        if: ${{ runner.os == 'Linux' && matrix.arch == 'arm32' }}
+        run: PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabihf/pkgconfig cmake -B build -S Platform -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++ -DCMAKE_SYSTEM_PROCESSOR=armv7l -DCMAKE_SYSTEM_NAME=Linux
       - name: CMake Build
         run: cmake --build build --config Release
       - name: Publish Artifact
@@ -91,6 +108,11 @@ jobs:
         with:
           name: ubuntu-latest-arm64-build
           path: Platform/libs/libarm64
+      - name: Download ubuntu lib (arm32)
+        uses: actions/download-artifact@v3
+        with:
+          name: ubuntu-latest-arm32-build
+          path: Platform/libs/libarm
       - name: Display structure of libs
         run: ls -R
         working-directory: Platform/libs

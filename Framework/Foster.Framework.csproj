@@ -8,7 +8,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Title>Foster</Title>
     <Product>Foster</Product>
-    <Version>0.1.16-alpha</Version>
+    <Version>0.1.18-alpha</Version>
     <Authors>Noel Berry</Authors>
     <Description>A small 2D cross-platform Game Framework</Description>
     <RepositoryType>git</RepositoryType>
@@ -40,6 +40,12 @@
     <Content Include="$(NativeLibsDir)libarm64\libFosterPlatform.so">
       <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\linux-arm64\native</PackagePath>
+      <Pack>True</Pack>
+      <Link>libFosterPlatform.so</Link>
+    </Content>
+    <Content Include="$(NativeLibsDir)libarm\libFosterPlatform.so">
+      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm'">PreserveNewest</CopyToOutputDirectory>
+      <PackagePath>runtimes\linux-arm\native</PackagePath>
       <Pack>True</Pack>
       <Link>libFosterPlatform.so</Link>
     </Content>
