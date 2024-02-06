@@ -43,6 +43,12 @@
       <Pack>True</Pack>
       <Link>libFosterPlatform.so</Link>
     </Content>
+    <Content Include="$(NativeLibsDir)libarm\libFosterPlatform.so">
+      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm'">PreserveNewest</CopyToOutputDirectory>
+      <PackagePath>runtimes\linux-arm\native</PackagePath>
+      <Pack>True</Pack>
+      <Link>libFosterPlatform.so</Link>
+    </Content>
     <Content Include="$(NativeLibsDir)osx\libFosterPlatform.dylib">
       <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('OSX'))">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\osx\native</PackagePath>
