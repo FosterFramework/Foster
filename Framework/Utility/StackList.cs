@@ -26,14 +26,14 @@ public struct StackList8<T> : IEnumerable<T>, IList<T>
 	public void Add(T value)
 	{
 		if (count >= Capacity)
-			throw new OutOfMemoryException();
+			throw new Exception("Exceeding Capacity of StackList");
 		elements[count++] = value;
 	}
 
 	public void Resize(int count)
 	{
 		if (count >= Capacity)
-			throw new OutOfMemoryException();
+			throw new Exception("Exceeding Capacity of StackList");
 		this.count = count;
 	}
 
@@ -64,7 +64,7 @@ public struct StackList8<T> : IEnumerable<T>, IList<T>
 	public void Insert(int index, T item)
 	{
 		if (count >= Capacity)
-			throw new OutOfMemoryException();
+			throw new Exception("Exceeding Capacity of StackList");
 		for (int i = count - 1; i > index; i --)
 			elements[i] = elements[i - 1];
 		elements[index] = item;
@@ -148,14 +148,14 @@ public struct StackList16<T> : IEnumerable<T>, IList<T>
 	public void Add(T value)
 	{
 		if (count >= Capacity)
-			throw new OutOfMemoryException();
+			throw new Exception("Exceeding Capacity of StackList");
 		elements[count++] = value;
 	}
 
 	public void Resize(int count)
 	{
 		if (count >= Capacity)
-			throw new OutOfMemoryException();
+			throw new Exception("Exceeding Capacity of StackList");
 		this.count = count;
 	}
 
@@ -186,7 +186,7 @@ public struct StackList16<T> : IEnumerable<T>, IList<T>
 	public void Insert(int index, T item)
 	{
 		if (count >= Capacity)
-			throw new OutOfMemoryException();
+			throw new Exception("Exceeding Capacity of StackList");
 		for (int i = count - 1; i > index; i --)
 			elements[i] = elements[i - 1];
 		elements[index] = item;
@@ -270,14 +270,14 @@ public struct StackList32<T> : IEnumerable<T>, IList<T>
 	public void Add(T value)
 	{
 		if (count >= Capacity)
-			throw new OutOfMemoryException();
+			throw new Exception("Exceeding Capacity of StackList");
 		elements[count++] = value;
 	}
 
 	public void Resize(int count)
 	{
 		if (count >= Capacity)
-			throw new OutOfMemoryException();
+			throw new Exception("Exceeding Capacity of StackList");
 		this.count = count;
 	}
 
@@ -308,7 +308,7 @@ public struct StackList32<T> : IEnumerable<T>, IList<T>
 	public void Insert(int index, T item)
 	{
 		if (count >= Capacity)
-			throw new OutOfMemoryException();
+			throw new Exception("Exceeding Capacity of StackList");
 		for (int i = count - 1; i > index; i --)
 			elements[i] = elements[i - 1];
 		elements[index] = item;
@@ -392,14 +392,14 @@ public struct StackList64<T> : IEnumerable<T>, IList<T>
 	public void Add(T value)
 	{
 		if (count >= Capacity)
-			throw new OutOfMemoryException();
+			throw new Exception("Exceeding Capacity of StackList");
 		elements[count++] = value;
 	}
 
 	public void Resize(int count)
 	{
 		if (count >= Capacity)
-			throw new OutOfMemoryException();
+			throw new Exception("Exceeding Capacity of StackList");
 		this.count = count;
 	}
 
@@ -430,7 +430,7 @@ public struct StackList64<T> : IEnumerable<T>, IList<T>
 	public void Insert(int index, T item)
 	{
 		if (count >= Capacity)
-			throw new OutOfMemoryException();
+			throw new Exception("Exceeding Capacity of StackList");
 		for (int i = count - 1; i > index; i --)
 			elements[i] = elements[i - 1];
 		elements[index] = item;
