@@ -86,7 +86,7 @@ public static class Log
 	}
 
 	public static void Warning(string message)
-		=> Info(message.AsSpan());
+		=> Warning(message.AsSpan());
 
 	public static void Error(ReadOnlySpan<char> message)
 	{

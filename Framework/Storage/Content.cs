@@ -74,7 +74,7 @@ public class Content
 	{
 		return new ContentEnumerator(
 				Directory.GetFiles(
-					CurrentDirectory + path,
+					Path.Combine(CurrentDirectory, path),
 					searchPattern,
 					recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly
 					));
@@ -82,10 +82,9 @@ public class Content
 
 	public virtual IEnumerator<string> EnumerateDirectories(string path, string searchPattern, bool recursive)
 	{
-
 		return new ContentEnumerator(
 			Directory.GetDirectories(
-				CurrentDirectory + path,
+				Path.Combine(CurrentDirectory, path),
 				searchPattern,
 				recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly
 				));
