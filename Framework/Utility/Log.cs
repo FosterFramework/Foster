@@ -123,7 +123,7 @@ public static class Log
 	}
 
 	public static void Error(string message)
-		=> Info(message.AsSpan());
+		=> Error(message.AsSpan());
 
 	public static void Append(ReadOnlySpan<char> message)
 	{
