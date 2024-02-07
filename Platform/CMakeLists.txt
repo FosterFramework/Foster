@@ -99,7 +99,12 @@ if (EMSCRIPTEN)
 
 # Pull SDL2 from its Github repo
 else()
-	if (NOT DEFINED FOSTER_SDL2_LIBS)
+	if (DEFINED FOSTER_SDL2_LIBS)
+                set(SDL2_LIBRARIES ${FOSTER_SDL2_LIBS})
+                set(SDL2_INDLUDE_DIRS ${FOSTER_SDL2_INCLUDE})
+                # Tell external SDL it's going to be a shared lib
+                set_property(TARGET ${FOSTER_SDL2_LIBS} PROPERTY POSITION_INDEPENDENT_CODE ON)
+	else()
 		include(FetchContent)
 		set(FETCHCONTENT_QUIET FALSE)
 		set(SDL_TEST_ENABLED_BY_DEFAULT OFF)
@@ -113,17 +118,12 @@ else()
 			GIT_PROGRESS TRUE
 		)
 		FetchContent_MakeAvailable(SDL2)
-		set(FOSTER_SDL2_LIBS SDL2-static)
-		set(FOSTER_SDL2_INCLUDE ${sdl2_SOURCE_DIRS}/include)
+		set(SDL2_LIBRARIES ${SDL2_LIBRARIES} SDL2-static)
+		set(SDL2_INCLUDE_DIRS ${SDL2_SOURCE_DIR}/include)
 	endif()
-
-	# statically link SDL2 since we're building it ourselve
-	set(LIBS ${LIBS} ${FOSTER_SDL2_LIBS})
-	target_include_directories(${TARGET_NAME} PRIVATE ${FOSTER_SDL2_INCLUDE})
+	set(LIBS ${LIBS} ${SDL2_LIBRARIES})
+	target_include_directories(${TARGET_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
 endif()
-
-# Tell SDL it's going to be a shared lib
-set_property(TARGET ${FOSTER_SDL2_LIBS} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 # Link SDL
 target_link_libraries(${TARGET_NAME} PRIVATE ${LIBS})
