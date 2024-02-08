@@ -280,6 +280,7 @@ public static class App
 	{
 		Debug.Assert(!Running, "Application is already running");
 		Debug.Assert(!Exiting, "Application is still exiting");
+		Debug.Assert(width > 0 && height > 0, "Width or height is <= 0");
 
 		Log.Info($"Foster: v{Version.Major}.{Version.Minor}.{Version.Build}");
 		Log.Info($"Platform: {RuntimeInformation.OSDescription} ({RuntimeInformation.OSArchitecture})");
@@ -320,6 +321,11 @@ public static class App
 					Exit();
 			}
 		});
+
+		if(Platform.FosterIsRunning() == 0)
+		{
+			throw new Exception("Platform is not running");
+		}
 
 		UserPath = Platform.ParseUTF8(Platform.FosterGetUserPath());
 		Graphics.Initialize();
