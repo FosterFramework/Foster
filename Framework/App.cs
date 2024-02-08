@@ -322,6 +322,11 @@ public static class App
 			}
 		});
 
+		if(Platform.FosterIsRunning() == 0)
+		{
+			throw new Exception("Platform is not running");
+		}
+
 		UserPath = Platform.ParseUTF8(Platform.FosterGetUserPath());
 		Graphics.Initialize();
 
