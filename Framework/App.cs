@@ -435,7 +435,7 @@ public static class App
 			Update(deltaTime);
 		}
 
-		for (int i = 0; i < modules.Count; i ++)
+		for (int i = modules.Count - 1; i >= 0; i --)
 			modules[i].Render();
 
 		Platform.FosterEndFrame();
