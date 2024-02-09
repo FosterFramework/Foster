@@ -364,7 +364,7 @@ public static class App
 			Tick();
 
 		// shutdown
-		for (int i = 0; i < modules.Count; i ++)
+		for (int i = modules.Count - 1; i >= 0; i --)
 			modules[i].Shutdown();
 		modules.Clear();
 
