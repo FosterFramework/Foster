@@ -400,7 +400,7 @@ public class Packer
 				foreach (var entry in result.Entries)
 					if (entry.Index == source.DuplicateOf.Value)
 					{
-						result.Entries.Add(new(source.Index, source.Name, entry.Page, entry.Source, entry.Frame));
+						result.Entries.Add(new(source.Index, source.Name, entry.Page, entry.Source, source.Frame));
 						break;
 					}
 			}
