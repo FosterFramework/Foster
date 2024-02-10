@@ -22,6 +22,7 @@ typedef struct
 	FosterLogFn logWarn;
 	FosterLogFn logError;
 	FosterLogging logLevel;
+	FosterBool polledMouseMovement;
 } FosterState;
 
 FosterState* FosterGetState();

@@ -14,9 +14,9 @@ public static class App
 	private static TimeSpan accumulator;
 	private static string title = string.Empty;
 	private static Platform.FosterFlags flags = 
-		Platform.FosterFlags.RESIZABLE | 
-		Platform.FosterFlags.VSYNC |
-		Platform.FosterFlags.MOUSE_VISIBLE;
+		Platform.FosterFlags.Resizable |
+		Platform.FosterFlags.Vsync |
+		Platform.FosterFlags.MouseVisible;
 
 	/// <summary>
 	/// Foster Version Number
@@ -183,11 +183,11 @@ public static class App
 	/// </summary>
 	public static bool Fullscreen
 	{
-		get => flags.Has(Platform.FosterFlags.FULLSCREEN);
+		get => flags.Has(Platform.FosterFlags.Fullscreen);
 		set
 		{
-			if (value) flags |= Platform.FosterFlags.FULLSCREEN;
-			else flags &= ~Platform.FosterFlags.FULLSCREEN;
+			if (value) flags |= Platform.FosterFlags.Fullscreen;
+			else flags &= ~Platform.FosterFlags.Fullscreen;
 			Platform.FosterSetFlags(flags);
 		}
 	}
@@ -197,11 +197,11 @@ public static class App
 	/// </summary>
 	public static bool Resizable
 	{
-		get => flags.Has(Platform.FosterFlags.RESIZABLE);
+		get => flags.Has(Platform.FosterFlags.Resizable);
 		set
 		{
-			if (value) flags |= Platform.FosterFlags.RESIZABLE;
-			else flags &= ~Platform.FosterFlags.RESIZABLE;
+			if (value) flags |= Platform.FosterFlags.Resizable;
+			else flags &= ~Platform.FosterFlags.Resizable;
 			Platform.FosterSetFlags(flags);
 		}
 	}
@@ -211,11 +211,11 @@ public static class App
 	/// </summary>
 	public static bool VSync
 	{
-		get => flags.Has(Platform.FosterFlags.VSYNC);
+		get => flags.Has(Platform.FosterFlags.Vsync);
 		set
 		{
-			if (value) flags |= Platform.FosterFlags.VSYNC;
-			else flags &= ~Platform.FosterFlags.VSYNC;
+			if (value) flags |= Platform.FosterFlags.Vsync;
+			else flags &= ~Platform.FosterFlags.Vsync;
 			Platform.FosterSetFlags(flags);
 		}
 	}
@@ -225,11 +225,11 @@ public static class App
 	/// </summary>
 	public static bool MouseVisible
 	{
-		get => flags.Has(Platform.FosterFlags.MOUSE_VISIBLE);
+		get => flags.Has(Platform.FosterFlags.MouseVisible);
 		set
 		{
-			if (value) flags |= Platform.FosterFlags.MOUSE_VISIBLE;
-			else flags &= ~Platform.FosterFlags.MOUSE_VISIBLE;
+			if (value) flags |= Platform.FosterFlags.MouseVisible;
+			else flags &= ~Platform.FosterFlags.MouseVisible;
 			Platform.FosterSetFlags(flags);
 		}
 	}
@@ -292,10 +292,10 @@ public static class App
 		MainThreadID = Thread.CurrentThread.ManagedThreadId;
 
 		if (fullscreen)
-			App.flags |= Platform.FosterFlags.FULLSCREEN;
+			flags |= Platform.FosterFlags.Fullscreen;
 
-		App.title = applicationName;
-		App.Name = applicationName;
+		title = applicationName;
+		Name = applicationName;
 		var name = Platform.ToUTF8(applicationName);
 
 		Platform.FosterStartup(new()
@@ -305,23 +305,7 @@ public static class App
 			width = width,
 			height = height,
 			renderer = renderer,
-			flags = App.flags,
-			onText = Input.OnText,
-			onKey = Input.OnKey,
-			onMouseButton = Input.OnMouseButton,
-			onMouseMove = Input.OnMouseMove,
-			onMouseWheel = Input.OnMouseWheel,
-			onControllerConnect = Input.OnControllerConnect,
-			onControllerDisconnect = Input.OnControllerDisconnect,
-			onControllerButton = Input.OnControllerButton,
-			onControllerAxis = Input.OnControllerAxis,
-			onExitRequest = () =>
-			{
-				if (OnExitRequested != null)
-					OnExitRequested();
-				else
-					Exit();
-			}
+			flags = flags,
 		});
 
 		if(Platform.FosterIsRunning() == 0)
@@ -339,7 +323,7 @@ public static class App
 		timer.Restart();
 
 		// poll events once, so input has controller state before Startup
-		Platform.FosterPollEvents();
+		PollEvents();
 		Input.Step();
 
 		// register & startup all modules in order
@@ -377,6 +361,16 @@ public static class App
 		Exiting = false;
 	}
 
+	/// <summary>
+	/// Notifies the Application to Exit.
+	/// The Application may finish the current frame before exiting.
+	/// </summary>
+	public static void Exit()
+	{
+		if (Running)
+			Exiting = true;
+	}
+
 	private static void Tick()
 	{
 		static void Update(TimeSpan delta)
@@ -386,7 +380,7 @@ public static class App
 
 			Graphics.Resources.DeleteRequested();
 			Input.Step();
-			Platform.FosterPollEvents();
+			PollEvents();
 			FramePool.NextFrame();
 
 			for (int i = 0; i < modules.Count; i ++)
@@ -442,13 +436,32 @@ public static class App
 		Platform.FosterEndFrame();
 	}
 
-	/// <summary>
-	/// Notifies the Application to Exit.
-	/// The Application may finish the current frame before exiting.
-	/// </summary>
-	public static void Exit()
+	private static void PollEvents()
 	{
-		if (Running)
-			Exiting = true;
+		while (Platform.FosterPollEvents(out var ev) != 0)
+		{
+			switch (ev.EventType)
+			{
+			case Platform.FosterEventType.None:
+				break;
+			case Platform.FosterEventType.ExitRequested:
+				if (OnExitRequested != null)
+					OnExitRequested();
+				else
+					Exit();
+				break;
+			case Platform.FosterEventType.KeyboardInput:
+			case Platform.FosterEventType.KeyboardKey:
+			case Platform.FosterEventType.MouseButton:
+			case Platform.FosterEventType.MouseMove:
+			case Platform.FosterEventType.MouseWheel:
+			case Platform.FosterEventType.ControllerConnect:
+			case Platform.FosterEventType.ControllerDisconnect:
+			case Platform.FosterEventType.ControllerButton:
+			case Platform.FosterEventType.ControllerAxis:
+				Input.OnFosterEvent(ev);
+				break;
+			}
+		}
 	}
 }

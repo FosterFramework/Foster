@@ -161,149 +161,188 @@ void FosterBeginFrame()
 		fstate.device.frameBegin();
 }
 
-void FosterPollEvents()
+FosterBool FosterPollEvents(FosterEvent* output)
 {
-	FOSTER_ASSERT_RUNNING(FosterPollEvents);
+	FOSTER_ASSERT_RUNNING_RET(FosterPollEvents, 0);
 
-	// always update the mouse position state
+	*output = (FosterEvent){ 0 };
+	output->eventType = FOSTER_EVENT_TYPE_NONE;
+
+	// Mouse Movement is always polled every time we poll events
+	// This way we track it even if SDL hasn't sent new mouse motion events
+	// TODO: should this just change to a getter?
+	if (!fstate.polledMouseMovement)
 	{
-		int rel_x, rel_y;
-		SDL_GetMouseState(&rel_x, &rel_y);
-		fstate.desc.onMouseMove((float)(rel_x), (float)(rel_y));
+		int mouseX, mouseY;
+		SDL_GetMouseState(&mouseX, &mouseY);
+		output->eventType = FOSTER_EVENT_TYPE_MOUSE_MOVE;
+		output->mouse.x = (float)mouseX;
+		output->mouse.y = (float)mouseY;
+		fstate.polledMouseMovement = 1;
+		return 1;
 	}
 
+	// get next SDL event, or return false if no more found
+NEXT_EVENT:
 	SDL_Event event;
-	while (SDL_PollEvent(&event))
+	if (!SDL_PollEvent(&event))
 	{
-		if (event.type == SDL_QUIT)
-		{
-			if (fstate.desc.onExitRequest)
-				fstate.desc.onExitRequest();
-		}
-		// Mouse
-		else if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP)
-		{
-			FosterMouse btn = FosterGetMouseFromSDL(event.button.button);
-			fstate.desc.onMouseButton(btn, event.type == SDL_MOUSEBUTTONDOWN);
-		}
-		else if (event.type == SDL_MOUSEWHEEL)
-		{
-			fstate.desc.onMouseWheel((float)event.wheel.x, (float)event.wheel.y);
-		}
-		// Keyboard
-		else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)
-		{
-			if (event.key.repeat == 0)
-				fstate.desc.onKey(FosterGetKeyFromSDL(event.key.keysym.scancode), event.type == SDL_KEYDOWN);
-		}
-		else if (event.type == SDL_TEXTINPUT)
-		{
-			fstate.desc.onText(event.text.text);
-		}
-		// Joystick Controller
-		else if (event.type == SDL_JOYDEVICEADDED)
-		{
-			int index = event.jdevice.which;
-
-			if (SDL_IsGameController(index) == SDL_FALSE && index >= 0 && index < FOSTER_MAX_CONTROLLERS)
-			{
-				SDL_Joystick* ptr = fstate.joysticks[index] = SDL_JoystickOpen(index);
-				const char* name = SDL_JoystickName(ptr);
-				int button_count = SDL_JoystickNumButtons(ptr);
-				int axis_count = SDL_JoystickNumAxes(ptr);
-				Uint16 vendor = SDL_JoystickGetVendor(ptr);
-				Uint16 product = SDL_JoystickGetProduct(ptr);
-				Uint16 version = SDL_JoystickGetProductVersion(ptr);
-
-				fstate.desc.onControllerConnect(index, name, button_count, 0, axis_count, vendor, product, version);
-			}
-		}
-		else if (event.type == SDL_JOYDEVICEREMOVED)
-		{
-			int index = FosterFindJoystickIndexSDL(fstate.joysticks, event.jdevice.which);
-			if (index >= 0)
-			{
-				if (SDL_IsGameController(index) == SDL_FALSE)
-				{
-					fstate.desc.onControllerDisconnect(index);
-					SDL_JoystickClose(fstate.joysticks[index]);
-				}
-			}
-		}
-		else if (event.type == SDL_JOYBUTTONDOWN || event.type == SDL_JOYBUTTONUP)
-		{
-			int index = FosterFindJoystickIndexSDL(fstate.joysticks, event.jdevice.which);
-			if (index >= 0 && SDL_IsGameController(index) == SDL_FALSE)
-				fstate.desc.onControllerButton(index, event.jbutton.button, event.type == SDL_JOYBUTTONDOWN);
-		}
-		else if (event.type == SDL_JOYAXISMOTION)
-		{
-			int index = FosterFindJoystickIndexSDL(fstate.joysticks, event.jdevice.which);
-			if (index >= 0 && SDL_IsGameController(index) == SDL_FALSE)
-			{
-				float value;
-				if (event.jaxis.value >= 0)
-					value = event.jaxis.value / 32767.0f;
-				else
-					value = event.jaxis.value / 32768.0f;
-				fstate.desc.onControllerAxis(index, event.jaxis.axis, value);
-			}
-		}
-		// Gamepad Controller
-		else if (event.type == SDL_CONTROLLERDEVICEADDED)
-		{
-			int index = event.cdevice.which;
-
-			if (index >= 0 && index < FOSTER_MAX_CONTROLLERS)
-			{
-				SDL_GameController* ptr = fstate.gamepads[index] = SDL_GameControllerOpen(index);
-				const char* name = SDL_GameControllerName(ptr);
-				Uint16 vendor = SDL_GameControllerGetVendor(ptr);
-				Uint16 product = SDL_GameControllerGetProduct(ptr);
-				Uint16 version = SDL_GameControllerGetProductVersion(ptr);
-
-				fstate.desc.onControllerConnect(index, name, 15, 6, 1, vendor, product, version);
-			}
-		}
-		else if (event.type == SDL_CONTROLLERDEVICEREMOVED)
-		{
-			int index = FosterFindGamepadIndexSDL(fstate.gamepads, event.cdevice.which);
-			if (index >= 0)
-			{
-				fstate.desc.onControllerDisconnect(index);
-				SDL_GameControllerClose(fstate.gamepads[index]);
-			}
-		}
-		else if (event.type == SDL_CONTROLLERBUTTONDOWN || event.type == SDL_CONTROLLERBUTTONUP)
-		{
-			int index = FosterFindGamepadIndexSDL(fstate.gamepads, event.cdevice.which);
-			if (index >= 0)
-			{
-				FosterButtons button = FOSTER_BUTTON_NONE;
-				if (event.cbutton.button >= 0 && event.cbutton.button < 15)
-					button = FosterGetButtonFromSDL(event.cbutton.button);
-				fstate.desc.onControllerButton(index, button, event.type == SDL_CONTROLLERBUTTONDOWN);
-			}
-		}
-		else if (event.type == SDL_CONTROLLERAXISMOTION)
-		{
-			int index = FosterFindGamepadIndexSDL(fstate.gamepads, event.cdevice.which);
-			if (index >= 0)
-			{
-				FosterAxis axis = FOSTER_AXIS_NONE;
-				if (event.caxis.axis >= 0 && event.caxis.axis < 6)
-					axis = FosterGetAxisFromSDL(event.caxis.axis);
-
-				float value;
-				if (event.caxis.value >= 0)
-					value = event.caxis.value / 32767.0f;
-				else
-					value = event.caxis.value / 32768.0f;
-
-				fstate.desc.onControllerAxis(index, axis, value);
-			}
-		}
+		fstate.polledMouseMovement = 0;
+		return 0;
 	}
+
+	// System Events
+	if (event.type == SDL_QUIT)
+	{
+		output->eventType = FOSTER_EVENT_TYPE_EXIT_REQUESTED;
+	}
+	// Mouse
+	else if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP)
+	{
+		output->eventType = FOSTER_EVENT_TYPE_MOUSE_BUTTON;
+		output->mouse.button = FosterGetMouseFromSDL(event.button.button);
+		output->mouse.buttonPressed = event.type == SDL_MOUSEBUTTONDOWN;
+	}
+	else if (event.type == SDL_MOUSEWHEEL)
+	{
+		output->eventType = FOSTER_EVENT_TYPE_MOUSE_WHEEL;
+		output->mouse.x = (float)event.wheel.x;
+		output->mouse.y = (float)event.wheel.y;
+	}
+	// Keyboard
+	else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)
+	{
+		if (event.key.repeat != 0)
+			goto NEXT_EVENT;
+
+		output->eventType = FOSTER_EVENT_TYPE_KEYBOARD_KEY;
+		output->keyboard.key = FosterGetKeyFromSDL(event.key.keysym.scancode);
+		output->keyboard.keyPressed = event.type == SDL_KEYDOWN;
+	}
+	else if (event.type == SDL_TEXTINPUT)
+	{
+		output->eventType = FOSTER_EVENT_TYPE_KEYBOARD_INPUT;
+		for (int i = 0; i < SDL_TEXTINPUTEVENT_TEXT_SIZE; i ++)
+			output->keyboard.text[i] = event.text.text[i];
+	}
+	// Joystick Controller
+	else if (event.type == SDL_JOYDEVICEADDED)
+	{
+		int index = event.jdevice.which;
+
+		if (SDL_IsGameController(index) || index < 0 || index >= FOSTER_MAX_CONTROLLERS)
+			goto NEXT_EVENT;
+
+		SDL_Joystick* ptr = fstate.joysticks[index] = SDL_JoystickOpen(index);
+
+		output->eventType = FOSTER_EVENT_TYPE_CONTROLLER_CONNECT;
+		output->controller.index = index;
+		output->controller.name = SDL_JoystickName(ptr);
+		output->controller.isGamepad = 0;
+		output->controller.buttonCount = SDL_JoystickNumButtons(ptr);
+		output->controller.axisCount = SDL_JoystickNumAxes(ptr);
+		output->controller.vendor = SDL_JoystickGetVendor(ptr);
+		output->controller.product = SDL_JoystickGetProduct(ptr);
+		output->controller.version = SDL_JoystickGetProductVersion(ptr);
+	}
+	else if (event.type == SDL_JOYDEVICEREMOVED)
+	{
+		int index = FosterFindJoystickIndexSDL(fstate.joysticks, event.jdevice.which);
+		if (index < 0 || SDL_IsGameController(index))
+			goto NEXT_EVENT;
+
+		output->eventType = FOSTER_EVENT_TYPE_CONTROLLER_DISCONNECT;
+		output->controller.index = index;
+		SDL_JoystickClose(fstate.joysticks[index]);
+	}
+	else if (event.type == SDL_JOYBUTTONDOWN || event.type == SDL_JOYBUTTONUP)
+	{
+		int index = FosterFindJoystickIndexSDL(fstate.joysticks, event.jdevice.which);
+		if (index < 0 || SDL_IsGameController(index))
+			goto NEXT_EVENT;
+
+		output->eventType = FOSTER_EVENT_TYPE_CONTROLLER_BUTTON;
+		output->controller.index = index;
+		output->controller.button = event.jbutton.button;
+		output->controller.buttonPressed = event.type == SDL_JOYBUTTONDOWN;
+	}
+	else if (event.type == SDL_JOYAXISMOTION)
+	{
+		int index = FosterFindJoystickIndexSDL(fstate.joysticks, event.jdevice.which);
+		if (index < 0 || SDL_IsGameController(index))
+			goto NEXT_EVENT;
+
+		output->eventType = FOSTER_EVENT_TYPE_CONTROLLER_AXIS;
+		output->controller.index = index;
+		output->controller.axis = event.jaxis.axis;
+		if (event.jaxis.value >= 0)
+			output->controller.axisValue = event.jaxis.value / 32767.0f;
+		else
+			output->controller.axisValue = event.jaxis.value / 32768.0f;
+	}
+	// Gamepad Controller
+	else if (event.type == SDL_CONTROLLERDEVICEADDED)
+	{
+		int index = event.cdevice.which;
+		if (index < 0 || index >= FOSTER_MAX_CONTROLLERS)
+			goto NEXT_EVENT;
+
+		SDL_GameController* ptr = fstate.gamepads[index] = SDL_GameControllerOpen(index);
+		output->eventType = FOSTER_EVENT_TYPE_CONTROLLER_CONNECT;
+		output->controller.index = index;
+		output->controller.name = SDL_GameControllerName(ptr);
+		output->controller.buttonCount = 15;
+		output->controller.axisCount = 6;
+		output->controller.isGamepad = 1;
+		output->controller.vendor = SDL_GameControllerGetVendor(ptr);
+		output->controller.product = SDL_GameControllerGetProduct(ptr);
+		output->controller.version = SDL_GameControllerGetProductVersion(ptr);
+	}
+	else if (event.type == SDL_CONTROLLERDEVICEREMOVED)
+	{
+		int index = FosterFindGamepadIndexSDL(fstate.gamepads, event.cdevice.which);
+		if (index < 0)
+			goto NEXT_EVENT;
+
+		output->eventType = FOSTER_EVENT_TYPE_CONTROLLER_DISCONNECT;
+		output->controller.index = index;
+		SDL_GameControllerClose(fstate.gamepads[index]);
+	}
+	else if (event.type == SDL_CONTROLLERBUTTONDOWN || event.type == SDL_CONTROLLERBUTTONUP)
+	{
+		int index = FosterFindGamepadIndexSDL(fstate.gamepads, event.cdevice.which);
+		if (index < 0)
+			goto NEXT_EVENT;
+
+		output->eventType = FOSTER_EVENT_TYPE_CONTROLLER_BUTTON;
+		output->controller.index = index;
+		output->controller.button = FOSTER_BUTTON_NONE;
+		if (event.cbutton.button >= 0 && event.cbutton.button < 15)
+			output->controller.button = FosterGetButtonFromSDL(event.cbutton.button);
+		output->controller.buttonPressed = event.type == SDL_CONTROLLERBUTTONDOWN;
+	}
+	else if (event.type == SDL_CONTROLLERAXISMOTION)
+	{
+		int index = FosterFindGamepadIndexSDL(fstate.gamepads, event.cdevice.which);
+		if (index < 0)
+			goto NEXT_EVENT;
+
+		output->eventType = FOSTER_EVENT_TYPE_CONTROLLER_AXIS;
+		output->controller.index = index;
+		output->controller.axis = FOSTER_AXIS_NONE;
+		if (event.caxis.axis >= 0 && event.caxis.axis < 6)
+			output->controller.axis  = FosterGetAxisFromSDL(event.caxis.axis);
+		if (event.jaxis.value >= 0)
+			output->controller.axisValue = event.jaxis.value / 32767.0f;
+		else
+			output->controller.axisValue = event.jaxis.value / 32768.0f;
+	}
+	else
+	{
+		goto NEXT_EVENT;
+	}
+
+	return 1;
 }
 
 void FosterEndFrame()
