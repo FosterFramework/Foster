@@ -251,6 +251,9 @@ public static class App
 	/// </summary>
 	public static void Register<T>() where T : Module, new()
 	{
+		if (Exiting)
+			throw new Exception("Cannot register new Modules while the Application is shutting down");
+
 		if (!started)
 		{
 			registrations.Add(() => new T());
@@ -285,8 +288,7 @@ public static class App
 		Log.Info($"Foster: v{Version.Major}.{Version.Minor}.{Version.Build}");
 		Log.Info($"Platform: {RuntimeInformation.OSDescription} ({RuntimeInformation.OSArchitecture})");
 		Log.Info($"Framework: {RuntimeInformation.FrameworkDescription}");
-
-		Running = true;
+		
 		MainThreadID = Thread.CurrentThread.ManagedThreadId;
 
 		if (fullscreen)
@@ -323,10 +325,9 @@ public static class App
 		});
 
 		if(Platform.FosterIsRunning() == 0)
-		{
 			throw new Exception("Platform is not running");
-		}
 
+		Running = true;
 		UserPath = Platform.ParseUTF8(Platform.FosterGetUserPath());
 		Graphics.Initialize();
 
