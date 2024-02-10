@@ -77,7 +77,7 @@ void FosterStartup(FosterDesc desc)
 	FosterLogInfo("SDL: v%i.%i.%i", version.major, version.minor, version.patch);
 
 	// track SDL output
-	if (fstate.logLevel != FOSTER_LOGGING_NONE && 
+	if (fstate.logLevel != FOSTER_LOGGING_NONE &&
 		(fstate.logInfo || fstate.logWarn || fstate.logError))
 	{
 		SDL_LogSetOutputFunction(FosterLog_SDL, NULL);
@@ -119,7 +119,7 @@ void FosterStartup(FosterDesc desc)
 		fstate.desc.width,
 		fstate.desc.height,
 		fstate.windowCreateFlags);
-		
+
 	if (fstate.window == NULL)
 	{
 		FosterLogError("Foster SDL_CreateWindow Failed: %s", SDL_GetError());
@@ -246,7 +246,7 @@ void FosterPollEvents()
 					value = event.jaxis.value / 32767.0f;
 				else
 					value = event.jaxis.value / 32768.0f;
-				fstate.desc.onControllerAxis(index, event.jaxis.axis, value); 
+				fstate.desc.onControllerAxis(index, event.jaxis.axis, value);
 			}
 		}
 		// Gamepad Controller
@@ -327,6 +327,7 @@ void FosterShutdown()
 	fstate.clipboardText = NULL;
 	fstate.running = false;
 	SDL_DestroyWindow(fstate.window);
+	SDL_Quit();
 }
 
 FosterBool FosterIsRunning()
@@ -378,11 +379,11 @@ void FosterSetFlags(FosterFlags flags)
 	if (flags != fstate.flags)
 	{
 		// fullscreen
-		SDL_SetWindowFullscreen(fstate.window, 
+		SDL_SetWindowFullscreen(fstate.window,
 			FOSTER_CHECK(flags, FOSTER_FLAG_FULLSCREEN) ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 
 		// resizable
-		SDL_SetWindowResizable(fstate.window, 
+		SDL_SetWindowResizable(fstate.window,
 			FOSTER_CHECK(flags, FOSTER_FLAG_RESIZABLE) ? SDL_TRUE : SDL_FALSE);
 
 		// mouse visible
@@ -670,7 +671,7 @@ void FosterLogInfo(const char* fmt, ...)
 	if (fstate.logLevel == FOSTER_LOGGING_NONE ||
 		fstate.logInfo == NULL)
 		return;
-		
+
 	char msg[FOSTER_MAX_MESSAGE_SIZE];
 	va_list ap;
 	va_start(ap, fmt);
