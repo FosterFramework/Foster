@@ -8,7 +8,7 @@ namespace Foster.Framework;
 /// A 2D Integer Point
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
-public struct Point2 : IEquatable<Point2>
+public struct Point2(int x, int y) : IEquatable<Point2>
 {
 	public static readonly Point2 Zero = new(0, 0);
 	public static readonly Point2 UnitX = new(1, 0);
@@ -22,21 +22,12 @@ public struct Point2 : IEquatable<Point2>
 	/// <summary>
 	/// The X component of the Point
 	/// </summary>
-	public int X;
+	public int X = x;
 
 	/// <summary>
 	/// The Y component of the Point
 	/// </summary>
-	public int Y;
-
-	/// <summary>
-	/// Creates a Point with the given X and Y components
-	/// </summary>
-	public Point2(int x, int y)
-	{
-		X = x;
-		Y = y;
-	}
+	public int Y = y;
 
 	/// <summary>
 	/// Gets the Length of the Point
