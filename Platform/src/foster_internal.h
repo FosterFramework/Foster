@@ -19,7 +19,7 @@ typedef struct
 	int windowCreateFlags;
 	SDL_Window* window;
 	SDL_Joystick* joysticks[FOSTER_MAX_CONTROLLERS];
-	SDL_GameController* gamepads[FOSTER_MAX_CONTROLLERS];
+	SDL_Gamepad* gamepads[FOSTER_MAX_CONTROLLERS];
 	char* clipboardText;
 	char* userPath;
 	FosterLogFn logFn;

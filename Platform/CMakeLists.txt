@@ -91,39 +91,39 @@ if (FOSTER_D3D11_ENABLED)
 	set(LIBS ${LIBS} d3d11.lib dxguid.lib D3Dcompiler.lib)
 endif()
 
-# Emscripten can import SDL2 directly
+# Emscripten can import SDL3 directly
 if (EMSCRIPTEN)
 	
 	set_target_properties(${TARGET_NAME} PROPERTIES COMPILE_FLAGS "-s USE_SDL=2")
 	target_link_libraries(${TARGET_NAME} "-s USE_SDL=2 -s USE_WEBGL2=1")
 
-# Pull SDL2 from its Github repo
+# Pull SDL3 from its Github repo
 else()
-	if (NOT DEFINED FOSTER_SDL2_LIBS)
+	if (NOT DEFINED FOSTER_SDL3_LIBS)
 		include(FetchContent)
 		set(FETCHCONTENT_QUIET FALSE)
-		set(SDL_TEST_ENABLED_BY_DEFAULT OFF)
-		set(SDL_SHARED_ENABLED_BY_DEFAULT OFF)
-		set(SDL_STATIC_ENABLED_BY_DEFAULT ON)
+		set(SDL_TEST_LIBRARY OFF)
+		set(SDL_SHARED OFF)
+		set(SDL_STATIC ON)
 
 		FetchContent_Declare(
-			SDL2
+			SDL3
 			GIT_REPOSITORY https://github.com/libsdl-org/SDL
-			GIT_TAG release-2.30.0
+			GIT_TAG bba2a5d360b6f7788032a203c97c9e07178032d3 # Is there any tagged 3.x stuff? this is just a "recent" commit
 			GIT_PROGRESS TRUE
 		)
-		FetchContent_MakeAvailable(SDL2)
-		set(FOSTER_SDL2_LIBS SDL2-static)
-		set(FOSTER_SDL2_INCLUDE ${sdl2_SOURCE_DIRS}/include)
+		FetchContent_MakeAvailable(SDL3)
+		set(FOSTER_SDL3_LIBS SDL3-static)
+		set(FOSTER_SDL3_INCLUDE ${sdl2_SOURCE_DIRS}/include)
 	endif()
 
-	# statically link SDL2 since we're building it ourselve
-	set(LIBS ${LIBS} ${FOSTER_SDL2_LIBS})
-	target_include_directories(${TARGET_NAME} PRIVATE ${FOSTER_SDL2_INCLUDE})
+	# statically link SDL3 since we're building it ourselve
+	set(LIBS ${LIBS} ${FOSTER_SDL3_LIBS})
+	target_include_directories(${TARGET_NAME} PRIVATE ${FOSTER_SDL3_INCLUDE})
 endif()
 
 # Tell SDL it's going to be a shared lib
-set_property(TARGET ${FOSTER_SDL2_LIBS} PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET ${FOSTER_SDL3_LIBS} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 # Link SDL
 target_link_libraries(${TARGET_NAME} PRIVATE ${LIBS})
