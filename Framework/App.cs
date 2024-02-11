@@ -167,6 +167,18 @@ public static class App
 	}
 
 	/// <summary>
+	/// Gets the Size of the Display that the Application Window is currently in.
+	/// </summary>
+	public static Point2 DisplaySize
+	{
+		get
+		{
+			Platform.FosterGetDisplaySize(out int w, out int h);
+			return new(w, h);
+		}
+	}
+
+	/// <summary>
 	/// Gets the Content Scale for the Application Window.
 	/// In the future this should try to use the Display DPI, however the SDL2
 	/// implementation doesn't have very reliable values across platforms.
