@@ -1,13 +1,11 @@
-﻿namespace Foster.Framework.Storage;
+namespace Foster.Framework.Storage;
 
 /// <summary>
 /// A storage location for user data (save files, etc)
 /// </summary>
 public static class UserStorage
 {
-	public static WritableContent Provider { get; set; } = new WritableContent(App.UserPath);
-
-	#region Directory
+	public static Content Provider { get; set; } = new ContentStorage(App.UserPath, true);
 
 	public static bool FileExists(string relativePath)
 		=> Provider.FileExists(relativePath);
@@ -23,32 +21,22 @@ public static class UserStorage
 
 	public static void CreateDirectory(string path)
 		=> Provider.CreateDirectory(path);
-	public static void DeleteDirectory(string path, bool recursive)
-		=> Provider.DeleteDirectory(path, recursive);
+	public static void DeleteDirectory(string path)
+		=> Provider.DeleteDirectory(path);
 	public static void DeleteFile(string path)
 		=> Provider.DeleteFile(path);
 
-	#endregion
-
-	#region File
-
 	public static Stream OpenRead(string relativePath)
 		=> Provider.OpenRead(relativePath);
-
 	public static byte[] ReadAllBytes(string relativePath)
 		=> Provider.ReadAllBytes(relativePath);
-
 	public static string ReadAllText(string relativePath)
 		=> Provider.ReadAllText(relativePath);
 
-
-	public static Stream OpenWrite(string path)
-		=> Provider.OpenWrite(path);
+	public static Stream Create(string path)
+		=> Provider.Create(path);
 	public static void WriteAllBytes(string path, byte[] bytes)
 		=> Provider.WriteAllBytes(path, bytes);
 	public static void WriteAllText(string path, string text)
 		=> Provider.WriteAllText(path, text);
-
-	#endregion
-
 }

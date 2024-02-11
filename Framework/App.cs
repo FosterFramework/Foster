@@ -445,10 +445,13 @@ public static class App
 			case Platform.FosterEventType.None:
 				break;
 			case Platform.FosterEventType.ExitRequested:
-				if (OnExitRequested != null)
-					OnExitRequested();
-				else
-					Exit();
+				if (started)
+				{
+					if (OnExitRequested != null)
+						OnExitRequested();
+					else
+						Exit();
+				}
 				break;
 			case Platform.FosterEventType.KeyboardInput:
 			case Platform.FosterEventType.KeyboardKey:
