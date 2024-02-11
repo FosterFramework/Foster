@@ -4,9 +4,14 @@ namespace Foster.Framework;
 
 public static class Log
 {
+	public delegate void LogFn(ReadOnlySpan<char> text);
+
+	// TODO: this can potentially be written to from other threads
+	// The user shouldn't have access to this directly as they need to lock
+	// around it. Instead there should be some safe way to iterate over it or
+	// request lines from it. Ideally without creating tons of garbage.
 	public static readonly StringBuilder Logs = new();
 
-	public delegate void LogFn(ReadOnlySpan<char> text);
 	public static LogFn? OnInfo;
 	public static LogFn? OnWarn;
 	public static LogFn? OnError;

@@ -33,7 +33,7 @@ internal static class Platform
 	}
 
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public delegate void FosterLogFn(IntPtr msg);
+	public delegate void FosterLogFn(IntPtr msg, int type);
 	
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate void FosterWriteFn(IntPtr context, IntPtr data, int size);
@@ -191,21 +191,29 @@ internal static class Platform
 		Marshal.FreeHGlobal(ptr);
 	}
 
+	private static void HandleLog(IntPtr msg, int type)
+	{
+		switch (type)
+		{
+			case 0: Log.Info(msg); break;
+			case 1: Log.Warning(msg); break;
+			case 2: Log.Error(msg); break;
+			default: Log.Info(msg); break;
+		}
+	}
+
 	// need to store static references otherwise the delegates will get collected
-	private static readonly FosterLogFn logInfo = Log.Info;
-	private static readonly FosterLogFn logWarn = Log.Warning;
-	private static readonly FosterLogFn logErr = Log.Error;
+	private static readonly FosterLogFn handleLog = HandleLog;
 
 	static Platform()
 	{
-		// initialize logging immediately
-		FosterRegisterLogMethods(logInfo, logWarn, logErr, 0);
+		FosterSetLogCallback(handleLog, 0);
 	}
 
 	[DllImport(DLL)]
 	public static extern void FosterStartup(FosterDesc desc);
 	[DllImport(DLL)]
-	public static extern void FosterRegisterLogMethods(FosterLogFn info, FosterLogFn warn, FosterLogFn error, int level);
+	public static extern void FosterSetLogCallback(FosterLogFn logFn, int level);
 	[DllImport(DLL)]
 	public static extern void FosterBeginFrame();
 	[DllImport(DLL)]

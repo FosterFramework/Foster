@@ -458,7 +458,7 @@ static FosterOpenGLState fgl;
 // debug callback
 void APIENTRY FosterMessage_OpenGL(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
 {
-	if (FosterGetState()->logLevel != FOSTER_LOGGING_ALL)
+	if (FosterGetState()->logFilter != FOSTER_LOG_FILTER_VERBOSE)
 	{
 		if (severity == GL_DEBUG_SEVERITY_NOTIFICATION &&
 			type == GL_DEBUG_TYPE_OTHER)
@@ -490,11 +490,11 @@ void APIENTRY FosterMessage_OpenGL(GLenum source, GLenum type, GLuint id, GLenum
 	}
 
 	if (type == GL_DEBUG_TYPE_ERROR)
-		FosterLogError("GL (%s:%s) %s", typeName, severityName, message);
+		FOSTER_LOG_ERROR("GL (%s:%s) %s", typeName, severityName, message);
 	else if (severity != GL_DEBUG_SEVERITY_NOTIFICATION)
-		FosterLogWarn("GL (%s:%s) %s", typeName, severityName, message);
+		FOSTER_LOG_WARN("GL (%s:%s) %s", typeName, severityName, message);
 	else
-		FosterLogInfo("GL (%s) %s", typeName, message);
+		FOSTER_LOG_INFO("GL (%s) %s", typeName, message);
 }
 
 // conversion methods
@@ -794,7 +794,7 @@ void FosterTextureReturnReference(FosterTexture_OpenGL* texture)
 		if (texture->refCount <= 0)
 		{
 			if (!texture->disposed)
-				FosterLogError("Texture is being free'd without deleting its GPU Texture Data");
+				FOSTER_LOG_ERROR("Texture is being free'd without deleting its GPU Texture Data");
 			SDL_free(texture);
 		}
 	}
@@ -1010,7 +1010,7 @@ bool FosterInitialize_OpenGL()
 	fgl.context = SDL_GL_CreateContext(state->window);
 	if (fgl.context == NULL)
 	{
-		FosterLogError("Failed to create OpenGL Context: %s", SDL_GetError());
+		FOSTER_LOG_ERROR("Failed to create OpenGL Context: %s", SDL_GetError());
 		return false;
 	}
 	SDL_GL_MakeCurrent(state->window, fgl.context);
@@ -1021,7 +1021,7 @@ bool FosterInitialize_OpenGL()
 	#undef GL_FUNC
 
 	// bind debug message callback
-	if (fgl.glDebugMessageCallback != NULL && state->logLevel != FOSTER_LOGGING_NONE)
+	if (fgl.glDebugMessageCallback != NULL && state->logFilter != FOSTER_LOG_FILTER_IGNORE_ALL)
 	{
 		fgl.glEnable(GL_DEBUG_OUTPUT);
 		fgl.glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -1072,7 +1072,7 @@ bool FosterInitialize_OpenGL()
 		fgl.stateTextureSlots[i] = 0;
 
 	// log
-	FosterLogInfo("OpenGL: v%s, %s", fgl.glGetString(GL_VERSION), fgl.glGetString(GL_RENDERER));
+	FOSTER_LOG_INFO("OpenGL: v%s, %s", fgl.glGetString(GL_VERSION), fgl.glGetString(GL_RENDERER));
 	return true;
 }
 
@@ -1118,7 +1118,7 @@ FosterTexture* FosterTextureCreate_OpenGL(int width, int height, FosterTextureFo
 
 	if (width > fgl.max_texture_size || height > fgl.max_texture_size)
 	{
-		FosterLogError("Exceeded Max Texture Size of %i", fgl.max_texture_size);
+		FOSTER_LOG_ERROR("Exceeded Max Texture Size of %i", fgl.max_texture_size);
 		return NULL;
 	}
 
@@ -1140,14 +1140,14 @@ FosterTexture* FosterTextureCreate_OpenGL(int width, int height, FosterTextureFo
 			result.glType = GL_UNSIGNED_INT_24_8;
 			break;
 		default:
-			FosterLogError("Invalid Texture Format (%i)", format);
+			FOSTER_LOG_ERROR("Invalid Texture Format (%i)", format);
 			return NULL;
 	}
 
 	fgl.glGenTextures(1, &result.id);
 	if (result.id == 0)
 	{
-		FosterLogError("Failed to create Texture");
+		FOSTER_LOG_ERROR("Failed to create Texture");
 		return NULL;
 	}
 
@@ -1216,7 +1216,7 @@ FosterTarget* FosterTargetCreate_OpenGL(int width, int height, FosterTextureForm
 		{
 			for (int j = 0; j < i; j++)
 				FosterTextureDestroy_OpenGL((FosterTexture*)tex);
-			FosterLogError("Failed to create Target Attachment");
+			FOSTER_LOG_ERROR("Failed to create Target Attachment");
 			FosterBindFrameBuffer(NULL);
 			return NULL;
 		}
@@ -1275,13 +1275,13 @@ FosterShader* FosterShaderCreate_OpenGL(FosterShaderData* data)
 
 	if (data->vertexShader == NULL)
 	{
-		FosterLogError("Invalid Vertex Shader");
+		FOSTER_LOG_ERROR("Invalid Vertex Shader");
 		return NULL;
 	}
 
 	if (data->fragmentShader == NULL)
 	{
-		FosterLogError("Invalid Fragment Shader");
+		FOSTER_LOG_ERROR("Invalid Fragment Shader");
 		return NULL;
 	}
 
@@ -1300,12 +1300,12 @@ FosterShader* FosterShaderCreate_OpenGL(FosterShaderData* data)
 		{
 			fgl.glDeleteShader(vertexShader);
 			if (logLength > 0)
-				FosterLogError("%s", log);
+				FOSTER_LOG_ERROR("%s", log);
 			return NULL;
 		}
 		else if (logLength > 0)
 		{
-			FosterLogInfo("%s", log);
+			FOSTER_LOG_INFO("%s", log);
 		}
 	}
 
@@ -1325,12 +1325,12 @@ FosterShader* FosterShaderCreate_OpenGL(FosterShaderData* data)
 			fgl.glDeleteShader(vertexShader);
 			fgl.glDeleteShader(fragmentShader);
 			if (logLength > 0)
-				FosterLogError("%s", log);
+				FOSTER_LOG_ERROR("%s", log);
 			return NULL;
 		}
 		else if (logLength > 0)
 		{
-			FosterLogInfo("%s", log);
+			FOSTER_LOG_INFO("%s", log);
 		}
 	}
 
@@ -1352,12 +1352,12 @@ FosterShader* FosterShaderCreate_OpenGL(FosterShaderData* data)
 	if (!linkResult)
 	{
 		if (logLength > 0)
-			FosterLogError("%s", log);
+			FOSTER_LOG_ERROR("%s", log);
 		return NULL;
 	}
 	else if (logLength > 0)
 	{
-		FosterLogInfo("%s", log);
+		FOSTER_LOG_INFO("%s", log);
 	}
 
 	FosterShader_OpenGL* shader = (FosterShader_OpenGL*)SDL_malloc(sizeof(FosterShader_OpenGL));
@@ -1471,7 +1471,7 @@ void FosterShaderSetUniform_OpenGL(FosterShader* shader, int index, float* value
 
 	if (index < 0 || index > it->uniformCount)
 	{
-		FosterLogError("Failed to set uniform '%i': index out of bounds");
+		FOSTER_LOG_ERROR("Failed to set uniform '%i': index out of bounds");
 		return;
 	}
 
@@ -1501,7 +1501,7 @@ void FosterShaderSetUniform_OpenGL(FosterShader* shader, int index, float* value
 			return;
 	}
 
-	FosterLogError("Failed to set uniform '%s', unsupported type '%i'", uniform->name, uniform->glType);
+	FOSTER_LOG_ERROR("Failed to set uniform '%s', unsupported type '%i'", uniform->name, uniform->glType);
 }
 
 void FosterShaderSetTexture_OpenGL(FosterShader* shader, int index, FosterTexture** values)
@@ -1510,14 +1510,14 @@ void FosterShaderSetTexture_OpenGL(FosterShader* shader, int index, FosterTextur
 
 	if (index < 0 || index > it->uniformCount)
 	{
-		FosterLogError("Failed to set uniform '%i': index out of bounds", index);
+		FOSTER_LOG_ERROR("Failed to set uniform '%i': index out of bounds", index);
 		return;
 	}
 
 	FosterUniform_OpenGL* uniform = it->uniforms + index;
 	if (uniform->glType != GL_SAMPLER_2D)
 	{
-		FosterLogError("Failed to set uniform '%s': not a Texture", uniform->name);
+		FOSTER_LOG_ERROR("Failed to set uniform '%s': not a Texture", uniform->name);
 		return;
 	}
 
@@ -1535,14 +1535,14 @@ void FosterShaderSetSampler_OpenGL(FosterShader* shader, int index, FosterTextur
 
 	if (index < 0 || index > it->uniformCount)
 	{
-		FosterLogError("Failed to set uniform '%i': index out of bounds", index);
+		FOSTER_LOG_ERROR("Failed to set uniform '%i': index out of bounds", index);
 		return;
 	}
 
 	FosterUniform_OpenGL* uniform = it->uniforms + index;
 	if (uniform->glType != GL_SAMPLER_2D)
 	{
-		FosterLogError("Failed to set uniform '%s': not a Sampler", uniform->name);
+		FOSTER_LOG_ERROR("Failed to set uniform '%s': not a Sampler", uniform->name);
 		return;
 	}
 
@@ -1583,7 +1583,7 @@ FosterMesh* FosterMeshCreate_OpenGL()
 	fgl.glGenVertexArrays(1, &result.id);
 	if (result.id == 0)
 	{
-		FosterLogError("%s", "Failed to create Mesh");
+		FOSTER_LOG_ERROR("%s", "Failed to create Mesh");
 		return NULL;
 	}
 
@@ -1646,7 +1646,7 @@ void FosterMeshSetIndexFormat_OpenGL(FosterMesh* mesh, FosterIndexFormat format)
 			it->indexSize = 4;
 			break;
 		default:
-			FosterLogError("Invalid Index Format '%i'", format);
+			FOSTER_LOG_ERROR("Invalid Index Format '%i'", format);
 			break;
 	}
 }

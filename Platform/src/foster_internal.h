@@ -5,6 +5,10 @@
 #include "foster_renderer.h"
 #include <SDL.h>
 
+#define FOSTER_LOG_INFO(...) FosterLog(FOSTER_LOG_LEVEL_INFO, __VA_ARGS__)
+#define FOSTER_LOG_WARN(...) FosterLog(FOSTER_LOG_LEVEL_WARNING, __VA_ARGS__)
+#define FOSTER_LOG_ERROR(...) FosterLog(FOSTER_LOG_LEVEL_ERROR, __VA_ARGS__)
+
 // foster global state
 typedef struct
 {
@@ -18,19 +22,13 @@ typedef struct
 	SDL_GameController* gamepads[FOSTER_MAX_CONTROLLERS];
 	char* clipboardText;
 	char* userPath;
-	FosterLogFn logInfo;
-	FosterLogFn logWarn;
-	FosterLogFn logError;
-	FosterLogging logLevel;
+	FosterLogFn logFn;
+	FosterLogFilter logFilter;
 	FosterBool polledMouseMovement;
 } FosterState;
 
 FosterState* FosterGetState();
 
-void FosterLogInfo(const char* fmt, ...);
-
-void FosterLogWarn(const char* fmt, ...);
-
-void FosterLogError(const char* fmt, ...);
+void FosterLog(FosterLogLevel level, const char* fmt, ...);
 
 #endif

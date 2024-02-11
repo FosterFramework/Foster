@@ -387,12 +387,19 @@ typedef enum FosterIndexFormat
 	FOSTER_INDEX_FORMAT_THIRTY_TWO
 } FosterIndexFormat;
 
-typedef enum FosterLogging
+typedef enum FosterLogLevel
 {
-	FOSTER_LOGGING_DEFAULT,
-	FOSTER_LOGGING_ALL,
-	FOSTER_LOGGING_NONE
-} FosterLogging;
+	FOSTER_LOG_LEVEL_INFO,
+	FOSTER_LOG_LEVEL_WARNING,
+	FOSTER_LOG_LEVEL_ERROR
+} FosterLogLevel;
+
+typedef enum FosterLogFilter
+{
+	FOSTER_LOG_FILTER_DEFAULT,
+	FOSTER_LOG_FILTER_VERBOSE,
+	FOSTER_LOG_FILTER_IGNORE_ALL
+} FosterLogFilter;
 
 typedef enum FosterImageWriteFormat
 {
@@ -415,7 +422,7 @@ typedef enum FosterEventType
 	FOSTER_EVENT_TYPE_CONTROLLER_AXIS,
 } FosterEventType;
 
-typedef void (FOSTER_CALL * FosterLogFn)(const char *msg);
+typedef void (FOSTER_CALL * FosterLogFn)(const char *msg, FosterLogLevel level);
 typedef void (FOSTER_CALL * FosterWriteFn)(void *context, void *data, int size);
 
 typedef struct FosterTexture FosterTexture; 
@@ -566,7 +573,7 @@ extern "C" {
 
 FOSTER_API void FosterStartup(FosterDesc desc);
 
-FOSTER_API void FosterRegisterLogMethods(FosterLogFn logInfo, FosterLogFn logWarn, FosterLogFn logErr, FosterLogging level);
+FOSTER_API void FosterSetLogCallback(FosterLogFn logFn, FosterLogFilter filter);
 
 FOSTER_API void FosterBeginFrame();
 

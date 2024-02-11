@@ -13,10 +13,10 @@
 	(((flags) & (flag)) != 0)
 
 #define FOSTER_ASSERT_RUNNING_RET(func, ret) \
-	do { if (!fstate.running) { FosterLogError("Failed '%s', Foster is not running", #func); return ret; } } while(0)
+	do { if (!fstate.running) { FOSTER_LOG_ERROR("Failed '%s', Foster is not running", #func); return ret; } } while(0)
 
 #define FOSTER_ASSERT_RUNNING(func) \
-	do { if (!fstate.running) { FosterLogError("Failed '%s', Foster is not running", #func); return; } } while(0)
+	do { if (!fstate.running) { FOSTER_LOG_ERROR("Failed '%s', Foster is not running", #func); return; } } while(0)
 
 FosterKeys FosterGetKeyFromSDL(SDL_Scancode key);
 FosterButtons FosterGetButtonFromSDL(SDL_GameControllerButton button);
@@ -38,18 +38,18 @@ void FosterLog_SDL(void *userdata, int category, SDL_LogPriority priority, const
 	{
 		case SDL_LOG_PRIORITY_VERBOSE:
 		case SDL_LOG_PRIORITY_DEBUG:
-			if (fstate.logLevel == FOSTER_LOGGING_ALL)
-				FosterLogInfo("%s", message);
+			if (fstate.logFilter == FOSTER_LOG_FILTER_VERBOSE)
+				FOSTER_LOG_INFO("%s", message);
 			break;
 		case SDL_LOG_PRIORITY_INFO:
-			FosterLogInfo("%s", message);
+			FOSTER_LOG_INFO("%s", message);
 			break;
 		case SDL_LOG_PRIORITY_WARN:
-			FosterLogWarn("%s", message);
+			FOSTER_LOG_WARN("%s", message);
 			break;
 		case SDL_LOG_PRIORITY_ERROR:
 		case SDL_LOG_PRIORITY_CRITICAL:
-			FosterLogError("%s", message);
+			FOSTER_LOG_ERROR("%s", message);
 			break;
 	}
 }
@@ -67,18 +67,17 @@ void FosterStartup(FosterDesc desc)
 
 	if (fstate.desc.width <= 0 || fstate.desc.height <= 0)
 	{
-		FosterLogError("Foster invalid application width/height (%i, %i)", desc.width, desc.height);
+		FOSTER_LOG_ERROR("Foster invalid application width/height (%i, %i)", desc.width, desc.height);
 		return;
 	}
 
 	// Get SDL version
 	SDL_version version;
 	SDL_GetVersion(&version);
-	FosterLogInfo("SDL: v%i.%i.%i", version.major, version.minor, version.patch);
+	FOSTER_LOG_INFO("SDL: v%i.%i.%i", version.major, version.minor, version.patch);
 
 	// track SDL output
-	if (fstate.logLevel != FOSTER_LOGGING_NONE &&
-		(fstate.logInfo || fstate.logWarn || fstate.logError))
+	if (fstate.logFilter != FOSTER_LOG_FILTER_IGNORE_ALL && fstate.logFn)
 	{
 		SDL_LogSetOutputFunction(FosterLog_SDL, NULL);
 	}
@@ -96,14 +95,14 @@ void FosterStartup(FosterDesc desc)
 	int sdl_init_flags = SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER;
 	if (SDL_Init(sdl_init_flags) != 0)
 	{
-		FosterLogError("Foster SDL_Init Failed: %s", SDL_GetError());
+		FOSTER_LOG_ERROR("Foster SDL_Init Failed: %s", SDL_GetError());
 		return;
 	}
 
 	// determine renderer type
 	if (!FosterGetDevice(fstate.desc.renderer, &fstate.device))
 	{
-		FosterLogError("Foster Failed to get Renderer Device");
+		FOSTER_LOG_ERROR("Foster Failed to get Renderer Device");
 		return;
 	}
 
@@ -122,7 +121,7 @@ void FosterStartup(FosterDesc desc)
 
 	if (fstate.window == NULL)
 	{
-		FosterLogError("Foster SDL_CreateWindow Failed: %s", SDL_GetError());
+		FOSTER_LOG_ERROR("Foster SDL_CreateWindow Failed: %s", SDL_GetError());
 		return;
 	}
 
@@ -133,7 +132,7 @@ void FosterStartup(FosterDesc desc)
 	{
 		if (!fstate.device.initialize())
 		{
-			FosterLogError("Foster Failed to initialize Renderer Device");
+			FOSTER_LOG_ERROR("Foster Failed to initialize Renderer Device");
 			fstate.running = false;
 			SDL_DestroyWindow(fstate.window);
 			return;
@@ -145,12 +144,10 @@ void FosterStartup(FosterDesc desc)
 	SDL_ShowWindow(fstate.window);
 }
 
-void FosterRegisterLogMethods(FosterLogFn logInfo, FosterLogFn logWarn, FosterLogFn logError, FosterLogging logLevel)
+void FosterSetLogCallback(FosterLogFn logFn, FosterLogFilter logFiler)
 {
-	fstate.logInfo = logInfo;
-	fstate.logWarn = logWarn;
-	fstate.logError = logError;
-	fstate.logLevel = logLevel;
+	fstate.logFn = logFn;
+	fstate.logFilter = logFiler;
 }
 
 void FosterBeginFrame()
@@ -433,7 +430,7 @@ void FosterSetFlags(FosterFlags flags)
 		{
 			int result = SDL_GL_SetSwapInterval(FOSTER_CHECK(flags, FOSTER_FLAG_VSYNC) ? 1 : 0);
 			if (result != 0)
-				FosterLogWarn("Setting V-Sync Failed: %s", SDL_GetError());
+				FOSTER_LOG_WARN("Setting V-Sync Failed: %s", SDL_GetError());
 		}
 
 		fstate.flags = flags;
@@ -488,7 +485,7 @@ FosterFont* FosterFontInit(unsigned char* data, int length)
 {
 	if (stbtt_GetNumberOfFonts(data) <= 0)
 	{
-		FosterLogError("Unable to parse Font File");
+		FOSTER_LOG_ERROR("Unable to parse Font File");
 		return NULL;
 	}
 
@@ -496,7 +493,7 @@ FosterFont* FosterFontInit(unsigned char* data, int length)
 
 	if (stbtt_InitFont(info, data, 0) == 0)
 	{
-		FosterLogError("Unable to parse Font File");
+		FOSTER_LOG_ERROR("Unable to parse Font File");
 		SDL_free(info);
 		return NULL;
 	}
@@ -705,10 +702,10 @@ void FosterClear(FosterClearCommand* clear)
 	fstate.device.clear(clear);
 }
 
-void FosterLogInfo(const char* fmt, ...)
+void FosterLog(FosterLogLevel level, const char* fmt, ...)
 {
-	if (fstate.logLevel == FOSTER_LOGGING_NONE ||
-		fstate.logInfo == NULL)
+	if (fstate.logFilter == FOSTER_LOG_FILTER_IGNORE_ALL ||
+		fstate.logFn == NULL)
 		return;
 
 	char msg[FOSTER_MAX_MESSAGE_SIZE];
@@ -717,37 +714,7 @@ void FosterLogInfo(const char* fmt, ...)
 	SDL_vsnprintf(msg, sizeof(msg), fmt, ap);
 	va_end(ap);
 
-	fstate.logInfo(msg);
-}
-
-void FosterLogWarn(const char* fmt, ...)
-{
-	if (fstate.logLevel == FOSTER_LOGGING_NONE ||
-		fstate.logWarn == NULL)
-		return;
-
-	char msg[FOSTER_MAX_MESSAGE_SIZE];
-	va_list ap;
-	va_start(ap, fmt);
-	SDL_vsnprintf(msg, sizeof(msg), fmt, ap);
-	va_end(ap);
-
-	fstate.logWarn(msg);
-}
-
-void FosterLogError(const char* fmt, ...)
-{
-	if (fstate.logLevel == FOSTER_LOGGING_NONE ||
-		fstate.logError == NULL)
-		return;
-
-	char msg[FOSTER_MAX_MESSAGE_SIZE];
-	va_list ap;
-	va_start(ap, fmt);
-	SDL_vsnprintf(msg, sizeof(msg), fmt, ap);
-	va_end(ap);
-
-	fstate.logError(msg);
+	fstate.logFn(msg, level);
 }
 
 int FosterFindJoystickIndexSDL(SDL_Joystick** joysticks, SDL_JoystickID instanceID)
