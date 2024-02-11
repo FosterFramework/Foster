@@ -165,6 +165,7 @@ FosterBool FosterPollEvents(FosterEvent* output)
 {
 	FOSTER_ASSERT_RUNNING_RET(FosterPollEvents, 0);
 
+	SDL_Event event;
 	*output = (FosterEvent){ 0 };
 	output->eventType = FOSTER_EVENT_TYPE_NONE;
 
@@ -184,7 +185,6 @@ FosterBool FosterPollEvents(FosterEvent* output)
 
 	// get next SDL event, or return false if no more found
 NEXT_EVENT:
-	SDL_Event event;
 	if (!SDL_PollEvent(&event))
 	{
 		fstate.polledMouseMovement = 0;
