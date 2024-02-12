@@ -303,12 +303,14 @@ public static class App
 		
 		MainThreadID = Thread.CurrentThread.ManagedThreadId;
 
+		// toggle fulscreen flag
 		if (fullscreen)
 			flags |= Platform.FosterFlags.Fullscreen;
 
+		// run the application
+		var name = Platform.ToUTF8(applicationName); 
 		title = applicationName;
 		Name = applicationName;
-		var name = Platform.ToUTF8(applicationName);
 
 		Platform.FosterStartup(new()
 		{
@@ -326,6 +328,9 @@ public static class App
 		Running = true;
 		UserPath = Platform.ParseUTF8(Platform.FosterGetUserPath());
 		Graphics.Initialize();
+
+		// load default input mappings if they exist
+		Input.AddDefaultSdlGamepadMappings(AppContext.BaseDirectory);
 
 		// Clear Time
 		Time.Frame = 0;

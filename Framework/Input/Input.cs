@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Foster.Framework;
 
@@ -51,10 +52,60 @@ public static class Input
 	/// </summary>
 	public static float RepeatInterval = 0.03f;
 
+	/// <summary>
+	/// 
+	/// </summary>
 	public delegate void TextInputHandler(char value);
+
+	/// <summary>
+	/// Called whenever keyboard text is typed
+	/// </summary>
 	public static event TextInputHandler? OnTextEvent;
 
-	internal static readonly List<WeakReference<VirtualButton>> virtualButtons = new List<WeakReference<VirtualButton>>();
+	/// <summary>
+	/// Holds references to all Virtual Buttons so they can be updated.
+	/// </summary>
+	internal static readonly List<WeakReference<VirtualButton>> virtualButtons = [];
+
+	/// <summary>
+	/// Loads 'gamecontrollerdb.txt' from a local file or falls back to the 
+	/// default embedded SDL gamepad mappings
+	/// </summary>
+	internal static void AddDefaultSdlGamepadMappings(string relativePath)
+	{
+		var path = Path.Combine(relativePath, "gamecontrollerdb.txt");
+		if (File.Exists(path))
+			AddSdlGamepadMappings(File.ReadAllLines(path));
+	}
+
+	/// <summary>
+	/// Loads a list of SDL Gamepad Mappings.
+	/// You can find more information here: https://github.com/mdqinc/SDL_GameControllerDB
+	/// By default, any 'gamecontrollerdb.txt' found adjacent to the application at runtime
+	/// will be loaded automatically.
+	/// </summary>
+	public static void AddSdlGamepadMappings(string[] mappings)
+	{
+		foreach (var mapping in mappings)
+			Platform.SDL_GameControllerAddMapping(mapping);
+	}
+
+	/// <summary>
+	/// Sets the Clipboard to the given String
+	/// </summary>
+	public static void SetClipboardString(string value)
+	{
+		Platform.FosterSetClipboard(value);
+	}
+
+	/// <summary>
+	/// Gets the Clipboard String
+	/// </summary>
+	public static string GetClipboardString()
+	{
+		var ptr = Platform.FosterGetClipboard();
+		return Platform.ParseUTF8(ptr);
+	}
 
 	/// <summary>
 	/// Run at the beginning of a frame to step the input state.
@@ -75,23 +126,6 @@ public static class Input
 			else
 				virtualButtons.RemoveAt(i);
 		}
-	}
-
-	/// <summary>
-	/// Sets the Clipboard to the given String
-	/// </summary>
-	public static void SetClipboardString(string value)
-	{
-		Platform.FosterSetClipboard(value);
-	}
-
-	/// <summary>
-	/// Gets the Clipboard String
-	/// </summary>
-	public static string GetClipboardString()
-	{
-		var ptr = Platform.FosterGetClipboard();
-		return Platform.ParseUTF8(ptr);
 	}
 
 	private static unsafe void OnText(IntPtr cstr)

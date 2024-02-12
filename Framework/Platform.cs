@@ -313,6 +313,11 @@ internal static class Platform
 	public static extern void FosterDraw(ref FosterDrawCommand command);
 	[DllImport(DLL)]
 	public static extern void FosterClear(ref FosterClearCommand command);
+
+	// Non-Foster Calls:
+	
+	[DllImport(DLL, CharSet = CharSet.Ansi)]
+	public static extern int SDL_GameControllerAddMapping(string mappingString);
 	
 	// [DllImport(DLL)]
 	// public static extern void emscripten_set_main_loop(IntPtr action, int fps, bool simulateInfiniteLoop);
