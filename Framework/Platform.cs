@@ -32,8 +32,8 @@ internal static class Platform
 		ControllerAxis
 	}
 
-	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public delegate void FosterLogFn(IntPtr msg, int type);
+	// [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	// public delegate void FosterLogFn(IntPtr msg, int type);
 	
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate void FosterWriteFn(IntPtr context, IntPtr data, int size);
@@ -191,6 +191,7 @@ internal static class Platform
 		Marshal.FreeHGlobal(ptr);
 	}
 
+	[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
 	private static void HandleLog(IntPtr msg, int type)
 	{
 		switch (type)
@@ -202,18 +203,18 @@ internal static class Platform
 		}
 	}
 
-	// need to store static references otherwise the delegates will get collected
-	private static readonly FosterLogFn handleLog = HandleLog;
-
-	static Platform()
+	static unsafe Platform()
 	{
-		FosterSetLogCallback(handleLog, 0);
+		// This is done in this way so that the delegate is compatible with WASM/Emscripten,
+		// which do not accept normal delegates (only unmanaged function pointer ones like this) 
+		delegate* unmanaged[Cdecl]<IntPtr, int, void> fn = &HandleLog;
+		FosterSetLogCallback((IntPtr)fn, 0);
 	}
 
 	[DllImport(DLL)]
-	public static extern void FosterStartup(FosterDesc desc);
+	public static extern void FosterSetLogCallback(IntPtr logFn, int level);
 	[DllImport(DLL)]
-	public static extern void FosterSetLogCallback(FosterLogFn logFn, int level);
+	public static extern void FosterStartup(FosterDesc desc);
 	[DllImport(DLL)]
 	public static extern void FosterBeginFrame();
 	[DllImport(DLL)]
@@ -312,4 +313,7 @@ internal static class Platform
 	public static extern void FosterDraw(ref FosterDrawCommand command);
 	[DllImport(DLL)]
 	public static extern void FosterClear(ref FosterClearCommand command);
+	
+	// [DllImport(DLL)]
+	// public static extern void emscripten_set_main_loop(IntPtr action, int fps, bool simulateInfiniteLoop);
 }
