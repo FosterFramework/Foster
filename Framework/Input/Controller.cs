@@ -28,6 +28,39 @@ public class Controller
 	public bool IsGamepad { get; private set; } = false;
 
 	/// <summary>
+	/// The Type of Gamepad
+	/// </summary>
+	public GamepadTypes GamepadType { get; private set; } = GamepadTypes.Unknown;
+
+	/// <summary>
+	/// The Gamepad Provider
+	/// </summary>
+	public GamepadProviders GamepadProvider => GamepadType switch
+	{
+		GamepadTypes.Unknown => GamepadProviders.Unknown,
+		GamepadTypes.Xbox360 => GamepadProviders.Xbox,
+		GamepadTypes.XboxOne => GamepadProviders.Xbox,
+		GamepadTypes.PS3 => GamepadProviders.PlayStation,
+		GamepadTypes.PS4 => GamepadProviders.PlayStation,
+		GamepadTypes.NintendoSwitchPro => GamepadProviders.Nintendo,
+		GamepadTypes.Virtual => GamepadProviders.Unknown,
+		GamepadTypes.PS5 => GamepadProviders.PlayStation,
+		GamepadTypes.AmazonLuna => GamepadProviders.Unknown,
+		GamepadTypes.GoogleStadia => GamepadProviders.Unknown,
+		GamepadTypes.NVidiaShield => GamepadProviders.Unknown,
+		GamepadTypes.NintendoSwitchJoyconLeft => GamepadProviders.Nintendo,
+		GamepadTypes.NintendoSwitchJoyconRight => GamepadProviders.Nintendo,
+		GamepadTypes.NintendoSwitchJoyconPair => GamepadProviders.Nintendo,
+		_ => GamepadProviders.Unknown
+	};
+
+	/// <summary>
+	/// The Gamepad type, if known.
+	/// </summary>
+	[Obsolete("Use GamepadType or GamepadProvider instead")]
+	public Gamepads Gamepad => Gamepads.Xbox;
+
+	/// <summary>
 	/// Number of Buttons
 	/// </summary>
 	public int Buttons { get; private set; } = 0;
@@ -59,12 +92,13 @@ public class Controller
 	internal readonly float[] axis = new float[MaxAxis];
 	internal readonly TimeSpan[] axisTimestamp = new TimeSpan[MaxAxis];
 
-	internal void Connect(string name, int buttonCount, int axisCount, bool isGamepad, ushort vendor, ushort product, ushort version)
+	internal void Connect(string name, int buttonCount, int axisCount, bool isGamepad, GamepadTypes type, ushort vendor, ushort product, ushort version)
 	{
 		Name = name;
 		Buttons = Math.Min(buttonCount, MaxButtons);
 		Axes = Math.Min(axisCount, MaxAxis);
 		IsGamepad = isGamepad;
+		GamepadType = type;
 		Connected = true;
 		Vendor = vendor;
 		Product = product;
@@ -76,6 +110,7 @@ public class Controller
 		Name = "Unknown";
 		Connected = false;
 		IsGamepad = false;
+		GamepadType = GamepadTypes.Unknown;
 		Buttons = 0;
 		Axes = 0;
 		Vendor = 0;
@@ -113,30 +148,6 @@ public class Controller
 		Array.Copy(other.timestamp, 0, timestamp, 0, pressed.Length);
 		Array.Copy(other.axis, 0, axis, 0, axis.Length);
 		Array.Copy(other.axisTimestamp, 0, axisTimestamp, 0, axis.Length);
-	}
-
-	/// <summary>
-	/// The Gamepad type, if known.
-	/// </summary>
-	public Gamepads Gamepad
-	{
-		get
-		{
-			var vendor  = ((Vendor  >> 8) & 0x00FF) | ((Vendor  << 8) & 0xFF00);
-			var product = ((Product >> 8) & 0x00FF) | ((Product << 8) & 0xFF00);
-			var id = (vendor << 16) | product;
-
-			if (id == 0x4c05c405 || id == 0x4c05cc09)
-				return Gamepads.DualShock4;
-			
-			if (id == 0x4c05e60c)
-				return Gamepads.DualSense;
-
-			if (id == 0x7e050920 || id == 0x7e053003)
-				return Gamepads.Nintendo;
-
-			return Gamepads.Xbox;
-		}
 	}
 
 	public bool Pressed(int buttonIndex) => buttonIndex >= 0 && buttonIndex < MaxButtons && pressed[buttonIndex];

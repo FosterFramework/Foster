@@ -236,6 +236,7 @@ NEXT_EVENT:
 		output->controller.index = index;
 		output->controller.name = SDL_JoystickName(ptr);
 		output->controller.isGamepad = 0;
+		output->controller.gamepadType = FOSTER_GAMEPAD_TYPE_UNKNOWN;
 		output->controller.buttonCount = SDL_JoystickNumButtons(ptr);
 		output->controller.axisCount = SDL_JoystickNumAxes(ptr);
 		output->controller.vendor = SDL_JoystickGetVendor(ptr);
@@ -291,6 +292,7 @@ NEXT_EVENT:
 		output->controller.buttonCount = 15;
 		output->controller.axisCount = 6;
 		output->controller.isGamepad = 1;
+		output->controller.gamepadType = (FosterGamepadTypes)SDL_GameControllerGetType(ptr);
 		output->controller.vendor = SDL_GameControllerGetVendor(ptr);
 		output->controller.product = SDL_GameControllerGetProduct(ptr);
 		output->controller.version = SDL_GameControllerGetProductVersion(ptr);

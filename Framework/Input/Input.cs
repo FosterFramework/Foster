@@ -219,6 +219,7 @@ public static class Input
 						ev.Controller.ButtonCount,
 						ev.Controller.AxisCount,
 						ev.Controller.IsGamepad != 0,
+						ev.Controller.GamepadType,
 						ev.Controller.Vendor,
 						ev.Controller.Product,
 						ev.Controller.Version
