@@ -203,6 +203,8 @@ public static class Input
 				var pixels = new Point2(App.WidthInPixels, App.HeightInPixels);
 				nextState.Mouse.Position.X = (ev.Mouse.X / size.X) * pixels.X;
 				nextState.Mouse.Position.Y = (ev.Mouse.Y / size.Y) * pixels.Y;
+				nextState.Mouse.Delta.X = ev.Mouse.deltaX;
+				nextState.Mouse.Delta.Y = ev.Mouse.deltaY;
 				break;
 			}
 			case Platform.FosterEventType.MouseWheel:
