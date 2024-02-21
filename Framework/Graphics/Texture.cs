@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
@@ -109,13 +110,13 @@ public class Texture : IResource
 		if (IsDisposed)
 			throw new Exception("Resource is Disposed");
 		
-		if (Marshal.SizeOf<T>() * data.Length < MemorySize)
+		if (Unsafe.SizeOf<T>() * data.Length < MemorySize)
 			throw new Exception("Data Buffer is smaller than the Size of the Texture");
 
 		fixed (byte* ptr = MemoryMarshal.AsBytes(data))
 		{
-			int length = Marshal.SizeOf<T>()  * data.Length;
-			Platform.FosterTextureSetData(resource, new nint(ptr), length);
+			int length = Unsafe.SizeOf<T>()  * data.Length;
+			Platform.FosterTextureSetData(resource, ptr, length);
 		}
 	}
 
@@ -127,13 +128,13 @@ public class Texture : IResource
 		if (IsDisposed)
 			throw new Exception("Resource is Disposed");
 
-		if (Marshal.SizeOf<T>() * data.Length < MemorySize)
+		if (Unsafe.SizeOf<T>() * data.Length < MemorySize)
 			throw new Exception("Data Buffer is smaller than the Size of the Texture");
 
 		fixed (byte* ptr = MemoryMarshal.AsBytes(data))
 		{
-			int length = Marshal.SizeOf<T>() * data.Length;
-			Platform.FosterTextureGetData(resource, new nint(ptr), length);
+			int length = Unsafe.SizeOf<T>() * data.Length;
+			Platform.FosterTextureGetData(resource, ptr, length);
 		}
 	}
 
