@@ -253,6 +253,11 @@ public static class App
 	public static Action? OnExitRequested;
 
 	/// <summary>
+	/// Called only in DEBUG builds when a hot reload occurs.
+	/// </summary>
+	public static Action? OnHotReload;
+
+	/// <summary>
 	/// The Main Thread that the Application was Run on
 	/// </summary>
 	public static int MainThreadID { get; private set; }
