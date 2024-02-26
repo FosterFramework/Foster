@@ -424,6 +424,12 @@ public struct RectInt : IEquatable<RectInt>
 	public static RectInt operator /(in RectInt rect, in Point2 scaler)
 		=> new RectInt(rect.X / scaler.X, rect.Y / scaler.Y, rect.Width / scaler.X, rect.Height / scaler.Y).Validate();
 
+	public static RectInt operator +(in RectInt a, in Point2 b)
+		=> new(a.X + b.X, a.Y + b.Y, a.Width, a.Height);
+
+	public static RectInt operator -(in RectInt a, in Point2 b)
+		=> new(a.X - b.X, a.Y - b.Y, a.Width, a.Height);
+
 	public static explicit operator RectInt(in Rect rect)
 		=> new((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
 
