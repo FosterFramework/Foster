@@ -1577,7 +1577,7 @@ public class Batcher : IDisposable
 
 		SetTexture(subtex.Texture);
 		Quad(
-			rect.TopLeft - pos, rect.TopRight - pos, rect.BottomRight - pos, rect.BottomLeft - pos,
+			Vector2.Zero, rect.TopRight - pos, rect.BottomRight - pos, rect.BottomLeft - pos,
 			subtex.TexCoords0, subtex.TexCoords1, subtex.TexCoords2, subtex.TexCoords3,
 			color);
 
@@ -1602,7 +1602,7 @@ public class Batcher : IDisposable
 
 		SetTexture(subtex.Texture);
 		Quad(
-			rect.TopLeft - pos, rect.TopRight - pos, rect.BottomRight - pos, rect.BottomLeft - pos,
+			Vector2.Zero, rect.TopRight - pos, rect.BottomRight - pos, rect.BottomLeft - pos,
 			subtex.TexCoords0, subtex.TexCoords1, subtex.TexCoords2, subtex.TexCoords3,
 			c0, c1, c2, c3);
 
