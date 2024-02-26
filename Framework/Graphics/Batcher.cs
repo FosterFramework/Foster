@@ -1559,6 +1559,56 @@ public class Batcher : IDisposable
 		Matrix = was;
 	}
 
+	public void ImageStretch(in Subtexture subtex, in Rect rect, Color color)
+	{
+		SetTexture(subtex.Texture);
+		Quad(
+			rect.TopLeft, rect.TopRight, rect.BottomRight, rect.BottomLeft,
+			subtex.TexCoords0, subtex.TexCoords1, subtex.TexCoords2, subtex.TexCoords3,
+			color);
+	}
+
+	public void ImageStretch(in Subtexture subtex, in Rect rect, in Vector2 origin, in Vector2 scale, float rotation, Color color)
+	{
+		var was = Matrix;
+
+		var pos = rect.Position;
+		Matrix = Transform.CreateMatrix(pos, origin, scale, rotation) * Matrix;
+
+		SetTexture(subtex.Texture);
+		Quad(
+			rect.TopLeft - pos, rect.TopRight - pos, rect.BottomRight - pos, rect.BottomLeft - pos,
+			subtex.TexCoords0, subtex.TexCoords1, subtex.TexCoords2, subtex.TexCoords3,
+			color);
+
+		Matrix = was;
+	}
+
+	public void ImageStretch(in Subtexture subtex, in Rect rect, Color c0, Color c1, Color c2, Color c3)
+	{
+		SetTexture(subtex.Texture);
+		Quad(
+			rect.TopLeft, rect.TopRight, rect.BottomRight, rect.BottomLeft,
+			subtex.TexCoords0, subtex.TexCoords1, subtex.TexCoords2, subtex.TexCoords3,
+			c0, c1, c2, c3);
+	}
+
+	public void ImageStretch(in Subtexture subtex, in Rect rect, in Vector2 origin, in Vector2 scale, float rotation, Color c0, Color c1, Color c2, Color c3)
+	{
+		var was = Matrix;
+
+		var pos = rect.Position;
+		Matrix = Transform.CreateMatrix(pos, origin, scale, rotation) * Matrix;
+
+		SetTexture(subtex.Texture);
+		Quad(
+			rect.TopLeft - pos, rect.TopRight - pos, rect.BottomRight - pos, rect.BottomLeft - pos,
+			subtex.TexCoords0, subtex.TexCoords1, subtex.TexCoords2, subtex.TexCoords3,
+			c0, c1, c2, c3);
+
+		Matrix = was;
+	}
+
 	public void ImageFit(in Subtexture subtex, in Rect rect, in Vector2 justify, Color color, bool flipX, bool flipY)
 	{
 		if (subtex.Texture == null)
