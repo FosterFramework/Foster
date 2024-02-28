@@ -73,6 +73,7 @@ internal static partial class Platform
 			public int ButtonCount;
 			public int AxisCount;
 			public byte IsGamepad;
+			public GamepadTypes GamepadType;
 			public ushort Vendor;
 			public ushort Product;
 			public ushort Version;

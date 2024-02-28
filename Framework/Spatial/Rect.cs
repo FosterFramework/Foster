@@ -300,6 +300,12 @@ public struct Rect : IConvexShape, IEquatable<Rect>
 	public readonly Rect Scale(in Vector2 by)
 		=> new(X * by.X, Y * by.Y, Width * by.X, Height * by.Y);
 
+	public readonly Rect Translate(float byX, float byY)
+		=> new(X + byX, Y + byY, Width, Height);
+
+	public readonly Rect Translate(in Vector2 by)
+		=> new(X + by.X, Y + by.Y, Width, Height);
+
 	public readonly void Project(in Vector2 axis, out float min, out float max)
 	{
 		min = float.MaxValue;
