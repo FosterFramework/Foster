@@ -40,6 +40,8 @@ public struct BlendMode : IEquatable<BlendMode>
 
 	public static readonly BlendMode Premultiply
 		= new (BlendOp.Add, BlendFactor.One, BlendFactor.OneMinusSrcAlpha);
+	public static readonly BlendMode NonPremultiplied
+		= new(BlendOp.Add, BlendFactor.SrcAlpha, BlendFactor.OneMinusSrcAlpha);
 	public static readonly BlendMode Add
 		= new (BlendOp.Add, BlendFactor.One, BlendFactor.DstAlpha);
 	public static readonly BlendMode Subtract
