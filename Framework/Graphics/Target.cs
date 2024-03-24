@@ -63,7 +63,7 @@ public class Target : IResource
 		Bounds = new RectInt(0, 0, Width, Height);
 
 		var textures = new List<Texture>();
-		for (int i = 0; i < attachments.Length; i ++)
+		for (int i = 0; i < attachments.Length; i++)
 		{
 			var ptr = Platform.FosterTargetGetAttachment(resource, i);
 			textures.Add(new Texture(ptr, width, height, attachments[i]));
@@ -89,7 +89,7 @@ public class Target : IResource
 	/// <summary>
 	/// Clears the Target
 	/// </summary>
-	public void Clear(Color color, float depth, int stencil, ClearMask mask)
+	public unsafe void Clear(Color color, float depth, int stencil, ClearMask mask)
 	{
 		if (IsDisposed)
 			throw new Exception("Resource is Disposed");
@@ -103,8 +103,8 @@ public class Target : IResource
 			stencil = stencil,
 			mask = mask
 		};
-		
-		Platform.FosterClear(ref clear);
+
+		Platform.FosterClear(&clear);
 	}
 
 	/// <summary>

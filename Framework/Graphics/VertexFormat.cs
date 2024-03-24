@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
@@ -31,7 +32,7 @@ public readonly struct VertexFormat
 
 	public static VertexFormat Create<T>(params Element[] elements) where T : struct
 	{
-		return new VertexFormat(Marshal.SizeOf<T>(), elements);
+		return new VertexFormat(Unsafe.SizeOf<T>(), elements);
 	}
 
 	public static bool operator ==(VertexFormat a, VertexFormat b)
