@@ -60,6 +60,8 @@ internal static partial class Platform
 			public FosterEventType EventType;
 			public float X;
 			public float Y;
+			public float deltaX;
+			public float deltaY;
 			public int Button;
 			public byte ButtonPressed;
 		}

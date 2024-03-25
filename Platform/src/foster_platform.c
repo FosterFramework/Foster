@@ -171,11 +171,17 @@ FosterBool FosterPollEvents(FosterEvent* output)
 	// TODO: should this just change to a getter?
 	if (!fstate.polledMouseMovement)
 	{
+		output->eventType = FOSTER_EVENT_TYPE_MOUSE_MOVE;
+
 		int mouseX, mouseY;
 		SDL_GetMouseState(&mouseX, &mouseY);
-		output->eventType = FOSTER_EVENT_TYPE_MOUSE_MOVE;
 		output->mouse.x = (float)mouseX;
 		output->mouse.y = (float)mouseY;
+
+		SDL_GetRelativeMouseState(&mouseX, &mouseY);
+		output->mouse.deltaX = (float)mouseX;
+		output->mouse.deltaY = (float)mouseY;
+
 		fstate.polledMouseMovement = 1;
 		return 1;
 	}

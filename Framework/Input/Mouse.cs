@@ -21,6 +21,11 @@ public class Mouse
 	/// </summary>
 	public Vector2 Position;
 
+	/// <summary>
+	/// Delta to the previous mouse position, in Pixel Coordinates.
+	/// </summary>
+	public Vector2 Delta;
+
 	public float X
 	{
 		get => Position.X;
@@ -70,6 +75,7 @@ public class Mouse
 		Array.Copy(other.timestamp, 0, timestamp, 0, MaxButtons);
 
 		Position = other.Position;
+		Delta = other.Delta;
 		wheelValue = other.wheelValue;
 	}
 
