@@ -84,7 +84,7 @@ public class Mesh : IResource
 	/// <summary>
 	/// Uploads the Index data to the Mesh.
 	/// </summary>
-	public unsafe void SetIndices(IntPtr data, int count, IndexFormat format)
+	public void SetIndices(nint data, int count, IndexFormat format)
 	{
 		if (IsDisposed)
 			throw new Exception("Resource is Disposed");
@@ -96,9 +96,9 @@ public class Mesh : IResource
 			IndexFormat = format;
 			Platform.FosterMeshSetIndexFormat(resource, format);
 		}
-		
+
 		Platform.FosterMeshSetIndexData(
-			resource, 
+			resource,
 			data,
 			GetIndexFormatSize(format) * count,
 			0
@@ -126,7 +126,7 @@ public class Mesh : IResource
 	/// The Mesh must already be able to fit this with a previous call to SetIndices.
 	/// This also cannot modify the existing Index Format.
 	/// </summary>
-	public unsafe void SetSubIndices(int offset, IntPtr data, int count)
+	public void SetSubIndices(int offset, nint data, int count)
 	{
 		if (IsDisposed)
 			throw new Exception("Resource is Disposed");
@@ -136,11 +136,11 @@ public class Mesh : IResource
 
 		if (offset + count > IndexCount)
 			throw new Exception("SetSubIndices is out of range of the existing Index Buffer");
-		
+
 		var size = GetIndexFormatSize(IndexFormat.Value);
 
 		Platform.FosterMeshSetIndexData(
-			resource, 
+			resource,
 			data,
 			size * count,
 			size * offset
@@ -188,9 +188,9 @@ public class Mesh : IResource
 		if (!VertexFormat.HasValue || VertexFormat.Value != format)
 		{
 			VertexFormat = format;
-			
+
 			var elements = stackalloc Platform.FosterVertexElement[format.Elements.Length];
-			for (int i = 0; i < format.Elements.Length; i ++)
+			for (int i = 0; i < format.Elements.Length; i++)
 			{
 				elements[i].index = format.Elements[i].Index;
 				elements[i].type = format.Elements[i].Type;

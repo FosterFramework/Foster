@@ -262,6 +262,26 @@ typedef enum FosterAxis
 	FOSTER_AXIS_RIGHT_TRIGGER = 5
 } FosterAxis;
 
+// intentionally a 1-1 mapping with SDL's SDL_GameControllerType:
+// https://github.com/libsdl-org/SDL/blob/release-2.30.x/include/SDL_gamecontroller.h#L61
+typedef enum FosterGamepadTypes
+{
+	FOSTER_GAMEPAD_TYPE_UNKNOWN = 0,
+	FOSTER_GAMEPAD_TYPE_XBOX360,
+	FOSTER_GAMEPAD_TYPE_XBOXONE,
+	FOSTER_GAMEPAD_TYPE_PS3,
+	FOSTER_GAMEPAD_TYPE_PS4,
+	FOSTER_GAMEPAD_TYPE_NINTENDO_SWITCH_PRO,
+	FOSTER_GAMEPAD_TYPE_VIRTUAL,
+	FOSTER_GAMEPAD_TYPE_PS5,
+	FOSTER_GAMEPAD_TYPE_AMAZON_LUNA,
+	FOSTER_GAMEPAD_TYPE_GOOGLE_STADIA,
+	FOSTER_GAMEPAD_TYPE_NVIDIA_SHIELD,
+	FOSTER_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT,
+	FOSTER_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT,
+	FOSTER_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR,
+} FosterGamepadTypes;
+
 typedef enum FosterCompare
 {
 	FOSTER_COMPARE_NONE,
@@ -457,6 +477,8 @@ typedef union FosterEvent
 		int eventType;
 		float x;
 		float y;
+		float deltaX;
+		float deltaY;
 		int button;
 		FosterBool buttonPressed;
 	} mouse;
@@ -469,6 +491,7 @@ typedef union FosterEvent
 		int buttonCount;
 		int axisCount;
 		FosterBool isGamepad;
+		FosterGamepadTypes gamepadType;
 		uint16_t vendor;
 		uint16_t product;
 		uint16_t version;

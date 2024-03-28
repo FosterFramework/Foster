@@ -53,7 +53,7 @@ namespace Foster.Framework
 		/// <summary>
 		/// Clears the Back Buffer
 		/// </summary>
-		public static void Clear(Color color, float depth, int stencil, ClearMask mask)
+		public static unsafe void Clear(Color color, float depth, int stencil, ClearMask mask)
 		{
 			Platform.FosterClearCommand clear = new()
 			{
@@ -64,10 +64,10 @@ namespace Foster.Framework
 				stencil = stencil,
 				mask = mask
 			};
-			Platform.FosterClear(ref clear);
+			Platform.FosterClear(&clear);
 		}
 
-		public static void Submit(in DrawCommand command)
+		public static unsafe void Submit(in DrawCommand command)
 		{
 			IntPtr shader = IntPtr.Zero;
 			if (command.Material != null && command.Material.Shader != null && !command.Material.Shader.IsDisposed)
@@ -100,17 +100,23 @@ namespace Foster.Framework
 
 			if (command.Viewport.HasValue)
 			{
-				fc.viewport = new () { 
-					x = command.Viewport.Value.X, y = command.Viewport.Value.Y, 
-					w = command.Viewport.Value.Width, h = command.Viewport.Value.Height 
+				fc.viewport = new()
+				{
+					x = command.Viewport.Value.X,
+					y = command.Viewport.Value.Y,
+					w = command.Viewport.Value.Width,
+					h = command.Viewport.Value.Height
 				};
 			}
 
 			if (command.Scissor.HasValue)
 			{
-				fc.scissor = new () { 
-					x = command.Scissor.Value.X, y = command.Scissor.Value.Y, 
-					w = command.Scissor.Value.Width, h = command.Scissor.Value.Height 
+				fc.scissor = new()
+				{
+					x = command.Scissor.Value.X,
+					y = command.Scissor.Value.Y,
+					w = command.Scissor.Value.Width,
+					h = command.Scissor.Value.Height
 				};
 			}
 
@@ -118,7 +124,7 @@ namespace Foster.Framework
 			command.Material?.Apply();
 
 			// perform draw
-			Platform.FosterDraw(ref fc);
+			Platform.FosterDraw(&fc);
 		}
 
 		internal static class Resources
@@ -134,7 +140,7 @@ namespace Foster.Framework
 			/// </summary>
 			public static void RegisterAllocated(IResource managed, IntPtr handle, FreeFn free)
 			{
-				Allocated alloc = new (new(managed), handle, free);
+				Allocated alloc = new(new(managed), handle, free);
 				lock (allocated)
 					allocated.Add(handle, alloc);
 			}

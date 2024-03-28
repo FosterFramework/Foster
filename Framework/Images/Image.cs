@@ -32,8 +32,8 @@ public class Image : IDisposable
 	/// <summary>
 	/// Bounds of the Image
 	/// </summary>
-	public RectInt Bounds => new (0, 0, Width, Height);
-	
+	public RectInt Bounds => new(0, 0, Width, Height);
+
 	/// <summary>
 	/// Gets a Span of the pixel data held by the Image.
 	/// </summary>
@@ -67,13 +67,13 @@ public class Image : IDisposable
 
 	}
 
-	public Image(int width, int height, Color fill) 
+	public Image(int width, int height, Color fill)
 		: this(width, height, new Color[width * height])
 	{
 		unsafe
 		{
 			Color* pixels = (Color*)ptr.ToPointer();
-			for (int i = 0, n = width * height; i < n; i ++)
+			for (int i = 0, n = width * height; i < n; i++)
 				pixels[i] = fill;
 		}
 	}
@@ -110,13 +110,15 @@ public class Image : IDisposable
 		stream.Read(data);
 
 		// load image from byte data
-		IntPtr mem;
+		nint mem;
 		int w, h;
 		fixed (byte* it = data)
-			mem = Platform.FosterImageLoad(new nint(it), data.Length, out w, out h);
+		{
+			mem = Platform.FosterImageLoad(it, data.Length, out w, out h);
+		}
 
 		// returns invalid ptr if unable to load
-		if (mem == IntPtr.Zero)
+		if (mem == 0)
 			throw new Exception("Failed to load Image");
 
 		// update properties
@@ -145,6 +147,7 @@ public class Image : IDisposable
 		ptr = new();
 		unmanaged = false;
 		Width = Height = 0;
+		GC.SuppressFinalize(this);
 	}
 
 	/// <summary>
@@ -181,8 +184,9 @@ public class Image : IDisposable
 		Write(stream, ImageWriteFormat.Qoi);
 	}
 
-	private void Write(Stream stream, ImageWriteFormat format)
+	private unsafe void Write(Stream stream, ImageWriteFormat format)
 	{
+		[UnmanagedCallersOnly]
 		static unsafe void Write(IntPtr context, IntPtr data, int size)
 		{
 			var stream = GCHandle.FromIntPtr(context).Target as Stream;
@@ -191,7 +195,7 @@ public class Image : IDisposable
 		}
 
 		GCHandle handle = GCHandle.Alloc(stream);
-		Platform.FosterImageWrite(Write, GCHandle.ToIntPtr(handle), format, Width, Height, ptr);
+		Platform.FosterImageWrite(&Write, GCHandle.ToIntPtr(handle), format, Width, Height, ptr);
 		handle.Free();
 	}
 
@@ -223,16 +227,13 @@ public class Image : IDisposable
 	/// Get the color of a pixel.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public Color GetPixel(int x, int y)
+	public unsafe Color GetPixel(int x, int y)
 	{
 		if (x < 0 || y < 0 || x >= Width || y >= Height)
 			throw new IndexOutOfRangeException();
 
-		unsafe
-		{
-			Color* pixels = (Color*)ptr;
-			return pixels[x + y * Width];
-		}
+		Color* pixels = (Color*)ptr;
+		return pixels[x + y * Width];
 	}
 
 	/// <summary>
@@ -297,13 +298,13 @@ public class Image : IDisposable
 		Debug.Assert(sourcePixels.Length >= sourceWidth * sourceHeight);
 
 		var target = new RectInt(destination.X, destination.Y, sourceRect.Width, sourceRect.Height);
-		
+
 		var dst = Bounds.OverlapRect(in target);
 		if (dst.Width <= 0 || dst.Height <= 0)
 			return;
 
 		var p = sourceRect.TopLeft + (dst.TopLeft - target.TopLeft);
-		
+
 		fixed (Color* sourcePtr = sourcePixels)
 		{
 			var sourceEnd = sourcePtr + sourceWidth * sourceHeight;
@@ -325,7 +326,7 @@ public class Image : IDisposable
 				}
 				else
 				{
-					for (int i = 0; i < len; i ++)
+					for (int i = 0; i < len; i++)
 						dstPtr[i] = blend(srcPtr[i], dstPtr[i]);
 				}
 			}
