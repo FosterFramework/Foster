@@ -72,21 +72,15 @@ void FosterStartup(FosterDesc desc)
 	}
 
 	// Get SDL version
-	SDL_version version;
+	SDL_Version version;
 	SDL_GetVersion(&version);
 	FOSTER_LOG_INFO("SDL: v%i.%i.%i", version.major, version.minor, version.patch);
 
 	// track SDL output
 	if (fstate.logFilter != FOSTER_LOG_FILTER_IGNORE_ALL && fstate.logFn)
 	{
-		SDL_LogSetOutputFunction(FosterLog_SDL, NULL);
+		SDL_SetLogOutputFunction(FosterLog_SDL, NULL);
 	}
-
-	// Make us DPI aware on Windows
-	SDL_SetHint(SDL_HINT_WINDOWS_DPI_AWARENESS, "permonitorv2");
-
-	// use physical button layout, not labels
-	SDL_SetHintWithPriority(SDL_HINT_GAMECONTROLLER_USE_BUTTON_LABELS, "0", SDL_HINT_OVERRIDE);
 
 	// by default allow controller presses while unfocused, let game decide if it should handle them
 	SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
@@ -138,6 +132,8 @@ void FosterStartup(FosterDesc desc)
 	}
 
 	// toggle flags & show window
+	SDL_SetWindowFullscreenMode(fstate.window, NULL);
+	SDL_SetWindowBordered(fstate.window, SDL_TRUE);
 	FosterSetFlags(fstate.desc.flags);
 	SDL_ShowWindow(fstate.window);
 }
@@ -171,14 +167,14 @@ FosterBool FosterPollEvents(FosterEvent* output)
 	{
 		output->eventType = FOSTER_EVENT_TYPE_MOUSE_MOVE;
 
-		int mouseX, mouseY;
+		float mouseX, mouseY;
 		SDL_GetMouseState(&mouseX, &mouseY);
-		output->mouse.x = (float)mouseX;
-		output->mouse.y = (float)mouseY;
+		output->mouse.x = mouseX;
+		output->mouse.y = mouseY;
 
 		SDL_GetRelativeMouseState(&mouseX, &mouseY);
-		output->mouse.deltaX = (float)mouseX;
-		output->mouse.deltaY = (float)mouseY;
+		output->mouse.deltaX = mouseX;
+		output->mouse.deltaY = mouseY;
 
 		fstate.polledMouseMovement = 1;
 		return 1;
@@ -241,11 +237,11 @@ NEXT_EVENT:
 		output->controller.name = SDL_GetJoystickName(ptr);
 		output->controller.isGamepad = 0;
 		output->controller.gamepadType = FOSTER_GAMEPAD_TYPE_UNKNOWN;
-		output->controller.buttonCount = SDL_JoystickNumButtons(ptr);
-		output->controller.axisCount = SDL_JoystickNumAxes(ptr);
-		output->controller.vendor = SDL_JoystickGetVendor(ptr);
-		output->controller.product = SDL_JoystickGetProduct(ptr);
-		output->controller.version = SDL_JoystickGetProductVersion(ptr);
+		output->controller.buttonCount = SDL_GetNumJoystickButtons(ptr);
+		output->controller.axisCount = SDL_GetNumJoystickAxes(ptr);
+		output->controller.vendor = SDL_GetJoystickVendor(ptr);
+		output->controller.product = SDL_GetJoystickProduct(ptr);
+		output->controller.version = SDL_GetJoystickProductVersion(ptr);
 	}
 	else if (event.type == SDL_EVENT_JOYSTICK_REMOVED)
 	{
@@ -296,10 +292,10 @@ NEXT_EVENT:
 		output->controller.buttonCount = 15;
 		output->controller.axisCount = 6;
 		output->controller.isGamepad = 1;
-		output->controller.gamepadType = (FosterGamepadTypes)SDL_GameControllerGetType(ptr);
-		output->controller.vendor = SDL_GameControllerGetVendor(ptr);
-		output->controller.product = SDL_GameControllerGetProduct(ptr);
-		output->controller.version = SDL_GameControllerGetProductVersion(ptr);
+		output->controller.gamepadType = (FosterGamepadTypes)SDL_GetGamepadType(ptr);
+		output->controller.vendor = SDL_GetGamepadVendor(ptr);
+		output->controller.product = SDL_GetGamepadProduct(ptr);
+		output->controller.version = SDL_GetGamepadProductVersion(ptr);
 	}
 	else if (event.type == SDL_EVENT_GAMEPAD_REMOVED)
 	{

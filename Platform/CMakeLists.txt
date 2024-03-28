@@ -109,7 +109,7 @@ else()
 		FetchContent_Declare(
 			SDL3
 			GIT_REPOSITORY https://github.com/libsdl-org/SDL
-			GIT_TAG bba2a5d360b6f7788032a203c97c9e07178032d3 # Is there any tagged 3.x stuff? this is just a "recent" commit
+			GIT_TAG prerelease-3.1.0
 			GIT_PROGRESS TRUE
 		)
 		FetchContent_MakeAvailable(SDL3)
