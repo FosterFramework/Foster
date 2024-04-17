@@ -474,7 +474,7 @@ void APIENTRY FosterMessage_OpenGL(GLenum source, GLenum type, GLuint id, GLenum
 		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: typeName = "DEPRECATED BEHAVIOR"; break;
 		case GL_DEBUG_TYPE_MARKER: typeName = "MARKER"; break;
 		case GL_DEBUG_TYPE_OTHER: typeName = "OTHER"; break;
-		case GL_DEBUG_TYPE_PERFORMANCE: typeName = "PEROFRMANCE"; break;
+		case GL_DEBUG_TYPE_PERFORMANCE: typeName = "PERFORMANCE"; break;
 		case GL_DEBUG_TYPE_POP_GROUP: typeName = "POP GROUP"; break;
 		case GL_DEBUG_TYPE_PORTABILITY: typeName = "PORTABILITY"; break;
 		case GL_DEBUG_TYPE_PUSH_GROUP: typeName = "PUSH GROUP"; break;
