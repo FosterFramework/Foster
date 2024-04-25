@@ -1698,6 +1698,68 @@ public class Batcher : IDisposable
 		}
 	}
 
+	public void Text(SpriteFont font, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, int maxLineWidth, Color color)
+    {
+        // TODO:
+        // I feel like the vertical alignment is slightly off, but not sure how.
+
+        var at = position + new Vector2(0, font.Ascent);
+        var last = 0;
+
+        if (justify.X != 0)
+            at.X -= justify.X * font.WidthOfLine(text);
+
+        if (justify.Y != 0)
+            at.Y -= justify.Y * font.HeightOf(text);
+
+        at.X = Calc.Round(at.X);
+        at.Y = Calc.Round(at.Y);
+
+        float previousLinesWidth = 0;
+
+        for (int i = 0; i < text.Length; i++)
+        {
+			//fits next word?
+            bool maxLineWidthReached = false;
+            if(text[i] == ' ')
+            {
+                for (int j = i+1; j < text.Length; j++)
+                {
+                    if(text[j] == ' ')
+                    {
+                        maxLineWidthReached = font.WidthOfLine(text[0..(j)]) - previousLinesWidth >= maxLineWidth ? true : false;
+
+                        if(maxLineWidthReached) previousLinesWidth = font.WidthOfLine(text[0..(j)]);
+                        	break;
+                    }
+                }
+            }
+
+            if (text[i] == '\n' || maxLineWidthReached)
+            {
+                at.X = position.X;
+                if (justify.X != 0 && i < text.Length - 1)
+                    at.X -= justify.X * font.WidthOfLine(text[(i + 1)..]);
+                at.Y += font.LineHeight;
+                last = 0;
+                continue;
+            }
+
+            if (font.TryGetCharacter(text, i, out var ch, out var step))
+            {
+                if (last != 0)
+                    at.X += font.GetKerning(last, ch.Codepoint);
+
+                if (ch.Subtexture.Texture != null)
+                    Image(ch.Subtexture, at + ch.Offset, color);
+
+                last = ch.Codepoint;
+                at.X += ch.Advance;
+                i += step - 1;
+            }
+        }
+    }
+
 	#endregion
 
 	#region Misc.
