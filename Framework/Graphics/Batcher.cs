@@ -1698,48 +1698,53 @@ public class Batcher : IDisposable
 		}
 	}
 
-	public void Text(SpriteFont font, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, int maxLineWidth, Color color)
+	public void Text(SpriteFont font, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, float maxLineWidth, Color color)
     {
         // TODO:
         // I feel like the vertical alignment is slightly off, but not sure how.
+		// Can be optimized catching results of getfittingline
 
         var at = position + new Vector2(0, font.Ascent);
         var last = 0;
 
+		int lastFitChar;
+		float fitLineWidth;
+		
+		font.GetFittingLine(text, maxLineWidth, out lastFitChar, out fitLineWidth);
+
         if (justify.X != 0)
-            at.X -= justify.X * font.WidthOfLine(text);
+            at.X -= justify.X * fitLineWidth;
+
+		int lineCount = 1;
+		for (int i = 0; i < text.Length; i++)
+        {
+			if (i == lastFitChar)
+            {
+				font.GetFittingLine(text[(i + 1)..], maxLineWidth, out lastFitChar, out fitLineWidth);
+				lastFitChar += i+1;
+				lineCount++;
+			}
+		}
 
         if (justify.Y != 0)
-            at.Y -= justify.Y * font.HeightOf(text);
+            at.Y -= justify.Y * lineCount * font.LineHeight;
+
+		font.GetFittingLine(text, maxLineWidth, out lastFitChar, out fitLineWidth);
 
         at.X = Calc.Round(at.X);
         at.Y = Calc.Round(at.Y);
 
-		int lineStartCh = 0;	//currentLineInitialCharIndex
-
         for (int i = 0; i < text.Length; i++)
         {
-			//fits next word?
-            bool maxLineWidthReached = false;
-            if(text[i] == ' ')
+            if (i == lastFitChar)
             {
-                for (int j = i+1; j < text.Length; j++)
-                {
-                    if(text[j] == ' ')
-                    {
-                        maxLineWidthReached = font.WidthOfLine(text[lineStartCh..(j)]) >= maxLineWidth ? true : false;
-						break;
-                    }
-                }
-            }
-
-            if (text[i] == '\n' || maxLineWidthReached)
-            {
-				lineStartCh = i+1;
+				font.GetFittingLine(text[(i + 1)..], maxLineWidth, out lastFitChar, out fitLineWidth);
+				lastFitChar += i+1;
+				lineCount++;
 
                 at.X = position.X;
                 if (justify.X != 0 && i < text.Length - 1)
-                    at.X -= justify.X * font.WidthOfLine(text[(i + 1)..]);
+                    at.X -= justify.X * fitLineWidth;
                 at.Y += font.LineHeight;
                 last = 0;
                 continue;

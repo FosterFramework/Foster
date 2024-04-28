@@ -238,6 +238,51 @@ public class SpriteFont
 		return lineWidth;
 	}
 
+	// Does a line fits in a max width? Reads until finding '\n'
+	// Returns last fitting char (always a complete word) and fitting text width
+	public bool GetFittingLine(ReadOnlySpan<char> text, float maxWidth, out int lastFitChar, out float fitLineWidth)
+	{
+		float lineWidth = 0;
+		int lastCodepoint = 0;
+		
+		lastFitChar = 0;
+		fitLineWidth = 0;
+
+		for (int i = 0; i < text.Length; i ++)
+		{
+			if (text[i] == '\n')
+			{
+				fitLineWidth = lineWidth;
+				lastFitChar = i;
+				return true;
+			}
+
+			if(text[i] == ' ')
+			{
+				fitLineWidth = lineWidth;
+				lastFitChar = i;
+			}
+
+			if (TryGetCharacter(text, i, out var ch, out var step))
+			{
+				lineWidth += ch.Advance;
+				if (lastCodepoint != 0)
+					lineWidth += GetKerning(lastCodepoint, ch.Codepoint);
+				lastCodepoint = ch.Codepoint;
+				i += step - 1;
+
+				if(lineWidth > maxWidth)
+				{
+					return false;
+				}
+			}
+		}
+
+		fitLineWidth = lineWidth;
+		lastFitChar = text.Length;
+		return true;
+	}
+
 	public float HeightOf(ReadOnlySpan<char> text)
 	{
 		if (text.Length <= 0)
