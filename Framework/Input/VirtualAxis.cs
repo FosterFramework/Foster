@@ -66,7 +66,7 @@ public class VirtualAxis
 				value = Negative.PressTimestamp > Positive.PressTimestamp ? negativeValue : positiveValue;
 			else if (Positive.Down)
 				value = positiveValue;
-			else
+			else if (Negative.Down)
 				value = negativeValue;
 		}
 		else if (OverlapBehaviour == Overlaps.TakeOlder)
@@ -75,7 +75,7 @@ public class VirtualAxis
 				value = Negative.PressTimestamp < Positive.PressTimestamp ? negativeValue : positiveValue;
 			else if (Positive.Down)
 				value = positiveValue;
-			else
+			else if (Negative.Down)
 				value = negativeValue;
 		}
 
