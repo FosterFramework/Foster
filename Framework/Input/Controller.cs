@@ -136,6 +136,7 @@ public class Controller
 		Name = other.Name;
 		Connected = other.Connected;
 		IsGamepad = other.IsGamepad;
+		GamepadType = other.GamepadType;
 		Buttons = other.Buttons;
 		Axes = other.Axes;
 		Product = other.Product;
