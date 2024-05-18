@@ -109,12 +109,12 @@ else()
 		FetchContent_Declare(
 			SDL3
 			GIT_REPOSITORY https://github.com/libsdl-org/SDL
-			GIT_TAG prerelease-3.1.0
+			GIT_TAG prerelease-3.1.2
 			GIT_PROGRESS TRUE
 		)
 		FetchContent_MakeAvailable(SDL3)
 		set(FOSTER_SDL3_LIBS SDL3-static)
-		set(FOSTER_SDL3_INCLUDE ${sdl2_SOURCE_DIRS}/include)
+		set(FOSTER_SDL3_INCLUDE ${SDL3_SOURCE_DIRS}/include)
 	endif()
 
 	# statically link SDL3 since we're building it ourselve

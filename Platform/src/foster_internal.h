@@ -3,7 +3,7 @@
 
 #include "foster_platform.h"
 #include "foster_renderer.h"
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #define FOSTER_LOG_INFO(...) FosterLog(FOSTER_LOG_LEVEL_INFO, __VA_ARGS__)
 #define FOSTER_LOG_WARN(...) FosterLog(FOSTER_LOG_LEVEL_WARNING, __VA_ARGS__)

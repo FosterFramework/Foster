@@ -1,7 +1,7 @@
 #include "foster_platform.h"
 #include "foster_renderer.h"
 #include "foster_internal.h"
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #define STBTT_STATIC
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -417,7 +417,7 @@ void FosterSetFlags(FosterFlags flags)
 	{
 		// fullscreen
 		SDL_SetWindowFullscreen(fstate.window,
-			FOSTER_CHECK(flags, FOSTER_FLAG_FULLSCREEN) ? 1 : 0);
+			FOSTER_CHECK(flags, FOSTER_FLAG_FULLSCREEN) ? SDL_TRUE : SDL_FALSE);
 
 		// resizable
 		SDL_SetWindowResizable(fstate.window,

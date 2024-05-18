@@ -1,6 +1,6 @@
 #include "foster_platform.h"
 #include "foster_internal.h"
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "third_party/stb_image.h"
