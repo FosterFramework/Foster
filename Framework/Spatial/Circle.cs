@@ -61,11 +61,20 @@ public struct Circle : IProjectable
 	{
 		pushout = Vector2.Zero;
 
+		var combinedRadius = (Radius + other.Radius);
 		var lengthSqrd = (other.Position - Position).LengthSquared();
-		if (lengthSqrd < (Radius + other.Radius) * (Radius + other.Radius))
+
+		if (lengthSqrd < combinedRadius * combinedRadius)
 		{
 			var length = MathF.Sqrt(lengthSqrd);
-			pushout = ((Position - other.Position) / length) * (Radius + other.Radius - length);
+
+			// they overlap exactly, so there is no "direction" to push out of.
+			// instead just push out along the unit-x vector
+			if (length <= 0)
+				pushout = Vector2.UnitX * combinedRadius;
+			else
+				pushout = ((Position - other.Position) / length) * (combinedRadius - length);
+			
 			return true;
 		}
 
