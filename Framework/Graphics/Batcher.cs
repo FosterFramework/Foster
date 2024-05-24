@@ -67,6 +67,7 @@ public class Batcher : IDisposable
 	public int BatchCount => batches.Count + (currentBatch.Elements > 0 ? 1 : 0);
 
 	private readonly MaterialState defaultMaterialState = new();
+	private readonly Material defaultMaterial = new();
 	private readonly Stack<Matrix3x2> matrixStack = new();
 	private readonly Stack<RectInt?> scissorStack = new();
 	private readonly Stack<BlendMode> blendStack = new();
@@ -99,37 +100,22 @@ public class Batcher : IDisposable
 		string SamplerUniform
 	);
 
-	private struct Batch
+	private struct Batch(MaterialState material, BlendMode blend, Texture? texture, TextureSampler sampler, int offset, int elements)
 	{
-		public int Layer;
-		public MaterialState MaterialState;
-		public BlendMode Blend;
-		public Texture? Texture;
-		public RectInt? Scissor;
-		public TextureSampler Sampler;
-		public int Offset;
-		public int Elements;
-		public bool FlipVerticalUV;
-
-		public Batch(MaterialState material, BlendMode blend, Texture? texture, TextureSampler sampler, int offset, int elements)
-		{
-			Layer = 0;
-			MaterialState = material;
-			Blend = blend;
-			Texture = texture;
-			Sampler = sampler;
-			Scissor = null;
-			Offset = offset;
-			Elements = elements;
-			FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && Graphics.OriginBottomLeft;
-		}
+		public int Layer = 0;
+		public MaterialState MaterialState = material;
+		public BlendMode Blend = blend;
+		public Texture? Texture = texture;
+		public RectInt? Scissor = null;
+		public TextureSampler Sampler = sampler;
+		public int Offset = offset;
+		public int Elements = elements;
+		public bool FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && Graphics.OriginBottomLeft;
 	}
 
 	public Batcher()
 	{
-		if (DefaultShader == null || DefaultShader.IsDisposed)
-			DefaultShader = new Shader(ShaderDefaults.Batcher[Graphics.Renderer]);
-		defaultMaterialState = new(new Material(DefaultShader), "u_matrix", "u_texture", "u_texture_sampler");
+		defaultMaterialState = new(defaultMaterial, "u_matrix", "u_texture", "u_texture_sampler");
 		Clear();
 	}
 
@@ -228,6 +214,11 @@ public class Batcher : IDisposable
 			mesh.SetVertices(vertexPtr, vertexCount, VertexFormat);
 			dirty = false;
 		}
+
+		// make sure default shader and material are valid
+		if (DefaultShader == null || DefaultShader.IsDisposed)
+			DefaultShader = new Shader(ShaderDefaults.Batcher[Graphics.Renderer]);
+		defaultMaterial.SetShader(DefaultShader);
 
 		// render batches
 		for (int i = 0; i < batches.Count; i++)

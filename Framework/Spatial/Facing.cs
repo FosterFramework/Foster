@@ -1,23 +1,24 @@
-﻿using System.Diagnostics;
-using System.Numerics;
+﻿using System.Numerics;
 
 namespace Foster.Framework;
 
 /// <summary>
-/// A left/right struct, where left &lt; 0 and right >= 0.
+/// A binary struct, where Left is any negative value and Right is zero or any positive number
 /// Useful for 2D Platformers.
 /// </summary>
-public readonly struct Facing : IEquatable<Facing>
+public readonly struct Facing(int val) : IEquatable<Facing>
 {
 	public static readonly Facing Right = new(1);
 	public static readonly Facing Left = new(-1);
 
-	private readonly int value;
+	private readonly int value = val < 0 ? -1 : 1;
 
+	/// <summary>
+	/// Returns -1 if Left, or +1 if Right
+	/// </summary>
 	public int Sign => value < 0 ? -1 : 1;
+	
 	public Facing Reverse => new(-value);
-
-	public Facing(int val) => value = val < 0 ? -1 : 1;
 
 	public static implicit operator Facing(int v) => v < 0 ? Left : Right;
 	public static implicit operator int(Facing f) => f.Sign;

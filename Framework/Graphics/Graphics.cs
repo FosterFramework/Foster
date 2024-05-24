@@ -100,24 +100,22 @@ namespace Foster.Framework
 
 			if (command.Viewport.HasValue)
 			{
-				fc.viewport = new()
-				{
-					x = command.Viewport.Value.X,
-					y = command.Viewport.Value.Y,
-					w = command.Viewport.Value.Width,
-					h = command.Viewport.Value.Height
-				};
+				fc.viewport = new(
+					command.Viewport.Value.X,
+					command.Viewport.Value.Y,
+					command.Viewport.Value.Width,
+					command.Viewport.Value.Height
+				);
 			}
 
 			if (command.Scissor.HasValue)
 			{
-				fc.scissor = new()
-				{
-					x = command.Scissor.Value.X,
-					y = command.Scissor.Value.Y,
-					w = command.Scissor.Value.Width,
-					h = command.Scissor.Value.Height
-				};
+				fc.scissor = new(
+					command.Scissor.Value.X,
+					command.Scissor.Value.Y,
+					command.Scissor.Value.Width,
+					command.Scissor.Value.Height
+				);
 			}
 
 			// apply material values before drawing

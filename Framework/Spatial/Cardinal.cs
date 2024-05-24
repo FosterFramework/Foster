@@ -3,6 +3,10 @@ using System.Numerics;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// A 4-directional struct representing the Cardinal Directions.
+/// Useful for 2D games.
+/// </summary>
 public readonly struct Cardinal : IEquatable<Cardinal>
 {
 	public const int RightValue = 0;
@@ -56,8 +60,8 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 			_ => throw new Exception()
 		};
 
-	public static implicit operator Cardinal(Facing f) => f.Sign > 0 ? Cardinal.Right : Cardinal.Left;
-	public static implicit operator Point2(Cardinal c) => new Point2(c.X, c.Y);
+	public static implicit operator Cardinal(Facing f) => f.Sign > 0 ? Right : Left;
+	public static implicit operator Point2(Cardinal c) => new(c.X, c.Y);
 	public static bool operator ==(Cardinal a, Cardinal b) => a.Value == b.Value;
 	public static bool operator !=(Cardinal a, Cardinal b) => a.Value != b.Value;
 	public static Point2 operator *(Cardinal a, int b) => (Point2)a * b;

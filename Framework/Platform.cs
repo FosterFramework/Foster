@@ -124,11 +124,9 @@ internal static partial class Platform
 	}
 
 	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-	public struct FosterRect
+	public struct FosterRect(int x, int y, int w, int h)
 	{
-		public int x, y, w, h;
-
-		public FosterRect(int x, int y, int w, int h) { this.x = x; this.y = y; this.w = w; this.h = h; }
+		public int X = x, Y = y, W = w, H = h;
 	}
 
 	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]

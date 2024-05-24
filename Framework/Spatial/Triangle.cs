@@ -4,18 +4,11 @@ using System.Runtime.InteropServices;
 namespace Foster.Framework;
 
 [StructLayout(LayoutKind.Sequential)]
-public struct Triangle : IConvexShape
+public struct Triangle(Vector2 a, Vector2 b, Vector2 c) : IConvexShape
 {
-	public Vector2 A;
-	public Vector2 B;
-	public Vector2 C;
-
-	public Triangle(Vector2 a, Vector2 b, Vector2 c)
-	{
-		A = a;
-		B = b;
-		C = c;
-	}
+	public Vector2 A = a;
+	public Vector2 B = b;
+	public Vector2 C = c;
 
 	public readonly bool Contains(in Vector2 pt)
 		=> Calc.Cross(B - A, pt - A) > 0 && Calc.Cross(C - B, pt - B) > 0 && Calc.Cross(A - C, pt - C) > 0;

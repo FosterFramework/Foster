@@ -6,8 +6,8 @@ namespace Foster.Framework;
 
 public class Polygon : IEnumerable<Vector2>
 {
-	private readonly List<Vector2> vertices = new();
-	private readonly List<int> triangles = new();
+	private readonly List<Vector2> vertices = [];
+	private readonly List<int> triangles = [];
 	private bool trianglesDirty;
 
 	/// <summary>

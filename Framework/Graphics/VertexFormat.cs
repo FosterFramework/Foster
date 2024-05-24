@@ -4,36 +4,20 @@ using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
 
-public readonly struct VertexFormat
+public readonly struct VertexFormat(int stride, params VertexFormat.Element[] elements)
 {
 	[StructLayout(LayoutKind.Sequential)]
-	public readonly struct Element
-	{
-		public readonly int Index;
-		public readonly VertexType Type;
-		public readonly bool Normalized;
+	public readonly record struct Element(
+		int Index,
+		VertexType Type,
+		bool Normalized = true
+	);
 
-		public Element(int index, VertexType type, bool normalized = true)
-		{
-			Index = index;
-			Type = type;
-			Normalized = normalized;
-		}
-	}
-
-	public readonly Element[] Elements;
-	public readonly int Stride;
-
-	public VertexFormat(int stride, params Element[] elements)
-	{
-		Stride = stride;
-		Elements = elements;
-	}
+	public readonly Element[] Elements = elements;
+	public readonly int Stride = stride;
 
 	public static VertexFormat Create<T>(params Element[] elements) where T : struct
-	{
-		return new VertexFormat(Unsafe.SizeOf<T>(), elements);
-	}
+		=> new(Unsafe.SizeOf<T>(), elements);
 
 	public static bool operator ==(VertexFormat a, VertexFormat b)
 		=> a.Elements == b.Elements && a.Stride == b.Stride;
