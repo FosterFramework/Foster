@@ -1,46 +1,40 @@
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 
 namespace Foster.Framework;
 
 /// <summary>
-/// A Font used to render text in a Sprite Batch
+/// A Font used to render text in a Sprite Batch.
+/// By default the SpriteFont will prepare characters as they are requested,
+/// which means there can occasionally be a delay between requesting to draw 
+/// some text and it actually appearing on-screen. To remove this delay, you
+/// can call SpriteFont.PrepareCharacters to pre-render all characters that
+/// you would like to use.
 /// </summary>
 public class SpriteFont
 {
-	public struct Character
-	{
-		public int Codepoint;
-		public Subtexture Subtexture;
-		public float Advance;
-		public Vector2 Offset;
+	public readonly record struct Character(
+		int Codepoint,
+		Subtexture Subtexture,
+		float Advance,
+		Vector2 Offset,
+		bool Exists
+	);
 
-		public Character(int codepoint, in Subtexture subtexture, float advance, in Vector2 offset)
-		{
-			Codepoint = codepoint;
-			Subtexture = subtexture;
-			Advance = advance;
-			Offset = offset;
-		}
-
-		public Character(char ch, in Subtexture subtexture, float advance, in Vector2 offset)
-			: this((int)ch, subtexture, advance, offset) { }
-	}
-
-	private readonly struct KerningPair : IEquatable<KerningPair>
-	{
-		public readonly int First;
-		public readonly int Second;
-
-		public KerningPair(int first, int second) { First = first; Second = second; }
-
-		public bool Equals(KerningPair other) => First == other.First && Second == other.Second;
-		public override int GetHashCode() => HashCode.Combine(First, Second);
-	}
+	private readonly record struct KerningPair(int First, int Second);
 
 	/// <summary>
 	/// Set of ASCII character unicode values
 	/// </summary>
 	public static readonly int[] Ascii;
+
+	/// <summary>
+	/// The Font being used by the SpriteFont.
+	/// This can be null if the SpriteFont was created without a Font, in which
+	/// case only custom Characters will be used.
+	/// </summary>
+	public readonly Font? Font;
 
 	/// <summary>
 	/// Name of the Sprite Font. Not used internally.
@@ -50,7 +44,14 @@ public class SpriteFont
 	/// <summary>
 	/// Font Size
 	/// </summary>
-	public float Size;
+	public readonly float Size;
+
+	/// <summary>
+	/// If the SpriteFont is allowed to dynamically blit Characters as they are
+	/// requested. If this is false, no new characters that have not already been
+	/// rendered will be created.
+	/// </summary>
+	public bool DynamicBlittingEnabled = true;
 
 	/// <summary>
 	/// Font Ascent
@@ -77,113 +78,53 @@ public class SpriteFont
 	/// </summary>
 	public float LineHeight => Ascent - Descent + LineGap;
 
-	private readonly Dictionary<int, Character> characters = new();
-	private readonly Dictionary<KerningPair, float> kerning = new();
+	private readonly float fontScale = 1.0f;
+	private readonly Dictionary<int, Character> characters = [];
+	private readonly Dictionary<KerningPair, float> kerning = [];
+	private readonly List<Page> texturePages = [];
+	private Color[] buffer = [];
 
 	static SpriteFont()
 	{
 		var ascii = new List<int>();
 		for (int i = 32; i < 128; i ++)
 			ascii.Add(i);
-		Ascii = ascii.ToArray();
+		Ascii = [.. ascii];
 	}
 
-	public SpriteFont()
+	public SpriteFont(Font font, float size, ReadOnlySpan<int> prebakedCodepoints = default)
 	{
-
-	}
-
-	public SpriteFont(string path, float size)
-		: this(path, size, Ascii) { }
-
-	public SpriteFont(string path, float size, ReadOnlySpan<int> codepoints)
-	{
-		using var font = new Font(path);
-		InitializeFromFont(font, size, codepoints);
-	}
-
-	public SpriteFont(Stream stream, float size)
-		: this(stream, size, Ascii) { }
-
-	public SpriteFont(Stream stream, float size, ReadOnlySpan<int> codepoints)
-	{
-		using var font = new Font(stream);
-		InitializeFromFont(font, size, codepoints);
-	}
-
-	public SpriteFont(Font font, float size)
-		: this(font, size, Ascii) { }
-
-	public SpriteFont(Font font, float size, ReadOnlySpan<int> codepoints)
-	{
-		InitializeFromFont(font, size, codepoints);
-	}
-
-	private void InitializeFromFont(Font font, float size, ReadOnlySpan<int> codepoints)
-	{
-		// get font scale
-		var scale = font.GetScale(size);
-
-		// setup size based on the font given
+		Font = font;
 		Size = size;
-		Ascent = font.Ascent * scale;
-		Descent = font.Descent * scale;
-		LineGap = font.LineGap * scale;
+		fontScale = font.GetScale(size);
+		Ascent = font.Ascent * fontScale;
+		Descent = font.Descent * fontScale;
+		LineGap = font.LineGap * fontScale;
 
-		// create a buffer that should be large enough for any character
-		var buffer = new Color[(int)(size * size)];
-
-		// create sprite packer
-		var packer = new Packer
-		{
-			MaxSize = 4096,
-			Trim = false,
-			CombineDuplicates = false
-		};
-
-		// add each character
-		foreach (var codepoint in codepoints)
-		{
-			var glyph = font.GetGlyphIndex(codepoint);
-			var metrics = font.GetCharacterOfGlyph(glyph, scale);
-
-			if (metrics.Visible)
-			{
-				if (buffer.Length < metrics.Width * metrics.Height)
-					Array.Resize(ref buffer, metrics.Width * metrics.Height);
-
-				if (font.GetPixels(metrics, buffer))
-				{
-					packer.Add(codepoint, string.Empty, metrics.Width, metrics.Height, buffer);
-				}
-			}
-
-			characters.Add(codepoint, new(
-				codepoint,
-				new Subtexture(),
-				metrics.Advance,
-				metrics.Offset
-			));
-		}
-
-		// pack characters into textures
-		var result = packer.Pack();
-		var textures = new List<Texture>();
-		foreach (var page in result.Pages)
-			textures.Add(new(page));
-
-		// update subtextures of all the created characters
-		foreach (var packed in result.Entries)
-		{
-			var codepoint = packed.Index;
-			var subtexture = new Subtexture(
-				textures[packed.Page],
-				packed.Source,
-				packed.Frame);
-
-			characters[codepoint] = characters[codepoint] with { Subtexture = subtexture };
-		}
+		if (prebakedCodepoints.Length > 0)
+			PrepareCharacters(prebakedCodepoints, true);
 	}
+
+	public SpriteFont(string path, float size, ReadOnlySpan<int> prebakedCodepoints = default)
+		: this(new Font(path), size, prebakedCodepoints)
+	{
+
+	}
+
+	public SpriteFont(Stream stream, float size, ReadOnlySpan<int> prebakedCodepoints = default)
+		: this(new Font(stream), size, prebakedCodepoints)
+	{
+		
+	}
+
+	public SpriteFont(float size = 16)
+	{
+		Font = null;
+		Size = size;
+	}
+
+	public Character this[int codepoint] => GetCharacter(codepoint);
+	public Character this[char ch] => GetCharacter(ch);
 
 	public float WidthOf(ReadOnlySpan<char> text)
 	{
@@ -262,24 +203,58 @@ public class SpriteFont
 		);
 	}
 
-	public Character this[int codepoint] => characters[codepoint];
-	public Character this[char ch] => characters[ch];
-
-	public void AddCharacter(in Character character)
+	/// <summary>
+	/// Prepares the given characters for rendering.
+	/// If immediate is true, it will render and update every character immediately.
+	/// Otherwise, it queues them off-thread.
+	/// </summary>
+	public void PrepareCharacters(ReadOnlySpan<int> codepoints, bool immediate)
 	{
-		characters[character.Codepoint] = character;
+		foreach (var it in codepoints)
+			PrepareCharacter(it, immediate);
+
+		if (immediate && codepoints.Length > 0)
+		{
+			foreach (var page in texturePages)
+				page.Upload();
+		}
+	}
+
+	/// <summary>
+	/// Adds a custom Character to the Sprite Font
+	/// </summary>
+	public void AddCharacter(int codepoint, in float advance, in Vector2 offset, in Subtexture subtexture)
+	{
+		characters[codepoint] = new(codepoint, subtexture, advance, offset, true);
+	}
+
+	/// <summary>
+	/// Gets a Character from the SpriteFont.
+	/// Note that the Character may not yet be rendered, in which case its
+	/// Subtexture value will have no texture assigned. 
+	/// Requesting a Character will queue it to be rendered in another thread,
+	/// unless DynamicBlittingEnabled is false, in which case an empty struct
+	/// is returned.
+	/// </summary>
+	public Character GetCharacter(int codepoint)
+	{
+		if (!characters.TryGetValue(codepoint, out var value))
+		{
+			// we are not allowed to dynamically create new characters
+			if (!DynamicBlittingEnabled)
+				return new();
+
+			// try to create the character
+			value = PrepareCharacter(codepoint, false);
+		}
+
+		return value;
 	}
 
 	public bool TryGetCharacter(int codepoint, out Character character)
 	{
-		if (characters.TryGetValue(codepoint, out var result))
-		{
-			character = result;
-			return true;
-		}
-
-		character = new();
-		return false;
+		character = GetCharacter(codepoint);
+		return character.Exists;
 	}
 
 	public bool TryGetCharacter(char ch, out Character character)
@@ -299,25 +274,373 @@ public class SpriteFont
 		}
 	}
 
-	public float GetKerning(char a, char b)
+	public void SetKerning(int codepointFirst, int codepointSecond, float advance)
 	{
-		return GetKerning((int)a, (int)b);
+		kerning[new(codepointFirst, codepointSecond)] = advance;
 	}
 
-	public float GetKerning(int a, int b)
+	public float GetKerning(int codepointFirst, int codepointSecond)
 	{
-		if (kerning.TryGetValue(new KerningPair(a, b), out float result))
-			return result;
-		return 0;
+		var key = new KerningPair(codepointFirst, codepointSecond);
+
+		if (!kerning.TryGetValue(key, out var value))
+		{
+			if (Font != null)
+				kerning[key] = value = Font.GetKerning(codepointFirst, codepointSecond, fontScale);
+			else
+				value = 0;
+		}
+
+		return value;
 	}
 
-	public void SetKerning(char a, char b, float value)
+	public void RenderText(Batcher batch, ReadOnlySpan<char> text, Vector2 position, Color color)
 	{
-		SetKerning((int)a, (int)b, value);
+		RenderText(batch, text, position, Vector2.Zero, color);
 	}
 
-	public void SetKerning(int a, int b, float value)
+	public void RenderText(Batcher batch, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, Color color)
 	{
-		kerning[new KerningPair(a, b)] = value;
+		// TODO:
+		// I feel like the vertical alignment is slightly off, but not sure how.
+
+		var at = position + new Vector2(0, Ascent);
+		var last = 0;
+
+		if (justify.X != 0)
+			at.X -= justify.X * WidthOfLine(text);
+
+		if (justify.Y != 0)
+			at.Y -= justify.Y * HeightOf(text);
+		
+		// TODO:
+		// this is incorrect, this should only happen if the font is a pixel font.
+		// (otherwise using matrices and so on will not play nicely with this)
+		at.X = Calc.Round(at.X);
+		at.Y = Calc.Round(at.Y);
+
+		for (int i = 0; i < text.Length; i++)
+		{
+			if (text[i] == '\n')
+			{
+				at.X = position.X;
+				if (justify.X != 0 && i < text.Length - 1)
+					at.X -= justify.X * WidthOfLine(text[(i + 1)..]);
+				at.Y += LineHeight;
+				last = 0;
+				continue;
+			}
+
+			if (TryGetCharacter(text, i, out var ch, out var step))
+			{
+				if (last != 0)
+					at.X += GetKerning(last, ch.Codepoint);
+
+				if (ch.Subtexture.Texture != null)
+					batch.Image(ch.Subtexture, at + ch.Offset, color);
+
+				last = ch.Codepoint;
+				at.X += ch.Advance;
+				i += step - 1;
+			}
+		}
+	}
+
+	private Character PrepareCharacter(int codepoint, bool immediate)
+	{
+		Character result;
+
+		var advance = 0.0f;
+		var offset = Vector2.Zero;
+		var subtex = new Subtexture();
+		var exists = false;
+
+		if (Font != null)
+		{
+			var scale = Font.GetScale(Size);
+			var glyph = Font.GetGlyphIndex(codepoint);
+			var metrics = Font.GetCharacterOfGlyph(glyph, scale);
+
+			advance = metrics.Advance;
+			offset = metrics.Offset;
+			subtex = new Subtexture(null, default, new Rect(0, 0, metrics.Width, metrics.Height));
+			exists = glyph != 0;
+
+			// request that the character be rendered and added to our texture
+			if (metrics.Visible)
+			{
+				if (immediate)
+				{
+					if (buffer.Length < metrics.Width * metrics.Height)
+						Array.Resize(ref buffer, metrics.Width * metrics.Height);
+					Font.GetPixels(metrics, buffer);
+					TryPack(codepoint, buffer, metrics.Width, metrics.Height, out _);
+				}
+				else
+				{
+					if (BlitModule.Instance == null)
+						App.Register<BlitModule>();
+					BlitModule.Instance?.Queue(this, codepoint, metrics);
+				}
+			}
+		}
+
+		characters[codepoint] = result = new(
+			codepoint,
+			subtex,
+			advance,
+			offset,
+			exists
+		);
+
+		return result;
+	}
+
+	private bool TryPack(int codepoint, Color[] buffer, int width, int height, [NotNullWhen(returnValue: true)] out Page? page)
+	{
+		// TODO:
+		// Ideally the pages could expand (up to a maximum size) if needed.
+		// The reason this can't be done at the moment is because every Character
+		// in the sprite font would need their Subtexture re-assigned, so the
+		// texture pages would need to keep track of that somehow and update them
+		// if it decides to grow its textures.
+		// Alternatively Textures could have a Resize method.
+		var pageSize = (int)Math.Min(4096, Size * 16);
+
+		// unusual case where somehow the character is gigantic and can't fit into a
+		// texture page .... in this scenario, throw a warning and don't render it
+		if (width > pageSize || height > pageSize)
+		{
+			Log.Warning($"SpriteFont Character '{codepoint}' was too large to render to a Texture!");
+			page = null;
+			return false;
+		}
+
+		var pageIndex = 0;
+		while (true)
+		{
+			if (pageIndex >= texturePages.Count)
+				texturePages.Add(new(pageSize));
+			
+			page = texturePages[pageIndex];
+			if (page.TryPack(buffer, width, height, out var result))
+			{
+				var existing = GetCharacter(codepoint);
+				AddCharacter(
+					existing.Codepoint,
+					existing.Advance,
+					existing.Offset,
+					result
+				);
+
+				return true;
+			}
+
+			pageIndex++;
+		}
+	}
+
+	/// <summary>
+	/// This is an internal module that blits Font characters, and then uploads
+	/// them to textures for the Sprite Font to use. This way the program does
+	/// not halt and wait for individual characters to be rendered.
+	/// </summary>
+	private class BlitModule : Module
+	{
+		private class BlitTask
+		{
+			public SpriteFont? SpriteFont;
+			public int CodePoint;
+			public Color[] Buffer = [];
+			public Font.Character Metrics;
+			public bool BufferContainsValidData;
+		}
+
+		public static BlitModule? Instance = null;
+
+		private readonly List<Task<BlitTask>> runningTasks = [];
+		private readonly Queue<BlitTask> completeTasks = [];
+		private readonly HashSet<Page> pagesToUpload = [];
+		private readonly HashSet<Page> pagesUploaded = [];
+		private readonly Stopwatch uploadTimer = new();
+
+		private const int MaximumMillisecondsPerFrame = 3;
+
+		public override void Startup() => Instance = this;
+		public override void Shutdown() => Instance = null;
+
+		public override void Update()
+		{
+			// find all finished tasks
+			for (int i = 0; i < runningTasks.Count; i ++)
+			{
+				var task = runningTasks[i];
+				if (!task.IsCompleted)
+					continue;
+
+				runningTasks.RemoveAt(i--);
+				completeTasks.Enqueue(task.Result);
+			}
+
+			uploadTimer.Restart();
+
+			// populate image data with finished glyphs
+			while (uploadTimer.ElapsedMilliseconds < MaximumMillisecondsPerFrame &&
+				completeTasks.TryDequeue(out var task))
+			{
+				if (task.BufferContainsValidData)
+				{
+					if (task.SpriteFont?.TryPack(task.CodePoint, task.Buffer, task.Metrics.Width, task.Metrics.Height, out var page) ?? false)
+						pagesToUpload.Add(page);
+				}
+
+				task.SpriteFont = null;
+				Pool.Return(task);
+			}
+
+			// upload page data to gpu textures
+			{
+				foreach (var it in pagesToUpload)
+				{
+					it.Upload();
+					pagesUploaded.Add(it);
+					if (uploadTimer.ElapsedMilliseconds >= MaximumMillisecondsPerFrame)
+						break;
+				}
+				
+				foreach (var it in pagesUploaded)
+					pagesToUpload.Remove(it);
+				pagesUploaded.Clear();
+			}
+		}
+
+		public void Queue(SpriteFont spriteFont, int codepoint, in Font.Character metrics)
+		{
+			static BlitTask Perform(object? state)
+			{
+				var result = (BlitTask)state!;
+				result.BufferContainsValidData = false;
+				
+				if (result.Buffer.Length < result.Metrics.Width * result.Metrics.Height)
+					Array.Resize(ref result.Buffer, result.Metrics.Width * result.Metrics.Height);
+
+				if (result.SpriteFont?.Font?.GetPixels(result.Metrics, result.Buffer) ?? false)
+					result.BufferContainsValidData = true;
+
+				return result;
+			}
+
+			var task = Pool.Get<BlitTask>();
+			task.SpriteFont = spriteFont;
+			task.CodePoint = codepoint;
+			task.Metrics = metrics;
+
+			runningTasks.Add(Task.Factory.StartNew(Perform, task));
+		}
+	}
+
+	private class Page(int size)
+	{
+		private struct Node
+		{
+			public int Left;
+			public int Right;
+			public RectInt Bounds;
+		}
+
+		private readonly Image image = new(size, size);
+		private readonly Texture texture = new(size, size, TextureFormat.Color);
+		private readonly List<Node> nodes = [ new() { Bounds = new(0, 0, size, size) } ];
+		private bool textureDirty;
+
+		public bool TryPack(Color[] buffer, int width, int height, out Subtexture result)
+		{
+			int index = TryPackNode(0, width + 2, height + 2);
+
+			if (index >= 0)
+			{
+				var node = nodes[index];
+				image.CopyPixels(buffer, width, height, new Point2(node.Bounds.X + 1, node.Bounds.Y + 1));
+				result = new Subtexture(texture, node.Bounds, new Rect(1, 1, width, height));
+				textureDirty = true;
+				return true;
+			}
+
+			result = default;
+			return false;
+		}
+
+		public void Upload()
+		{
+			if (textureDirty)
+			{
+				texture.SetData<Color>(image.Data);
+				textureDirty = false;
+			}
+		}
+
+		private int TryPackNode(int node, int width, int height)
+		{
+			var it = nodes[node];
+
+			if (it.Left > 0 || it.Right > 0)
+			{
+				if (it.Left > 0)
+				{
+					var fit = TryPackNode(it.Left, width, height);
+					if (fit > 0)
+						return fit;
+				}
+
+				if (it.Right > 0)
+				{
+					var fit = TryPackNode(it.Right, width, height);
+					if (fit > 0)
+						return fit;
+				}
+
+				return -1;
+			}
+
+			if (width > it.Bounds.Width || height > it.Bounds.Height)
+				return -1;
+
+			var w = it.Bounds.Width - width;
+			var h = it.Bounds.Height - height;
+
+			it.Left = nodes.Count;
+			nodes.Add(new());
+			it.Right = nodes.Count;
+			nodes.Add(new());
+
+			if (w <= h)
+			{
+				nodes[it.Left] = new() { Bounds = new(it.Bounds.X + width, it.Bounds.Y, w, height) };
+				nodes[it.Right] = new() { Bounds = new(it.Bounds.X, it.Bounds.Y + height, it.Bounds.Width, h) };
+			}
+			else
+			{
+				nodes[it.Left] = new() { Bounds = new(it.Bounds.X, it.Bounds.Y + height, width, h) };
+				nodes[it.Right] = new() { Bounds = new(it.Bounds.X + width, it.Bounds.Y, w, it.Bounds.Height) };
+			}
+
+			it.Bounds.Width = width;
+			it.Bounds.Height = height;
+			nodes[node] = it;
+			return node;
+		}
+	}
+}
+
+public static class SpriteFontBatcherExt
+{
+	public static void Text(this Batcher batch, SpriteFont font, ReadOnlySpan<char> text, Vector2 position, Color color)
+	{
+		Text(batch, font, text, position, Vector2.Zero, color);
+	}
+
+	public static void Text(this Batcher batch, SpriteFont font, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, Color color)
+	{
+		font.RenderText(batch, text, position, justify, color);
 	}
 }
