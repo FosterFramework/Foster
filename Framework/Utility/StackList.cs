@@ -32,7 +32,7 @@ public struct StackList8<T> : IEnumerable<T>, IList<T>
 
 	public void Resize(int count)
 	{
-		if (count >= Capacity)
+		if (count > Capacity)
 			throw new Exception("Exceeding Capacity of StackList");
 		this.count = count;
 	}
@@ -154,7 +154,7 @@ public struct StackList16<T> : IEnumerable<T>, IList<T>
 
 	public void Resize(int count)
 	{
-		if (count >= Capacity)
+		if (count > Capacity)
 			throw new Exception("Exceeding Capacity of StackList");
 		this.count = count;
 	}
@@ -276,7 +276,7 @@ public struct StackList32<T> : IEnumerable<T>, IList<T>
 
 	public void Resize(int count)
 	{
-		if (count >= Capacity)
+		if (count > Capacity)
 			throw new Exception("Exceeding Capacity of StackList");
 		this.count = count;
 	}
@@ -398,7 +398,7 @@ public struct StackList64<T> : IEnumerable<T>, IList<T>
 
 	public void Resize(int count)
 	{
-		if (count >= Capacity)
+		if (count > Capacity)
 			throw new Exception("Exceeding Capacity of StackList");
 		this.count = count;
 	}
