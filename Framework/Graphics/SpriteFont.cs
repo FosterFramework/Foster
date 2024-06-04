@@ -385,13 +385,17 @@ public class SpriteFont
 			}
 		}
 
-		characters[codepoint] = result = new(
-			codepoint,
-			subtex,
-			advance,
-			offset,
-			exists
-		);
+		// Ensure we're not overwriting an immediately rendered character
+		if(!characters.TryGetValue(codepoint, out result))
+		{
+			characters[codepoint] = result = new(
+				codepoint,
+				subtex,
+				advance,
+				offset,
+				exists
+			);
+		}
 
 		return result;
 	}
