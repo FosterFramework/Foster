@@ -371,9 +371,12 @@ public class SpriteFont
 			{
 				if (immediate)
 				{
-					if (buffer.Length < metrics.Width * metrics.Height)
-						Array.Resize(ref buffer, metrics.Width * metrics.Height);
+					var length = metrics.Width * metrics.Height;
+					if (buffer.Length < length)
+						Array.Resize(ref buffer, length);
 					Font.GetPixels(metrics, buffer);
+					for (int i = 0; i < length; i ++)
+						buffer[i] = buffer[i].Premultiply();
 					TryPack(codepoint, buffer, metrics.Width, metrics.Height, out _);
 				}
 				else
@@ -523,13 +526,18 @@ public class SpriteFont
 			static BlitTask Perform(object? state)
 			{
 				var result = (BlitTask)state!;
+				var length = result.Metrics.Width * result.Metrics.Height;
 				result.BufferContainsValidData = false;
 				
-				if (result.Buffer.Length < result.Metrics.Width * result.Metrics.Height)
-					Array.Resize(ref result.Buffer, result.Metrics.Width * result.Metrics.Height);
+				if (result.Buffer.Length < length)
+					Array.Resize(ref result.Buffer, length);
 
 				if (result.SpriteFont?.Font?.GetPixels(result.Metrics, result.Buffer) ?? false)
+				{
+					for (int i = 0; i < length; i ++)
+						result.Buffer[i] = result.Buffer[i].Premultiply();
 					result.BufferContainsValidData = true;
+				}
 
 				return result;
 			}
