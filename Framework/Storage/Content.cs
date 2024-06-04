@@ -97,7 +97,7 @@ public abstract class Content
 	/// </summary>
 	public void WriteAllText(string path, string text)
 	{
-		using var stream = OpenRead(path);
+		using var stream = Create(path);
 		stream.Write(Encoding.UTF8.GetBytes(text));
 		stream.Flush();
 	}
