@@ -229,6 +229,14 @@ public class SpriteFont
 	}
 
 	/// <summary>
+	/// Adds a custom Character to the Sprite Font
+	/// </summary>
+	public void AddCharacter(in Character character)
+	{
+		characters[character.Codepoint] = character;
+	}
+
+	/// <summary>
 	/// Gets a Character from the SpriteFont.
 	/// Note that the Character may not yet be rendered, in which case its
 	/// Subtexture value will have no texture assigned. 
@@ -348,8 +356,6 @@ public class SpriteFont
 
 	private Character PrepareCharacter(int codepoint, bool immediate)
 	{
-		Character result;
-
 		var advance = 0.0f;
 		var offset = Vector2.Zero;
 		var subtex = new Subtexture();
@@ -371,13 +377,9 @@ public class SpriteFont
 			{
 				if (immediate)
 				{
-					var length = metrics.Width * metrics.Height;
-					if (buffer.Length < length)
-						Array.Resize(ref buffer, length);
-					Font.GetPixels(metrics, buffer);
-					for (int i = 0; i < length; i ++)
-						buffer[i] = buffer[i].Premultiply();
-					TryPack(codepoint, buffer, metrics.Width, metrics.Height, out _);
+					if (TryBlitCharacter(Font, metrics, ref buffer) &&
+						TryPackCharacter(buffer, metrics.Width, metrics.Height, out var tex))
+						subtex = tex;
 				}
 				else
 				{
@@ -388,22 +390,32 @@ public class SpriteFont
 			}
 		}
 
-		// Ensure we're not overwriting an immediately rendered character
-		if(!characters.TryGetValue(codepoint, out result))
-		{
-			characters[codepoint] = result = new(
-				codepoint,
-				subtex,
-				advance,
-				offset,
-				exists
-			);
-		}
-
-		return result;
+		return characters[codepoint] = new(
+			codepoint,
+			subtex,
+			advance,
+			offset,
+			exists
+		);
 	}
 
-	private bool TryPack(int codepoint, Color[] buffer, int width, int height, [NotNullWhen(returnValue: true)] out Page? page)
+	private static bool TryBlitCharacter(Font font, in Font.Character ch, ref Color[] buffer)
+	{
+		var length = ch.Width * ch.Height;
+		if (buffer.Length <= length)
+			Array.Resize(ref buffer, length);
+
+		if (font.GetPixels(ch, buffer))
+		{
+			for (int i = 0; i < length; i ++)
+				buffer[i] = buffer[i].Premultiply();
+			return true;
+		}
+
+		return false;
+	}
+
+	private bool TryPackCharacter(Color[] buffer, int width, int height, out Subtexture subtexture)
 	{
 		// TODO:
 		// Ideally the pages could expand (up to a maximum size) if needed.
@@ -418,8 +430,8 @@ public class SpriteFont
 		// texture page .... in this scenario, throw a warning and don't render it
 		if (width > pageSize || height > pageSize)
 		{
-			Log.Warning($"SpriteFont Character '{codepoint}' was too large to render to a Texture!");
-			page = null;
+			Log.Warning($"SpriteFont Character was too large to render to a Texture!");
+			subtexture = default;
 			return false;
 		}
 
@@ -429,19 +441,8 @@ public class SpriteFont
 			if (pageIndex >= texturePages.Count)
 				texturePages.Add(new(pageSize));
 			
-			page = texturePages[pageIndex];
-			if (page.TryPack(buffer, width, height, out var result))
-			{
-				var existing = GetCharacter(codepoint);
-				AddCharacter(
-					existing.Codepoint,
-					existing.Advance,
-					existing.Offset,
-					result
-				);
-
+			if (texturePages[pageIndex].TryPack(buffer, width, height, out subtexture))
 				return true;
-			}
 
 			pageIndex++;
 		}
@@ -465,10 +466,9 @@ public class SpriteFont
 
 		public static BlitModule? Instance = null;
 
-		private readonly List<Task<BlitTask>> runningTasks = [];
-		private readonly Queue<BlitTask> completeTasks = [];
-		private readonly HashSet<Page> pagesToUpload = [];
-		private readonly HashSet<Page> pagesUploaded = [];
+		private readonly Queue<Task<BlitTask>> runningTasks = [];
+		private readonly HashSet<SpriteFont> fontsToUpload = [];
+		private readonly HashSet<SpriteFont> fontsUploaded = [];
 		private readonly Stopwatch uploadTimer = new();
 
 		private const int MaximumMillisecondsPerFrame = 3;
@@ -478,88 +478,78 @@ public class SpriteFont
 
 		public override void Update()
 		{
-			// find all finished tasks
-			for (int i = 0; i < runningTasks.Count; i ++)
-			{
-				var task = runningTasks[i];
-				if (!task.IsCompleted)
-					continue;
-
-				runningTasks.RemoveAt(i--);
-				completeTasks.Enqueue(task.Result);
-			}
-
 			uploadTimer.Restart();
 
-			// populate image data with finished glyphs
-			while (uploadTimer.ElapsedMilliseconds < MaximumMillisecondsPerFrame &&
-				completeTasks.TryDequeue(out var task))
+			// find all finished tasks
+			while (runningTasks.TryDequeue(out var task))
 			{
-				if (task.BufferContainsValidData)
+				if (!task.IsCompleted)
 				{
-					if (task.SpriteFont?.TryPack(task.CodePoint, task.Buffer, task.Metrics.Width, task.Metrics.Height, out var page) ?? false)
-						pagesToUpload.Add(page);
+					runningTasks.Enqueue(task);
+					continue;
 				}
+				else if (uploadTimer.ElapsedMilliseconds > MaximumMillisecondsPerFrame)
+				{
+					runningTasks.Enqueue(task);
+					break;
+				}
+				else
+				{
+					var it = task.Result;
+					var width = it.Metrics.Width;
+					var height = it.Metrics.Height;
 
-				task.SpriteFont = null;
-				Pool.Return(task);
+					// pack the character into the page, and reassign its subtexture
+					// TODO: should packing the character into the page be part of the thread?
+					if (it.SpriteFont != null &&
+						it.SpriteFont.TryPackCharacter(it.Buffer, width, height, out var subtex))
+					{
+						it.SpriteFont.AddCharacter(it.SpriteFont.GetCharacter(it.CodePoint) with { Subtexture = subtex });
+						fontsToUpload.Add(it.SpriteFont);
+					}
+
+					it.SpriteFont = null;
+					Pool.Return(it);
+				}
 			}
 
 			// upload page data to gpu textures
 			{
-				foreach (var it in pagesToUpload)
+				foreach (var it in fontsToUpload)
 				{
-					it.Upload();
-					pagesUploaded.Add(it);
+					foreach (var page in it.texturePages)
+						page.Upload();
+					fontsUploaded.Add(it);
 					if (uploadTimer.ElapsedMilliseconds >= MaximumMillisecondsPerFrame)
 						break;
 				}
 				
-				foreach (var it in pagesUploaded)
-					pagesToUpload.Remove(it);
-				pagesUploaded.Clear();
+				foreach (var it in fontsUploaded)
+					fontsToUpload.Remove(it);
+				fontsUploaded.Clear();
 			}
 		}
 
 		public void Queue(SpriteFont spriteFont, int codepoint, in Font.Character metrics)
 		{
-			static BlitTask Perform(object? state)
-			{
-				var result = (BlitTask)state!;
-				var length = result.Metrics.Width * result.Metrics.Height;
-				result.BufferContainsValidData = false;
-				
-				if (result.Buffer.Length < length)
-					Array.Resize(ref result.Buffer, length);
-
-				if (result.SpriteFont?.Font?.GetPixels(result.Metrics, result.Buffer) ?? false)
-				{
-					for (int i = 0; i < length; i ++)
-						result.Buffer[i] = result.Buffer[i].Premultiply();
-					result.BufferContainsValidData = true;
-				}
-
-				return result;
-			}
-
 			var task = Pool.Get<BlitTask>();
 			task.SpriteFont = spriteFont;
 			task.CodePoint = codepoint;
 			task.Metrics = metrics;
-
-			runningTasks.Add(Task.Factory.StartNew(Perform, task));
+			runningTasks.Enqueue(Task.Factory.StartNew(static (object? state) =>
+			{
+				var result = (BlitTask)state!;
+				result.BufferContainsValidData =
+					result.SpriteFont?.Font != null &&
+					TryBlitCharacter(result.SpriteFont.Font, result.Metrics, ref result.Buffer);
+				return result;
+			}, task));
 		}
 	}
 
 	private class Page(int size)
 	{
-		private struct Node
-		{
-			public int Left;
-			public int Right;
-			public RectInt Bounds;
-		}
-
+		private record struct Node(int Left, int Right, RectInt Bounds);
 		private readonly Image image = new(size, size);
 		private readonly Texture texture = new(size, size, TextureFormat.Color);
 		private readonly List<Node> nodes = [ new() { Bounds = new(0, 0, size, size) } ];
@@ -636,8 +626,7 @@ public class SpriteFont
 				nodes[it.Right] = new() { Bounds = new(it.Bounds.X + width, it.Bounds.Y, w, it.Bounds.Height) };
 			}
 
-			it.Bounds.Width = width;
-			it.Bounds.Height = height;
+			it.Bounds = it.Bounds with { Width = width, Height = height };
 			nodes[node] = it;
 			return node;
 		}
