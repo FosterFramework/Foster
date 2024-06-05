@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 
 namespace Foster.Framework;
@@ -27,7 +26,7 @@ public class SpriteFont
 	/// <summary>
 	/// Set of ASCII character unicode values
 	/// </summary>
-	public static readonly int[] Ascii;
+	public static readonly int[] Ascii = Enumerable.Range(32, 128 - 32).ToArray();
 
 	/// <summary>
 	/// The Font being used by the SpriteFont.
@@ -45,13 +44,6 @@ public class SpriteFont
 	/// Font Size
 	/// </summary>
 	public readonly float Size;
-
-	/// <summary>
-	/// If the SpriteFont is allowed to dynamically blit Characters as they are
-	/// requested. If this is false, no new characters that have not already been
-	/// rendered will be created.
-	/// </summary>
-	public bool DynamicBlittingEnabled = true;
 
 	/// <summary>
 	/// Font Ascent
@@ -78,21 +70,28 @@ public class SpriteFont
 	/// </summary>
 	public float LineHeight => Ascent - Descent + LineGap;
 
+	/// <summary>
+	/// If the SpriteFont is allowed to dynamically blit Characters as they are
+	/// requested. If this is false, no new characters that have not already been
+	/// rendered will be created.
+	/// </summary>
+	public bool DynamicBlittingEnabled = true;
+
+	/// <summary>
+	/// If the generated character images should premultiply their alpha.
+	/// This should be true if you render the SpriteFont with the default
+	/// Premultiply BlendMode.
+	/// Note that this property does not modify already-created characters.
+	/// </summary>
+	public bool PremultiplyAlpha = true;
+
 	private readonly float fontScale = 1.0f;
 	private readonly Dictionary<int, Character> characters = [];
 	private readonly Dictionary<KerningPair, float> kerning = [];
 	private readonly List<Page> texturePages = [];
 	private Color[] buffer = [];
 
-	static SpriteFont()
-	{
-		var ascii = new List<int>();
-		for (int i = 32; i < 128; i ++)
-			ascii.Add(i);
-		Ascii = [.. ascii];
-	}
-
-	public SpriteFont(Font font, float size, ReadOnlySpan<int> prebakedCodepoints = default)
+	public SpriteFont(Font font, float size, ReadOnlySpan<int> prebakedCodepoints = default, bool premultiplyAlpha = true)
 	{
 		Font = font;
 		Size = size;
@@ -100,19 +99,20 @@ public class SpriteFont
 		Ascent = font.Ascent * fontScale;
 		Descent = font.Descent * fontScale;
 		LineGap = font.LineGap * fontScale;
+		PremultiplyAlpha = premultiplyAlpha;
 
 		if (prebakedCodepoints.Length > 0)
 			PrepareCharacters(prebakedCodepoints, true);
 	}
 
-	public SpriteFont(string path, float size, ReadOnlySpan<int> prebakedCodepoints = default)
-		: this(new Font(path), size, prebakedCodepoints)
+	public SpriteFont(string path, float size, ReadOnlySpan<int> prebakedCodepoints = default, bool premultiplyAlpha = true)
+		: this(new Font(path), size, prebakedCodepoints, premultiplyAlpha)
 	{
 
 	}
 
-	public SpriteFont(Stream stream, float size, ReadOnlySpan<int> prebakedCodepoints = default)
-		: this(new Font(stream), size, prebakedCodepoints)
+	public SpriteFont(Stream stream, float size, ReadOnlySpan<int> prebakedCodepoints = default, bool premultiplyAlpha = true)
+		: this(new Font(stream), size, prebakedCodepoints, premultiplyAlpha)
 	{
 		
 	}
@@ -377,7 +377,7 @@ public class SpriteFont
 			{
 				if (immediate)
 				{
-					if (TryBlitCharacter(Font, metrics, ref buffer) &&
+					if (TryBlitCharacter(Font, metrics, ref buffer, PremultiplyAlpha) &&
 						TryPackCharacter(buffer, metrics.Width, metrics.Height, out var tex))
 						subtex = tex;
 				}
@@ -399,7 +399,7 @@ public class SpriteFont
 		);
 	}
 
-	private static bool TryBlitCharacter(Font font, in Font.Character ch, ref Color[] buffer)
+	private static bool TryBlitCharacter(Font font, in Font.Character ch, ref Color[] buffer, bool premultiply)
 	{
 		var length = ch.Width * ch.Height;
 		if (buffer.Length <= length)
@@ -407,8 +407,12 @@ public class SpriteFont
 
 		if (font.GetPixels(ch, buffer))
 		{
-			for (int i = 0; i < length; i ++)
-				buffer[i] = buffer[i].Premultiply();
+			if (premultiply)
+			{
+				for (int i = 0; i < length; i ++)
+					buffer[i] = buffer[i].Premultiply();
+			}
+
 			return true;
 		}
 
@@ -541,7 +545,7 @@ public class SpriteFont
 				var result = (BlitTask)state!;
 				result.BufferContainsValidData =
 					result.SpriteFont?.Font != null &&
-					TryBlitCharacter(result.SpriteFont.Font, result.Metrics, ref result.Buffer);
+					TryBlitCharacter(result.SpriteFont.Font, result.Metrics, ref result.Buffer, result.SpriteFont.PremultiplyAlpha);
 				return result;
 			}, task));
 		}
