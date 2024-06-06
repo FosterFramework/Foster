@@ -85,6 +85,16 @@ public class SpriteFont
 	/// </summary>
 	public bool PremultiplyAlpha = true;
 
+	/// <summary>
+	/// Newline characters to use during various text measuring and rendering methods.
+	/// </summary>
+	public readonly List<char> NewlineCharacters = [ '\n' ];
+
+	/// <summary>
+	/// Wordbreak characters to use during Text Wrapping calculations and rendering.
+	/// </summary>
+	public readonly List<char> WordbreakCharacters = [ '\n', ' ' ];
+
 	private readonly float fontScale = 1.0f;
 	private readonly Dictionary<int, Character> characters = [];
 	private readonly Dictionary<KerningPair, float> kerning = [];
@@ -126,6 +136,10 @@ public class SpriteFont
 	public Character this[int codepoint] => GetCharacter(codepoint);
 	public Character this[char ch] => GetCharacter(ch);
 
+	/// <summary>
+	/// Calculates the width of the given text. If the text has multiple lines,
+	/// then the width of the widest line will be returned.
+	/// </summary>
 	public float WidthOf(ReadOnlySpan<char> text)
 	{
 		float width = 0;
@@ -134,7 +148,7 @@ public class SpriteFont
 
 		for (int i = 0; i < text.Length; i ++)
 		{
-			if (text[i] == '\n')
+			if (NewlineCharacters.Contains(text[i]))
 			{
 				lineWidth = 0;
 				lastCodepoint = 0;
@@ -156,6 +170,9 @@ public class SpriteFont
 		return width;
 	}
 
+	/// <summary>
+	/// Calculates the width of the given text, up to the first line-break.
+	/// </summary>
 	public float WidthOfLine(ReadOnlySpan<char> text)
 	{
 		float lineWidth = 0;
@@ -163,7 +180,7 @@ public class SpriteFont
 
 		for (int i = 0; i < text.Length; i ++)
 		{
-			if (text[i] == '\n')
+			if (NewlineCharacters.Contains(text[i]))
 				break;
 
 			if (TryGetCharacter(text, i, out var ch, out var step))
@@ -179,6 +196,36 @@ public class SpriteFont
 		return lineWidth;
 	}
 
+	/// <summary>
+	/// Calculates the width of the next word in the given text
+	/// </summary>
+	public float WidthOfWord(ReadOnlySpan<char> text, out int length)
+	{
+		float lineWidth = 0;
+		int lastCodepoint = 0;
+
+		for (length = 0; length < text.Length; length ++)
+		{
+			if (TryGetCharacter(text, length, out var ch, out var step))
+			{
+				lineWidth += ch.Advance;
+				if (lastCodepoint != 0)
+					lineWidth += GetKerning(lastCodepoint, ch.Codepoint);
+				lastCodepoint = ch.Codepoint;
+				length += step - 1;
+			}
+
+			if (WordbreakCharacters.Contains(text[length]))
+				break;
+		}
+		length++;
+
+		return lineWidth;
+	}
+
+	/// <summary>
+	/// Calculate the height of the given text
+	/// </summary>
 	public float HeightOf(ReadOnlySpan<char> text)
 	{
 		if (text.Length <= 0)
@@ -188,19 +235,73 @@ public class SpriteFont
 
 		for (int i = 0; i < text.Length; i ++)
 		{
-			if (text[i] == '\n')
+			if (NewlineCharacters.Contains(text[i]))
 				height += LineHeight;
 		}
 
 		return height - LineGap;
 	}
 
+	/// <summary>
+	/// Calculate the size of the given text
+	/// </summary>
 	public Vector2 SizeOf(ReadOnlySpan<char> text)
 	{
 		return new Vector2(
 			WidthOf(text),
 			HeightOf(text)
 		);
+	}
+
+	/// <summary>
+	/// Calculates word-wrapping positions to fit the given text into the maximum line width
+	/// </summary>
+	public List<(int Start, int Length)> WrapText(ReadOnlySpan<char> text, float maxLineWidth)
+	{
+		var lines = new List<(int Start, int Length)>();
+		WrapText(text, maxLineWidth, lines);
+		return lines;
+	}
+
+	/// <summary>
+	/// Calculates and populates a list with word-wrapping positions to fit the given text into the maximum line width
+	/// </summary>
+	public void WrapText(ReadOnlySpan<char> text, float maxLineWidth, List<(int Start, int Length)> writeLinesTo)
+	{
+		var lineWidth = 0.0f;
+		var start = 0;
+		for (int i = 0; i < text.Length; i ++)
+		{
+			// mandatory line-break
+			if (NewlineCharacters.Contains(text[i]))
+			{
+				writeLinesTo.Add((start, i - start));
+				start = i + 1;
+				lineWidth = 0;
+				continue;
+			}
+
+			var nextWordWidth = WidthOfWord(text[i..], out var nextWordLength);
+
+			// split before the next word if the one being added is too long
+			if (lineWidth > 0 && lineWidth + nextWordWidth > maxLineWidth)
+			{
+				writeLinesTo.Add((start, i - start));
+				start = i;
+				lineWidth = 0;
+			}
+
+			// append word
+			lineWidth += nextWordWidth;
+			i += nextWordLength - 1;
+
+			// finished
+			if (i >= text.Length)
+			{
+				writeLinesTo.Add((start, i - start));
+				break;
+			}
+		}
 	}
 
 	/// <summary>
@@ -352,6 +453,25 @@ public class SpriteFont
 				i += step - 1;
 			}
 		}
+	}
+
+	public void RenderText(Batcher batch, ReadOnlySpan<char> text, float maxLineWidth, Vector2 position, Vector2 justify, Color color)
+	{
+		var lines = Pool.Get<List<(int Start, int Length)>>();
+		lines.Clear();
+
+		WrapText(text, maxLineWidth, lines);
+
+		if (justify.Y != 0)
+			position.Y -= justify.Y * (Height * lines.Count + LineGap * (lines.Count - 1));
+
+		foreach (var (Start, Length) in lines)
+		{
+			RenderText(batch, text[Start..(Start + Length)], position, justify, color);
+			position.Y += LineHeight;
+		}
+
+		Pool.Return(lines);
 	}
 
 	private Character PrepareCharacter(int codepoint, bool immediate)
@@ -641,11 +761,21 @@ public static class SpriteFontBatcherExt
 {
 	public static void Text(this Batcher batch, SpriteFont font, ReadOnlySpan<char> text, Vector2 position, Color color)
 	{
-		Text(batch, font, text, position, Vector2.Zero, color);
+		font.RenderText(batch, text, position, Vector2.Zero, color);
 	}
 
 	public static void Text(this Batcher batch, SpriteFont font, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, Color color)
 	{
 		font.RenderText(batch, text, position, justify, color);
+	}
+
+	public static void Text(this Batcher batch, SpriteFont font, ReadOnlySpan<char> text, float maxLineWidth, Vector2 position, Color color)
+	{
+		font.RenderText(batch, text, maxLineWidth, position, Vector2.Zero, color);
+	}
+
+	public static void Text(this Batcher batch, SpriteFont font, ReadOnlySpan<char> text, float maxLineWidth, Vector2 position, Vector2 justify, Color color)
+	{
+		font.RenderText(batch, text, maxLineWidth, position, justify, color);
 	}
 }
