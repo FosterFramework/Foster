@@ -203,8 +203,9 @@ public class SpriteFont
 	{
 		float lineWidth = 0;
 		int lastCodepoint = 0;
-
-		for (length = 0; length < text.Length; length ++)
+		
+		length = 0;
+		while (length < text.Length)
 		{
 			if (TryGetCharacter(text, length, out var ch, out var step))
 			{
@@ -212,13 +213,16 @@ public class SpriteFont
 				if (lastCodepoint != 0)
 					lineWidth += GetKerning(lastCodepoint, ch.Codepoint);
 				lastCodepoint = ch.Codepoint;
-				length += step - 1;
+				length += step;
+			}
+			else
+			{
+				length++;
 			}
 
-			if (WordbreakCharacters.Contains(text[length]))
+			if (length >= text.Length || WordbreakCharacters.Contains(text[length]))
 				break;
 		}
-		length++;
 
 		return lineWidth;
 	}
