@@ -341,11 +341,8 @@ public class SpriteFont
 
 	/// <summary>
 	/// Gets a Character from the SpriteFont.
-	/// Note that the Character may not yet be rendered, in which case its
-	/// Subtexture value will have no texture assigned. 
-	/// Requesting a Character will queue it to be rendered in another thread,
-	/// unless DynamicBlittingEnabled is false, in which case an empty struct
-	/// is returned.
+	/// Note that the Character may not yet be ready if BlitMode is set
+	/// to SpriteFontBlitModes.Streaming.
 	/// </summary>
 	public Character GetCharacter(int codepoint)
 	{
@@ -356,7 +353,11 @@ public class SpriteFont
 				return new();
 
 			// try to create the character
-			value = PrepareCharacter(codepoint, BlitMode == SpriteFontBlitModes.Immediate, BlitMode == SpriteFontBlitModes.Immediate);
+			value = PrepareCharacter(
+				codepoint: codepoint,
+				immediate: BlitMode == SpriteFontBlitModes.Immediate,
+				immediateUploadToTexture: BlitMode == SpriteFontBlitModes.Immediate
+			);
 		}
 
 		return value;
@@ -476,7 +477,7 @@ public class SpriteFont
 		Pool.Return(lines);
 	}
 
-	private Character PrepareCharacter(int codepoint, bool immediate, bool uploadToTexture)
+	private Character PrepareCharacter(int codepoint, bool immediate, bool immediateUploadToTexture)
 	{
 		var advance = 0.0f;
 		var offset = Vector2.Zero;
@@ -500,7 +501,7 @@ public class SpriteFont
 				if (immediate)
 				{
 					if (TryBlitCharacter(Font, metrics, ref buffer, PremultiplyAlpha) &&
-						TryPackCharacter(buffer, metrics.Width, metrics.Height, uploadToTexture, out var tex))
+						TryPackCharacter(buffer, metrics.Width, metrics.Height, immediateUploadToTexture, out var tex))
 						subtex = tex;
 				}
 				else
