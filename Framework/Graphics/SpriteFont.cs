@@ -300,9 +300,9 @@ public class SpriteFont
 			i += nextWordLength - 1;
 
 			// finished
-			if (i >= text.Length)
+			if (i >= text.Length - 1)
 			{
-				writeLinesTo.Add((start, i - start));
+				writeLinesTo.Add((start, text.Length - start));
 				break;
 			}
 		}
@@ -666,6 +666,7 @@ public class SpriteFont
 			task.Metrics = metrics;
 			runningTasks.Enqueue(Task.Factory.StartNew(static (object? state) =>
 			{
+				Thread.Sleep(new Random().Next(1000));
 				var result = (BlitTask)state!;
 				result.BufferContainsValidData =
 					result.SpriteFont?.Font != null &&
