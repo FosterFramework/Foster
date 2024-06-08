@@ -314,7 +314,7 @@ public class SpriteFont
 	public void PrepareCharacters(ReadOnlySpan<int> codepoints, bool immediate)
 	{
 		foreach (var it in codepoints)
-			PrepareCharacter(it, immediate);
+			PrepareCharacter(it, immediate, false);
 
 		if (immediate && codepoints.Length > 0)
 		{
@@ -356,7 +356,7 @@ public class SpriteFont
 				return new();
 
 			// try to create the character
-			value = PrepareCharacter(codepoint, BlitMode == SpriteFontBlitModes.Immediate);
+			value = PrepareCharacter(codepoint, BlitMode == SpriteFontBlitModes.Immediate, BlitMode == SpriteFontBlitModes.Immediate);
 		}
 
 		return value;
@@ -476,7 +476,7 @@ public class SpriteFont
 		Pool.Return(lines);
 	}
 
-	private Character PrepareCharacter(int codepoint, bool immediate)
+	private Character PrepareCharacter(int codepoint, bool immediate, bool uploadToTexture)
 	{
 		var advance = 0.0f;
 		var offset = Vector2.Zero;
@@ -500,7 +500,7 @@ public class SpriteFont
 				if (immediate)
 				{
 					if (TryBlitCharacter(Font, metrics, ref buffer, PremultiplyAlpha) &&
-						TryPackCharacter(buffer, metrics.Width, metrics.Height, out var tex))
+						TryPackCharacter(buffer, metrics.Width, metrics.Height, uploadToTexture, out var tex))
 						subtex = tex;
 				}
 				else
@@ -541,7 +541,7 @@ public class SpriteFont
 		return false;
 	}
 
-	private bool TryPackCharacter(Color[] buffer, int width, int height, out Subtexture subtexture)
+	private bool TryPackCharacter(Color[] buffer, int width, int height, bool uploadToTexture, out Subtexture subtexture)
 	{
 		// TODO:
 		// Ideally the pages could expand (up to a maximum size) if needed.
@@ -567,7 +567,7 @@ public class SpriteFont
 			if (pageIndex >= texturePages.Count)
 				texturePages.Add(new(pageSize));
 			
-			if (texturePages[pageIndex].TryPack(buffer, width, height, out subtexture))
+			if (texturePages[pageIndex].TryPack(buffer, width, height, uploadToTexture, out subtexture))
 				return true;
 
 			pageIndex++;
@@ -628,7 +628,7 @@ public class SpriteFont
 					// pack the character into the page, and reassign its subtexture
 					// TODO: should packing the character into the page be part of the thread?
 					if (it.SpriteFont != null &&
-						it.SpriteFont.TryPackCharacter(it.Buffer, width, height, out var subtex))
+						it.SpriteFont.TryPackCharacter(it.Buffer, width, height, false, out var subtex))
 					{
 						it.SpriteFont.AddCharacter(it.SpriteFont.GetCharacter(it.CodePoint) with { Subtexture = subtex });
 						fontsToUpload.Add(it.SpriteFont);
@@ -681,7 +681,7 @@ public class SpriteFont
 		private readonly List<Node> nodes = [ new() { Bounds = new(0, 0, size, size) } ];
 		private bool textureDirty;
 
-		public bool TryPack(Color[] buffer, int width, int height, out Subtexture result)
+		public bool TryPack(Color[] buffer, int width, int height, bool uploadToTexture, out Subtexture result)
 		{
 			int index = TryPackNode(0, width + 2, height + 2);
 
@@ -690,7 +690,17 @@ public class SpriteFont
 				var node = nodes[index];
 				image.CopyPixels(buffer, width, height, new Point2(node.Bounds.X + 1, node.Bounds.Y + 1));
 				result = new Subtexture(texture, node.Bounds, new Rect(1, 1, width, height));
-				textureDirty = true;
+
+				if (uploadToTexture)
+				{
+					// TODO: partial rectangle upload
+					texture.SetData<Color>(image.Data);
+				}
+				else
+				{
+					textureDirty = true;
+				}
+
 				return true;
 			}
 
