@@ -610,15 +610,15 @@ public class SpriteFont
 			// find all finished tasks
 			while (runningTasks.TryDequeue(out var task))
 			{
-				if (!task.IsCompleted)
-				{
-					runningTasks.Enqueue(task);
-					continue;
-				}
-				else if (uploadTimer.ElapsedMilliseconds > MaximumMillisecondsPerFrame)
+				if (uploadTimer.ElapsedMilliseconds >= MaximumMillisecondsPerFrame)
 				{
 					runningTasks.Enqueue(task);
 					break;
+				}
+				else if (!task.IsCompleted)
+				{
+					runningTasks.Enqueue(task);
+					continue;
 				}
 				else
 				{
