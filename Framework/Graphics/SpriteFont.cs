@@ -71,11 +71,9 @@ public class SpriteFont
 	public float LineHeight => Ascent - Descent + LineGap;
 
 	/// <summary>
-	/// If the SpriteFont is allowed to dynamically blit Characters as they are
-	/// requested. If this is false, no new characters that have not already been
-	/// rendered will be created.
+	/// How the SpriteFont should blit characters upon request.
 	/// </summary>
-	public bool DynamicBlittingEnabled = true;
+	public SpriteFontBlitModes BlitMode = SpriteFontBlitModes.Immediate;
 
 	/// <summary>
 	/// If the generated character images should premultiply their alpha.
@@ -354,11 +352,11 @@ public class SpriteFont
 		if (!characters.TryGetValue(codepoint, out var value))
 		{
 			// we are not allowed to dynamically create new characters
-			if (!DynamicBlittingEnabled)
+			if (BlitMode == SpriteFontBlitModes.Manual)
 				return new();
 
 			// try to create the character
-			value = PrepareCharacter(codepoint, false);
+			value = PrepareCharacter(codepoint, BlitMode == SpriteFontBlitModes.Immediate);
 		}
 
 		return value;
@@ -666,7 +664,6 @@ public class SpriteFont
 			task.Metrics = metrics;
 			runningTasks.Enqueue(Task.Factory.StartNew(static (object? state) =>
 			{
-				Thread.Sleep(new Random().Next(1000));
 				var result = (BlitTask)state!;
 				result.BufferContainsValidData =
 					result.SpriteFont?.Font != null &&
