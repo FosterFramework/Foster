@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
 
@@ -22,6 +23,9 @@ public struct StackList8<T> : IEnumerable<T>, IList<T>
 	public readonly int Count => count;
 	public readonly int Capacity => TypeCapacity;
 	public readonly bool IsReadOnly => false;
+
+	public ReadOnlySpan<T> Span 
+		=> MemoryMarshal.CreateReadOnlySpan(ref elements[0], Count);
 
 	public void Add(T value)
 	{
@@ -145,6 +149,9 @@ public struct StackList16<T> : IEnumerable<T>, IList<T>
 	public readonly int Capacity => TypeCapacity;
 	public readonly bool IsReadOnly => false;
 
+	public ReadOnlySpan<T> Span 
+		=> MemoryMarshal.CreateReadOnlySpan(ref elements[0], Count);
+
 	public void Add(T value)
 	{
 		if (count >= Capacity)
@@ -267,6 +274,9 @@ public struct StackList32<T> : IEnumerable<T>, IList<T>
 	public readonly int Capacity => TypeCapacity;
 	public readonly bool IsReadOnly => false;
 
+	public ReadOnlySpan<T> Span 
+		=> MemoryMarshal.CreateReadOnlySpan(ref elements[0], Count);
+
 	public void Add(T value)
 	{
 		if (count >= Capacity)
@@ -388,6 +398,9 @@ public struct StackList64<T> : IEnumerable<T>, IList<T>
 	public readonly int Count => count;
 	public readonly int Capacity => TypeCapacity;
 	public readonly bool IsReadOnly => false;
+
+	public ReadOnlySpan<T> Span 
+		=> MemoryMarshal.CreateReadOnlySpan(ref elements[0], Count);
 
 	public void Add(T value)
 	{
