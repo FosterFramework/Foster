@@ -1,4 +1,3 @@
-using System.Diagnostics;
 
 namespace Foster.Framework;
 

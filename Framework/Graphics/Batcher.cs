@@ -67,6 +67,7 @@ public class Batcher : IDisposable
 	public int BatchCount => batches.Count + (currentBatch.Elements > 0 ? 1 : 0);
 
 	private readonly MaterialState defaultMaterialState = new();
+	private readonly Material defaultMaterial = new();
 	private readonly Stack<Matrix3x2> matrixStack = new();
 	private readonly Stack<RectInt?> scissorStack = new();
 	private readonly Stack<BlendMode> blendStack = new();
@@ -99,37 +100,22 @@ public class Batcher : IDisposable
 		string SamplerUniform
 	);
 
-	private struct Batch
+	private struct Batch(MaterialState material, BlendMode blend, Texture? texture, TextureSampler sampler, int offset, int elements)
 	{
-		public int Layer;
-		public MaterialState MaterialState;
-		public BlendMode Blend;
-		public Texture? Texture;
-		public RectInt? Scissor;
-		public TextureSampler Sampler;
-		public int Offset;
-		public int Elements;
-		public bool FlipVerticalUV;
-
-		public Batch(MaterialState material, BlendMode blend, Texture? texture, TextureSampler sampler, int offset, int elements)
-		{
-			Layer = 0;
-			MaterialState = material;
-			Blend = blend;
-			Texture = texture;
-			Sampler = sampler;
-			Scissor = null;
-			Offset = offset;
-			Elements = elements;
-			FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && Graphics.OriginBottomLeft;
-		}
+		public int Layer = 0;
+		public MaterialState MaterialState = material;
+		public BlendMode Blend = blend;
+		public Texture? Texture = texture;
+		public RectInt? Scissor = null;
+		public TextureSampler Sampler = sampler;
+		public int Offset = offset;
+		public int Elements = elements;
+		public bool FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && Graphics.OriginBottomLeft;
 	}
 
 	public Batcher()
 	{
-		if (DefaultShader == null || DefaultShader.IsDisposed)
-			DefaultShader = new Shader(ShaderDefaults.Batcher[Graphics.Renderer]);
-		defaultMaterialState = new(new Material(DefaultShader), "u_matrix", "u_texture", "u_texture_sampler");
+		defaultMaterialState = new(defaultMaterial, "u_matrix", "u_texture", "u_texture_sampler");
 		Clear();
 	}
 
@@ -228,6 +214,11 @@ public class Batcher : IDisposable
 			mesh.SetVertices(vertexPtr, vertexCount, VertexFormat);
 			dirty = false;
 		}
+
+		// make sure default shader and material are valid
+		if (DefaultShader == null || DefaultShader.IsDisposed)
+			DefaultShader = new Shader(ShaderDefaults.Batcher[Graphics.Renderer]);
+		defaultMaterial.SetShader(DefaultShader);
 
 		// render batches
 		for (int i = 0; i < batches.Count; i++)
@@ -1643,59 +1634,6 @@ public class Batcher : IDisposable
 		var orig = new Vector2(subtex.Width, subtex.Height) * justify;
 
 		Image(subtex, at, orig, new Vector2(flipX ? -1 : 1, flipY ? -1 : 1) * scale, 0, c0, c1, c2, c3);
-	}
-
-	#endregion
-
-	#region SpriteFont
-
-	public void Text(SpriteFont font, ReadOnlySpan<char> text, Vector2 position, Color color)
-	{
-		Text(font, text, position, Vector2.Zero, color);
-	}
-
-	public void Text(SpriteFont font, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, Color color)
-	{
-		// TODO:
-		// I feel like the vertical alignment is slightly off, but not sure how.
-
-		var at = position + new Vector2(0, font.Ascent);
-		var last = 0;
-
-		if (justify.X != 0)
-			at.X -= justify.X * font.WidthOfLine(text);
-
-		if (justify.Y != 0)
-			at.Y -= justify.Y * font.HeightOf(text);
-
-		at.X = Calc.Round(at.X);
-		at.Y = Calc.Round(at.Y);
-
-		for (int i = 0; i < text.Length; i++)
-		{
-			if (text[i] == '\n')
-			{
-				at.X = position.X;
-				if (justify.X != 0 && i < text.Length - 1)
-					at.X -= justify.X * font.WidthOfLine(text[(i + 1)..]);
-				at.Y += font.LineHeight;
-				last = 0;
-				continue;
-			}
-
-			if (font.TryGetCharacter(text, i, out var ch, out var step))
-			{
-				if (last != 0)
-					at.X += font.GetKerning(last, ch.Codepoint);
-
-				if (ch.Subtexture.Texture != null)
-					Image(ch.Subtexture, at + ch.Offset, color);
-
-				last = ch.Codepoint;
-				at.X += ch.Advance;
-				i += step - 1;
-			}
-		}
 	}
 
 	#endregion

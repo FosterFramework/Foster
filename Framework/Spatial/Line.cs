@@ -5,19 +5,13 @@ using System.Runtime.InteropServices;
 namespace Foster.Framework;
 
 [StructLayout(LayoutKind.Sequential)]
-public struct Line : IConvexShape
+public struct Line(Vector2 from, Vector2 to) : IConvexShape
 {
-	public Vector2 From;
-	public Vector2 To;
+	public Vector2 From = from;
+	public Vector2 To = to;
 
 	public readonly int Points => 2;
 	public readonly int Axes => 1;
-
-	public Line(Vector2 from, Vector2 to)
-	{
-		From = from;
-		To = to;
-	}
 
 	public readonly Rect Bounds => new(From, To);
 	public readonly float Length => (To - From).Length();

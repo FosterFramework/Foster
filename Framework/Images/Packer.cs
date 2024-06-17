@@ -58,7 +58,7 @@ public class Packer
 	public int MaxSize = 8192;
 
 	/// <summary>
-	/// Image Padding
+	/// Pixel padding around each packed entry.
 	/// </summary>
 	public int Padding = 1;
 
@@ -68,7 +68,7 @@ public class Packer
 	public bool DuplicateEdges = false;
 
 	/// <summary>
-	/// Power of Two
+	/// Forces the resulting packed images to be a power of two.
 	/// </summary>
 	public bool PowerOfTwo = false;
 

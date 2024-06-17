@@ -1,7 +1,7 @@
 namespace Foster.Framework;
 
 /// <summary>
-/// Type of Gamepads
+/// Type of Gamepads.
 /// This is a 1-1 mapping with SDL_GameControllerType:
 /// https://github.com/libsdl-org/SDL/blob/release-2.30.x/include/SDL_gamecontroller.h#L61
 /// </summary>

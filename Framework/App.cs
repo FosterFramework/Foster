@@ -254,6 +254,7 @@ public static class App
 
 	/// <summary>
 	/// Called only in DEBUG builds when a hot reload occurs.
+	/// Note that this may be called off-thread, depending on when the Hot Reload occurs.
 	/// </summary>
 	public static Action? OnHotReload;
 

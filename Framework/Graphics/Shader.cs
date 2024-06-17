@@ -2,31 +2,27 @@ using System.Collections.ObjectModel;
 
 namespace Foster.Framework;
 
-public struct ShaderCreateInfo
+public struct ShaderCreateInfo(
+	string vertexShader,
+	string fragmentShader,
+	ShaderCreateInfo.Attribute[]? attributes = null)
 {
 	public readonly record struct Attribute(string SemanticName, int SemanticIndex);
 
 	/// <summary>
 	/// Vertex Shader Code
 	/// </summary>
-	public string VertexShader;
+	public string VertexShader = vertexShader;
 
 	/// <summary>
 	/// Fragment Shader Code
 	/// </summary>
-	public string FragmentShader;
+	public string FragmentShader = fragmentShader;
 
 	/// <summary>
 	/// Attributes, required if using HLSL / D3D11
 	/// </summary>
-	public Attribute[]? Attributes;
-
-	public ShaderCreateInfo(string vertexShader, string fragmentShader, Attribute[]? attributes = null)
-	{
-		VertexShader = vertexShader;
-		FragmentShader = fragmentShader;
-		Attributes = attributes;
-	}
+	public Attribute[]? Attributes = attributes;
 }
 
 public class Shader : IResource

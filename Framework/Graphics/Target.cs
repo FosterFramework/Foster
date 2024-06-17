@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 
 namespace Foster.Framework;
 
@@ -8,7 +7,7 @@ namespace Foster.Framework;
 /// </summary>
 public class Target : IResource
 {
-	private static readonly TextureFormat[] defaultFormats = new TextureFormat[] { TextureFormat.Color };
+	private static readonly TextureFormat[] defaultFormats = [ TextureFormat.Color ];
 
 	/// <summary>
 	/// Optional Target Name
