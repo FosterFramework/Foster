@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 
 namespace Foster.Framework;
 
@@ -64,7 +64,7 @@ public struct Rng
 
 	public double Double()
 	{
-		ulong bits = (uint)(0x3ff0000000000000ul | (U64() >> 11));
+		ulong bits = 0x3ff0000000000000ul | (U64() >> 11);
 		double val;
 		unsafe { Unsafe.WriteUnaligned(&val, bits); }
 		return val - (1.0 - double.Epsilon / 2.0);
