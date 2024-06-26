@@ -48,9 +48,13 @@ public struct Rng
 	public short Short(short max) => (short)(max != 0 ? Math.Abs(Short()) % max : 0);
 	public short Short(short min, short max) => (short)(min + Short((short)(max - min)));
 
-	public sbyte Byte() => (sbyte)U64();
-	public sbyte Byte(sbyte max) => (sbyte)(max != 0 ? Math.Abs(Byte()) % max : 0);
-	public sbyte Byte(sbyte min, sbyte max) => (sbyte)(min + Byte((sbyte)(max - min)));
+	[Obsolete("Use SByte or U8")] public sbyte Byte() => (sbyte)U64();
+	[Obsolete("Use SByte or U8")] public sbyte Byte(sbyte max) => (sbyte)(max != 0 ? Math.Abs(SByte()) % max : 0);
+	[Obsolete("Use SByte or U8")] public sbyte Byte(sbyte min, sbyte max) => (sbyte)(min + SByte((sbyte)(max - min)));
+
+	public sbyte SByte() => (sbyte)U64();
+	public sbyte SByte(sbyte max) => (sbyte)(max != 0 ? Math.Abs(SByte()) % max : 0);
+	public sbyte SByte(sbyte min, sbyte max) => (sbyte)(min + SByte((sbyte)(max - min)));
 
 	public float Float()
 	{
