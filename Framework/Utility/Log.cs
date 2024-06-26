@@ -4,24 +4,38 @@ namespace Foster.Framework;
 
 public static class Log
 {
-	public delegate void LogFn(ReadOnlySpan<char> text);
+	public delegate void Fn(ReadOnlySpan<char> text);
 
-	// TODO: this can potentially be written to from other threads
-	// The user shouldn't have access to this directly as they need to lock
-	// around it. Instead there should be some safe way to iterate over it or
-	// request lines from it. Ideally without creating tons of garbage.
-	public static readonly StringBuilder Logs = new();
+	[Obsolete("Use Log.GetHistory")]
+	public static StringBuilder Logs => logs;
+	[Obsolete("Use Log.SetCallbacks")]
+	public static Fn? OnInfo { get => onInfo; set => onInfo = value; }
+	[Obsolete("Use Log.SetCallbacks")]
+	public static Fn? OnWarn { get => onWarn; set => onWarn = value; }
+	[Obsolete("Use Log.SetCallbacks")]
+	public static Fn? OnError { get => onError; set => onError = value; }
 
-	public static LogFn? OnInfo;
-	public static LogFn? OnWarn;
-	public static LogFn? OnError;
+	private static Fn? onInfo;
+	private static Fn? onWarn;
+	private static Fn? onError;
+	private static readonly StringBuilder logs = new();
+
+	/// <summary>
+	/// Sets optional custom logging callbacks
+	/// </summary>
+	public static void SetCallbacks(Fn? onInfo, Fn? onWarn, Fn? onError)
+	{
+		Log.onInfo = onInfo;
+		Log.onWarn = onWarn;
+		Log.onError = onError;
+	}
 
 	public static void Info(ReadOnlySpan<char> message)
 	{
 		Append(message);
-		
-		if (OnInfo != null)
-			OnInfo(message);
+
+		if (onInfo != null)
+			onInfo(message);
 		else
 			Console.Out.WriteLine(message);
 	}
@@ -59,9 +73,9 @@ public static class Log
 	public static void Warning(ReadOnlySpan<char> message)
 	{
 		Append(message);
-		
-		if (OnWarn != null)
-			OnWarn(message);
+
+		if (onWarn != null)
+			onWarn(message);
 		else
 			Console.Out.WriteLine(message);
 	}
@@ -96,9 +110,9 @@ public static class Log
 	public static void Error(ReadOnlySpan<char> message)
 	{
 		Append(message);
-		
-		if (OnError != null)
-			OnError(message);
+
+		if (onError != null)
+			onError(message);
 		else
 			Console.Out.WriteLine(message);
 	}
@@ -130,12 +144,47 @@ public static class Log
 	public static void Error(string message)
 		=> Error(message.AsSpan());
 
+	/// <summary>
+	/// Appends a line to the Log
+	/// </summary>
 	public static void Append(ReadOnlySpan<char> message)
 	{
-		lock (Logs)
+		lock (logs)
 		{
-			Logs.Append(message);
-			Logs.Append('\n');
+			logs.Append(message);
+			logs.Append('\n');
 		}
+	}
+
+	/// <summary>
+	/// Constructs a string of the Log History
+	/// </summary>
+	public static string GetHistory()
+	{
+		string history;
+		lock (logs)
+			history = logs.ToString();
+		return history;
+	}
+
+	/// <summary>
+	/// Iterates over all the chunks in the log history, calling the given method for each entry.
+	/// </summary>
+	public static void GetHistory(Action<ReadOnlyMemory<char>> readChunk)
+	{
+		lock (logs)
+		{
+			foreach (var it in logs.GetChunks())
+				readChunk(it);
+		}
+	}
+
+	/// <summary>
+	/// Clears the Log history
+	/// </summary>
+	public static void ClearHistory()
+	{
+		lock (logs)
+			logs.Clear();
 	}
 }
