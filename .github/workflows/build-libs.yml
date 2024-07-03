@@ -20,6 +20,9 @@ jobs:
           - os: windows-latest
             arch: x64
             lib: x64/FosterPlatform.dll
+          - os: windows-latest
+            arch: arm64
+            lib: arm64/FosterPlatform.dll
           - os: macos-latest
             arch: x64-arm64
             lib: osx/libFosterPlatform.dylib
@@ -66,12 +69,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libsdl2-dev:armhf libwayland-dev:armhf libegl-dev:armhf libdrm-dev:armhf libxkbcommon-dev:armhf libpulse-dev:armhf
       - name: CMake Configure
-        if: ${{ matrix.arch != 'arm64' && matrix.arch != 'arm32' }}
+        if: ${{ !(runner.os == 'Linux' && matrix.arch == 'arm64') && !(runner.os == 'Linux' && matrix.arch == 'arm32') }}
         run: cmake -B build -S Platform
-      - name: CMake Configure (arm64)
+      - name: CMake Configure (Linux-arm64)
         if: ${{ runner.os == 'Linux' && matrix.arch == 'arm64' }}
         run: PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig cmake -B build -S Platform -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_SYSTEM_NAME=Linux
-      - name: CMake Configure (arm32)
+      - name: CMake Configure (Linux-arm32)
         if: ${{ runner.os == 'Linux' && matrix.arch == 'arm32' }}
         run: PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabihf/pkgconfig cmake -B build -S Platform -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++ -DCMAKE_SYSTEM_PROCESSOR=armv7l -DCMAKE_SYSTEM_NAME=Linux
       - name: CMake Build
@@ -88,11 +91,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4.0.0
-      - name: Download windows lib
+      - name: Download windows x64 lib
         uses: actions/download-artifact@v3
         with:
           name: windows-latest-x64-build
           path: Platform/libs/x64
+      - name: Download windows arm lib
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-latest-arm64-build
+          path: Platform/libs/arm64
       - name: Download macos lib
         uses: actions/download-artifact@v3
         with:

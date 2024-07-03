@@ -289,7 +289,7 @@ public class SpriteFont
 			if (lineWidth > 0 && lineWidth + nextWordWidth > maxLineWidth)
 			{
 				writeLinesTo.Add((start, i - start));
-				start = i;
+				start = i + 1;
 				lineWidth = 0;
 			}
 
@@ -413,9 +413,6 @@ public class SpriteFont
 
 	public void RenderText(Batcher batch, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, Color color)
 	{
-		// TODO:
-		// I feel like the vertical alignment is slightly off, but not sure how.
-
 		var at = position + new Vector2(0, Ascent);
 		var last = 0;
 
