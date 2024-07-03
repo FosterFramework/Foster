@@ -20,6 +20,9 @@ jobs:
           - os: windows-latest
             arch: x64
             lib: x64/FosterPlatform.dll
+          - os: windows-latest
+            arch: arm64
+            lib: arm64/FosterPlatform.dll
           - os: macos-latest
             arch: x64-arm64
             lib: osx/libFosterPlatform.dylib
