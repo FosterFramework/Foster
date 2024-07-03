@@ -69,7 +69,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libsdl2-dev:armhf libwayland-dev:armhf libegl-dev:armhf libdrm-dev:armhf libxkbcommon-dev:armhf libpulse-dev:armhf
       - name: CMake Configure
-        if: ${{ matrix.arch != 'arm64' && matrix.arch != 'arm32' }}
+        if: ${{ runner.os == 'Linux' && matrix.arch != 'arm64' && matrix.arch != 'arm32' }}
         run: cmake -B build -S Platform
       - name: CMake Configure (arm64)
         if: ${{ runner.os == 'Linux' && matrix.arch == 'arm64' }}
@@ -91,11 +91,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4.0.0
-      - name: Download windows lib
+      - name: Download windows x64 lib
         uses: actions/download-artifact@v3
         with:
           name: windows-latest-x64-build
           path: Platform/libs/x64
+      - name: Download windows arm lib
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-latest-arm64-build
+          path: Platform/libs/arm64
       - name: Download macos lib
         uses: actions/download-artifact@v3
         with:
