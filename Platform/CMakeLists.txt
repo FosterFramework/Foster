@@ -35,10 +35,11 @@ target_include_directories(${TARGET_NAME}
 )
 
 # Get platform target
+message(STATUS "System Processor: ${CMAKE_SYSTEM_PROCESSOR}")
 if (APPLE)
 	set(FosterTarget osx)
 elseif (WIN32)
-	if(CMAKE_SYSTEM_PROCESSOR STREQUAL "ARM64")
+	if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
 		set(FosterTarget arm64)
 	else()
 		set(FosterTarget x64)
