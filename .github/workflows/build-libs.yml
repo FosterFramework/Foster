@@ -19,22 +19,28 @@ jobs:
         include:
           - os: windows-latest
             arch: x64
-            lib: x64/FosterPlatform.dll
+            target: win-x64
+            lib: FosterPlatform.dll
           - os: windows-latest
             arch: arm64
-            lib: arm64/FosterPlatform.dll
+            target: win-arm64
+            lib: FosterPlatform.dll
           - os: macos-latest
             arch: x64-arm64
-            lib: osx/libFosterPlatform.dylib
+            target: osx
+            lib: libFosterPlatform.dylib
           - os: ubuntu-latest
             arch: x64
-            lib: lib64/libFosterPlatform.so
+            target: linux-x64
+            lib: libFosterPlatform.so
           - os: ubuntu-latest
             arch: arm64
-            lib: libarm64/libFosterPlatform.so
+            target: linux-arm64
+            lib: libFosterPlatform.so
           - os: ubuntu-latest
             arch: arm32
-            lib: libarm/libFosterPlatform.so
+            target: linux-arm32
+            lib: libFosterPlatform.so
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
@@ -70,20 +76,20 @@ jobs:
           sudo apt-get install -y libsdl2-dev:armhf libwayland-dev:armhf libegl-dev:armhf libdrm-dev:armhf libxkbcommon-dev:armhf libpulse-dev:armhf
       - name: CMake Configure
         if: ${{ !(runner.os == 'Linux' && matrix.arch == 'arm64') && !(runner.os == 'Linux' && matrix.arch == 'arm32') }}
-        run: cmake -B build -S Platform
+        run: cmake -B build -S Platform -DFOSTER_OVERRIDE_TARGET=${{matrix.target}}
       - name: CMake Configure (Linux-arm64)
         if: ${{ runner.os == 'Linux' && matrix.arch == 'arm64' }}
-        run: PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig cmake -B build -S Platform -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_SYSTEM_NAME=Linux
+        run: PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig cmake -B build -S Platform -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_SYSTEM_NAME=Linux -DFOSTER_OVERRIDE_TARGET=${{matrix.target}}
       - name: CMake Configure (Linux-arm32)
         if: ${{ runner.os == 'Linux' && matrix.arch == 'arm32' }}
-        run: PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabihf/pkgconfig cmake -B build -S Platform -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++ -DCMAKE_SYSTEM_PROCESSOR=armv7l -DCMAKE_SYSTEM_NAME=Linux
+        run: PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabihf/pkgconfig cmake -B build -S Platform -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++ -DCMAKE_SYSTEM_PROCESSOR=armv7l -DCMAKE_SYSTEM_NAME=Linux -DFOSTER_OVERRIDE_TARGET=${{matrix.target}}
       - name: CMake Build
         run: cmake --build build --config Release
       - name: Publish Artifact
         uses: actions/upload-artifact@v3.1.3
         with:
           name: ${{matrix.os}}-${{matrix.arch}}-build
-          path: Platform/libs/${{matrix.lib}}
+          path: Platform/libs/${{matrix.target}}/${{matrix.lib}}
   UpdateLibs:
     if: github.ref == 'refs/heads/main'
     needs: [Build]
@@ -95,12 +101,12 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: windows-latest-x64-build
-          path: Platform/libs/x64
+          path: Platform/libs/win-x64
       - name: Download windows arm lib
         uses: actions/download-artifact@v3
         with:
           name: windows-latest-arm64-build
-          path: Platform/libs/arm64
+          path: Platform/libs/win-arm64
       - name: Download macos lib
         uses: actions/download-artifact@v3
         with:
@@ -110,17 +116,17 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: ubuntu-latest-x64-build
-          path: Platform/libs/lib64
+          path: Platform/libs/linux-x64
       - name: Download ubuntu lib (arm64)
         uses: actions/download-artifact@v3
         with:
           name: ubuntu-latest-arm64-build
-          path: Platform/libs/libarm64
+          path: Platform/libs/linux-arm64
       - name: Download ubuntu lib (arm32)
         uses: actions/download-artifact@v3
         with:
           name: ubuntu-latest-arm32-build
-          path: Platform/libs/libarm
+          path: Platform/libs/linux-arm32
       - name: Display structure of libs
         run: ls -R
         working-directory: Platform/libs
