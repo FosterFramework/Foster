@@ -44,9 +44,9 @@ jobs:
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.0.0
+        uses: actions/checkout@v4
       - name: Get CMake
-        uses: lukka/get-cmake@v3.27.4
+        uses: lukka/get-cmake@v3.29.4
       - name: Setup Linux dependencies
         if: ${{ runner.os == 'Linux' && matrix.arch != 'arm64' }}
         run: |
@@ -86,7 +86,7 @@ jobs:
       - name: CMake Build
         run: cmake --build build --config Release
       - name: Publish Artifact
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{matrix.os}}-${{matrix.arch}}-build
           path: Platform/libs/${{matrix.target}}/${{matrix.lib}}
@@ -96,34 +96,34 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.0.0
+        uses: actions/checkout@v4
       - name: Download windows x64 lib
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: windows-latest-x64-build
           path: Platform/libs/win-x64
       - name: Download windows arm lib
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: windows-latest-arm64-build
           path: Platform/libs/win-arm64
       - name: Download macos lib
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: macos-latest-x64-arm64-build
           path: Platform/libs/osx
       - name: Download ubuntu lib
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ubuntu-latest-x64-build
           path: Platform/libs/linux-x64
       - name: Download ubuntu lib (arm64)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ubuntu-latest-arm64-build
           path: Platform/libs/linux-arm64
       - name: Download ubuntu lib (arm32)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ubuntu-latest-arm32-build
           path: Platform/libs/linux-arm32
