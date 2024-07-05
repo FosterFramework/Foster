@@ -227,31 +227,7 @@ public struct Rect : IConvexShape, IEquatable<Rect>
 		=> tri.Contains(TopLeft) || Overlaps(tri.AB) || Overlaps(tri.BC) || Overlaps(tri.CA);
 
 	public readonly bool Overlaps(in Line line)
-	{
-		var sectorA = GetPointSector(line.From);
-		var sectorB = GetPointSector(line.To);
-
-		if ((sectorA & sectorB) != 0)
-			return false;	// the two points share an x- or y-sector of the rect so will not cross it
-
-		var combined = sectorA | sectorB;
-
-		if (combined == 0)
-			return true;	// at least one of the points is contained by the rect
-
-		return combined switch
-		{
-			// states where the line must cross the rect
-			0b1100 or 0b0011 or 0b1111 or
-			0b0111 or 0b1011 or 0b1101 or 0b1110 => true,
-
-			// states where we are crossing a corner and it might intersect the rect
-			0b1010 or 0b1001 => line.Intersects(BottomLine),
-			0b0110 or 0b0101 => line.Intersects(TopLine),
-
-			_ => false,
-		};
-	}
+		=> this.Overlaps(line, out _);
 
 	public readonly Rect OverlapRect(in Rect against)
 	{
