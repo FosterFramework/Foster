@@ -149,6 +149,8 @@ public struct Point2(int x, int y) : IEquatable<Point2>
 	public static Point2 operator +(Point2 a, Point2 b) => new(a.X + b.X, a.Y + b.Y);
 	public static Point2 operator -(Point2 a, Point2 b) => new(a.X - b.X, a.Y - b.Y);
 
+	public static Point2 operator *(Point2 point, Facing facing) => new(point.X * facing.Sign, point.Y);
+
 	public static Rect operator +(Point2 a, Rect b) => new(a.X + b.X, a.Y + b.Y, b.Width, b.Height);
 	public static Rect operator +(Rect a, Point2 b) => new(b.X + a.X, b.Y + a.Y, a.Width, a.Height);
 
