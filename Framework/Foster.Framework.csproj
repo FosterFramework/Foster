@@ -8,7 +8,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Title>Foster</Title>
     <Product>Foster</Product>
-    <Version>0.1.18-alpha</Version>
+    <Version>0.1.19-alpha</Version>
     <Authors>Noel Berry</Authors>
     <Description>A small 2D cross-platform Game Framework</Description>
     <RepositoryType>git</RepositoryType>
@@ -19,33 +19,53 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageOutputPath>$(SolutionDir)artifacts/</PackageOutputPath>
     <IsAotCompatible>true</IsAotCompatible>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>CS1591</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>
     <NativeLibsDir>$(ProjectDir)..\Platform\libs\</NativeLibsDir>
   </PropertyGroup>
 
+  <PropertyGroup Condition="$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) == 'X64'">
+    <IsX64>true</IsX64>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) == 'Arm64'">
+    <IsArm64>true</IsArm64>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) == 'Arm32'">
+    <IsArm32>true</IsArm32>
+  </PropertyGroup>
+
   <ItemGroup>
-    <Content Include="$(NativeLibsDir)x64\FosterPlatform.dll">
-      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Windows'))">PreserveNewest</CopyToOutputDirectory>
+    <Content Include="$(NativeLibsDir)win-x64\FosterPlatform.dll">
+      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Windows')) AND $(IsArm64) != 'true'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\win-x64\native</PackagePath>
       <Pack>True</Pack>
       <Link>FosterPlatform.dll</Link>
     </Content>
-    <Content Include="$(NativeLibsDir)lib64\libFosterPlatform.so">
-      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">PreserveNewest</CopyToOutputDirectory>
+    <Content Include="$(NativeLibsDir)win-arm64\FosterPlatform.dll">
+      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Windows')) AND $(IsArm64) == 'true'">PreserveNewest</CopyToOutputDirectory>
+      <PackagePath>runtimes\win-arm64\native</PackagePath>
+      <Pack>True</Pack>
+      <Link>FosterPlatform.dll</Link>
+    </Content>
+    <Content Include="$(NativeLibsDir)linux-x64\libFosterPlatform.so">
+      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND $(IsX64) == 'true'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\linux-x64\native</PackagePath>
       <Pack>True</Pack>
       <Link>libFosterPlatform.so</Link>
     </Content>
-    <Content Include="$(NativeLibsDir)libarm64\libFosterPlatform.so">
-      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">PreserveNewest</CopyToOutputDirectory>
+    <Content Include="$(NativeLibsDir)linux-arm64\libFosterPlatform.so">
+      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND $(IsArm64) == 'true'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\linux-arm64\native</PackagePath>
       <Pack>True</Pack>
       <Link>libFosterPlatform.so</Link>
     </Content>
-    <Content Include="$(NativeLibsDir)libarm\libFosterPlatform.so">
-      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm'">PreserveNewest</CopyToOutputDirectory>
+    <Content Include="$(NativeLibsDir)linux-arm32\libFosterPlatform.so">
+      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND $(IsArm32) == 'true'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\linux-arm\native</PackagePath>
       <Pack>True</Pack>
       <Link>libFosterPlatform.so</Link>

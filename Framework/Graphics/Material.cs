@@ -52,7 +52,7 @@ public class Material
 	}
 
 	/// <summary>
-	/// Copies the Shader & Uniform values from this Material to the given one
+	/// Copies the Shader &amp; Uniform values from this Material to the given one
 	/// </summary>
 	public void CopyTo(Material material)
 	{

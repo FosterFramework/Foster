@@ -148,6 +148,7 @@ public struct Color : IEquatable<Color>
 	/// Returns a Hex String representation of the Color's given components
 	/// </summary>
 	/// <param name="components">The Components, in any order. ex. "RGBA" or "RGB" or "ARGB"</param>
+	/// <param name="destination">The destination to write the string to</param>
 	public readonly void ToHexString(ReadOnlySpan<char> components, Span<char> destination)
 	{
 		if (destination.Length < components.Length * 2)

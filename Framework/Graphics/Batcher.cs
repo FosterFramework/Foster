@@ -506,7 +506,12 @@ public class Batcher : IDisposable
 	/// <summary>
 	/// Pushes a Matrix that will transform all future data
 	/// </summary>
+	/// <param name="position"></param>
+	/// <param name="scale"></param>
+	/// <param name="origin"></param>
+	/// <param name="rotation"></param>
 	/// <param name="relative">If the Matrix should be relative to the previously pushed transformations</param>
+	/// <returns></returns>
 	public Matrix3x2 PushMatrix(in Vector2 position, in Vector2 scale, in Vector2 origin, float rotation, bool relative = true)
 	{
 		return PushMatrix(Transform.CreateMatrix(position, origin, scale, rotation), relative);
@@ -515,6 +520,7 @@ public class Batcher : IDisposable
 	/// <summary>
 	/// Pushes a Matrix that will transform all future data
 	/// </summary>
+	/// <param name="transform"></param>
 	/// <param name="relative">If the Matrix should be relative to the previously pushed transformations</param>
 	public Matrix3x2 PushMatrix(Transform transform, bool relative = true)
 	{
@@ -524,6 +530,7 @@ public class Batcher : IDisposable
 	/// <summary>
 	/// Pushes a Matrix that will transform all future data
 	/// </summary>
+	/// <param name="position"></param>
 	/// <param name="relative">If the Matrix should be relative to the previously pushed transformations</param>
 	public Matrix3x2 PushMatrix(in Vector2 position, bool relative = true)
 	{
@@ -533,6 +540,7 @@ public class Batcher : IDisposable
 	/// <summary>
 	/// Pushes a Matrix that will transform all future data
 	/// </summary>
+	/// <param name="matrix"></param>
 	/// <param name="relative">If the Matrix should be relative to the previously pushed transformations</param>
 	public Matrix3x2 PushMatrix(in Matrix3x2 matrix, bool relative = true)
 	{
