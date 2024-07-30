@@ -59,7 +59,10 @@ void FosterStartup(FosterDesc desc)
 	fstate.desc = desc;
 	fstate.flags = 0;
 	fstate.window = NULL;
-	fstate.windowCreateFlags = SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
+	fstate.windowCreateFlags = 
+		SDL_WINDOW_HIGH_PIXEL_DENSITY | 
+		SDL_WINDOW_HIDDEN |
+		SDL_WINDOW_RESIZABLE;
 	fstate.running = false;
 	fstate.device.renderer = FOSTER_RENDERER_NONE;
 	fstate.clipboardText = NULL;
@@ -67,14 +70,20 @@ void FosterStartup(FosterDesc desc)
 
 	if (fstate.desc.width <= 0 || fstate.desc.height <= 0)
 	{
-		FOSTER_LOG_ERROR("Foster invalid application width/height (%i, %i)", desc.width, desc.height);
+		FOSTER_LOG_ERROR(
+			"Foster invalid application width/height (%i, %i)", 
+			desc.width, 
+			desc.height
+		);
 		return;
 	}
 
 	// Get SDL version
-	SDL_Version version;
-	SDL_GetVersion(&version);
-	FOSTER_LOG_INFO("SDL: v%i.%i.%i", version.major, version.minor, version.patch);
+	int v = SDL_GetVersion();
+	FOSTER_LOG_INFO("SDL: v%i.%i.%i", 
+		SDL_VERSIONNUM_MAJOR(v), 
+		SDL_VERSIONNUM_MINOR(v),
+		SDL_VERSIONNUM_MICRO(v));
 
 	// track SDL output
 	if (fstate.logFilter != FOSTER_LOG_FILTER_IGNORE_ALL && fstate.logFn)
@@ -82,11 +91,14 @@ void FosterStartup(FosterDesc desc)
 		SDL_SetLogOutputFunction(FosterLog_SDL, NULL);
 	}
 
-	// by default allow controller presses while unfocused, let game decide if it should handle them
+	// by default allow controller presses while unfocused, 
+	// let game decide if it should handle them
 	SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 
 	// initialize SDL
-	int sdl_init_flags = SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS | SDL_INIT_JOYSTICK | SDL_INIT_GAMEPAD;
+	int sdl_init_flags = 
+		SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS | 
+		SDL_INIT_JOYSTICK | SDL_INIT_GAMEPAD;
 	if (SDL_Init(sdl_init_flags) != 0)
 	{
 		FOSTER_LOG_ERROR("Foster SDL_Init Failed: %s", SDL_GetError());
@@ -194,7 +206,8 @@ NEXT_EVENT:
 		output->eventType = FOSTER_EVENT_TYPE_EXIT_REQUESTED;
 	}
 	// Mouse
-	else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || event.type == SDL_EVENT_MOUSE_BUTTON_UP)
+	else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || 
+		event.type == SDL_EVENT_MOUSE_BUTTON_UP)
 	{
 		output->eventType = FOSTER_EVENT_TYPE_MOUSE_BUTTON;
 		output->mouse.button = FosterGetMouseFromSDL(event.button.button);
@@ -213,7 +226,7 @@ NEXT_EVENT:
 			goto NEXT_EVENT;
 
 		output->eventType = FOSTER_EVENT_TYPE_KEYBOARD_KEY;
-		output->keyboard.key = FosterGetKeyFromSDL(event.key.keysym.scancode);
+		output->keyboard.key = FosterGetKeyFromSDL(event.key.scancode);
 		output->keyboard.keyPressed = event.type == SDL_EVENT_KEY_DOWN;
 	}
 	else if (event.type == SDL_EVENT_TEXT_INPUT)
@@ -452,7 +465,7 @@ const char* FosterGetUserPath()
 	FOSTER_ASSERT_RUNNING_RET(FosterGetUserPath, NULL);
 
 	if (fstate.userPath == NULL)
-		fstate.userPath = SDL_GetPrefPath(NULL, fstate.desc.applicationName);
+		fstate.userPath = SDL_ClaimTemporaryMemory(SDL_GetPrefPath(NULL, fstate.desc.applicationName));
 
 	return fstate.userPath;
 }
@@ -474,7 +487,7 @@ const char* FosterGetClipboard()
 		fstate.clipboardText = NULL;
 	}
 
-	fstate.clipboardText = SDL_GetClipboardText();
+	fstate.clipboardText = SDL_ClaimTemporaryMemory(SDL_GetClipboardText());
 	return fstate.clipboardText;
 }
 
@@ -724,7 +737,7 @@ void FosterLog(FosterLogLevel level, const char* fmt, ...)
 int FosterFindJoystickIndexSDL(SDL_Joystick** joysticks, SDL_JoystickID instanceID)
 {
 	for (int i = 0; i < FOSTER_MAX_CONTROLLERS; i++)
-		if (joysticks[i] != NULL && SDL_GetJoystickInstanceID(joysticks[i]) == instanceID)
+		if (joysticks[i] != NULL && SDL_GetJoystickID(joysticks[i]) == instanceID)
 			return i;
 	return -1;
 }
@@ -736,7 +749,7 @@ int FosterFindGamepadIndexSDL(SDL_Gamepad** gamepads, SDL_JoystickID instanceID)
 		if (gamepads[i] != NULL)
 		{
 			SDL_Joystick* joystick = SDL_GetGamepadJoystick(gamepads[i]);
-			if (SDL_GetJoystickInstanceID(joystick) == instanceID)
+			if (SDL_GetJoystickID(joystick) == instanceID)
 				return i;
 		}
 	}

@@ -1078,7 +1078,7 @@ bool FosterInitialize_OpenGL()
 
 void FosterShutdown_OpenGL()
 {
-	SDL_GL_DeleteContext(fgl.context);
+	SDL_GL_DestroyContext(fgl.context);
 	fgl.context = NULL;
 }
 
