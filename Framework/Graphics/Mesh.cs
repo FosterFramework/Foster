@@ -3,9 +3,20 @@ using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// The Mesh contains a buffer of Vertices and optionally a buffer of Indices
+/// used during a DrawCommand.
+/// </summary>
 public class Mesh : IResource
 {
+	/// <summary>
+	/// Optional Mesh Name
+	/// </summary>
 	public string Name { get; set; } = string.Empty;
+
+	/// <summary>
+	/// If the Mesh has been disposed
+	/// </summary>
 	public bool IsDisposed => disposed;
 
 	/// <summary>
@@ -31,6 +42,9 @@ public class Mesh : IResource
 	internal IntPtr resource;
 	internal bool disposed = false;
 
+	/// <summary>
+	/// Creates a new Mesh for rendering
+	/// </summary>
 	public Mesh()
 	{
 		resource = Platform.FosterMeshCreate();
@@ -39,6 +53,9 @@ public class Mesh : IResource
 		Graphics.Resources.RegisterAllocated(this, resource, Platform.FosterMeshDestroy);
 	}
 
+	/// <summary>
+	/// Disposes the Mesh resources
+	/// </summary>
 	~Mesh()
 	{
 		Dispose(false);
@@ -252,6 +269,10 @@ public class Mesh : IResource
 		);
 	}
 
+	/// <summary>
+	/// Disposes the graphical resources of the Mesh. Once Disposed, the Mesh
+	/// is no longer usable.
+	/// </summary>
 	public void Dispose()
 	{
 		Dispose(true);

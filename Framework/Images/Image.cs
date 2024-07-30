@@ -200,7 +200,7 @@ public class Image : IDisposable
 	}
 
 	/// <summary>
-	/// Get &amp Set the color of a pixel.
+	/// Get &amp; Set the color of a pixel.
 	/// </summary>
 	public Color this[int index]
 	{
@@ -212,7 +212,7 @@ public class Image : IDisposable
 	}
 
 	/// <summary>
-	/// Get &amp Set the color of a pixel.
+	/// Get &amp; Set the color of a pixel.
 	/// </summary>
 	public Color this[int x, int y]
 	{

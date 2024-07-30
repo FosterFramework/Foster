@@ -20,6 +20,7 @@
     <PackageOutputPath>$(SolutionDir)artifacts/</PackageOutputPath>
     <IsAotCompatible>true</IsAotCompatible>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>CS1591</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>

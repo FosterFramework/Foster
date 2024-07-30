@@ -10,31 +10,17 @@ public class Packer
 	/// <summary>
 	/// A single packed Entry
 	/// </summary>
+	/// <param name="Index">Index when added to the Packer</param>
+	/// <param name="Name">The Name of the Entry</param>
+	/// <param name="Page">The corresponding image page of the Entry</param>
+	/// <param name="Source">The Source Rectangle</param>
+	/// <param name="Frame">The Frame Rectangle. This is the size of the image before it was packed</param>
 	public readonly record struct Entry
-	(	
-		/// <summary>
-		/// Index when added to the Packer
-		/// </summary>
-		int Index, 
-		
-		/// <summary>
-		/// The Name of the Entry
-		/// </summary>
-		string Name, 
-		
-		/// <summary>
-		/// The corresponding image page of the Entry
-		/// </summary>
-		int Page, 
-		
-		/// <summary>
-		/// The Source Rectangle
-		/// </summary>
-		RectInt Source, 
-		
-		/// <summary>
-		/// The Frame Rectangle. This is the size of the image before it was packed
-		/// </summary>
+	(
+		int Index,
+		string Name,
+		int Page,
+		RectInt Source,
 		RectInt Frame
 	);
 
