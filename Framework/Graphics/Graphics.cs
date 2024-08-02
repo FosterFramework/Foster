@@ -1,14 +1,30 @@
 
 using System.Diagnostics;
+using static Foster.Framework.SDL3;
 
 namespace Foster.Framework
 {
 	public static class Graphics
 	{
+		private static bool vsyncEnabled = true;
+
+		public static bool VSync
+		{
+			get => vsyncEnabled;
+			set
+			{
+				if (vsyncEnabled != value)
+				{
+					vsyncEnabled = value;
+					throw new NotImplementedException();
+				}
+			}
+		}
+
 		/// <summary>
 		/// The current Renderer API in use
 		/// </summary>
-		public static Renderers Renderer { get; private set; } = Renderers.None;
+		public static Renderers Renderer { get; private set; } = Renderers.OpenGL;
 
 		/// <summary>
 		/// Width of the Back Buffer, in Pixels
@@ -23,7 +39,7 @@ namespace Foster.Framework
 		/// <summary>
 		/// Maximum Texture Size
 		/// </summary>
-		public static int MaxTextureSize { get; private set; }
+		public static int MaxTextureSize { get; private set; } = 8192;
 
 		/// <summary>
 		/// If our (0,0) in our coordinate system is bottom-left.
@@ -32,22 +48,12 @@ namespace Foster.Framework
 		public static bool OriginBottomLeft => Renderer == Renderers.OpenGL;
 
 		/// <summary>
-		/// Sets up Graphics properties
-		/// </summary>
-		internal static void Initialize()
-		{
-			Renderer = Platform.FosterGetRenderer();
-
-			// TODO: actually query the graphics device for this
-			MaxTextureSize = 8192;
-		}
-
-		/// <summary>
 		/// Clears the Back Buffer to a given Color
 		/// </summary>
 		public static void Clear(Color color)
 		{
-			Clear(color, 0, 0, ClearMask.Color);
+			Framework.Renderer.BindBackbuffer();
+			Framework.Renderer.Clear(color);
 		}
 
 		/// <summary>

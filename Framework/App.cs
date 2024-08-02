@@ -2,22 +2,22 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
+using static Foster.Framework.SDL3;
+using static Foster.Framework.SDL3.Hints;
+
 namespace Foster.Framework;
 
 public static class App
 {
-	private static readonly List<Module> modules = new();
-	private static readonly List<Func<Module>> registrations = new();
+	private static readonly List<Module> modules = [];
+	private static readonly List<Func<Module>> registrations = [];
 	private static readonly Stopwatch timer = new();
 	private static bool started = false;
 	private static TimeSpan lastTime;
 	private static TimeSpan accumulator;
 	private static string title = string.Empty;
-	private static Platform.FosterFlags flags = 
-		Platform.FosterFlags.Resizable |
-		Platform.FosterFlags.Vsync |
-		Platform.FosterFlags.MouseVisible;
-
+	private static readonly Exception notRunningException = new("Foster is not Running");
+	
 	/// <summary>
 	/// Foster Version Number
 	/// </summary>
@@ -29,7 +29,7 @@ public static class App
 	public static bool Running { get; private set; } = false;
 
 	/// <summary>
-	/// If the Application is exiting. Call <see cref="App.Exit"/> to exit the Application.
+	/// If the Application is exiting. Call <see cref="Exit"/> to exit the Application.
 	/// </summary>
 	public static bool Exiting { get; private set; } = false;
 
@@ -45,7 +45,17 @@ public static class App
 	public static string Title
 	{
 		get => title;
-		set => Platform.FosterSetTitle(title = value);
+		set
+		{
+			if (!Running)
+				throw notRunningException;
+			
+			if (title != value)
+			{
+				title = value;
+				SDL_SetWindowTitle(Platform.Window, value);
+			}
+		}
 	}
 
 	/// <summary>
@@ -65,7 +75,16 @@ public static class App
 	/// <summary>
 	/// Returns whether the Application Window is currently Focused or not.
 	/// </summary>
-	public static bool Focused => Platform.FosterGetFocused() != 0;
+	public static bool Focused
+	{
+		get
+		{
+			if (!Running)
+				throw notRunningException;
+			var flags = SDL_WindowFlags.INPUT_FOCUS | SDL_WindowFlags.MOUSE_FOCUS;
+			return (SDL_GetWindowFlags(Platform.Window) & flags) != 0;
+		}
+	}
 
 	/// <summary>
 	/// The Window width, which isn't necessarily the size in Pixels depending on the Platform.
@@ -73,19 +92,8 @@ public static class App
 	/// </summary>
 	public static int Width
 	{
-		get
-		{
-			Platform.FosterGetSize(out int w, out _);
-			return w;
-		}
-		set
-		{
-			if (Width != value)
-			{
-				Platform.FosterSetSize(value, Height);
-				Platform.FosterSetCentered();
-			}
-		}
+		get => Size.X;
+		set => Size = new(value, Height);
 	}
 
 	/// <summary>
@@ -94,19 +102,8 @@ public static class App
 	/// </summary>
 	public static int Height
 	{
-		get
-		{
-			Platform.FosterGetSize(out _, out int h);
-			return h;
-		}
-		set
-		{
-			if (Height != value)
-			{
-				Platform.FosterSetSize(Width, value);
-				Platform.FosterSetCentered();
-			}
-		}
+		get => Size.Y;
+		set => Size = new(Width, value);
 	}
 
 	/// <summary>
@@ -117,42 +114,28 @@ public static class App
 	{
 		get
 		{
-			Platform.FosterGetSize(out int w, out int h);
+			if (!Running)
+				throw notRunningException;
+			SDL_GetWindowSize(Platform.Window, out int w, out int h);
 			return new(w, h);
 		}
 		set
 		{
-			if (Size != value)
-			{
-				Platform.FosterSetSize(value.X, value.Y);
-				Platform.FosterSetCentered();
-			}
+			if (!Running)
+				throw notRunningException;
+			SDL_SetWindowSize(Platform.Window, value.X, value.Y);
 		}
 	}
 
 	/// <summary>
 	/// The Width of the Window in Pixels
 	/// </summary>
-	public static int WidthInPixels
-	{
-		get
-		{
-			Platform.FosterGetSizeInPixels(out int w, out _);
-			return w;
-		}
-	}
+	public static int WidthInPixels => SizeInPixels.X;
 
 	/// <summary>
 	/// The Height of the Window in Pixels
 	/// </summary>
-	public static int HeightInPixels
-	{
-		get
-		{
-			Platform.FosterGetSizeInPixels(out _, out int h);
-			return h;
-		}
-	}
+	public static int HeightInPixels => SizeInPixels.Y;
 
 	/// <summary>
 	/// The Size of the Window in Pixels
@@ -161,7 +144,9 @@ public static class App
 	{
 		get
 		{
-			Platform.FosterGetSizeInPixels(out int w, out int h);
+			if (!Running)
+				throw notRunningException;
+			SDL_GetWindowSizeInPixels(Platform.Window, out int w, out int h);
 			return new(w, h);
 		}
 	}
@@ -169,12 +154,17 @@ public static class App
 	/// <summary>
 	/// Gets the Size of the Display that the Application Window is currently in.
 	/// </summary>
-	public static Point2 DisplaySize
+	public static unsafe Point2 DisplaySize
 	{
 		get
 		{
-			Platform.FosterGetDisplaySize(out int w, out int h);
-			return new(w, h);
+			if (!Running)
+				throw notRunningException;
+			var index = SDL_GetDisplayForWindow(Platform.Window);
+			var mode = SDL_GetCurrentDisplayMode(index);
+			if (mode == null)
+				return Point2.Zero;
+			return new(mode->w, mode->h);
 		}
 	}
 
@@ -195,12 +185,17 @@ public static class App
 	/// </summary>
 	public static bool Fullscreen
 	{
-		get => flags.Has(Platform.FosterFlags.Fullscreen);
+		get
+		{
+			if (!Running)
+				throw notRunningException;
+			return (SDL_GetWindowFlags(Platform.Window) & SDL_WindowFlags.FULLSCREEN) != 0;
+		}
 		set
 		{
-			if (value) flags |= Platform.FosterFlags.Fullscreen;
-			else flags &= ~Platform.FosterFlags.Fullscreen;
-			Platform.FosterSetFlags(flags);
+			if (!Running)
+				throw notRunningException;
+			SDL_SetWindowFullscreen(Platform.Window, value ? 1 : 0);
 		}
 	}
 
@@ -209,27 +204,28 @@ public static class App
 	/// </summary>
 	public static bool Resizable
 	{
-		get => flags.Has(Platform.FosterFlags.Resizable);
+		get
+		{
+			if (!Running)
+				throw notRunningException;
+			return (SDL_GetWindowFlags(Platform.Window) & SDL_WindowFlags.RESIZABLE) != 0;
+		}
 		set
 		{
-			if (value) flags |= Platform.FosterFlags.Resizable;
-			else flags &= ~Platform.FosterFlags.Resizable;
-			Platform.FosterSetFlags(flags);
+			if (!Running)
+				throw notRunningException;
+			SDL_SetWindowResizable(Platform.Window, value ? 1 : 0);
 		}
 	}
 
 	/// <summary>
 	/// If Vertical Synchronization is enabled
 	/// </summary>
+	[Obsolete("Use Graphics.VSync instead")]
 	public static bool VSync
 	{
-		get => flags.Has(Platform.FosterFlags.Vsync);
-		set
-		{
-			if (value) flags |= Platform.FosterFlags.Vsync;
-			else flags &= ~Platform.FosterFlags.Vsync;
-			Platform.FosterSetFlags(flags);
-		}
+		get => Graphics.VSync;
+		set => Graphics.VSync = value;
 	}
 
 	/// <summary>
@@ -237,18 +233,26 @@ public static class App
 	/// </summary>
 	public static bool MouseVisible
 	{
-		get => flags.Has(Platform.FosterFlags.MouseVisible);
+		get
+		{
+			if (!Running)
+				throw notRunningException;
+			return SDL_CursorVisible() != 0;
+		}
 		set
 		{
-			if (value) flags |= Platform.FosterFlags.MouseVisible;
-			else flags &= ~Platform.FosterFlags.MouseVisible;
-			Platform.FosterSetFlags(flags);
+			if (!Running)
+				throw notRunningException;
+			if (value)
+				SDL_ShowCursor();
+			else
+				SDL_HideCursor();
 		}
 	}
 
 	/// <summary>
 	/// What action to perform when the user requests for the Application to exit.
-	/// If not assigned, the default behavior is to call <see cref="App.Exit"/>.
+	/// If not assigned, the default behavior is to call <see cref="Exit"/>.
 	/// </summary>
 	public static Action? OnExitRequested;
 
@@ -297,48 +301,98 @@ public static class App
 	/// <summary>
 	/// Runs the Application
 	/// </summary>
-	public static void Run(string applicationName, int width, int height, bool fullscreen = false, Renderers renderer = Renderers.None)
+	public static unsafe void Run(string applicationName, int width, int height, bool fullscreen = false, Renderers renderer = Renderers.None)
 	{
 		Debug.Assert(!Running, "Application is already running");
 		Debug.Assert(!Exiting, "Application is still exiting");
 		Debug.Assert(width > 0 && height > 0, "Width or height is <= 0");
 
-		Log.Info($"Foster: v{Version.Major}.{Version.Minor}.{Version.Build}");
-		Log.Info($"Platform: {RuntimeInformation.OSDescription} ({RuntimeInformation.OSArchitecture})");
-		Log.Info($"Framework: {RuntimeInformation.FrameworkDescription}");
-		
+		// log info
+		{
+			var sdlv = SDL_GetVersion();
+			Log.Info($"Foster: v{Version.Major}.{Version.Minor}.{Version.Build}");
+			Log.Info($"SDL: v{sdlv / 1000000}.{((sdlv) / 1000) % 1000}.{(sdlv) % 1000}");
+			Log.Info($"Platform: {RuntimeInformation.OSDescription} ({RuntimeInformation.OSArchitecture})");
+			Log.Info($"Framework: {RuntimeInformation.FrameworkDescription}");
+		}
+
 		MainThreadID = Thread.CurrentThread.ManagedThreadId;
 
-		// toggle fulscreen flag
-		if (fullscreen)
-			flags |= Platform.FosterFlags.Fullscreen;
+		// set SDL logging method
+		SDL_SetLogOutputFunction(&Platform.HandleLog, IntPtr.Zero);
 
-		// run the application
-		var name = Platform.ToUTF8(applicationName); 
-		title = applicationName;
-		Name = applicationName;
+		// by default allow controller presses while unfocused, 
+		// let game decide if it should handle them
+		SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 
-		Platform.FosterStartup(new()
+		// initialize SDL3
 		{
-			windowTitle = name,
-			applicationName = name,
-			width = width,
-			height = height,
-			renderer = renderer,
-			flags = flags,
-		});
+			var initFlags = 
+				SDL_InitFlags.VIDEO | SDL_InitFlags.TIMER | SDL_InitFlags.EVENTS |
+				SDL_InitFlags.JOYSTICK | SDL_InitFlags.GAMEPAD;
 
-		if(Platform.FosterIsRunning() == 0)
-			throw new Exception("Platform is not running");
+			if (SDL_Init(initFlags) != 0)
+			{
+				var error = Platform.ParseUTF8(SDL_GetError());
+				throw new Exception($"Foster SDL_Init Failed: {error}");
+			}
 
-		Running = true;
-		UserPath = Platform.ParseUTF8(Platform.FosterGetUserPath());
-		Graphics.Initialize();
+			// get the UserPath
+			var name = Platform.ToUTF8(applicationName);
+			UserPath = Platform.ParseUTF8(SDL_GetPrefPath(IntPtr.Zero, name));
+			Platform.FreeUTF8(name);
+		}
+
+		// create the graphics device
+		{
+			Platform.Device = SDL_GpuCreateDevice(
+				SDL_GpuBackendBits.SDL_GPU_BACKEND_ALL, 
+				debugMode: 1, 
+				preferLowPower: 0);
+
+			if (Platform.Device == IntPtr.Zero)
+				throw new Exception("Failed to create GPU Device");
+		}
+
+		// create the window
+		{
+			var windowFlags = 
+				SDL_WindowFlags.HIGH_PIXEL_DENSITY | SDL_WindowFlags.RESIZABLE | 
+				SDL_WindowFlags.HIDDEN;
+
+			if (fullscreen)
+				windowFlags |= SDL_WindowFlags.FULLSCREEN;
+
+			Platform.Window = SDL_CreateWindow(applicationName, width, height, windowFlags);
+			if (Platform.Window == IntPtr.Zero)
+			{
+				var error = Platform.ParseUTF8(SDL_GetError());
+				throw new Exception($"Foster SDL_CreateWindow Failed: {error}");
+			}
+
+			if (SDL_GpuClaimWindow(
+				Platform.Device, 
+				Platform.Window, 
+				SDL_GpuSwapchainComposition.SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
+				SDL_GpuPresentMode.SDL_GPU_PRESENTMODE_VSYNC) != 1)
+			{
+				throw new Exception("SDL_GpuClaimWindow failed");
+			}
+		}
+
+		Renderer.Startup();
+
+		// toggle flags and show window
+		SDL_StartTextInput(Platform.Window);
+		SDL_SetWindowFullscreenMode(Platform.Window, null);
+		SDL_SetWindowBordered(Platform.Window, 1);
+		SDL_ShowCursor();
 
 		// load default input mappings if they exist
 		Input.AddDefaultSdlGamepadMappings(AppContext.BaseDirectory);
 
 		// Clear Time
+		Running = true;
 		Time.Frame = 0;
 		Time.Duration = new();
 		lastTime = TimeSpan.Zero;
@@ -365,6 +419,9 @@ public static class App
 			for (int i = from; i < modules.Count; i ++)
 				modules[i].Startup();
 		}
+		
+		// Display Window now that we're ready
+		SDL_ShowWindow(Platform.Window);
 
 		// begin normal game loop
 		started = true;
@@ -375,12 +432,18 @@ public static class App
 		for (int i = modules.Count - 1; i >= 0; i --)
 			modules[i].Shutdown();
 		modules.Clear();
-
-		Graphics.Resources.DeleteAllocated();
-		Platform.FosterShutdown();
-		Platform.FreeUTF8(name);
-		started = false;
 		Running = false;
+
+		Renderer.Shutdown();
+
+		SDL_StopTextInput(Platform.Window);
+		SDL_GpuUnclaimWindow(Platform.Device, Platform.Window);
+		SDL_DestroyWindow(Platform.Window);
+		SDL_GpuDestroyDevice(Platform.Device);
+		SDL_Quit();
+
+		Platform.Window = IntPtr.Zero;
+		started = false;
 		Exiting = false;
 	}
 
@@ -409,8 +472,6 @@ public static class App
 			for (int i = 0; i < modules.Count; i ++)
 				modules[i].Update();
 		}
-		
-		Platform.FosterBeginFrame();
 
 		var currentTime = timer.Elapsed;
 		var deltaTime = currentTime - lastTime;
@@ -455,19 +516,25 @@ public static class App
 
 		for (int i = 0; i < modules.Count; i ++)
 			modules[i].Render();
-
-		Platform.FosterEndFrame();
+		
+		Renderer.Present();
 	}
 
-	private static void PollEvents()
+	private static unsafe void PollEvents()
 	{
-		while (Platform.FosterPollEvents(out var ev) != 0)
+		// always perform a mouse-move event
 		{
-			switch (ev.EventType)
+			SDL_GetMouseState(out float mouseX, out float mouseY);
+			SDL_GetRelativeMouseState(out float deltaX, out float deltaY);
+			Input.OnMouseMove(new Vector2(mouseX, mouseY), new Vector2(deltaX, deltaY));
+		}
+
+		SDL_Event ev = default;
+		while (SDL_PollEvent(&ev) != 0)
+		{
+			switch (ev.type)
 			{
-			case Platform.FosterEventType.None:
-				break;
-			case Platform.FosterEventType.ExitRequested:
+			case SDL_EventType.QUIT:
 				if (started)
 				{
 					if (OnExitRequested != null)
@@ -476,16 +543,37 @@ public static class App
 						Exit();
 				}
 				break;
-			case Platform.FosterEventType.KeyboardInput:
-			case Platform.FosterEventType.KeyboardKey:
-			case Platform.FosterEventType.MouseButton:
-			case Platform.FosterEventType.MouseMove:
-			case Platform.FosterEventType.MouseWheel:
-			case Platform.FosterEventType.ControllerConnect:
-			case Platform.FosterEventType.ControllerDisconnect:
-			case Platform.FosterEventType.ControllerButton:
-			case Platform.FosterEventType.ControllerAxis:
-				Input.OnFosterEvent(ev);
+
+			// mouse
+			case SDL_EventType.MOUSE_BUTTON_DOWN:
+				Input.OnMouseButton((int)Platform.GetMouseFromSDL(ev.button.button), true);
+				break;
+			case SDL_EventType.MOUSE_BUTTON_UP:
+				Input.OnMouseButton((int)Platform.GetMouseFromSDL(ev.button.button), false);
+				break;
+			case SDL_EventType.MOUSE_WHEEL:
+				Input.OnMouseWheel(new(ev.wheel.x, ev.wheel.y));
+				break;
+
+			// keyboard
+			case SDL_EventType.KEY_DOWN:
+				if (ev.key.repeat == 0)
+					Input.OnKey((int)Platform.GetKeyFromSDL(ev.key.scancode), true);
+				break;
+			case SDL_EventType.KEY_UP:
+				if (ev.key.repeat == 0)
+					Input.OnKey((int)Platform.GetKeyFromSDL(ev.key.scancode), false);
+				break;
+
+			case SDL_EventType.TEXT_INPUT:
+				Input.OnText(ev.text.text);
+				break;
+
+			// joystick
+
+			// gamepad
+
+			default:
 				break;
 			}
 		}

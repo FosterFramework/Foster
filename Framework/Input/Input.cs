@@ -87,7 +87,7 @@ public static class Input
 	public static void AddSdlGamepadMappings(string[] mappings)
 	{
 		foreach (var mapping in mappings)
-			Platform.SDL_GameControllerAddMapping(mapping);
+			SDL3.SDL_AddGamepadMapping(mapping);
 	}
 
 	/// <summary>
@@ -95,7 +95,7 @@ public static class Input
 	/// </summary>
 	public static void SetClipboardString(string value)
 	{
-		Platform.FosterSetClipboard(value);
+		SDL3.SDL_SetClipboardText(value);
 	}
 
 	/// <summary>
@@ -103,8 +103,7 @@ public static class Input
 	/// </summary>
 	public static string GetClipboardString()
 	{
-		var ptr = Platform.FosterGetClipboard();
-		return Platform.ParseUTF8(ptr);
+		return Platform.ParseUTF8(SDL3.SDL_GetClipboardText());
 	}
 
 	/// <summary>
@@ -128,7 +127,7 @@ public static class Input
 		}
 	}
 
-	private static unsafe void OnText(IntPtr cstr)
+	internal static unsafe void OnText(nint cstr)
 	{
 		byte* ptr = (byte*)cstr;
 		if (ptr == null || ptr[0] == 0)
@@ -151,121 +150,104 @@ public static class Input
 		}
 	}
 
-	internal static unsafe void OnFosterEvent(in Platform.FosterEvent ev)
+	internal static void OnKey(int key, bool pressed)
 	{
-		switch (ev.EventType)
+		if (key >= 0 && key < Keyboard.MaxKeys)
 		{
-			case Platform.FosterEventType.KeyboardInput:
+			if (pressed)
 			{
-				fixed (byte* ptr = ev.Keyboard.Text)
-					OnText(new IntPtr(ptr));
-				break;
+				nextState.Keyboard.down[key] = true;
+				nextState.Keyboard.pressed[key] = true;
+				nextState.Keyboard.timestamp[key] = Time.Duration;
 			}
-			case Platform.FosterEventType.KeyboardKey:
+			else
 			{
-				if (ev.Keyboard.Key >= 0 && ev.Keyboard.Key < Keyboard.MaxKeys)
-				{
-					if (ev.Keyboard.KeyPressed != 0)
-					{
-						nextState.Keyboard.down[ev.Keyboard.Key] = true;
-						nextState.Keyboard.pressed[ev.Keyboard.Key] = true;
-						nextState.Keyboard.timestamp[ev.Keyboard.Key] = Time.Duration;
-					}
-					else
-					{
-						nextState.Keyboard.down[ev.Keyboard.Key] = false;
-						nextState.Keyboard.released[ev.Keyboard.Key] = true;
-					}
-				}
-				break;
+				nextState.Keyboard.down[key] = false;
+				nextState.Keyboard.released[key] = true;
 			}
-			case Platform.FosterEventType.MouseButton:
+		}
+	}
+
+	internal static void OnMouseButton(int button, bool pressed)
+	{
+		if (button >= 0 && button < Mouse.MaxButtons)
+		{
+			if (pressed)
 			{
-				if (ev.Mouse.Button >= 0 && ev.Mouse.Button < Mouse.MaxButtons)
-				{
-					if (ev.Mouse.ButtonPressed != 0)
-					{
-						nextState.Mouse.down[ev.Mouse.Button] = true;
-						nextState.Mouse.pressed[ev.Mouse.Button] = true;
-						nextState.Mouse.timestamp[ev.Mouse.Button] = Time.Duration;
-					}
-					else
-					{
-						nextState.Mouse.down[ev.Mouse.Button] = false;
-						nextState.Mouse.released[ev.Mouse.Button] = true;
-					}
-				}
-				break;
+				nextState.Mouse.down[button] = true;
+				nextState.Mouse.pressed[button] = true;
+				nextState.Mouse.timestamp[button] = Time.Duration;
 			}
-			case Platform.FosterEventType.MouseMove:
+			else
 			{
-				var size = new Point2(App.Width, App.Height);
-				var pixels = new Point2(App.WidthInPixels, App.HeightInPixels);
-				nextState.Mouse.Position.X = (ev.Mouse.X / size.X) * pixels.X;
-				nextState.Mouse.Position.Y = (ev.Mouse.Y / size.Y) * pixels.Y;
-				nextState.Mouse.Delta.X = ev.Mouse.deltaX;
-				nextState.Mouse.Delta.Y = ev.Mouse.deltaY;
-				break;
+				nextState.Mouse.down[button] = false;
+				nextState.Mouse.released[button] = true;
 			}
-			case Platform.FosterEventType.MouseWheel:
+		}
+	}
+
+	internal static void OnMouseMove(Vector2 position, Vector2 delta)
+	{
+		var size = new Point2(App.Width, App.Height);
+		var pixels = new Point2(App.WidthInPixels, App.HeightInPixels);
+		nextState.Mouse.Position.X = (position.X / size.X) * pixels.X;
+		nextState.Mouse.Position.Y = (position.Y / size.Y) * pixels.Y;
+		nextState.Mouse.Delta.X = delta.X;
+		nextState.Mouse.Delta.Y = delta.Y;
+	}
+
+	internal static void OnMouseWheel(Vector2 wheel)
+	{
+		nextState.Mouse.wheelValue = wheel;
+	}
+
+	internal static void OnControllerConnect(int index, string name, int buttonCount, int axisCount, bool isGamepad, GamepadTypes type, ushort vendor, ushort product, ushort version)
+	{
+		if (index >= 0 && index < InputState.MaxControllers)
+		{
+			nextState.Controllers[index].Connect(
+				name,
+				buttonCount,
+				axisCount,
+				isGamepad,
+				type,
+				vendor,
+				product,
+				version
+			);
+		}
+	}
+
+	internal static void OnControllerDisconnect(int index)
+	{
+		if (index >= 0 && index < InputState.MaxControllers)
+			nextState.Controllers[index].Disconnect();
+	}
+
+	internal static void OnControllerButton(int index, int button, bool pressed)
+	{
+		if (index >= 0 && index < InputState.MaxControllers && button >= 0 && button < Controller.MaxButtons)
+		{
+			if (pressed)
 			{
-				nextState.Mouse.wheelValue = new(ev.Mouse.X, ev.Mouse.Y);
-				break;
+				nextState.Controllers[index].down[button] = true;
+				nextState.Controllers[index].pressed[button] = true;
+				nextState.Controllers[index].timestamp[button] = Time.Duration;
 			}
-			case Platform.FosterEventType.ControllerConnect:
+			else
 			{
-				if (ev.Controller.Index >= 0 && ev.Controller.Index < InputState.MaxControllers)
-				{
-					nextState.Controllers[ev.Controller.Index].Connect(
-						Platform.ParseUTF8(ev.Controller.Name), 
-						ev.Controller.ButtonCount,
-						ev.Controller.AxisCount,
-						ev.Controller.IsGamepad != 0,
-						ev.Controller.GamepadType,
-						ev.Controller.Vendor,
-						ev.Controller.Product,
-						ev.Controller.Version
-					);
-				}
-				break;
+				nextState.Controllers[index].down[button] = false;
+				nextState.Controllers[index].released[button] = true;
 			}
-			case Platform.FosterEventType.ControllerDisconnect:
-			{
-				if (ev.Controller.Index >= 0 && ev.Controller.Index < InputState.MaxControllers)
-					nextState.Controllers[ev.Controller.Index].Disconnect();
-				break;
-			}
-			case Platform.FosterEventType.ControllerButton:
-			{
-				var index = ev.Controller.Index;
-				var button = ev.Controller.Button;
-				if (index >= 0 && index < InputState.MaxControllers && button >= 0 && button < Controller.MaxButtons)
-				{
-					if (ev.Controller.ButtonPressed != 0)
-					{
-						nextState.Controllers[index].down[button] = true;
-						nextState.Controllers[index].pressed[button] = true;
-						nextState.Controllers[index].timestamp[button] = Time.Duration;
-					}
-					else
-					{
-						nextState.Controllers[index].down[button] = false;
-						nextState.Controllers[index].released[button] = true;
-					}
-				}
-				break;
-			}
-			case Platform.FosterEventType.ControllerAxis:
-			{
-				var index = ev.Controller.Index;
-				var axis = ev.Controller.Axis;
-				if (index >= 0 && index < InputState.MaxControllers && axis >= 0 && axis < Controller.MaxAxis)
-				{
-					nextState.Controllers[index].axis[axis] = ev.Controller.AxisValue;
-					nextState.Controllers[index].axisTimestamp[axis] = Time.Duration;
-				}
-				break;
-			}
+		}
+	}
+
+	internal static void OnControllerAxis(int index, int axis, float value)
+	{
+		if (index >= 0 && index < InputState.MaxControllers && axis >= 0 && axis < Controller.MaxAxis)
+		{
+			nextState.Controllers[index].axis[axis] = value;
+			nextState.Controllers[index].axisTimestamp[axis] = Time.Duration;
 		}
 	}
 }

@@ -58,12 +58,12 @@ public class Font : IDisposable
 		dataLength = buffer.Length;
 
 		// create the font ptr
-		fontPtr = Platform.FosterFontInit(dataPtr, dataLength);
+		fontPtr = Platform.FontInit(dataPtr, dataLength);
 		if (fontPtr == IntPtr.Zero)
 			throw new Exception("Unable to parse Font Data");
 
 		// get font properties
-		Platform.FosterFontGetMetrics(fontPtr, out int ascent, out int descent, out int linegap);
+		Platform.FontGetMetrics(fontPtr, out int ascent, out int descent, out int linegap);
 		Ascent = ascent;
 		Descent = descent;
 		LineGap = linegap;
@@ -75,7 +75,7 @@ public class Font : IDisposable
 	public int GetGlyphIndex(int codepoint)
 	{
 		if (!codepointToGlyphLookup.TryGetValue(codepoint, out var glyphIndex))
-			codepointToGlyphLookup[codepoint] = glyphIndex = Platform.FosterFontGetGlyphIndex(fontPtr, codepoint);
+			codepointToGlyphLookup[codepoint] = glyphIndex = Platform.FontGetGlyphIndex(fontPtr, codepoint);
 
 		return glyphIndex;
 	}
@@ -95,7 +95,7 @@ public class Font : IDisposable
 	{
 		if (fontPtr == IntPtr.Zero)
 			throw new Exception("Trying to use an invalid Font");
-		return Platform.FosterFontGetScale(fontPtr, size);
+		return Platform.FontGetScale(fontPtr, size);
 	}
 
 	/// <summary>
@@ -125,7 +125,7 @@ public class Font : IDisposable
 	{
 		if (fontPtr == IntPtr.Zero)
 			throw new Exception("Trying to use an invalid Font");
-		return Platform.FosterFontGetKerning(fontPtr, glyph1, glyph2, scale);
+		return Platform.FontGetKerning(fontPtr, glyph1, glyph2, scale);
 	}
 
 	/// <summary>
@@ -156,7 +156,7 @@ public class Font : IDisposable
 		if (fontPtr == IntPtr.Zero)
 			throw new Exception("Trying to use an invalid Font");
 		
-		Platform.FosterFontGetCharacter(fontPtr, glyphIndex, scale,
+		Platform.FontGetCharacter(fontPtr, glyphIndex, scale,
 			out int width, out int height, out float advance, out float offsetX, out float offsetY, out int visible);
 
 		return new()
@@ -209,7 +209,7 @@ public class Font : IDisposable
 		unsafe
 		{
 			fixed (Color* ptr = destination)
-				Platform.FosterFontGetPixels(fontPtr, new(ptr), character.GlyphIndex, character.Width, character.Height, character.Scale);
+				Platform.FontGetPixels(fontPtr, new(ptr), character.GlyphIndex, character.Width, character.Height, character.Scale);
 		}
 
 		return true;
@@ -226,7 +226,7 @@ public class Font : IDisposable
 
 		if (fontPtr != IntPtr.Zero)
 		{
-			Platform.FosterFontFree(fontPtr);
+			Platform.FontFree(fontPtr);
 			fontPtr = IntPtr.Zero;
 		}
 	}

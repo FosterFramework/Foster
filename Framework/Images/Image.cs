@@ -114,7 +114,7 @@ public class Image : IDisposable
 		int w, h;
 		fixed (byte* it = data)
 		{
-			mem = Platform.FosterImageLoad(it, data.Length, out w, out h);
+			mem = Platform.ImageLoad(it, data.Length, out w, out h);
 		}
 
 		// returns invalid ptr if unable to load
@@ -136,7 +136,7 @@ public class Image : IDisposable
 	{
 		if (unmanaged)
 		{
-			Platform.FosterImageFree(ptr);
+			Platform.ImageFree(ptr);
 		}
 		else if (handle.IsAllocated)
 		{
@@ -195,7 +195,7 @@ public class Image : IDisposable
 		}
 
 		GCHandle handle = GCHandle.Alloc(stream);
-		Platform.FosterImageWrite(&Write, GCHandle.ToIntPtr(handle), format, Width, Height, ptr);
+		Platform.ImageWrite(&Write, GCHandle.ToIntPtr(handle), format, Width, Height, ptr);
 		handle.Free();
 	}
 

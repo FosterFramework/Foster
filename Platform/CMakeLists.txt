@@ -1,12 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 project(FosterPlatform C)
 
-# Platform Variables
-option(FOSTER_OPENGL_ENABLED "Make OpenGL Renderer available" ON)
-if (WIN32)
-	option(FOSTER_D3D11_ENABLED "Make D3D11 Renderer available" ON)
-endif()
-
 # Set flag for building a universal binary on macOS 
 if(APPLE)
 	set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64")
@@ -23,10 +17,6 @@ set (TARGET_NAME FosterPlatform)
 add_library(${TARGET_NAME} SHARED
 	include/foster_platform.h
 	src/foster_platform.c
-	src/foster_image.c
-	src/foster_renderer.c
-	src/foster_renderer_d3d11.c
-	src/foster_renderer_opengl.c
 )
 
 target_include_directories(${TARGET_NAME}
@@ -82,17 +72,6 @@ endif ()
 # tracks which libraries we need to link, depends on Options above
 set(LIBS "")
 
-# use the OpenGL Renderer Backend
-if (FOSTER_OPENGL_ENABLED)
-	target_compile_definitions(${TARGET_NAME} PRIVATE FOSTER_OPENGL_ENABLED)
-endif()
-
-# use the D3D11 Renderer Backend
-if (FOSTER_D3D11_ENABLED)
-	target_compile_definitions(${TARGET_NAME} PRIVATE FOSTER_D3D11_ENABLED)
-	set(LIBS ${LIBS} d3d11.lib dxguid.lib D3Dcompiler.lib)
-endif()
-
 # Emscripten can import SDL3 directly
 if (EMSCRIPTEN)
 	
@@ -110,8 +89,9 @@ else()
 
 		FetchContent_Declare(
 			SDL3
-			GIT_REPOSITORY https://github.com/libsdl-org/SDL
-			GIT_TAG prerelease-3.1.2
+			GIT_REPOSITORY https://github.com/thatcosmonaut/SDL
+			GIT_BRANCH gpu
+			GIT_TAG e626e29
 			GIT_PROGRESS TRUE
 		)
 		FetchContent_MakeAvailable(SDL3)
@@ -127,5 +107,5 @@ endif()
 # Tell SDL it's going to be a shared lib
 set_property(TARGET ${FOSTER_SDL3_LIBS} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-# Link SDL
+# Link SDL3
 target_link_libraries(${TARGET_NAME} PRIVATE ${LIBS})
