@@ -13,6 +13,8 @@ typedef struct FosterRenderDevice
 	void (*shutdown)();
 	void (*frameBegin)();
 	void (*frameEnd)();
+
+	int (*getMaxTextureSize)();
 	
 	FosterTexture* (*textureCreate)(int width, int height, FosterTextureFormat format);
 	void (*textureSetData)(FosterTexture* texture, void* data, int length);

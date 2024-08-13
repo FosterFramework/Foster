@@ -1098,6 +1098,11 @@ void FosterFrameEnd_OpenGL()
 	SDL_GL_SwapWindow(state->window);
 }
 
+int FosterGetMaxTextureSize_OpenGL()
+{
+	return fgl.max_texture_size;
+}
+
 FosterTexture* FosterTextureCreate_OpenGL(int width, int height, FosterTextureFormat format)
 {
 	FosterTexture_OpenGL result;
@@ -1820,6 +1825,7 @@ bool FosterGetDevice_OpenGL(FosterRenderDevice* device)
 	device->shutdown = FosterShutdown_OpenGL;
 	device->frameBegin = FosterFrameBegin_OpenGL;
 	device->frameEnd = FosterFrameEnd_OpenGL;
+	device->getMaxTextureSize = FosterGetMaxTextureSize_OpenGL;
 	device->textureCreate = FosterTextureCreate_OpenGL;
 	device->textureSetData = FosterTextureSetData_OpenGL;
 	device->textureGetData = FosterTextureGetData_OpenGL;

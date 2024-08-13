@@ -618,6 +618,8 @@ FOSTER_API void FosterGetSizeInPixels(int* width, int* height);
 
 FOSTER_API void FosterGetDisplaySize(int* width, int* height);
 
+FOSTER_API int FosterGetMaxTextureSize();
+
 FOSTER_API void FosterSetFlags(FosterFlags flags);
 
 FOSTER_API void FosterSetCentered();

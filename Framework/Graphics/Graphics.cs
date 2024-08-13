@@ -37,9 +37,7 @@ namespace Foster.Framework
 		internal static void Initialize()
 		{
 			Renderer = Platform.FosterGetRenderer();
-
-			// TODO: actually query the graphics device for this
-			MaxTextureSize = 8192;
+			MaxTextureSize = Platform.FosterGetMaxTextureSize();
 		}
 
 		/// <summary>
