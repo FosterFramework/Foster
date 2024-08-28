@@ -416,6 +416,12 @@ void FosterGetDisplaySize(int* width, int* height)
 	*height = mode.h;
 }
 
+int FosterGetMaxTextureSize()
+{
+	FOSTER_ASSERT_RUNNING_RET(FosterGetMaxTextureSize, -1);
+	return fstate.device.getMaxTextureSize();
+}
+
 void FosterSetFlags(FosterFlags flags)
 {
 	FOSTER_ASSERT_RUNNING(FosterSetFlags);

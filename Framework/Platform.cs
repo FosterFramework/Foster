@@ -229,6 +229,8 @@ internal static partial class Platform
 	[LibraryImport(DLL)]
 	public static partial void FosterGetDisplaySize(out int width, out int height);
 	[LibraryImport(DLL)]
+	public static partial int FosterGetMaxTextureSize();
+	[LibraryImport(DLL)]
 	public static partial void FosterSetFlags(FosterFlags flags);
 	[LibraryImport(DLL)]
 	public static partial void FosterSetCentered();
