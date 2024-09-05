@@ -1,24 +1,34 @@
-name: Publish NuGet Package
-on:
-  release:
-    types: [published]
+name: Publish to Nuget
+
+on: 
+  workflow_dispatch:
+    inputs:
+      version:
+        required: false
+        type: string
+      branch:
+        description: 'Branch to checkout'
+        required: true
+        default: 'main'        
 
 jobs:
-  publish_nuget:
-    runs-on: windows-latest
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ windows-latest ]
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-
-    - name: Setup .NET 8 SDK
-      uses: actions/setup-dotnet@v4
-      with:
-        global-json-file: ./global.json
-
-    - name: Pack
-      run: |
-          dotnet build -c Release
-          dotnet pack -c Release
-
-    - name: Push
-      run: dotnet nuget push artifacts/**/*.nupkg -k ${{secrets.NUGET_TOKEN}} --skip-duplicate --source https://api.nuget.org/v3/index.json
+      - uses: actions/checkout@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 8.x
+      - name: Pack
+        run: dotnet pack --configuration Release
+      - name: Add Source
+        env:
+          NUGET_PUSH_KEY: ${{ secrets.NUGET_PUSH_KEY }}
+        run: dotnet nuget add source https://ghostgame.pkgs.visualstudio.com/_packaging/Innersloth/nuget/v3/index.json --name Innersloth -u Username -p "$env:NUGET_PUSH_KEY"
+      - name: Push
+        run: dotnet nuget push InnerFosterFramework.${{ inputs.version }}.nupkg --source Innersloth -k az

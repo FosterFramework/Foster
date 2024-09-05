@@ -8,12 +8,12 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Title>Foster</Title>
     <Product>Foster</Product>
-    <Version>0.1.19-alpha</Version>
+    <Version>0.0.1</Version>
     <Authors>Noel Berry</Authors>
     <Description>A small 2D cross-platform Game Framework</Description>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/FosterFramework/Foster</RepositoryUrl>
-    <PackageId>FosterFramework</PackageId>
+    <PackageId>InnerFosterFramework</PackageId>
     <PackageProjectUrl>https://github.com/FosterFramework/Foster</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -79,8 +79,32 @@
   </ItemGroup>
   
   <ItemGroup>
-    <None Include="$(ProjectDir)..\LICENSE" Pack="true" PackagePath="/"/>
-    <None Include="$(ProjectDir)..\README.md" Pack="true" PackagePath="/"/>
+    <None Include="$(ProjectDir)..\LICENSE" Pack="true" PackagePath="/" />
+    <None Include="$(ProjectDir)..\README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
+  
+  <Target Name="PostBuildWindows" AfterTargets="PostBuildEvent" Condition="$([MSBuild]::IsOSPlatform('Windows')) And '$(Configuration)' == 'Release'">
+    <!-- Delete the old package if it exists, so we make sure the package is rebuilt every build -->
+    <RemoveDir Directories="$(SolutionDir)artifacts\$(PackageId).$(Version)" Condition="Exists('$(SolutionDir)artifacts\$(PackageId).$(Version)')" />
+    <!-- Clear local nuget cache -->
+    <Exec Command="rd /s /q &quot;%25USERPROFILE%25\.nuget\packages\InnerFosterFramework&quot;" />
+    <Exec Command="dotnet pack &quot;$(SolutionDir)Framework\Foster.Framework.csproj&quot; -o &quot;$(SolutionDir)artifacts&quot; --configuration Release --no-build" />
+  </Target>
+
+  <Target Name="PostBuildLinux" AfterTargets="PostBuildEvent" Condition="$([MSBuild]::IsOSPlatform('Linux')) And '$(Configuration)' == 'Release'">
+    <!-- Delete the old package if it exists, so we make sure the package is rebuilt every build -->
+    <RemoveDir Directories="$(SolutionDir)artifacts/$(PackageId).$(Version)" Condition="Exists('$(SolutionDir)artifacts/$(PackageId).$(Version)')" />
+    <!-- Clear local nuget cache -->
+    <Exec Command="rm -rf ~/.nuget/packages/InnerFosterFramework" />
+    <Exec Command="dotnet pack '$(SolutionDir)Framework/Foster.Framework.csproj' -o '$(SolutionDir)artifacts' --configuration Release --no-build" />
+  </Target>
+
+  <Target Name="PostBuildMac" AfterTargets="PostBuildEvent" Condition="$([MSBuild]::IsOSPlatform('OSX')) And '$(Configuration)' == 'Release'">
+    <!-- Delete the old package if it exists, so we make sure the package is rebuilt every build -->
+    <RemoveDir Directories="$(SolutionDir)artifacts/$(PackageId).$(Version)" Condition="Exists('$(SolutionDir)artifacts/$(PackageId).$(Version)')" />
+    <!-- Clear local nuget cache -->
+    <Exec Command="rm -rf ~/.nuget/packages/InnerFosterFramework" />
+    <Exec Command="dotnet pack '$(SolutionDir)Framework/Foster.Framework.csproj' -o '$(SolutionDir)artifacts' --configuration Release --no-build" />
+  </Target>
 
 </Project>
