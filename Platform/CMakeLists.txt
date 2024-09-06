@@ -89,9 +89,8 @@ else()
 
 		FetchContent_Declare(
 			SDL3
-			GIT_REPOSITORY https://github.com/thatcosmonaut/SDL
-			GIT_BRANCH gpu
-			GIT_TAG e626e29
+			GIT_REPOSITORY https://github.com/libsdl-org/sdl
+			GIT_TAG 379aea5
 			GIT_PROGRESS TRUE
 		)
 		FetchContent_MakeAvailable(SDL3)

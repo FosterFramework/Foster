@@ -195,7 +195,7 @@ public static class App
 		{
 			if (!Running)
 				throw notRunningException;
-			SDL_SetWindowFullscreen(Platform.Window, value ? 1 : 0);
+			SDL_SetWindowFullscreen(Platform.Window, value);
 		}
 	}
 
@@ -214,7 +214,7 @@ public static class App
 		{
 			if (!Running)
 				throw notRunningException;
-			SDL_SetWindowResizable(Platform.Window, value ? 1 : 0);
+			SDL_SetWindowResizable(Platform.Window, value);
 		}
 	}
 
@@ -237,7 +237,7 @@ public static class App
 		{
 			if (!Running)
 				throw notRunningException;
-			return SDL_CursorVisible() != 0;
+			return SDL_CursorVisible();
 		}
 		set
 		{
@@ -331,7 +331,7 @@ public static class App
 				SDL_InitFlags.VIDEO | SDL_InitFlags.TIMER | SDL_InitFlags.EVENTS |
 				SDL_InitFlags.JOYSTICK | SDL_InitFlags.GAMEPAD;
 
-			if (SDL_Init(initFlags) != 0)
+			if (!SDL_Init(initFlags))
 			{
 				var error = Platform.ParseUTF8(SDL_GetError());
 				throw new Exception($"Foster SDL_Init Failed: {error}");
@@ -345,10 +345,10 @@ public static class App
 
 		// create the graphics device
 		{
-			Platform.Device = SDL_GpuCreateDevice(
-				SDL_GpuBackendBits.SDL_GPU_BACKEND_ALL, 
-				debugMode: 1, 
-				preferLowPower: 0);
+			Platform.Device = SDL_CreateGPUDevice(
+				formatFlags: SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
+				debugMode: 1,
+				null);
 
 			if (Platform.Device == IntPtr.Zero)
 				throw new Exception("Failed to create GPU Device");
@@ -370,14 +370,8 @@ public static class App
 				throw new Exception($"Foster SDL_CreateWindow Failed: {error}");
 			}
 
-			if (SDL_GpuClaimWindow(
-				Platform.Device, 
-				Platform.Window, 
-				SDL_GpuSwapchainComposition.SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
-				SDL_GpuPresentMode.SDL_GPU_PRESENTMODE_VSYNC) != 1)
-			{
+			if (SDL_ClaimWindowForGPUDevice(Platform.Device, Platform.Window) != 1)
 				throw new Exception("SDL_GpuClaimWindow failed");
-			}
 		}
 
 		Renderer.Startup();
@@ -385,7 +379,7 @@ public static class App
 		// toggle flags and show window
 		SDL_StartTextInput(Platform.Window);
 		SDL_SetWindowFullscreenMode(Platform.Window, null);
-		SDL_SetWindowBordered(Platform.Window, 1);
+		SDL_SetWindowBordered(Platform.Window, true);
 		SDL_ShowCursor();
 
 		// load default input mappings if they exist
@@ -437,9 +431,9 @@ public static class App
 		Renderer.Shutdown();
 
 		SDL_StopTextInput(Platform.Window);
-		SDL_GpuUnclaimWindow(Platform.Device, Platform.Window);
+		SDL_ReleaseWindowFromGPUDevice(Platform.Device, Platform.Window);
 		SDL_DestroyWindow(Platform.Window);
-		SDL_GpuDestroyDevice(Platform.Device);
+		SDL_DestroyGPUDevice(Platform.Device);
 		SDL_Quit();
 
 		Platform.Window = IntPtr.Zero;
@@ -530,7 +524,7 @@ public static class App
 		}
 
 		SDL_Event ev = default;
-		while (SDL_PollEvent(&ev) != 0)
+		while (SDL_PollEvent(&ev))
 		{
 			switch (ev.type)
 			{

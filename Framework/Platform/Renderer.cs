@@ -33,9 +33,9 @@ internal static partial class Renderer
 	private static unsafe void AcquireCommandBuffers()
 	{
 		uint w, h;
-		renderCmdBuf = SDL_GpuAcquireCommandBuffer(Platform.Device);
-		uploadCmdBuf = SDL_GpuAcquireCommandBuffer(Platform.Device);
-		swapchainTexture = SDL_GpuAcquireSwapchainTexture(renderCmdBuf, Platform.Window, &w, &h);
+		renderCmdBuf = SDL_AcquireGPUCommandBuffer(Platform.Device);
+		uploadCmdBuf = SDL_AcquireGPUCommandBuffer(Platform.Device);
+		swapchainTexture = SDL_AcquireGPUSwapchainTexture(renderCmdBuf, Platform.Window, &w, &h);
 	}
 
 	private static unsafe void Flush(bool wait)
@@ -46,17 +46,17 @@ internal static partial class Renderer
 
 		if (wait)
 		{
-			var renderFence = SDL_GpuSubmitAndAcquireFence(renderCmdBuf);
-			var uploadFence = SDL_GpuSubmitAndAcquireFence(uploadCmdBuf);
+			var renderFence = SDL_SubmitGPUCommandBufferAndAcquireFence(renderCmdBuf);
+			var uploadFence = SDL_SubmitGPUCommandBufferAndAcquireFence(uploadCmdBuf);
 			var fences = stackalloc nint[] { renderFence, uploadFence };
-			SDL_GpuWaitForFences(Platform.Device, 1, fences, 2);
-			SDL_GpuReleaseFence(Platform.Device, renderFence);
-			SDL_GpuReleaseFence(Platform.Device, uploadFence);
+			SDL_WaitForGPUFences(Platform.Device, 1, fences, 2);
+			SDL_ReleaseGPUFence(Platform.Device, renderFence);
+			SDL_ReleaseGPUFence(Platform.Device, uploadFence);
 		}
 		else
 		{
-			SDL_GpuSubmit(renderCmdBuf);
-			SDL_GpuSubmit(uploadCmdBuf);
+			SDL_SubmitGPUCommandBuffer(renderCmdBuf);
+			SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
 		}
 	}
 
@@ -117,13 +117,13 @@ internal static partial class Renderer
 	private static unsafe void CopyPassBegin()
 	{
 		Debug.Assert(copyPass == nint.Zero);
-		copyPass = SDL_GpuBeginCopyPass(uploadCmdBuf);
+		copyPass = SDL_BeginGPUCopyPass(uploadCmdBuf);
 	}
 
 	private static void CopyPassEnd()
 	{
 		if (copyPass != nint.Zero)
-			SDL_GpuEndCopyPass(copyPass);
+			SDL_EndGPUCopyPass(copyPass);
 		copyPass = nint.Zero;
 	}
 
@@ -132,22 +132,22 @@ internal static partial class Renderer
 		Debug.Assert(renderPass == nint.Zero);
 
 		var colorAttachments = 
-			stackalloc SDL_GpuColorAttachmentInfo[nextRenderPass.ColorTargets.Count];
+			stackalloc SDL_GPUColorAttachmentInfo[nextRenderPass.ColorTargets.Count];
 
 		for (int i = 0; i < nextRenderPass.ColorTargets.Count; i ++)
 		{
 			colorAttachments[i] = new()
 			{
-				textureSlice = new() { texture = nextRenderPass.ColorTargets[i] },
+				texture = nextRenderPass.ColorTargets[i],
 				clearColor = GetColor(nextRenderPass.ClearColor ?? Color.Transparent),
 				loadOp = nextRenderPass.ClearColor.HasValue ? 
-					SDL_GpuLoadOp.SDL_GPU_LOADOP_CLEAR : 
-					SDL_GpuLoadOp.SDL_GPU_LOADOP_LOAD,
-				storeOp = SDL_GpuStoreOp.SDL_GPU_STOREOP_STORE
+					SDL_GPULoadOp.SDL_GPU_LOADOP_CLEAR : 
+					SDL_GPULoadOp.SDL_GPU_LOADOP_LOAD,
+				storeOp = SDL_GPUStoreOp.SDL_GPU_STOREOP_STORE
 			};
 		}
 
-		renderPass = SDL_GpuBeginRenderPass(
+		renderPass = SDL_BeginGPURenderPass(
 			renderCmdBuf,
 			colorAttachments,
 			(uint)nextRenderPass.ColorTargets.Count,
@@ -166,11 +166,11 @@ internal static partial class Renderer
 	private static void RenderPassEnd()
 	{
 		if (renderPass != nint.Zero)
-			SDL_GpuEndRenderPass(renderPass);
+			SDL_EndGPURenderPass(renderPass);
 		renderPass = nint.Zero;
 	}
 
-	private static SDL_GpuColor GetColor(Color color)
+	private static SDL_FColor GetColor(Color color)
 	{
 		var vec4 = color.ToVector4();
 		return new() { r = vec4.X, g = vec4.Y, b = vec4.Z, a = vec4.W, };

@@ -3,13 +3,13 @@ using System.Runtime.InteropServices;
 using SDL_DisplayID = System.UInt32;
 using SDL_WindowID = System.UInt32;
 using SDL_PixelFormat = System.UInt32;
-using SDL_bool = System.Int32;
 using SDL_KeyboardID = System.UInt32;
 using SDL_Keycode = System.UInt32;
 using SDL_Keymod = System.UInt16;
 using SDL_MouseID = System.UInt32;
 using SDL_MouseButtonFlags = System.UInt32;
 using SDL_JoystickID = System.UInt32;
+using System.Runtime.InteropServices.Marshalling;
 
 namespace Foster.Framework;
 
@@ -42,8 +42,8 @@ internal static partial class SDL3
 		CAMERA     = 0x00010000u,
 	}
 
-	[LibraryImport(DLL)]
-	public static partial int SDL_Init(SDL_InitFlags flags);
+	[LibraryImport(DLL)] [return:MarshalAs(UnmanagedType.Bool)]
+	public static partial bool SDL_Init(SDL_InitFlags flags);
 
 	[LibraryImport(DLL)]
 	public static partial void SDL_Quit();
@@ -129,13 +129,13 @@ internal static partial class SDL3
 	public static unsafe partial int SDL_SetWindowFullscreenMode(nint window, SDL_DisplayMode* mode);
 
 	[LibraryImport(DLL)]
-	public static partial int SDL_SetWindowFullscreen(nint window, SDL_bool fullscreen);
+	public static partial int SDL_SetWindowFullscreen(nint window, [MarshalAs(UnmanagedType.Bool)] bool fullscreen);
 
 	[LibraryImport(DLL)]
-	public static partial int SDL_SetWindowResizable(nint window, SDL_bool resizable);
+	public static partial int SDL_SetWindowResizable(nint window, [MarshalAs(UnmanagedType.Bool)] bool resizable);
 
 	[LibraryImport(DLL)]
-	public static partial int SDL_SetWindowBordered(nint window, SDL_bool bordered);
+	public static partial int SDL_SetWindowBordered(nint window, [MarshalAs(UnmanagedType.Bool)] bool bordered);
 
 	[LibraryImport(DLL)]
 	public static partial int SDL_ShowWindow(nint window);
@@ -153,6 +153,31 @@ internal static partial class SDL3
 	[LibraryImport(DLL)]
 	public static unsafe partial int SDL_StopTextInput(nint window);
 
+	// SDL_rect.h
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct SDL_Rect
+	{
+		public int x, y, w, h;
+	}
+
+	// SDL_pixels.h
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct SDL_FColor
+	{
+		public float r, g, b, a;
+	}
+
+	// SDL_surface.h
+
+	public enum SDL_FlipMode : int
+	{
+		SDL_FLIP_NONE,
+		SDL_FLIP_HORIZONTAL,
+		SDL_FLIP_VERTICAL
+	}
+
 	// SDL_mouse.h
 
 	public enum SDL_MouseWheelDirection : int
@@ -167,8 +192,8 @@ internal static partial class SDL3
 	[LibraryImport(DLL)]
 	public static partial int SDL_HideCursor();
 
-	[LibraryImport(DLL)]
-	public static partial SDL_bool SDL_CursorVisible();
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.Bool)]  
+	public static partial bool SDL_CursorVisible();
 
 	[LibraryImport(DLL)]
 	public static partial SDL_MouseButtonFlags SDL_GetMouseState(out float x, out float y);
@@ -213,8 +238,8 @@ internal static partial class SDL3
 		public static readonly string SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS = "SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS";
 	}
 
-	[LibraryImport(DLL, StringMarshalling = StringMarshalling.Utf8)]
-	public static partial SDL_bool SDL_SetHint(string name, string value);
+	[LibraryImport(DLL, StringMarshalling = StringMarshalling.Utf8)][return:MarshalAs(UnmanagedType.Bool)] 
+	public static partial bool SDL_SetHint(string name, string value);
 
 	// SDL_events.h
 
@@ -615,6 +640,6 @@ internal static partial class SDL3
 		[FieldOffset(0)] public fixed byte padding[128];
 	}
 
-	[LibraryImport(DLL)]
-	public static unsafe partial SDL_bool SDL_PollEvent(SDL_Event* eventPtr);
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.Bool)] 
+	public static unsafe partial bool SDL_PollEvent(SDL_Event* eventPtr);
 }
