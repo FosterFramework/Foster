@@ -39,14 +39,19 @@ public struct DrawCommand()
 	public CullMode CullMode = CullMode.None;
 
 	/// <summary>
-	/// The Render State Depth comparison Function
+	/// The Depth Comparison Function, only used if DepthTestEnabled is true
 	/// </summary>
-	public DepthCompare DepthCompare = DepthCompare.None;
+	public DepthCompare DepthCompare = DepthCompare.Less;
+
+	/// <summary>
+	/// If the Depth Test is enabled
+	/// </summary>
+	public bool DepthTestEnabled = false;
 
 	/// <summary>
 	/// If Writing to the Depth Buffer is enabled
 	/// </summary>
-	public bool DepthMask = false;
+	public bool DepthWriteEnabled = false;
 
 	/// <summary>
 	/// Render Viewport

@@ -2,7 +2,7 @@ namespace Foster.Framework;
 
 public enum DepthCompare
 {
-	None,
+	Disabled,
 	Always,
 	Never,
 	Less,

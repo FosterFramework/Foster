@@ -80,7 +80,7 @@ public class Batcher : IDisposable
 	private Batch currentBatch;
 	private int currentBatchInsert;
 	private Color mode = new(255, 0, 0, 0);
-	private bool dirty;
+	private bool meshDirty;
 
 	private readonly List<Material> materialPool = new();
 	private int materialPoolIndex;
@@ -122,6 +122,19 @@ public class Batcher : IDisposable
 	~Batcher()
 	{
 		Dispose();
+	}
+
+	/// <summary>
+	/// Uploads the current state of the internal Mesh to the GPU
+	/// </summary>
+	public void Upload()
+	{
+		if (meshDirty && indexPtr != IntPtr.Zero && vertexPtr != IntPtr.Zero)
+		{
+			mesh.SetIndices(indexPtr, indexCount, IndexFormat.ThirtyTwo);
+			mesh.SetVertices(vertexPtr, vertexCount, VertexFormat);
+			meshDirty = false;
+		}
 	}
 
 	public void Dispose()
@@ -208,16 +221,11 @@ public class Batcher : IDisposable
 			return;
 
 		// upload our data if we've been modified since the last time we rendered
-		if (dirty)
-		{
-			mesh.SetIndices(indexPtr, indexCount, IndexFormat.ThirtyTwo);
-			mesh.SetVertices(vertexPtr, vertexCount, VertexFormat);
-			dirty = false;
-		}
+		Upload();
 
 		// make sure default shader and material are valid
 		if (DefaultShader == null || DefaultShader.IsDisposed)
-			DefaultShader = new Shader(ShaderDefaults.Batcher[Graphics.Renderer]);
+			DefaultShader = new Shader(ShaderDefaults.Default);
 		defaultMaterial.SetShader(DefaultShader);
 
 		// render batches
@@ -258,8 +266,8 @@ public class Batcher : IDisposable
 			BlendMode = batch.Blend,
 			MeshIndexStart = batch.Offset * 3,
 			MeshIndexCount = batch.Elements * 3,
-			DepthMask = false,
-			DepthCompare = DepthCompare.None,
+			DepthWriteEnabled = false,
+			DepthTestEnabled = false,
 			CullMode = CullMode.None
 		};
 		command.Submit();
@@ -1089,7 +1097,7 @@ public class Batcher : IDisposable
 
 				indexCount += 30;
 				currentBatch.Elements += 10;
-				dirty = true;
+				meshDirty = true;
 			}
 
 			// set verts
@@ -1694,7 +1702,7 @@ public class Batcher : IDisposable
 
 		indexCount += 3;
 		currentBatch.Elements++;
-		dirty = true;
+		meshDirty = true;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1716,7 +1724,7 @@ public class Batcher : IDisposable
 
 		indexCount += 6;
 		currentBatch.Elements += 2;
-		dirty = true;
+		meshDirty = true;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

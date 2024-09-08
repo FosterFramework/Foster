@@ -83,4 +83,14 @@
     <None Include="$(ProjectDir)..\README.md" Pack="true" PackagePath="/"/>
   </ItemGroup>
 
+  <!-- Default Shader Content -->
+  <ItemGroup>
+    <EmbeddedResource Include="$(ProjectDir)Content/Default.frag.spv" Visible="false">
+			<LogicalName>Default.frag.spv</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(ProjectDir)Content/Default.vert.spv" Visible="false">
+			<LogicalName>Default.vert.spv</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
 </Project>

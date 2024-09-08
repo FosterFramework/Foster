@@ -37,15 +37,14 @@ public class Target : IResource
 	/// <summary>
 	/// The Texture attachments in the Target. 
 	/// </summary>
-	public readonly ReadOnlyCollection<Texture> Attachments;
+	public readonly Texture[] Attachments;
 
-	internal readonly IntPtr resource;
 	internal bool disposed = false;
 
 	public Target(int width, int height)
 		: this(width, height, defaultFormats) { }
 
-	public Target(int width, int height, TextureFormat[] attachments)
+	public Target(int width, int height, in ReadOnlySpan<TextureFormat> attachments)
 	{
 		if (width <= 0 || height <= 0)
 			throw new ArgumentException("Target width and height must be larger than 0");
@@ -53,23 +52,12 @@ public class Target : IResource
 		if (attachments == null || attachments.Length <= 0)
 			throw new ArgumentException("Target needs at least 1 color attachment");
 
-		resource = Platform.FosterTargetCreate(width, height, attachments, attachments.Length);
-		if (resource == IntPtr.Zero)
-			throw new Exception("Failed to create Target");
-
 		Width = width;
 		Height = height;
 		Bounds = new RectInt(0, 0, Width, Height);
-
-		var textures = new List<Texture>();
-		for (int i = 0; i < attachments.Length; i++)
-		{
-			var ptr = Platform.FosterTargetGetAttachment(resource, i);
-			textures.Add(new Texture(ptr, width, height, attachments[i]));
-		}
-
-		Attachments = textures.AsReadOnly();
-		Graphics.Resources.RegisterAllocated(this, resource, Platform.FosterTargetDestroy);
+		Attachments = new Texture[attachments.Length];
+		for (int i = 0; i < attachments.Length; i ++)
+			Attachments[i] = new Texture(width, height, attachments[i], isTargetAttachment: true);
 	}
 
 	~Target()
@@ -92,18 +80,7 @@ public class Target : IResource
 	{
 		if (IsDisposed)
 			throw new Exception("Resource is Disposed");
-
-		Platform.FosterClearCommand clear = new()
-		{
-			target = resource,
-			clip = new(0, 0, Width, Height),
-			color = color,
-			depth = depth,
-			stencil = stencil,
-			mask = mask
-		};
-
-		Platform.FosterClear(&clear);
+		Renderer.Clear(this, color, depth, stencil, mask);
 	}
 
 	/// <summary>
@@ -119,13 +96,8 @@ public class Target : IResource
 	{
 		if (!disposed)
 		{
-			if (disposing)
-			{
-				foreach (var attachment in Attachments)
-					attachment.disposed = true;
-			}
-
-			Graphics.Resources.RequestDelete(resource);
+			foreach (var it in Attachments)
+				it.Dispose();
 			disposed = true;
 		}
 	}

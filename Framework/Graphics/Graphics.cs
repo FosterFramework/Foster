@@ -1,6 +1,5 @@
 
 using System.Diagnostics;
-using static Foster.Framework.SDL3;
 
 namespace Foster.Framework
 {
@@ -45,15 +44,14 @@ namespace Foster.Framework
 		/// If our (0,0) in our coordinate system is bottom-left.
 		/// This is true in OpenGL
 		/// </summary>
-		public static bool OriginBottomLeft => Renderer == Renderers.OpenGL;
+		public static bool OriginBottomLeft => false;
 
 		/// <summary>
 		/// Clears the Back Buffer to a given Color
 		/// </summary>
 		public static void Clear(Color color)
 		{
-			Framework.Renderer.BindBackbuffer();
-			Framework.Renderer.Clear(color);
+			Framework.Renderer.Clear(null, color, 0, 0, ClearMask.Color);
 		}
 
 		/// <summary>
@@ -61,16 +59,7 @@ namespace Foster.Framework
 		/// </summary>
 		public static unsafe void Clear(Color color, float depth, int stencil, ClearMask mask)
 		{
-			Platform.FosterClearCommand clear = new()
-			{
-				target = IntPtr.Zero,
-				clip = new(0, 0, Width, Height),
-				color = color,
-				depth = depth,
-				stencil = stencil,
-				mask = mask
-			};
-			Platform.FosterClear(&clear);
+			Framework.Renderer.Clear(null, color, depth, stencil, mask);
 		}
 
 		public static unsafe void Submit(in DrawCommand command)
@@ -88,47 +77,11 @@ namespace Foster.Framework
 			if (command.Mesh == null || command.Mesh.IsDisposed)
 				throw new Exception("Target is invalid");
 
-			Platform.FosterDrawCommand fc = new()
-			{
-				target = (command.Target != null && !command.Target.IsDisposed ? command.Target.resource : IntPtr.Zero),
-				mesh = (command.Mesh != null && !command.Mesh.IsDisposed ? command.Mesh.resource : IntPtr.Zero),
-				shader = shader,
-				hasViewport = command.Viewport.HasValue ? 1 : 0,
-				hasScissor = command.Scissor.HasValue ? 1 : 0,
-				indexStart = command.MeshIndexStart,
-				indexCount = command.MeshIndexCount,
-				instanceCount = 0,
-				compare = command.DepthCompare,
-				depthMask = command.DepthMask ? 1 : 0,
-				cull = command.CullMode,
-				blend = command.BlendMode,
-			};
-
-			if (command.Viewport.HasValue)
-			{
-				fc.viewport = new(
-					command.Viewport.Value.X,
-					command.Viewport.Value.Y,
-					command.Viewport.Value.Width,
-					command.Viewport.Value.Height
-				);
-			}
-
-			if (command.Scissor.HasValue)
-			{
-				fc.scissor = new(
-					command.Scissor.Value.X,
-					command.Scissor.Value.Y,
-					command.Scissor.Value.Width,
-					command.Scissor.Value.Height
-				);
-			}
-
 			// apply material values before drawing
 			command.Material?.Apply();
 
 			// perform draw
-			Platform.FosterDraw(&fc);
+			Framework.Renderer.Draw(command);
 		}
 
 		internal static class Resources

@@ -48,51 +48,43 @@ public class Texture : IResource
 	/// </summary>
 	public int MemorySize => Width * Height * Format.Size();
 
-	internal readonly IntPtr resource;
+	internal readonly nint resource;
 	internal bool disposed = false;
 
 	public Texture(int width, int height, TextureFormat format = TextureFormat.Color)
+		: this(width, height, format, isTargetAttachment: false) {}
+
+	public Texture(int width, int height, ReadOnlySpan<Color> pixels)
+		: this(width, height, TextureFormat.Color) => SetData<Color>(pixels);
+
+	public Texture(int width, int height, ReadOnlySpan<byte> pixels)
+		: this(width, height, TextureFormat.Color) => SetData<byte>(pixels);
+
+	public Texture(Image image) 
+		: this(image.Width, image.Height, TextureFormat.Color) => SetData<Color>(image.Data);
+
+	internal Texture(int width, int height, TextureFormat format, bool isTargetAttachment)
 	{
 		if (width <= 0 || height <= 0)
 			throw new Exception("Texture must have a size larger than 0");
 
-		resource = Platform.FosterTextureCreate(width, height, format);
-		if (resource == IntPtr.Zero)
-			throw new Exception("Failed to create Texture");
-
+		resource = Renderer.TextureCreate(width, height, format, false);
 		Width = width;
 		Height = height;
 		Format = format;
-		IsTargetAttachment = false;
-
-		Graphics.Resources.RegisterAllocated(this, resource, Platform.FosterTextureDestroy);
+		IsTargetAttachment = isTargetAttachment;
 	}
 
-	public Texture(int width, int height, ReadOnlySpan<Color> pixels)
-		: this(width, height, TextureFormat.Color)
+	internal Texture(nint resource, int width, int height, TextureFormat format, bool isTargetAttachment)
 	{
-		SetData<Color>(pixels);
-	}
+		if (width <= 0 || height <= 0)
+			throw new Exception("Texture must have a size larger than 0");
 
-	public Texture(int width, int height, ReadOnlySpan<byte> pixels)
-		: this(width, height, TextureFormat.Color)
-	{
-		SetData<byte>(pixels);
-	}
-
-	public Texture(Image image) 
-		: this(image.Width, image.Height, TextureFormat.Color)
-	{
-		SetData<Color>(image.Data);
-	}
-
-	internal Texture(IntPtr resource, int width, int height, TextureFormat format)
-	{
 		this.resource = resource;
 		Width = width;
 		Height = height;
 		Format = format;
-		IsTargetAttachment = true;
+		IsTargetAttachment = isTargetAttachment;
 	}
 
 	~Texture()
@@ -115,7 +107,7 @@ public class Texture : IResource
 		fixed (byte* ptr = MemoryMarshal.AsBytes(data))
 		{
 			int length = Unsafe.SizeOf<T>()  * data.Length;
-			Platform.FosterTextureSetData(resource, ptr, length);
+			Renderer.TextureSetData(resource, ptr, length);
 		}
 	}
 
@@ -133,25 +125,22 @@ public class Texture : IResource
 		fixed (byte* ptr = MemoryMarshal.AsBytes(data))
 		{
 			int length = Unsafe.SizeOf<T>() * data.Length;
-			Platform.FosterTextureGetData(resource, ptr, length);
+			Renderer.TextureGetData(resource, ptr, length);
 		}
 	}
 
 	public void Dispose()
 	{
-		if (IsTargetAttachment)
-			throw new InvalidOperationException("Cannot Dispose a Texture that is part of a Target. Instead, Dispose the Target.");
-
 		Dispose(true);
 		GC.SuppressFinalize(this);
 	}
 
 	private void Dispose(bool disposing)
 	{
-		if (!disposed && !IsTargetAttachment)
+		if (!disposed)
 		{
 			disposed = true;
-			Graphics.Resources.RequestDelete(resource);
+			Renderer.TextureDestroy(resource);
 		}
 	}
 }

@@ -39,19 +39,8 @@ public class Mesh : IResource
 	/// </summary>
 	public VertexFormat? VertexFormat { get; private set; }
 
-	internal IntPtr resource;
-	internal bool disposed = false;
-
-	/// <summary>
-	/// Creates a new Mesh for rendering
-	/// </summary>
-	public Mesh()
-	{
-		resource = Platform.FosterMeshCreate();
-		if (resource == IntPtr.Zero)
-			throw new Exception("Failed to create Mesh");
-		Graphics.Resources.RegisterAllocated(this, resource, Platform.FosterMeshDestroy);
-	}
+	internal IntPtr resource { get; private set; }
+	private bool disposed = false;
 
 	/// <summary>
 	/// Disposes the Mesh resources
@@ -108,17 +97,15 @@ public class Mesh : IResource
 
 		IndexCount = count;
 
-		if (!IndexFormat.HasValue || IndexFormat.Value != format)
-		{
-			IndexFormat = format;
-			Platform.FosterMeshSetIndexFormat(resource, format);
-		}
+		if (resource == nint.Zero)
+			resource = Renderer.MeshCreate();
 
-		Platform.FosterMeshSetIndexData(
+		Renderer.MeshSetIndexData(
 			resource,
 			data,
 			GetIndexFormatSize(format) * count,
-			0
+			0,
+			(IndexFormat = format).Value
 		);
 	}
 
@@ -156,11 +143,15 @@ public class Mesh : IResource
 
 		var size = GetIndexFormatSize(IndexFormat.Value);
 
-		Platform.FosterMeshSetIndexData(
+		if (resource == nint.Zero)
+			resource = Renderer.MeshCreate();
+
+		Renderer.MeshSetIndexData(
 			resource,
 			data,
 			size * count,
-			size * offset
+			size * offset,
+			IndexFormat.Value
 		);
 	}
 
@@ -175,7 +166,7 @@ public class Mesh : IResource
 	/// <summary>
 	/// Uploads the Vertex data to the Mesh.
 	/// </summary>
-	public unsafe void SetVertices<T>(ReadOnlySpan<T> vertices, VertexFormat format) where T : struct
+	public unsafe void SetVertices<T>(ReadOnlySpan<T> vertices, in VertexFormat format) where T : struct
 	{
 		fixed (byte* ptr = MemoryMarshal.AsBytes(vertices))
 		{
@@ -186,7 +177,7 @@ public class Mesh : IResource
 	/// <summary>
 	/// Recreates the Vertex Data to a given size in the Mesh
 	/// </summary>
-	public unsafe void SetVertices(int count, VertexFormat format)
+	public unsafe void SetVertices(int count, in VertexFormat format)
 	{
 		SetVertices(IntPtr.Zero, count, format);
 	}
@@ -194,41 +185,22 @@ public class Mesh : IResource
 	/// <summary>
 	/// Uploads the Vertex data to the Mesh.
 	/// </summary>
-	public unsafe void SetVertices(IntPtr data, int count, VertexFormat format)
+	public unsafe void SetVertices(IntPtr data, int count, in VertexFormat format)
 	{
 		if (IsDisposed)
 			throw new Exception("Resource is Disposed");
 
 		VertexCount = count;
 
-		// update vertex format
-		if (!VertexFormat.HasValue || VertexFormat.Value != format)
-		{
-			VertexFormat = format;
+		if (resource == nint.Zero)
+			resource = Renderer.MeshCreate();
 
-			var elements = stackalloc Platform.FosterVertexElement[format.Elements.Length];
-			for (int i = 0; i < format.Elements.Length; i++)
-			{
-				elements[i].index = format.Elements[i].Index;
-				elements[i].type = format.Elements[i].Type;
-				elements[i].normalized = format.Elements[i].Normalized ? 1 : 0;
-			}
-
-			Platform.FosterVertexFormat f = new()
-			{
-				elements = new IntPtr(elements),
-				elementCount = format.Elements.Length,
-				stride = format.Stride
-			};
-
-			Platform.FosterMeshSetVertexFormat(resource, ref f);
-		}
-
-		Platform.FosterMeshSetVertexData(
+		Renderer.MeshSetVertexData(
 			resource,
 			data,
 			format.Stride * count,
-			0
+			0,
+			(VertexFormat = format).Value
 		);
 	}
 
@@ -261,11 +233,15 @@ public class Mesh : IResource
 		if (offset + count > VertexCount)
 			throw new Exception("SetSubVertices is out of range of the existing Vertex Buffer");
 
-		Platform.FosterMeshSetVertexData(
+		if (resource == nint.Zero)
+			resource = Renderer.MeshCreate();
+
+		Renderer.MeshSetVertexData(
 			resource,
 			data,
 			VertexFormat.Value.Stride * count,
-			VertexFormat.Value.Stride * offset
+			VertexFormat.Value.Stride * offset,
+			VertexFormat.Value
 		);
 	}
 
@@ -284,7 +260,9 @@ public class Mesh : IResource
 		if (!disposed)
 		{
 			disposed = true;
-			Graphics.Resources.RequestDelete(resource);
+			if (resource != nint.Zero)
+				Renderer.MeshDestroy(resource);
+			resource = nint.Zero;
 		}
 	}
 }

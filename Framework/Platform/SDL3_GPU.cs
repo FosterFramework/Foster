@@ -615,7 +615,7 @@ internal static partial class SDL3
 	{
 		public UInt64 codeSize;
 		public byte* code;
-		public char* entryPointName;
+		public byte* entryPointName;
 		public SDL_GPUShaderFormat format;
 		public SDL_GPUShaderStage stage;
 		public UInt32 samplerCount;

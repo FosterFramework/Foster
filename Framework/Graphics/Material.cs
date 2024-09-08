@@ -265,18 +265,18 @@ public class Material
 			for (var i = 0; i < uniforms.Count; i++)
 			{
 				var uniform = uniforms[i];
-				if (IsFloat(uniform.Type))
-				{
-					Platform.FosterShaderSetUniform(id, uniform.Index, floatPtr + uniform.BufferStart);
-				}
-				else if (uniform.Type == UniformType.Sampler2D)
-				{
-					Platform.FosterShaderSetSampler(id, uniform.Index, samplerPtr + uniform.BufferStart);
-				}
-				else if (uniform.Type == UniformType.Texture2D)
-				{
-					Platform.FosterShaderSetTexture(id, uniform.Index, texturePtr + uniform.BufferStart);
-				}
+				// if (IsFloat(uniform.Type))
+				// {
+				// 	Platform.FosterShaderSetUniform(id, uniform.Index, floatPtr + uniform.BufferStart);
+				// }
+				// else if (uniform.Type == UniformType.Sampler2D)
+				// {
+				// 	Platform.FosterShaderSetSampler(id, uniform.Index, samplerPtr + uniform.BufferStart);
+				// }
+				// else if (uniform.Type == UniformType.Texture2D)
+				// {
+				// 	Platform.FosterShaderSetTexture(id, uniform.Index, texturePtr + uniform.BufferStart);
+				// }
 			}
 		}
 	}

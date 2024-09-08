@@ -3,9 +3,9 @@ namespace Foster.Framework;
 [Flags]
 public enum ClearMask
 {
-	None    = 0,
-	Color   = 1,
-	Depth   = 2,
-	Stencil = 4,
-	All     = Color | Depth | Stencil
+	None = 0,
+	Color = (1 << 0),
+	Depth = (1 << 1),
+	Stencil = (1 << 2),
+	All = Color | Depth | Stencil
 }

@@ -2,27 +2,10 @@ using System.Collections.ObjectModel;
 
 namespace Foster.Framework;
 
-public struct ShaderCreateInfo(
-	string vertexShader,
-	string fragmentShader,
-	ShaderCreateInfo.Attribute[]? attributes = null)
+public struct ShaderCreateInfo
 {
-	public readonly record struct Attribute(string SemanticName, int SemanticIndex);
-
-	/// <summary>
-	/// Vertex Shader Code
-	/// </summary>
-	public string VertexShader = vertexShader;
-
-	/// <summary>
-	/// Fragment Shader Code
-	/// </summary>
-	public string FragmentShader = fragmentShader;
-
-	/// <summary>
-	/// Attributes, required if using HLSL / D3D11
-	/// </summary>
-	public Attribute[]? Attributes = attributes;
+	public byte[] VertexShader;
+	public byte[] FragmentShader;
 }
 
 public class Shader : IResource
@@ -55,39 +38,48 @@ public class Shader : IResource
 	internal readonly IntPtr resource;
 	internal bool disposed = false;
 
+	private struct FosterUniformInfo
+	{
+		public int index;
+		public nint name;
+		public UniformType type;
+		public int arrayElements;
+	}
+
 	public Shader(in ShaderCreateInfo createInfo)
 	{
-		Platform.FosterShaderData data = new()
-		{
-			fragment = createInfo.FragmentShader,
-			vertex = createInfo.VertexShader
-		};
+		resource = Renderer.ShaderCreate(createInfo);
 
-		resource = Platform.FosterShaderCreate(ref data);
-		if (resource == IntPtr.Zero)
-			throw new Exception("Failed to create Shader");
-
-		var infos = new Platform.FosterUniformInfo[64];
-		var count = 0;
-
-		unsafe
-		{
-			// try to get all the uniforms
-			fixed (Platform.FosterUniformInfo* it = infos)
-				Platform.FosterShaderGetUniforms(resource, it, out count, infos.Length);
-				
-			// expand our buffer if there wasn't enough space
-			if (infos.Length < count)
-			{
-				Array.Resize(ref infos, count); 
-				fixed (Platform.FosterUniformInfo* it = infos)
-					Platform.FosterShaderGetUniforms(resource, it, out count, count);
+		FosterUniformInfo[] infos = [
+			new() {
+				index = 0,
+				name = Platform.ToUTF8("u_matrix"),
+				type = UniformType.Mat4x4,
+				arrayElements = 1,
+			},
+			new() {
+				index = 1,
+				name = Platform.ToUTF8("u_palette"),
+				type = UniformType.Float4,
+				arrayElements = 4,
+			},
+			new() {
+				index = 0,
+				name = Platform.ToUTF8("u_texture"),
+				type = UniformType.Texture2D,
+				arrayElements = 1,
+			},
+			new() {
+				index = 0,
+				name = Platform.ToUTF8("u_texture_sampler"),
+				type = UniformType.Sampler2D,
+				arrayElements = 1,
 			}
-		}
+		];
 
 		// add each uniform
 		var uniforms = new Dictionary<string, Uniform>();
-		for (int i = 0; i < count; i ++)
+		for (int i = 0; i < infos.Length; i ++)
 		{
 			var info = infos[i];
 			var name = Platform.ParseUTF8(info.name);
@@ -95,7 +87,6 @@ public class Shader : IResource
 		}
 
 		Uniforms = uniforms.AsReadOnly();
-		Graphics.Resources.RegisterAllocated(this, resource, Platform.FosterShaderDestroy);
 	}
 
 	~Shader()
@@ -145,7 +136,7 @@ public class Shader : IResource
 		if (!disposed)
 		{
 			disposed = true;
-			Graphics.Resources.RequestDelete(resource);
+			Renderer.ShaderDestroy(resource);
 		}
 	}
 }

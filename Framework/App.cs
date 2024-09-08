@@ -290,9 +290,9 @@ public static class App
 
 	/// <summary>
 	/// Runs the Application with the given Module automatically registered.
-	/// Functionally the same as calling <see cref="Register{T}"/> followed by <see cref="Run(string, int, int, bool, Renderers)"/>
+	/// Functionally the same as calling <see cref="Register{T}"/> followed by <see cref="Run(string, int, int, bool)"/>
 	/// </summary>
-	public static void Run<T>(string applicationName, int width, int height, bool fullscreen = false, Renderers renderer = Renderers.None) where T : Module, new()
+	public static void Run<T>(string applicationName, int width, int height, bool fullscreen = false) where T : Module, new()
 	{
 		Register<T>();
 		Run(applicationName, width, height, fullscreen);
@@ -301,7 +301,7 @@ public static class App
 	/// <summary>
 	/// Runs the Application
 	/// </summary>
-	public static unsafe void Run(string applicationName, int width, int height, bool fullscreen = false, Renderers renderer = Renderers.None)
+	public static unsafe void Run(string applicationName, int width, int height, bool fullscreen = false)
 	{
 		Debug.Assert(!Running, "Application is already running");
 		Debug.Assert(!Exiting, "Application is still exiting");
