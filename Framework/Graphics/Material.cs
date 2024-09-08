@@ -39,6 +39,8 @@ public class Material
 	/// </summary>
 	public Material(Shader? shader) => SetShader(shader);
 
+	internal float[] FloatBuffer => floatBuffer;
+
 	/// <summary>
 	/// Clears the Uniform state
 	/// </summary>

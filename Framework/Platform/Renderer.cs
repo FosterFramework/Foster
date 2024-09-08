@@ -56,6 +56,7 @@ internal static unsafe partial class Renderer
 	private static bool supportsD24S8;
 	private static readonly Dictionary<int, nint> graphicsPipelines = [];
 	private static readonly Dictionary<TextureSampler, nint> samplers = [];
+	private static nint emptyDefaultTexture;
 	
 	public static void Startup()
 	{
@@ -65,6 +66,7 @@ internal static unsafe partial class Renderer
 		swapchain = default;
 		renderPassTarget = null;
 		graphicsPipelines.Clear();
+		samplers.Clear();
 
 		supportsD24S8 = SDL_GPUTextureSupportsFormat(
 			Platform.Device,
@@ -73,10 +75,19 @@ internal static unsafe partial class Renderer
 			SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET) != 0;
 
 		AcquireCommandBuffers();
+
+		emptyDefaultTexture = TextureCreate(1, 1, TextureFormat.R8G8B8A8, false);
 	}
 
 	public static void Shutdown()
 	{
+		TextureDestroy(emptyDefaultTexture);
+		emptyDefaultTexture = nint.Zero;
+
+		foreach (var sampler in samplers.Values)
+			SDL_ReleaseGPUSampler(Platform.Device, sampler);
+		samplers.Clear();
+
 		Flush(true);
 	}
 
@@ -358,7 +369,7 @@ internal static unsafe partial class Renderer
 				samplerCount = 1,
 				storageTextureCount = 0,
 				storageBufferCount = 0,
-				uniformBufferCount = 1
+				uniformBufferCount = 0
 			};
 
 			fragmentProgram = SDL_CreateGPUShader(Platform.Device, &info);
@@ -450,20 +461,25 @@ internal static unsafe partial class Renderer
 			SDL_BindGPUVertexBuffers(renderPass, 0, &vertexBinding, 1);
 		}
 
-		// TODO:
-		// still crashes past this point
-		return;
-
 		// bind samplers
 		{
 			var samplers = stackalloc SDL_GPUTextureSamplerBinding[1]
 			{
 				new(){
-					texture = nint.Zero,
+					texture = ((TextureResource*)emptyDefaultTexture)->Texture,
 					sampler = GetSampler(new TextureSampler())
 				}
 			};
 			SDL_BindGPUFragmentSamplers(renderPass, 0, samplers, 1);
+		}
+
+		// upload uniforms
+		{
+			var data = command.Material.FloatBuffer;
+			var dataLength = data.Length;
+
+			fixed (float* ptr = data)
+				SDL_PushGPUVertexUniformData(cmd, 0, ptr, (uint)dataLength);
 		}
 
 		// perform draw
@@ -745,7 +761,7 @@ internal static unsafe partial class Renderer
 				multisampleState = new()
 				{
 					sampleCount = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1,
-					sampleMask = 0
+					sampleMask = 0xFFFF
 				},
 				depthStencilState = new()
 				{
@@ -786,7 +802,62 @@ internal static unsafe partial class Renderer
 
 	private static SDL_GPUColorAttachmentBlendState GetBlendState(BlendMode blend)
 	{
-		return default;
+		static SDL_GPUBlendFactor GetFactor(BlendFactor factor) => factor switch
+		{
+			BlendFactor.Zero => SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_ZERO,
+			BlendFactor.One => SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_ONE,
+			BlendFactor.SrcColor => SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_SRC_COLOR,
+			BlendFactor.OneMinusSrcColor => SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_COLOR,
+			BlendFactor.DstColor => SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_DST_COLOR,
+			BlendFactor.OneMinusDstColor => SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_ONE_MINUS_DST_COLOR,
+			BlendFactor.SrcAlpha => SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+			BlendFactor.OneMinusSrcAlpha => SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+			BlendFactor.DstAlpha => SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_DST_ALPHA,
+			BlendFactor.OneMinusDstAlpha => SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_ONE_MINUS_DST_ALPHA,
+			BlendFactor.ConstantColor => SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_CONSTANT_COLOR,
+			BlendFactor.OneMinusConstantColor => SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_ONE_MINUS_CONSTANT_COLOR,
+			BlendFactor.SrcAlphaSaturate => SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_SRC_ALPHA_SATURATE,
+			BlendFactor.ConstantAlpha => throw new NotImplementedException(),
+			BlendFactor.OneMinusConstantAlpha => throw new NotImplementedException(),
+			BlendFactor.Src1Color => throw new NotImplementedException(),
+			BlendFactor.OneMinusSrc1Color => throw new NotImplementedException(),
+			BlendFactor.Src1Alpha => throw new NotImplementedException(),
+			BlendFactor.OneMinusSrc1Alpha => throw new NotImplementedException(),
+			_ => throw new NotImplementedException()
+		};
+
+		static SDL_GPUBlendOp GetOp(BlendOp op) => op switch
+		{
+			BlendOp.Add => SDL_GPUBlendOp.SDL_GPU_BLENDOP_ADD,
+			BlendOp.Subtract => SDL_GPUBlendOp.SDL_GPU_BLENDOP_SUBTRACT,
+			BlendOp.ReverseSubtract => SDL_GPUBlendOp.SDL_GPU_BLENDOP_REVERSE_SUBTRACT,
+			BlendOp.Min => SDL_GPUBlendOp.SDL_GPU_BLENDOP_MIN,
+			BlendOp.Max => SDL_GPUBlendOp.SDL_GPU_BLENDOP_MAX,
+			_ => throw new NotImplementedException()
+		};
+
+		static SDL_GPUColorComponentFlags GetFlags(BlendMask mask)
+		{
+			SDL_GPUColorComponentFlags flags = default;
+			if (mask.Has(BlendMask.Red)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_R;
+			if (mask.Has(BlendMask.Green)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_G;
+			if (mask.Has(BlendMask.Blue)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_B;
+			if (mask.Has(BlendMask.Alpha)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_A;
+			return flags;
+		}
+
+		SDL_GPUColorAttachmentBlendState state = new()
+		{
+			blendEnable = 1,
+			srcColorBlendFactor = GetFactor(blend.ColorSource),
+			dstColorBlendFactor = GetFactor(blend.ColorDestination),
+			colorBlendOp = GetOp(blend.ColorOperation),
+			srcAlphaBlendFactor = GetFactor(blend.AlphaSource),
+			dstAlphaBlendFactor = GetFactor(blend.AlphaDestination),
+			alphaBlendOp = GetOp(blend.AlphaOperation),
+			colorWriteMask = GetFlags(blend.Mask)
+		};
+		return state;
 	}
 
 	private static nint GetSampler(in TextureSampler sampler)
