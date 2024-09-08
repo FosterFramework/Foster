@@ -9,7 +9,7 @@ layout (location = 0) out vec2 outTexCoord;
 layout (location = 1) out vec4 outColor;
 layout (location = 2) out vec4 outType;
 
-layout (binding = 0) uniform UniformBlock
+layout (set = 1, binding = 0) uniform UniformBlock
 {
 	mat4 Matrix;
 };

@@ -6,7 +6,7 @@ layout (location = 2) in vec4 Type;
 
 layout (location = 0) out vec4 FragColor;
 
-layout (binding = 0) uniform sampler2D Sampler;
+layout (set = 2, binding = 0) uniform sampler2D Sampler;
 
 void main(void)
 {
