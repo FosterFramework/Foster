@@ -18,9 +18,9 @@ public class Material
 		int ArrayElemets
 	);
 
-	private TextureSampler[] samplerBuffer = Array.Empty<TextureSampler>();
-	private Texture?[] textureBuffer = Array.Empty<Texture?>();
-	private float[] floatBuffer = Array.Empty<float>();
+	internal TextureSampler[] samplerBuffer = Array.Empty<TextureSampler>();
+	internal Texture?[] textureBuffer = Array.Empty<Texture?>();
+	internal float[] floatBuffer = Array.Empty<float>();
 	private readonly List<Uniform> uniforms = new();
 
 	/// <summary>
@@ -38,8 +38,6 @@ public class Material
 	/// Constructs a Material using the given Shader
 	/// </summary>
 	public Material(Shader? shader) => SetShader(shader);
-
-	internal float[] FloatBuffer => floatBuffer;
 
 	/// <summary>
 	/// Clears the Uniform state

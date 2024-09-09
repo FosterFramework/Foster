@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 
 using SDL_WindowPtr = nint;
-using SDL_bool = System.Int32;
+using SDL_bool = System.Byte;
 using SDL_PropertiesID = System.UInt32;
 
 using SDL_GPUDevicePtr = nint;

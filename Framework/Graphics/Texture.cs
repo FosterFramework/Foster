@@ -68,7 +68,7 @@ public class Texture : IResource
 		if (width <= 0 || height <= 0)
 			throw new Exception("Texture must have a size larger than 0");
 
-		resource = Renderer.TextureCreate(width, height, format, false);
+		resource = Renderer.TextureCreate(width, height, format, isTargetAttachment);
 		Width = width;
 		Height = height;
 		Format = format;

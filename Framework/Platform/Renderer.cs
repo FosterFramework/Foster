@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using static Foster.Framework.SDL3;
 
@@ -309,7 +310,7 @@ internal static unsafe partial class Renderer
 			{
 				buffer = res->Buffer,
 				offset = 0,
-				size = (uint)res->Capacity
+				size = (uint)dataSize
 			};
 
 			SDL_UploadToGPUBuffer(copyPass, &location, &region, cycle: 1);
@@ -400,7 +401,7 @@ internal static unsafe partial class Renderer
 		Marshal.FreeHGlobal(shader);
 	}
 
-	public static void Draw(in DrawCommand command)
+	public static void Draw(DrawCommand command)
 	{
 		RenderPassBegin(command.Target, default);
 
@@ -463,11 +464,20 @@ internal static unsafe partial class Renderer
 
 		// bind samplers
 		{
+			TextureSampler textureSampler = new();
+			TextureResource* textureResource = (TextureResource*)emptyDefaultTexture;
+
+			if (command.Material.textureBuffer.Length > 0 && command.Material.textureBuffer[0] is {} tex)
+			{
+				textureSampler = command.Material.samplerBuffer[0];
+				textureResource = (TextureResource*)tex.resource;
+			}
+
 			var samplers = stackalloc SDL_GPUTextureSamplerBinding[1]
 			{
 				new(){
-					texture = ((TextureResource*)emptyDefaultTexture)->Texture,
-					sampler = GetSampler(new TextureSampler())
+					texture = textureResource->Texture,
+					sampler = GetSampler(textureSampler)
 				}
 			};
 			SDL_BindGPUFragmentSamplers(renderPass, 0, samplers, 1);
@@ -475,17 +485,17 @@ internal static unsafe partial class Renderer
 
 		// upload uniforms
 		{
-			var data = command.Material.FloatBuffer;
+			var data = command.Material.floatBuffer;
 			var dataLength = data.Length;
 
 			fixed (float* ptr = data)
-				SDL_PushGPUVertexUniformData(cmd, 0, ptr, (uint)dataLength);
+				SDL_PushGPUVertexUniformData(cmd, 0, ptr, (uint)sizeof(Matrix4x4));
 		}
 
 		// perform draw
 		SDL_DrawGPUIndexedPrimitives(renderPass, 
 			indexCount: (uint)command.MeshIndexCount,
-			instanceCount: 0,
+			instanceCount: 1,
 			firstIndex: (uint)command.MeshIndexStart,
 			vertexOffset: 0,
 			firstInstance: 0
@@ -722,7 +732,7 @@ internal static unsafe partial class Renderer
 			for (int i = 0; i < vertexFormat.Elements.Count; i ++)
 			{
 				var it = vertexFormat.Elements[i];
-				GetVertexFormat(it.Type, out var format, out var size);
+				GetVertexFormat(it.Type, it.Normalized, out var format, out var size);
 				vertexAttributes[i] = new()
 				{
 					location = (uint)it.Index,
@@ -765,8 +775,8 @@ internal static unsafe partial class Renderer
 				},
 				depthStencilState = new()
 				{
-					depthTestEnable = command.DepthTestEnabled ? 1 : 0,
-					depthWriteEnable = command.DepthWriteEnabled ? 1 : 0,
+					depthTestEnable = (byte)(command.DepthTestEnabled ? 1 : 0),
+					depthWriteEnable = (byte)(command.DepthWriteEnabled ? 1 : 0),
 					stencilTestEnable = 0, // TODO: allow this
 					compareOp = command.DepthCompare switch
 					{
@@ -785,7 +795,7 @@ internal static unsafe partial class Renderer
 				{
 					colorAttachmentDescriptions = colorAttachments,
 					colorAttachmentCount = (uint)colorAttachmentCount,
-					hasDepthStencilAttachment = depthStencilAttachment == SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_INVALID ? 0 : 1,
+					hasDepthStencilAttachment = (byte)(depthStencilAttachment == SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_INVALID ? 0 : 1),
 					depthStencilFormat = depthStencilAttachment
 				}
 			};
@@ -897,20 +907,31 @@ internal static unsafe partial class Renderer
 		return result;
 	}
 
-	private static void GetVertexFormat(VertexType type, out SDL_GPUVertexElementFormat format, out int size)
+	private static void GetVertexFormat(VertexType type, bool normalized, out SDL_GPUVertexElementFormat format, out int size)
 	{
-		format = type switch
+		format = (type, normalized) switch
 		{
-			VertexType.Float => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT,
-			VertexType.Float2 => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-			VertexType.Float3 => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-			VertexType.Float4 => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
-			VertexType.Byte4 => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_BYTE4,
-			VertexType.UByte4 => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4,
-			VertexType.Short2 => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT2,
-			VertexType.UShort2 => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT2,
-			VertexType.Short4 => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT4,
-			VertexType.UShort4 => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT4,
+			(VertexType.Float, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT,
+			(VertexType.Float2, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+			(VertexType.Float3, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+			(VertexType.Float4, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+			(VertexType.Byte4, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_BYTE4,
+			(VertexType.UByte4, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4,
+			(VertexType.Short2, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT2,
+			(VertexType.UShort2, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT2,
+			(VertexType.Short4, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT4,
+			(VertexType.UShort4, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT4,
+			(VertexType.Float, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT,
+			(VertexType.Float2, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+			(VertexType.Float3, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+			(VertexType.Float4, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+			(VertexType.Byte4, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_BYTE4_NORM,
+			(VertexType.UByte4, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM,
+			(VertexType.Short2, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT2_NORM,
+			(VertexType.UShort2, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT2_NORM,
+			(VertexType.Short4, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT4_NORM,
+			(VertexType.UShort4, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT4_NORM,
+
 			_ => throw new NotImplementedException(),
 		};
 
