@@ -40,7 +40,6 @@ namespace Foster.Framework
 
 		/// <summary>
 		/// If our (0,0) in our coordinate system is bottom-left.
-		/// This is true in OpenGL
 		/// </summary>
 		public static bool OriginBottomLeft => false;
 

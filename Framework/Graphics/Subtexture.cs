@@ -4,7 +4,7 @@ using System.Numerics;
 namespace Foster.Framework;
 
 /// <summary>
-/// A Subtexture, representing a rectangular segment of a Texture
+/// A Subtexture representing a rectangular segment of a Texture
 /// </summary>
 public struct Subtexture
 {

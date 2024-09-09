@@ -29,6 +29,11 @@ public struct DrawCommand()
 	public int MeshIndexCount;
 
 	/// <summary>
+	/// The Offset into the Vertex Buffer
+	/// </summary>
+	public int MeshVertexOffset;
+
+	/// <summary>
 	/// The Render State Blend Mode
 	/// </summary>
 	public BlendMode BlendMode = BlendMode.Premultiply;
@@ -77,7 +82,5 @@ public struct DrawCommand()
 	}
 
 	public readonly void Submit()
-	{
-		Graphics.Submit(this);
-	}
+		=> Renderer.Draw(this);
 }

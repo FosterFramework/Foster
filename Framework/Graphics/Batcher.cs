@@ -257,7 +257,7 @@ public class Batcher : IDisposable
 		mat.Set(batch.MaterialState.MatrixUniform, matrix);
 		mat.FragmentSamplers[batch.MaterialState.SamplerIndex] = new(texture, batch.Sampler);
 
-		DrawCommand command = new(target, mesh, mat)
+		Graphics.Submit(new(target, mesh, mat)
 		{
 			Viewport = viewport,
 			Scissor = trimmed,
@@ -267,8 +267,7 @@ public class Batcher : IDisposable
 			DepthWriteEnabled = false,
 			DepthTestEnabled = false,
 			CullMode = CullMode.None
-		};
-		command.Submit();
+		});
 	}
 
 	#endregion

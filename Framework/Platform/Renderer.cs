@@ -49,6 +49,7 @@ internal static unsafe partial class Renderer
 	}
 
 	private static nint device;
+	private static nint window;
 	private static nint cmd;
 	private static nint renderPass;
 	private static nint copyPass;
@@ -83,18 +84,12 @@ internal static unsafe partial class Renderer
 		device = nint.Zero;
 	}
 
-	public static void Startup()
+	public static void Startup(nint window)
 	{
-		if (SDL_ClaimWindowForGPUDevice(device, Platform.Window) != 1)
-			throw new Exception("SDL_GpuClaimWindow failed");
+		Renderer.window = window;
 
-		cmd = nint.Zero;
-		renderPass = nint.Zero;
-		copyPass = nint.Zero;
-		swapchain = default;
-		renderPassTarget = null;
-		graphicsPipelines.Clear();
-		samplers.Clear();
+		if (SDL_ClaimWindowForGPUDevice(device, window) != 1)
+			throw new Exception("SDL_GpuClaimWindow failed");
 
 		// provider user what driver is being used
 		Driver = SDL_GetGPUDriver(device) switch
@@ -126,16 +121,28 @@ internal static unsafe partial class Renderer
 
 	public static void Shutdown()
 	{
-		SDL_ReleaseWindowFromGPUDevice(device, Platform.Window);
+		Flush(true);
 
+		// destroy default texture
 		DestroyTexture(emptyDefaultTexture);
 		emptyDefaultTexture = nint.Zero;
 
+		// release samplers
 		foreach (var sampler in samplers.Values)
 			SDL_ReleaseGPUSampler(device, sampler);
 		samplers.Clear();
-
-		Flush(true);
+		
+		SDL_ReleaseWindowFromGPUDevice(device, window);
+		
+		// clear state
+		window = nint.Zero;
+		cmd = nint.Zero;
+		renderPass = nint.Zero;
+		copyPass = nint.Zero;
+		swapchain = default;
+		renderPassTarget = null;
+		graphicsPipelines.Clear();
+		samplers.Clear();
 	}
 
 	public static void Present()
@@ -216,7 +223,7 @@ internal static unsafe partial class Renderer
 
 		// upload to the GPU
 		{
-			CopyPassBegin();
+			BeginCopyPass();
 
 			SDL_GPUTextureTransferInfo info = new()
 			{
@@ -344,7 +351,7 @@ internal static unsafe partial class Renderer
 
 		// submit to the GPU
 		{
-			CopyPassBegin();
+			BeginCopyPass();
 
 			SDL_GPUTransferBufferLocation location = new()
 			{
@@ -463,7 +470,7 @@ internal static unsafe partial class Renderer
 		if (mesh == null || mesh.IsDisposed)
 			throw new Exception("Mesh is Invalid");
 
-		RenderPassBegin(target, default);
+		BeginRenderPass(target, default);
 
 		// set scissor
 		if (command.Scissor.HasValue)
@@ -493,7 +500,7 @@ internal static unsafe partial class Renderer
 			SDL_SetGPUViewport(renderPass, null);
 
 		// figure out graphics pipeline, potentially create a new one
-		var pipeline = ResolveGraphicsPipeline(command);
+		var pipeline = GetGraphicsPipeline(command);
 		SDL_BindGPUGraphicsPipeline(renderPass, pipeline);
 
 		// bind mesh buffers
@@ -540,8 +547,23 @@ internal static unsafe partial class Renderer
 			SDL_BindGPUFragmentSamplers(renderPass, 0, samplers, (uint)shader.Fragment.SamplerCount);
 		}
 
-		// TODO:
-		// bind Vertex Samplers
+		// bind vertex samplers
+		if (shader.Vertex.SamplerCount > 0)
+		{
+			var samplers = stackalloc SDL_GPUTextureSamplerBinding[shader.Vertex.SamplerCount];
+
+			for (int i = 0; i < shader.Vertex.SamplerCount; i ++)
+			{
+				if (mat.VertexSamplers[i].Texture is {} tex && !tex.IsDisposed)
+					samplers[i].texture = ((TextureResource*)tex.resource)->Texture;
+				else
+					samplers[i].texture = ((TextureResource*)emptyDefaultTexture)->Texture;
+
+				samplers[i].sampler = GetSampler(mat.VertexSamplers[i].Sampler);
+			}
+
+			SDL_BindGPUVertexSamplers(renderPass, 0, samplers, (uint)shader.Vertex.SamplerCount);
+		}
 
 		// Upload Vertex Uniforms
 		if (shader.Vertex.Uniforms.Length > 0)
@@ -562,7 +584,7 @@ internal static unsafe partial class Renderer
 			indexCount: (uint)command.MeshIndexCount,
 			instanceCount: 1,
 			firstIndex: (uint)command.MeshIndexStart,
-			vertexOffset: 0,
+			vertexOffset: command.MeshVertexOffset,
 			firstInstance: 0
 		);
 	}
@@ -571,7 +593,7 @@ internal static unsafe partial class Renderer
 	{
 		if (mask != ClearMask.None)
 		{
-			RenderPassBegin(target, new()
+			BeginRenderPass(target, new()
 			{
 				Color = mask.Has(ClearMask.Color) ? color : null,
 				Depth = mask.Has(ClearMask.Depth) ? depth : null,
@@ -585,12 +607,12 @@ internal static unsafe partial class Renderer
 		cmd = SDL_AcquireGPUCommandBuffer(device);
 
 		uint w, h;
-		nint swapchainTexture = SDL_AcquireGPUSwapchainTexture(cmd, Platform.Window, &w, &h);
+		nint swapchainTexture = SDL_AcquireGPUSwapchainTexture(cmd, window, &w, &h);
 
 		swapchain = new()
 		{
 			Texture = swapchainTexture,
-			Format = SDL_GetGPUSwapchainTextureFormat(device, Platform.Window),
+			Format = SDL_GetGPUSwapchainTextureFormat(device, window),
 			Width = (int)w,
 			Height = (int)h
 		};
@@ -598,8 +620,8 @@ internal static unsafe partial class Renderer
 
 	private static void Flush(bool wait)
 	{
-		CopyPassEnd();
-		RenderPassEnd();
+		EndCopyPass();
+		EndRenderPass();
 
 		if (wait)
 		{
@@ -616,23 +638,23 @@ internal static unsafe partial class Renderer
 		cmd = nint.Zero;
 	}
 
-	private static void CopyPassBegin()
+	private static void BeginCopyPass()
 	{
 		if (copyPass != nint.Zero)
 			return;
 
-		RenderPassEnd();
+		EndRenderPass();
 		copyPass = SDL_BeginGPUCopyPass(cmd);
 	}
 
-	private static void CopyPassEnd()
+	private static void EndCopyPass()
 	{
 		if (copyPass != nint.Zero)
 			SDL_EndGPUCopyPass(copyPass);
 		copyPass = nint.Zero;
 	}
 
-	private static void RenderPassBegin(Target? target, ClearInfo clear)
+	private static void BeginRenderPass(Target? target, ClearInfo clear)
 	{
 		// only begin if we're not already in a render pass that is matching
 		if (renderPass != nint.Zero &&
@@ -642,8 +664,8 @@ internal static unsafe partial class Renderer
 			!clear.Stencil.HasValue)
 			return;
 
-		RenderPassEnd();
-		CopyPassEnd();
+		EndRenderPass();
+		EndCopyPass();
 
 		// configure lists of textures used
 		StackList4<nint> colorTargets = new();
@@ -713,7 +735,7 @@ internal static unsafe partial class Renderer
 		renderPassTarget = target;
 	}
 
-	private static void RenderPassEnd()
+	private static void EndRenderPass()
 	{
 		if (renderPass != nint.Zero)
 			SDL_EndGPURenderPass(renderPass);
@@ -721,13 +743,7 @@ internal static unsafe partial class Renderer
 		renderPassTarget = null;
 	}
 
-	private static SDL_FColor GetColor(Color color)
-	{
-		var vec4 = color.ToVector4();
-		return new() { r = vec4.X, g = vec4.Y, b = vec4.Z, a = vec4.W, };
-	}
-
-	private static nint ResolveGraphicsPipeline(in DrawCommand command)
+	private static nint GetGraphicsPipeline(in DrawCommand command)
 	{
 		var target = command.Target;
 		var mesh = command.Mesh;
@@ -798,15 +814,14 @@ internal static unsafe partial class Renderer
 			for (int i = 0; i < vertexFormat.Elements.Count; i ++)
 			{
 				var it = vertexFormat.Elements[i];
-				GetVertexFormat(it.Type, it.Normalized, out var format, out var size);
 				vertexAttributes[i] = new()
 				{
 					location = (uint)it.Index,
 					binding = 0,
-					format = format,
+					format = GetVertexFormat(it.Type, it.Normalized),
 					offset = (uint)vertexOffset
 				};
-				vertexOffset += size; 
+				vertexOffset += it.Type.SizeInBytes(); 
 			}
 			
 			SDL_GPUGraphicsPipelineCreateInfo info = new()
@@ -973,9 +988,9 @@ internal static unsafe partial class Renderer
 		return result;
 	}
 
-	private static void GetVertexFormat(VertexType type, bool normalized, out SDL_GPUVertexElementFormat format, out int size)
+	private static SDL_GPUVertexElementFormat GetVertexFormat(VertexType type, bool normalized)
 	{
-		format = (type, normalized) switch
+		return (type, normalized) switch
 		{
 			(VertexType.Float, _)       => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT,
 			(VertexType.Float2, _)      => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
@@ -996,20 +1011,11 @@ internal static unsafe partial class Renderer
 
 			_ => throw new NotImplementedException(),
 		};
+	}
 
-		size = type switch
-		{
-			VertexType.Float   => 4,
-			VertexType.Float2  => 8,
-			VertexType.Float3  => 12,
-			VertexType.Float4  => 16,
-			VertexType.Byte4   => 4,
-			VertexType.UByte4  => 4,
-			VertexType.Short2  => 4,
-			VertexType.UShort2 => 4,
-			VertexType.Short4  => 8,
-			VertexType.UShort4 => 8,
-			_ => 0,
-		};
+	private static SDL_FColor GetColor(Color color)
+	{
+		var vec4 = color.ToVector4();
+		return new() { r = vec4.X, g = vec4.Y, b = vec4.Z, a = vec4.W, };
 	}
 }

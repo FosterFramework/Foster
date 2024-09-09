@@ -9,6 +9,7 @@ namespace Foster.Framework;
 
 public static class App
 {
+	private static nint window;
 	private static readonly List<Module> modules = [];
 	private static readonly List<Func<Module>> registrations = [];
 	private static readonly Stopwatch timer = new();
@@ -53,7 +54,7 @@ public static class App
 			if (title != value)
 			{
 				title = value;
-				SDL_SetWindowTitle(Platform.Window, value);
+				SDL_SetWindowTitle(window, value);
 			}
 		}
 	}
@@ -82,7 +83,7 @@ public static class App
 			if (!Running)
 				throw notRunningException;
 			var flags = SDL_WindowFlags.INPUT_FOCUS | SDL_WindowFlags.MOUSE_FOCUS;
-			return (SDL_GetWindowFlags(Platform.Window) & flags) != 0;
+			return (SDL_GetWindowFlags(window) & flags) != 0;
 		}
 	}
 
@@ -116,14 +117,14 @@ public static class App
 		{
 			if (!Running)
 				throw notRunningException;
-			SDL_GetWindowSize(Platform.Window, out int w, out int h);
+			SDL_GetWindowSize(window, out int w, out int h);
 			return new(w, h);
 		}
 		set
 		{
 			if (!Running)
 				throw notRunningException;
-			SDL_SetWindowSize(Platform.Window, value.X, value.Y);
+			SDL_SetWindowSize(window, value.X, value.Y);
 		}
 	}
 
@@ -146,7 +147,7 @@ public static class App
 		{
 			if (!Running)
 				throw notRunningException;
-			SDL_GetWindowSizeInPixels(Platform.Window, out int w, out int h);
+			SDL_GetWindowSizeInPixels(window, out int w, out int h);
 			return new(w, h);
 		}
 	}
@@ -160,7 +161,7 @@ public static class App
 		{
 			if (!Running)
 				throw notRunningException;
-			var index = SDL_GetDisplayForWindow(Platform.Window);
+			var index = SDL_GetDisplayForWindow(window);
 			var mode = SDL_GetCurrentDisplayMode(index);
 			if (mode == null)
 				return Point2.Zero;
@@ -189,13 +190,13 @@ public static class App
 		{
 			if (!Running)
 				throw notRunningException;
-			return (SDL_GetWindowFlags(Platform.Window) & SDL_WindowFlags.FULLSCREEN) != 0;
+			return (SDL_GetWindowFlags(window) & SDL_WindowFlags.FULLSCREEN) != 0;
 		}
 		set
 		{
 			if (!Running)
 				throw notRunningException;
-			SDL_SetWindowFullscreen(Platform.Window, value);
+			SDL_SetWindowFullscreen(window, value);
 		}
 	}
 
@@ -208,13 +209,13 @@ public static class App
 		{
 			if (!Running)
 				throw notRunningException;
-			return (SDL_GetWindowFlags(Platform.Window) & SDL_WindowFlags.RESIZABLE) != 0;
+			return (SDL_GetWindowFlags(window) & SDL_WindowFlags.RESIZABLE) != 0;
 		}
 		set
 		{
 			if (!Running)
 				throw notRunningException;
-			SDL_SetWindowResizable(Platform.Window, value);
+			SDL_SetWindowResizable(window, value);
 		}
 	}
 
@@ -355,20 +356,20 @@ public static class App
 			if (fullscreen)
 				windowFlags |= SDL_WindowFlags.FULLSCREEN;
 
-			Platform.Window = SDL_CreateWindow(applicationName, width, height, windowFlags);
-			if (Platform.Window == IntPtr.Zero)
+			window = SDL_CreateWindow(applicationName, width, height, windowFlags);
+			if (window == IntPtr.Zero)
 			{
 				var error = Platform.ParseUTF8(SDL_GetError());
 				throw new Exception($"Foster SDL_CreateWindow Failed: {error}");
 			}
 		}
 
-		Renderer.Startup();
+		Renderer.Startup(window);
 
 		// toggle flags and show window
-		SDL_StartTextInput(Platform.Window);
-		SDL_SetWindowFullscreenMode(Platform.Window, null);
-		SDL_SetWindowBordered(Platform.Window, true);
+		SDL_StartTextInput(window);
+		SDL_SetWindowFullscreenMode(window, null);
+		SDL_SetWindowBordered(window, true);
 		SDL_ShowCursor();
 
 		// load default input mappings if they exist
@@ -404,7 +405,7 @@ public static class App
 		}
 		
 		// Display Window now that we're ready
-		SDL_ShowWindow(Platform.Window);
+		SDL_ShowWindow(window);
 
 		// begin normal game loop
 		started = true;
@@ -418,12 +419,12 @@ public static class App
 		Running = false;
 
 		Renderer.Shutdown();
-		SDL_StopTextInput(Platform.Window);
-		SDL_DestroyWindow(Platform.Window);
+		SDL_StopTextInput(window);
+		SDL_DestroyWindow(window);
 		Renderer.DestroyDevice();
 		SDL_Quit();
 
-		Platform.Window = IntPtr.Zero;
+		window = IntPtr.Zero;
 		started = false;
 		Exiting = false;
 	}

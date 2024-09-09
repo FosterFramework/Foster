@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Foster.Framework;
 
-public readonly struct VertexFormat(int stride, params VertexFormat.Element[] elements)
+public readonly struct VertexFormat
 {
 	public readonly record struct Element(
 		int Index,
@@ -11,8 +11,20 @@ public readonly struct VertexFormat(int stride, params VertexFormat.Element[] el
 		bool Normalized = true
 	);
 
-	public readonly StackList32<Element> Elements = [..elements];
-	public readonly int Stride = stride;
+	public readonly StackList32<Element> Elements;
+	public readonly int Stride;
+
+	public VertexFormat(int stride, params Element[] elements)
+	{
+		Elements = [..elements];
+		Stride = stride;
+	}
+
+	public VertexFormat(params Element[] elements)
+	{
+		Elements = [..elements];
+		Stride = Elements.Sum(it => it.Type.SizeInBytes());
+	}
 
 	public static VertexFormat Create<T>(params Element[] elements) where T : struct
 		=> new(Unsafe.SizeOf<T>(), elements);

@@ -10,11 +10,6 @@ internal static partial class Platform
 	public const string DLL = "FosterPlatform";
 
 	/// <summary>
-	/// The main SDL window used by the Application
-	/// </summary>
-	public static nint Window = nint.Zero;
-
-	/// <summary>
 	/// Converts a utf8 null-terminating string into a C# string
 	/// </summary>
 	public static unsafe string ParseUTF8(nint s)
@@ -44,15 +39,12 @@ internal static partial class Platform
 	/// <summary>
 	/// Frees a UTF8 string that was allocated from <seealso cref="ToUTF8"/>
 	/// </summary>
-	public static void FreeUTF8(nint ptr)
-	{
-		Marshal.FreeHGlobal(ptr);
-	}
+	public static void FreeUTF8(nint ptr) => Marshal.FreeHGlobal(ptr);
 
-	public static string GetSDLError()
-	{
-		return ParseUTF8(SDL_GetError());
-	}
+	/// <summary>
+	/// Wrapper around SDL_GetError() to return a C# string
+	/// </summary>
+	public static string GetSDLError() => ParseUTF8(SDL_GetError());
 
 	[LibraryImport(DLL, EntryPoint = "FosterImageLoad")]
 	public static unsafe partial nint ImageLoad(void* memory, int length, out int w, out int h);
