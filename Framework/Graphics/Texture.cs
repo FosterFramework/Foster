@@ -68,7 +68,7 @@ public class Texture : IResource
 		if (width <= 0 || height <= 0)
 			throw new Exception("Texture must have a size larger than 0");
 
-		resource = Renderer.TextureCreate(width, height, format, isTargetAttachment);
+		resource = Renderer.CreateTexture(width, height, format, isTargetAttachment);
 		Width = width;
 		Height = height;
 		Format = format;
@@ -107,7 +107,7 @@ public class Texture : IResource
 		fixed (byte* ptr = MemoryMarshal.AsBytes(data))
 		{
 			int length = Unsafe.SizeOf<T>()  * data.Length;
-			Renderer.TextureSetData(resource, ptr, length);
+			Renderer.SetTextureData(resource, ptr, length);
 		}
 	}
 
@@ -125,7 +125,7 @@ public class Texture : IResource
 		fixed (byte* ptr = MemoryMarshal.AsBytes(data))
 		{
 			int length = Unsafe.SizeOf<T>() * data.Length;
-			Renderer.TextureGetData(resource, ptr, length);
+			Renderer.GetTextureData(resource, ptr, length);
 		}
 	}
 
@@ -140,7 +140,7 @@ public class Texture : IResource
 		if (!disposed)
 		{
 			disposed = true;
-			Renderer.TextureDestroy(resource);
+			Renderer.DestroyTexture(resource);
 		}
 	}
 }

@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using static Foster.Framework.SDL3;
@@ -49,6 +48,7 @@ internal static unsafe partial class Renderer
 		public int? Stencil;
 	}
 
+	private static nint device;
 	private static nint cmd;
 	private static nint renderPass;
 	private static nint copyPass;
@@ -58,9 +58,36 @@ internal static unsafe partial class Renderer
 	private static readonly Dictionary<int, nint> graphicsPipelines = [];
 	private static readonly Dictionary<TextureSampler, nint> samplers = [];
 	private static nint emptyDefaultTexture;
+
+	public static GraphicsDriver Driver { get; private set; } = GraphicsDriver.None;
+
+	public static void CreateDevice()
+	{
+		if (device != nint.Zero)
+			throw new Exception("GPU Device is already created");
+
+		device = SDL_CreateGPUDevice(
+			formatFlags: SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
+			debugMode: 1,
+			null);
+
+		SDL_GetGPUDriver(device);
+
+		if (device == IntPtr.Zero)
+			throw new Exception($"Failed to create GPU Device: {Platform.GetSDLError()}");
+	}
 	
+	public static void DestroyDevice()
+	{
+		SDL_DestroyGPUDevice(device);
+		device = nint.Zero;
+	}
+
 	public static void Startup()
 	{
+		if (SDL_ClaimWindowForGPUDevice(device, Platform.Window) != 1)
+			throw new Exception("SDL_GpuClaimWindow failed");
+
 		cmd = nint.Zero;
 		renderPass = nint.Zero;
 		copyPass = nint.Zero;
@@ -69,24 +96,43 @@ internal static unsafe partial class Renderer
 		graphicsPipelines.Clear();
 		samplers.Clear();
 
+		// provider user what driver is being used
+		Driver = SDL_GetGPUDriver(device) switch
+		{
+			SDL_GPUDriver.SDL_GPU_DRIVER_INVALID => GraphicsDriver.D3D11,
+			SDL_GPUDriver.SDL_GPU_DRIVER_PRIVATE => GraphicsDriver.Private,
+			SDL_GPUDriver.SDL_GPU_DRIVER_VULKAN => GraphicsDriver.Vulkan,
+			SDL_GPUDriver.SDL_GPU_DRIVER_D3D11 => GraphicsDriver.D3D11,
+			SDL_GPUDriver.SDL_GPU_DRIVER_D3D12 => GraphicsDriver.D3D12,
+			SDL_GPUDriver.SDL_GPU_DRIVER_METAL => GraphicsDriver.Metal,
+			_ => GraphicsDriver.None
+		};
+
+		// some platforms don't support D24S8 depth/stencil format
 		supportsD24S8 = SDL_GPUTextureSupportsFormat(
-			Platform.Device,
+			device,
 			SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
 			SDL_GPUTextureType.SDL_GPU_TEXTURETYPE_2D,
 			SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET) != 0;
 
+		// we always have a command buffer ready
 		AcquireCommandBuffers();
 
-		emptyDefaultTexture = TextureCreate(1, 1, TextureFormat.R8G8B8A8, false);
+		// default texture we fall back to rendering if passed a material with a missing texture
+		emptyDefaultTexture = CreateTexture(1, 1, TextureFormat.R8G8B8A8, false);
+	
+		Log.Info($"Graphics Driver: SDL_GPU [{Driver}]");
 	}
 
 	public static void Shutdown()
 	{
-		TextureDestroy(emptyDefaultTexture);
+		SDL_ReleaseWindowFromGPUDevice(device, Platform.Window);
+
+		DestroyTexture(emptyDefaultTexture);
 		emptyDefaultTexture = nint.Zero;
 
 		foreach (var sampler in samplers.Values)
-			SDL_ReleaseGPUSampler(Platform.Device, sampler);
+			SDL_ReleaseGPUSampler(device, sampler);
 		samplers.Clear();
 
 		Flush(true);
@@ -98,7 +144,7 @@ internal static unsafe partial class Renderer
 		AcquireCommandBuffers();
 	}
 
-	public static nint TextureCreate(int width, int height, TextureFormat format, bool isTarget)
+	public static nint CreateTexture(int width, int height, TextureFormat format, bool isTarget)
 	{
 		SDL_GPUTextureCreateInfo info = new()
 		{
@@ -128,14 +174,14 @@ internal static unsafe partial class Renderer
 				info.usageFlags |= SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
 		}
 
-		nint texture = SDL_CreateGPUTexture(Platform.Device, &info);
+		nint texture = SDL_CreateGPUTexture(device, &info);
 		if (texture == nint.Zero)
 			throw new Exception($"Failed to create Texture: {Platform.GetSDLError()}");
 
 		TextureResource* res = (TextureResource*)Marshal.AllocHGlobal(sizeof(TextureResource));
 		*res = new TextureResource()
 		{
-			Device = Platform.Device,
+			Device = device,
 			Texture = texture,
 			TransferBuffer = nint.Zero,
 			Width = width,
@@ -145,7 +191,7 @@ internal static unsafe partial class Renderer
 		return new nint(res);
 	}
 
-	public static void TextureSetData(nint texture, void* data, int length)
+	public static void SetTextureData(nint texture, void* data, int length)
 	{
 		// get texture
 		TextureResource* props = (TextureResource*)texture;
@@ -158,14 +204,14 @@ internal static unsafe partial class Renderer
 				usage = SDL_GPUTransferBufferUsage.SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
 				sizeInBytes = (uint)length,
 			};
-			props->TransferBuffer = SDL_CreateGPUTransferBuffer(Platform.Device, &info);
+			props->TransferBuffer = SDL_CreateGPUTransferBuffer(device, &info);
 		}
 
 		// copy data
 		{
-			var dst = SDL_MapGPUTransferBuffer(Platform.Device, props->TransferBuffer, 1);
+			var dst = SDL_MapGPUTransferBuffer(device, props->TransferBuffer, 1);
 			Buffer.MemoryCopy(data, dst, length, length);
-			SDL_UnmapGPUTransferBuffer(Platform.Device, props->TransferBuffer);
+			SDL_UnmapGPUTransferBuffer(device, props->TransferBuffer);
 		}
 
 		// upload to the GPU
@@ -191,62 +237,62 @@ internal static unsafe partial class Renderer
 		}
 	}
 
-	public static void TextureGetData(nint texture, void* data, int length)
+	public static void GetTextureData(nint texture, void* data, int length)
 	{
 		throw new NotImplementedException();
 	}
 
-	public static void TextureDestroy(nint texture)
+	public static void DestroyTexture(nint texture)
 	{
 		TextureResource* res = (TextureResource*)texture;
-		if (res->Device != Platform.Device)
+		if (res->Device != device)
 			return;
 
 		if (res->TransferBuffer != nint.Zero)
-			SDL_ReleaseGPUTransferBuffer(Platform.Device, res->TransferBuffer);
+			SDL_ReleaseGPUTransferBuffer(device, res->TransferBuffer);
 
-		SDL_ReleaseGPUTexture(Platform.Device, res->Texture);
+		SDL_ReleaseGPUTexture(device, res->Texture);
 		Marshal.FreeHGlobal(texture);
 	}
 
-	public static nint MeshCreate()
+	public static nint CreateMesh()
 	{
 		MeshResource* res = (MeshResource*)Marshal.AllocHGlobal(sizeof(MeshResource));
 		*res = new MeshResource()
 		{
-			Device = Platform.Device
+			Device = device
 		};
 		return new nint(res);
 	}
 
-	public static void MeshSetVertexData(nint mesh, nint data, int dataSize, int dataDestOffset, in VertexFormat format)
+	public static void SetMeshVertexData(nint mesh, nint data, int dataSize, int dataDestOffset, in VertexFormat format)
 	{
 		MeshResource* res = (MeshResource*)mesh;
 		res->VertexFormat = format;
-		MeshUploadBuffer(&res->Vertex, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_VERTEX);
+		UploadMeshBuffer(&res->Vertex, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_VERTEX);
 	}
 
-	public static void MeshSetIndexData(nint mesh, nint data, int dataSize, int dataDestOffset, IndexFormat format)
+	public static void SetMeshIndexData(nint mesh, nint data, int dataSize, int dataDestOffset, IndexFormat format)
 	{
 		MeshResource* res = (MeshResource*)mesh;
 		res->IndexFormat = format;
-		MeshUploadBuffer(&res->Index, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_INDEX);
+		UploadMeshBuffer(&res->Index, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_INDEX);
 	}
 
-	public static void MeshDestroy(nint mesh)
+	public static void DestroyMesh(nint mesh)
 	{
 		MeshResource* res = (MeshResource*)mesh;
-		if (res->Device != Platform.Device)
+		if (res->Device != device)
 			return;
 
-		MeshDestroyBuffer(&res->Vertex);
-		MeshDestroyBuffer(&res->Index);
-		MeshDestroyBuffer(&res->Instance);
+		DestroyMeshBuffer(&res->Vertex);
+		DestroyMeshBuffer(&res->Index);
+		DestroyMeshBuffer(&res->Instance);
 
 		Marshal.FreeHGlobal(mesh);
 	}
 
-	private static void MeshUploadBuffer(BufferResource* res, nint data, int dataSize, int dataDestOffset, SDL_GPUBufferUsageFlags usage)
+	private static void UploadMeshBuffer(BufferResource* res, nint data, int dataSize, int dataDestOffset, SDL_GPUBufferUsageFlags usage)
 	{
 		// recreate buffer
 		var required = dataSize + dataDestOffset;
@@ -255,8 +301,8 @@ internal static unsafe partial class Renderer
 		{
 			if (res->Buffer != nint.Zero)
 			{
-				SDL_ReleaseGPUBuffer(Platform.Device, res->Buffer);
-				SDL_ReleaseGPUTransferBuffer(Platform.Device, res->TransferBuffer);
+				SDL_ReleaseGPUBuffer(device, res->Buffer);
+				SDL_ReleaseGPUTransferBuffer(device, res->TransferBuffer);
 				res->Buffer = nint.Zero;
 				res->TransferBuffer = nint.Zero;
 			}
@@ -271,7 +317,7 @@ internal static unsafe partial class Renderer
 				sizeInBytes = (uint)size
 			};
 			
-			res->Buffer = SDL_CreateGPUBuffer(Platform.Device, &info);
+			res->Buffer = SDL_CreateGPUBuffer(device, &info);
 			if (res->Buffer == nint.Zero)
 				throw new Exception($"Failed to create Mesh: {Platform.GetSDLError()}");
 			res->Capacity = size;
@@ -286,14 +332,14 @@ internal static unsafe partial class Renderer
 				sizeInBytes = (uint)res->Capacity,
 				props = 0
 			};
-			res->TransferBuffer = SDL_CreateGPUTransferBuffer(Platform.Device, &info);
+			res->TransferBuffer = SDL_CreateGPUTransferBuffer(device, &info);
 		}
 
 		// copy data
 		{
-			byte* dst = (byte*)SDL_MapGPUTransferBuffer(Platform.Device, res->TransferBuffer, 1);
+			byte* dst = (byte*)SDL_MapGPUTransferBuffer(device, res->TransferBuffer, 1);
 			Buffer.MemoryCopy((void*)data, dst + dataDestOffset, dataSize, dataSize);
-			SDL_UnmapGPUTransferBuffer(Platform.Device, res->TransferBuffer);
+			SDL_UnmapGPUTransferBuffer(device, res->TransferBuffer);
 		}
 
 		// submit to the GPU
@@ -317,18 +363,18 @@ internal static unsafe partial class Renderer
 		}
 	}
 
-	private static void MeshDestroyBuffer(BufferResource* res)
+	private static void DestroyMeshBuffer(BufferResource* res)
 	{
 		if (res->Buffer != nint.Zero)
-			SDL_ReleaseGPUBuffer(Platform.Device, res->Buffer);
+			SDL_ReleaseGPUBuffer(device, res->Buffer);
 
 		if (res->TransferBuffer != nint.Zero)
-			SDL_ReleaseGPUTransferBuffer(Platform.Device, res->TransferBuffer);
+			SDL_ReleaseGPUTransferBuffer(device, res->TransferBuffer);
 
 		*res = new();
 	}
 
-	public static nint ShaderCreate(in ShaderCreateInfo shaderInfo)
+	public static nint CreateShader(in ShaderCreateInfo shaderInfo)
 	{
 		var entryPoint = "main"u8;
 		nint vertexProgram;
@@ -336,44 +382,44 @@ internal static unsafe partial class Renderer
 
 		// create vertex shader
 		fixed (byte* entryPointPtr = entryPoint)
-		fixed (byte* vertexCode = shaderInfo.VertexShader)
+		fixed (byte* vertexCode = shaderInfo.VertexProgram.Code)
 		{
 			SDL_GPUShaderCreateInfo info = new()
 			{
-				codeSize = (uint)shaderInfo.VertexShader.Length,
+				codeSize = (uint)shaderInfo.VertexProgram.Code.Length,
 				code = vertexCode,
 				entryPointName = entryPointPtr,
 				format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
 				stage = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX,
-				samplerCount = 0,
+				samplerCount = (uint)shaderInfo.VertexProgram.SamplerCount,
 				storageTextureCount = 0,
 				storageBufferCount = 0,
 				uniformBufferCount = 1
 			};
 
-			vertexProgram = SDL_CreateGPUShader(Platform.Device, &info);
+			vertexProgram = SDL_CreateGPUShader(device, &info);
 			if (vertexProgram == nint.Zero)
 				throw new Exception($"Failed to create Shader [Vertex]: {Platform.GetSDLError()}");
 		}
 
 		// create fragment program
 		fixed (byte* entryPointPtr = entryPoint)
-		fixed (byte* fragmentCode = shaderInfo.FragmentShader)
+		fixed (byte* fragmentCode = shaderInfo.FragmentProgram.Code)
 		{
 			SDL_GPUShaderCreateInfo info = new()
 			{
-				codeSize = (uint)shaderInfo.FragmentShader.Length,
+				codeSize = (uint)shaderInfo.FragmentProgram.Code.Length,
 				code = fragmentCode,
 				entryPointName = entryPointPtr,
 				format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
 				stage = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT,
-				samplerCount = 1,
+				samplerCount = (uint)shaderInfo.FragmentProgram.Code.Length,
 				storageTextureCount = 0,
 				storageBufferCount = 0,
 				uniformBufferCount = 0
 			};
 
-			fragmentProgram = SDL_CreateGPUShader(Platform.Device, &info);
+			fragmentProgram = SDL_CreateGPUShader(device, &info);
 			if (fragmentProgram == nint.Zero)
 				throw new Exception($"Failed to create Shader [Fragment]: {Platform.GetSDLError()}");
 		}
@@ -381,7 +427,7 @@ internal static unsafe partial class Renderer
 		ShaderResource* res = (ShaderResource*)Marshal.AllocHGlobal(sizeof(ShaderResource));
 		*res = new ShaderResource()
 		{
-			Device = Platform.Device,
+			Device = device,
 			VertexShader = vertexProgram,
 			FragmentShader = fragmentProgram,
 		};
@@ -389,21 +435,35 @@ internal static unsafe partial class Renderer
 		return new nint(res);
 	}
 
-	public static void ShaderDestroy(nint shader)
+	public static void DestroyShader(nint shader)
 	{
 		ShaderResource* res = (ShaderResource*)shader;
-		if (res->Device != Platform.Device)
+		if (res->Device != device)
 			return;
 		
-		SDL_ReleaseGPUShader(Platform.Device, res->VertexShader);
-		SDL_ReleaseGPUShader(Platform.Device, res->FragmentShader);
+		SDL_ReleaseGPUShader(device, res->VertexShader);
+		SDL_ReleaseGPUShader(device, res->FragmentShader);
 
 		Marshal.FreeHGlobal(shader);
 	}
 
 	public static void Draw(DrawCommand command)
 	{
-		RenderPassBegin(command.Target, default);
+		var mat = command.Material ?? throw new Exception("Material is Invalid");
+		var shader = mat.Shader;
+		var target = command.Target;
+		var mesh = command.Mesh;
+
+		if (shader == null || shader.IsDisposed)
+			throw new Exception("Material Shader is Invalid");
+
+		if (target != null && target.IsDisposed)
+			throw new Exception("Target is Invalid");
+
+		if (mesh == null || mesh.IsDisposed)
+			throw new Exception("Mesh is Invalid");
+
+		RenderPassBegin(target, default);
 
 		// set scissor
 		if (command.Scissor.HasValue)
@@ -438,7 +498,7 @@ internal static unsafe partial class Renderer
 
 		// bind mesh buffers
 		{
-			var meshRes = (MeshResource*)command.Mesh.resource;
+			var meshRes = (MeshResource*)mesh.resource;
 
 			// bind index buffer
 			SDL_GPUBufferBinding indexBinding = new()
@@ -462,34 +522,39 @@ internal static unsafe partial class Renderer
 			SDL_BindGPUVertexBuffers(renderPass, 0, &vertexBinding, 1);
 		}
 
-		// bind samplers
+		// bind fragment samplers
+		if (shader.Fragment.SamplerCount > 0)
 		{
-			TextureSampler textureSampler = new();
-			TextureResource* textureResource = (TextureResource*)emptyDefaultTexture;
+			var samplers = stackalloc SDL_GPUTextureSamplerBinding[shader.Fragment.SamplerCount];
 
-			if (command.Material.textureBuffer.Length > 0 && command.Material.textureBuffer[0] is {} tex)
+			for (int i = 0; i < shader.Fragment.SamplerCount; i ++)
 			{
-				textureSampler = command.Material.samplerBuffer[0];
-				textureResource = (TextureResource*)tex.resource;
+				if (mat.FragmentSamplers[i].Texture is {} tex && !tex.IsDisposed)
+					samplers[i].texture = ((TextureResource*)tex.resource)->Texture;
+				else
+					samplers[i].texture = ((TextureResource*)emptyDefaultTexture)->Texture;
+
+				samplers[i].sampler = GetSampler(mat.FragmentSamplers[i].Sampler);
 			}
 
-			var samplers = stackalloc SDL_GPUTextureSamplerBinding[1]
-			{
-				new(){
-					texture = textureResource->Texture,
-					sampler = GetSampler(textureSampler)
-				}
-			};
-			SDL_BindGPUFragmentSamplers(renderPass, 0, samplers, 1);
+			SDL_BindGPUFragmentSamplers(renderPass, 0, samplers, (uint)shader.Fragment.SamplerCount);
 		}
 
-		// upload uniforms
-		{
-			var data = command.Material.floatBuffer;
-			var dataLength = data.Length;
+		// TODO:
+		// bind Vertex Samplers
 
-			fixed (float* ptr = data)
-				SDL_PushGPUVertexUniformData(cmd, 0, ptr, (uint)sizeof(Matrix4x4));
+		// Upload Vertex Uniforms
+		if (shader.Vertex.Uniforms.Length > 0)
+		{
+			fixed (byte* ptr = mat.vertexUniformBuffer)
+				SDL_PushGPUVertexUniformData(cmd, 0, ptr, (uint)shader.Vertex.UniformSizeInBytes);
+		}
+
+		// Upload Fragment Uniforms
+		if (shader.Fragment.Uniforms.Length > 0)
+		{
+			fixed (byte* ptr = mat.fragmentUniformBuffer)
+				SDL_PushGPUFragmentUniformData(cmd, 0, ptr, (uint)shader.Fragment.UniformSizeInBytes);
 		}
 
 		// perform draw
@@ -517,7 +582,7 @@ internal static unsafe partial class Renderer
 
 	private static void AcquireCommandBuffers()
 	{
-		cmd = SDL_AcquireGPUCommandBuffer(Platform.Device);
+		cmd = SDL_AcquireGPUCommandBuffer(device);
 
 		uint w, h;
 		nint swapchainTexture = SDL_AcquireGPUSwapchainTexture(cmd, Platform.Window, &w, &h);
@@ -525,7 +590,7 @@ internal static unsafe partial class Renderer
 		swapchain = new()
 		{
 			Texture = swapchainTexture,
-			Format = SDL_GetGPUSwapchainTextureFormat(Platform.Device, Platform.Window),
+			Format = SDL_GetGPUSwapchainTextureFormat(device, Platform.Window),
 			Width = (int)w,
 			Height = (int)h
 		};
@@ -540,8 +605,8 @@ internal static unsafe partial class Renderer
 		{
 			var fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
 			var fences = stackalloc nint[] { fence };
-			SDL_WaitForGPUFences(Platform.Device, 1, fences, 1);
-			SDL_ReleaseGPUFence(Platform.Device, fence);
+			SDL_WaitForGPUFences(device, 1, fences, 1);
+			SDL_ReleaseGPUFence(device, fence);
 		}
 		else
 		{
@@ -800,7 +865,7 @@ internal static unsafe partial class Renderer
 				}
 			};
 
-			pipeline = SDL_CreateGPUGraphicsPipeline(Platform.Device, &info);
+			pipeline = SDL_CreateGPUGraphicsPipeline(device, &info);
 			if (pipeline == nint.Zero)
 				throw new Exception($"Failed to create Graphics Pipeline for drawing: {Platform.GetSDLError()}");
 
@@ -898,7 +963,7 @@ internal static unsafe partial class Renderer
 				addressModeV = GetWrapMode(sampler.WrapY),
 				addressModeW = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
 			};
-			result = SDL_CreateGPUSampler(Platform.Device, &info);
+			result = SDL_CreateGPUSampler(device, &info);
 			if (result == nint.Zero)
 				throw new Exception($"Failed to create Texture Sampler: {Platform.GetSDLError()}");
 			samplers[sampler] = result;
@@ -911,41 +976,37 @@ internal static unsafe partial class Renderer
 	{
 		format = (type, normalized) switch
 		{
-			(VertexType.Float, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT,
-			(VertexType.Float2, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-			(VertexType.Float3, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-			(VertexType.Float4, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
-			(VertexType.Byte4, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_BYTE4,
-			(VertexType.UByte4, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4,
-			(VertexType.Short2, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT2,
+			(VertexType.Float, _)       => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT,
+			(VertexType.Float2, _)      => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+			(VertexType.Float3, _)      => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+			(VertexType.Float4, _)      => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+			(VertexType.Byte4, false)   => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_BYTE4,
+			(VertexType.Byte4, true)    => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_BYTE4_NORM,
+			(VertexType.UByte4, false)  => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4,
+			(VertexType.UByte4, true)   => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM,
+			(VertexType.Short2, false)  => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT2,
+			(VertexType.Short2, true)   => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT2_NORM,
 			(VertexType.UShort2, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT2,
-			(VertexType.Short4, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT4,
+			(VertexType.UShort2, true)  => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT2_NORM,
+			(VertexType.Short4, false)  => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT4,
+			(VertexType.Short4, true)   => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT4_NORM,
 			(VertexType.UShort4, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT4,
-			(VertexType.Float, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT,
-			(VertexType.Float2, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-			(VertexType.Float3, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-			(VertexType.Float4, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
-			(VertexType.Byte4, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_BYTE4_NORM,
-			(VertexType.UByte4, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM,
-			(VertexType.Short2, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT2_NORM,
-			(VertexType.UShort2, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT2_NORM,
-			(VertexType.Short4, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT4_NORM,
-			(VertexType.UShort4, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT4_NORM,
+			(VertexType.UShort4, true)  => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT4_NORM,
 
 			_ => throw new NotImplementedException(),
 		};
 
 		size = type switch
 		{
-			VertexType.Float => 4,
-			VertexType.Float2 => 8,
-			VertexType.Float3 => 12,
-			VertexType.Float4 => 16,
-			VertexType.Byte4 => 4,
-			VertexType.UByte4 => 4,
-			VertexType.Short2 => 4,
+			VertexType.Float   => 4,
+			VertexType.Float2  => 8,
+			VertexType.Float3  => 12,
+			VertexType.Float4  => 16,
+			VertexType.Byte4   => 4,
+			VertexType.UByte4  => 4,
+			VertexType.Short2  => 4,
 			VertexType.UShort2 => 4,
-			VertexType.Short4 => 8,
+			VertexType.Short4  => 8,
 			VertexType.UShort4 => 8,
 			_ => 0,
 		};

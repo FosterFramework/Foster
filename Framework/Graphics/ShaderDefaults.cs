@@ -20,10 +20,19 @@ internal static class ShaderDefaults
 			return [];
 		}
 
-		Default = new()
-		{
-			VertexShader = ReadBytes("Default.vert.spv"),
-			FragmentShader = ReadBytes("Default.frag.spv")
-		};
+		Default = new(
+			VertexProgram: new(
+				code: ReadBytes("Default.vert.spv"),
+				samplerCount: 0,
+				uniforms: [
+					new("Matrix", UniformType.Mat4x4)
+				]
+			),
+			FragmentProgram: new(
+				code: ReadBytes("Default.frag.spv"),
+				samplerCount: 1,
+				uniforms: []
+			)
+		);
 	}
 }

@@ -1,24 +1,44 @@
-using System.Collections.ObjectModel;
 
 namespace Foster.Framework;
 
-public struct ShaderCreateInfo
+/// <summary>
+/// Holds information on an individual Shader Uniform
+/// </summary>
+public readonly record struct ShaderUniform(
+	string Name,
+	UniformType Type,
+	int ArrayElements = 1
+);
+
+/// <summary>
+/// Reflection Data used to create a new Shader Program
+/// </summary>
+public class ShaderProgramInfo(byte[] code, int samplerCount, params ShaderUniform[] uniforms)
 {
-	public byte[] VertexShader;
-	public byte[] FragmentShader;
+	public readonly byte[] Code = code;
+	public readonly int SamplerCount = samplerCount;
+	public readonly ShaderUniform[] Uniforms = uniforms;
 }
+
+/// <summary>
+/// Data Required to create a new Shader
+/// </summary>
+public readonly record struct ShaderCreateInfo(
+	ShaderProgramInfo VertexProgram, 
+	ShaderProgramInfo FragmentProgram
+);
 
 public class Shader : IResource
 {
 	/// <summary>
-	/// Shader Uniform Entry
+	/// Holds information about a Shader Program
 	/// </summary>
-	public readonly record struct Uniform(
-		int Index,
-		string Name,
-		UniformType Type, 
-		int ArrayElements
-	);
+	public class Program(int samplerCount, ShaderUniform[] uniforms)
+	{
+		public int SamplerCount = samplerCount;
+		public readonly ShaderUniform[] Uniforms = uniforms;
+		public readonly int UniformSizeInBytes = uniforms.Sum(it => it.Type.SizeInBytes() * it.ArrayElements);
+	}
 
 	/// <summary>
 	/// Optional Shader Name
@@ -31,96 +51,29 @@ public class Shader : IResource
 	public bool IsDisposed => disposed;
 
 	/// <summary>
-	/// Dictionary of Uniforms in the Shader
+	/// Vertex Shader Program Reflection
 	/// </summary>
-	public readonly ReadOnlyDictionary<string, Uniform> Uniforms;
+	public readonly Program Vertex;
+
+	/// <summary>
+	/// Fragment Shader Program Reflection
+	/// </summary>
+	public readonly Program Fragment;
 
 	internal readonly IntPtr resource;
 	internal bool disposed = false;
 
-	private struct FosterUniformInfo
+	public Shader(ShaderCreateInfo createInfo)
 	{
-		public int index;
-		public nint name;
-		public UniformType type;
-		public int arrayElements;
-	}
-
-	public Shader(in ShaderCreateInfo createInfo)
-	{
-		resource = Renderer.ShaderCreate(createInfo);
-
-		FosterUniformInfo[] infos = [
-			new() {
-				index = 0,
-				name = Platform.ToUTF8("u_matrix"),
-				type = UniformType.Mat4x4,
-				arrayElements = 1,
-			},
-			new() {
-				index = 1,
-				name = Platform.ToUTF8("u_palette"),
-				type = UniformType.Float4,
-				arrayElements = 4,
-			},
-			new() {
-				index = 0,
-				name = Platform.ToUTF8("u_texture"),
-				type = UniformType.Texture2D,
-				arrayElements = 1,
-			},
-			new() {
-				index = 0,
-				name = Platform.ToUTF8("u_texture_sampler"),
-				type = UniformType.Sampler2D,
-				arrayElements = 1,
-			}
-		];
-
-		// add each uniform
-		var uniforms = new Dictionary<string, Uniform>();
-		for (int i = 0; i < infos.Length; i ++)
-		{
-			var info = infos[i];
-			var name = Platform.ParseUTF8(info.name);
-			uniforms.Add(name, new (info.index, name, info.type, info.arrayElements));
-		}
-
-		Uniforms = uniforms.AsReadOnly();
+		resource = Renderer.CreateShader(createInfo);
+		Vertex = new(createInfo.VertexProgram.SamplerCount, createInfo.VertexProgram.Uniforms);
+		Fragment = new(createInfo.FragmentProgram.SamplerCount, createInfo.FragmentProgram.Uniforms);
 	}
 
 	~Shader()
 	{
 		Dispose(false);
 	}
-
-	/// <summary>
-	/// Checks if the Sahder contains a given Uniform
-	/// </summary>
-	public bool Has(string name)
-		=> Uniforms.ContainsKey(name);
-
-	/// <summary>
-	/// Tries to get a Uniform from the Shader
-	/// </summary>
-	public bool TryGet(string name, out Uniform uniform)
-		=> Uniforms.TryGetValue(name, out uniform);
-
-	/// <summary>
-	/// Gets a Uniform from the Shader
-	/// </summary>
-	public Uniform Get(string name)
-	{
-		if (Uniforms.TryGetValue(name, out var value))
-			return value;
-		return default;
-	}
-
-	/// <summary>
-	/// Gets a Unifrom from the Shader
-	/// </summary>
-	public Uniform this[string name]
-		=> Uniforms[name];
 		
 	/// <summary>
 	/// Disposes of the Shader
@@ -136,7 +89,7 @@ public class Shader : IResource
 		if (!disposed)
 		{
 			disposed = true;
-			Renderer.ShaderDestroy(resource);
+			Renderer.DestroyShader(resource);
 		}
 	}
 }

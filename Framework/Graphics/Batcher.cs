@@ -226,7 +226,7 @@ public class Batcher : IDisposable
 		// make sure default shader and material are valid
 		if (DefaultShader == null || DefaultShader.IsDisposed)
 			DefaultShader = new Shader(ShaderDefaults.Default);
-		defaultMaterial.SetShader(DefaultShader);
+		defaultMaterial.Shader = DefaultShader;
 
 		// render batches
 		for (int i = 0; i < batches.Count; i++)
@@ -256,8 +256,7 @@ public class Batcher : IDisposable
 
 		var mat = batch.MaterialState.Material;
 		mat.Set(batch.MaterialState.MatrixUniform, matrix);
-		mat.Set(batch.MaterialState.TextureUniform, texture);
-		mat.Set(batch.MaterialState.SamplerUniform, batch.Sampler);
+		mat.FragmentSamplers[0] = new(texture, batch.Sampler);
 
 		DrawCommand command = new(target, mesh, mat)
 		{

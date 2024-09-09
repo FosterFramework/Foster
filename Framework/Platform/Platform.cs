@@ -15,11 +15,6 @@ internal static partial class Platform
 	public static nint Window = nint.Zero;
 
 	/// <summary>
-	/// SDL_GPU Device
-	/// </summary>
-	public static nint Device = nint.Zero;
-
-	/// <summary>
 	/// Converts a utf8 null-terminating string into a C# string
 	/// </summary>
 	public static unsafe string ParseUTF8(nint s)
@@ -321,9 +316,4 @@ internal static partial class Platform
 		SDL_Scancode.SDL_SCANCODE_RGUI => Keys.RightOS,
 		_ => Keys.Unknown,
 	};
-	
-	public static Renderers FosterGetRenderer()
-	{
-		return Renderers.OpenGL;
-	}
 }

@@ -344,15 +344,7 @@ public static class App
 		}
 
 		// create the graphics device
-		{
-			Platform.Device = SDL_CreateGPUDevice(
-				formatFlags: SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
-				debugMode: 1,
-				null);
-
-			if (Platform.Device == IntPtr.Zero)
-				throw new Exception("Failed to create GPU Device");
-		}
+		Renderer.CreateDevice();
 
 		// create the window
 		{
@@ -369,9 +361,6 @@ public static class App
 				var error = Platform.ParseUTF8(SDL_GetError());
 				throw new Exception($"Foster SDL_CreateWindow Failed: {error}");
 			}
-
-			if (SDL_ClaimWindowForGPUDevice(Platform.Device, Platform.Window) != 1)
-				throw new Exception("SDL_GpuClaimWindow failed");
 		}
 
 		Renderer.Startup();
@@ -429,11 +418,9 @@ public static class App
 		Running = false;
 
 		Renderer.Shutdown();
-
 		SDL_StopTextInput(Platform.Window);
-		SDL_ReleaseWindowFromGPUDevice(Platform.Device, Platform.Window);
 		SDL_DestroyWindow(Platform.Window);
-		SDL_DestroyGPUDevice(Platform.Device);
+		Renderer.DestroyDevice();
 		SDL_Quit();
 
 		Platform.Window = IntPtr.Zero;
@@ -457,8 +444,7 @@ public static class App
 		{
 			Time.Frame++;
 			Time.Advance(delta);
-
-			Graphics.Resources.DeleteRequested();
+			
 			Input.Step();
 			PollEvents();
 			FramePool.NextFrame();
