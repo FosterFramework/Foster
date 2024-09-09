@@ -131,8 +131,8 @@ internal static partial class Platform
 	public static MouseButtons GetMouseFromSDL(int button) => button switch
 	{
 		1 => MouseButtons.Left,
-		2 => MouseButtons.Right,
-		3 => MouseButtons.Middle,
+		2 => MouseButtons.Middle,
+		3 => MouseButtons.Right,
 		_ => MouseButtons.None,
 	};
 

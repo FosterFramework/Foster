@@ -233,7 +233,7 @@ internal static unsafe partial class Renderer
 				h = (uint)props->Height
 			};
 
-			SDL_UploadToGPUTexture(copyPass, &info, &region, 1);
+			SDL_UploadToGPUTexture(copyPass, &info, &region, cycle: 1);
 		}
 	}
 
@@ -645,6 +645,7 @@ internal static unsafe partial class Renderer
 		RenderPassEnd();
 		CopyPassEnd();
 
+		// configure lists of textures used
 		StackList4<nint> colorTargets = new();
 		nint depthStencilTarget = default;
 
