@@ -45,7 +45,7 @@ public class Material
 	internal byte[] vertexUniformBuffer = [];
 	internal byte[] fragmentUniformBuffer = [];
 
-	private void SetShader(Shader? shader)
+	public void SetShader(Shader? shader)
 	{
 		if (this.shader == shader)
 			return;
