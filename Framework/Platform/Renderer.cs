@@ -394,7 +394,7 @@ internal static unsafe partial class Renderer
 				samplerCount = (uint)shaderInfo.VertexProgram.SamplerCount,
 				storageTextureCount = 0,
 				storageBufferCount = 0,
-				uniformBufferCount = 1
+				uniformBufferCount = (uint)(shaderInfo.VertexProgram.Uniforms.Length > 0 ? 1 : 0)
 			};
 
 			vertexProgram = SDL_CreateGPUShader(device, &info);
@@ -413,10 +413,10 @@ internal static unsafe partial class Renderer
 				entryPointName = entryPointPtr,
 				format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
 				stage = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT,
-				samplerCount = (uint)shaderInfo.FragmentProgram.Code.Length,
+				samplerCount = (uint)shaderInfo.FragmentProgram.SamplerCount,
 				storageTextureCount = 0,
 				storageBufferCount = 0,
-				uniformBufferCount = 0
+				uniformBufferCount = (uint)(shaderInfo.FragmentProgram.Uniforms.Length > 0 ? 1 : 0)
 			};
 
 			fragmentProgram = SDL_CreateGPUShader(device, &info);

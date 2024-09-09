@@ -96,8 +96,7 @@ public class Batcher : IDisposable
 	private readonly record struct MaterialState(
 		Material Material,
 		string MatrixUniform,
-		string TextureUniform,
-		string SamplerUniform
+		int SamplerIndex
 	);
 
 	private struct Batch(MaterialState material, BlendMode blend, Texture? texture, TextureSampler sampler, int offset, int elements)
@@ -115,7 +114,7 @@ public class Batcher : IDisposable
 
 	public Batcher()
 	{
-		defaultMaterialState = new(defaultMaterial, "u_matrix", "u_texture", "u_texture_sampler");
+		defaultMaterialState = new(defaultMaterial, "Matrix", 0);
 		Clear();
 	}
 
@@ -256,7 +255,7 @@ public class Batcher : IDisposable
 
 		var mat = batch.MaterialState.Material;
 		mat.Set(batch.MaterialState.MatrixUniform, matrix);
-		mat.FragmentSamplers[0] = new(texture, batch.Sampler);
+		mat.FragmentSamplers[batch.MaterialState.SamplerIndex] = new(texture, batch.Sampler);
 
 		DrawCommand command = new(target, mesh, mat)
 		{
@@ -422,8 +421,7 @@ public class Batcher : IDisposable
 	{
 		PushMaterial(material, 
 			defaultMaterialState.MatrixUniform, 
-			defaultMaterialState.TextureUniform, 
-			defaultMaterialState.SamplerUniform
+			defaultMaterialState.SamplerIndex
 		);
 	}
 
@@ -432,7 +430,7 @@ public class Batcher : IDisposable
 	/// This clones the state of the Material, so changing it after pushing it
 	/// will not have an effect on the resulting draw.
 	/// </summary>
-	public void PushMaterial(Material material, string matrixUniform, string textureUniform, string samplerUniform)
+	public void PushMaterial(Material material, string matrixUniform, int samplerIndex)
 	{
 		materialStack.Push(currentBatch.MaterialState);
 
@@ -446,7 +444,7 @@ public class Batcher : IDisposable
 
 		// copy the values to our internal material & set it
 		material.CopyTo(copy);
-		SetMaterial(new(copy, matrixUniform, textureUniform, samplerUniform));
+		SetMaterial(new(copy, matrixUniform, samplerIndex));
 	}
 
 	/// <summary>
