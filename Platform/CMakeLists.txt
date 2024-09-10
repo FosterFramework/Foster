@@ -11,48 +11,43 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release)
 endif()
 
-# Define target name
-set (TARGET_NAME FosterPlatform)
-
-add_library(${TARGET_NAME} SHARED
+# Setup Foster Platform Lib
+set(FOSTER_LIB_NAME FosterPlatform)
+add_library(${FOSTER_LIB_NAME} SHARED
 	include/foster_platform.h
 	src/foster_platform.c
 )
-
-target_include_directories(${TARGET_NAME}
+target_include_directories(${FOSTER_LIB_NAME}
 	PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
 )
 
+# Setup MSVC/Windows Flags
 if (MSVC)
-    # Set warning level 3
-    target_compile_options(${TARGET_NAME} PRIVATE /W3)
-
-    # Warnings as Errors Enabled
-    target_compile_options(${TARGET_NAME} PRIVATE /WX)
+    target_compile_options(${FOSTER_LIB_NAME} PRIVATE /W3)
+    target_compile_options(${FOSTER_LIB_NAME} PRIVATE /WX)
 endif()
-
 if(WIN32)
-    target_compile_definitions(${TARGET_NAME} PRIVATE _UNICODE UNICODE _CRT_SECURE_NO_WARNINGS)
-    target_compile_definitions(${TARGET_NAME} PRIVATE NOMINMAX)
+    target_compile_definitions(${FOSTER_LIB_NAME} PRIVATE _UNICODE UNICODE _CRT_SECURE_NO_WARNINGS)
+    target_compile_definitions(${FOSTER_LIB_NAME} PRIVATE NOMINMAX)
 endif ()
 
 # Get platform target
 if (FOSTER_OVERRIDE_TARGET)
-	set(FosterTarget ${FOSTER_OVERRIDE_TARGET})
+	set(FOSTER_TARGET ${FOSTER_OVERRIDE_TARGET})
 elseif (APPLE)
-	set(FosterTarget osx)
+	set(FOSTER_TARGET osx)
 elseif (WIN32)
-	set(FosterTarget win-x64)
+	set(FOSTER_TARGET win-x64)
 elseif (UNIX)
 	if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
-		set(FosterTarget linux-arm64)
+		set(FOSTER_TARGET linux-arm64)
 	elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "armv7l")
-		set(FosterTarget linux-arm32)
+		set(FOSTER_TARGET linux-arm32)
 	elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "armv6l")
-		set(FosterTarget linux-arm32)
+		set(FOSTER_TARGET linux-arm32)
 	else()
-		set(FosterTarget linux-x64)
+		set(FOSTER_TARGET linux-x64)
 	endif()
 else()
 	message(FATAL_ERROR "Unknown Target!")
@@ -78,29 +73,27 @@ if (NOT DEFINED FOSTER_SDL3_LIBS)
 endif()
 
 # link SDL3
-target_include_directories(${TARGET_NAME} PRIVATE ${FOSTER_SDL3_INCLUDE})
-target_link_libraries(${TARGET_NAME} PRIVATE ${FOSTER_SDL3_LIBS})
+target_include_directories(${FOSTER_LIB_NAME} PRIVATE ${FOSTER_SDL3_INCLUDE})
+target_link_libraries(${FOSTER_LIB_NAME} PRIVATE ${FOSTER_SDL3_LIBS})
 
 # Output main lib to the libs folder
-set_target_properties(${TARGET_NAME}
+set_target_properties(${FOSTER_LIB_NAME}
 	PROPERTIES
-	ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
-	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
-	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
-	LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
-	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
-	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
+	ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FOSTER_TARGET}"
+	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FOSTER_TARGET}"
+	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FOSTER_TARGET}"
+	LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FOSTER_TARGET}"
+	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FOSTER_TARGET}"
+	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FOSTER_TARGET}"
 )
 
 # output SDL3 to the libs folder
-set_target_properties(SDL3-shared
+set_target_properties(${FOSTER_SDL3_LIBS}
 	PROPERTIES
-	ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
-	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
-	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
-	LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
-	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
-	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
+	ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FOSTER_TARGET}"
+	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FOSTER_TARGET}"
+	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FOSTER_TARGET}"
+	LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FOSTER_TARGET}"
+	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FOSTER_TARGET}"
+	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FOSTER_TARGET}"
 )
-
-
