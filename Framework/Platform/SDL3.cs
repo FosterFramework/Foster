@@ -19,7 +19,7 @@ namespace Foster.Framework;
 /// </summary>
 internal static partial class SDL3
 {
-	public const string DLL = Platform.DLL;
+	public const string DLL = "SDL3";
 
 	// SDL_version.h
 

@@ -40,41 +40,41 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="$(NativeLibsDir)win-x64\FosterPlatform.dll">
+    <Content Include="$(NativeLibsDir)win-x64\**">
       <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Windows')) AND $(IsArm64) != 'true'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\win-x64\native</PackagePath>
       <Pack>True</Pack>
-      <Link>FosterPlatform.dll</Link>
+      <Link>%(Filename)%(Extension)</Link>
     </Content>
-    <Content Include="$(NativeLibsDir)win-arm64\FosterPlatform.dll">
+    <Content Include="$(NativeLibsDir)win-arm64\**">
       <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Windows')) AND $(IsArm64) == 'true'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\win-arm64\native</PackagePath>
       <Pack>True</Pack>
-      <Link>FosterPlatform.dll</Link>
+      <Link>%(Filename)%(Extension)</Link>
     </Content>
-    <Content Include="$(NativeLibsDir)linux-x64\libFosterPlatform.so">
+    <Content Include="$(NativeLibsDir)linux-x64\**">
       <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND $(IsX64) == 'true'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\linux-x64\native</PackagePath>
       <Pack>True</Pack>
-      <Link>libFosterPlatform.so</Link>
+      <Link>%(Filename)%(Extension)</Link>
     </Content>
-    <Content Include="$(NativeLibsDir)linux-arm64\libFosterPlatform.so">
+    <Content Include="$(NativeLibsDir)linux-arm64\**">
       <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND $(IsArm64) == 'true'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\linux-arm64\native</PackagePath>
       <Pack>True</Pack>
-      <Link>libFosterPlatform.so</Link>
+      <Link>%(Filename)%(Extension)</Link>
     </Content>
-    <Content Include="$(NativeLibsDir)linux-arm32\libFosterPlatform.so">
+    <Content Include="$(NativeLibsDir)linux-arm32\**">
       <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND $(IsArm32) == 'true'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\linux-arm\native</PackagePath>
       <Pack>True</Pack>
-      <Link>libFosterPlatform.so</Link>
+      <Link>%(Filename)%(Extension)</Link>
     </Content>
-    <Content Include="$(NativeLibsDir)osx\libFosterPlatform.dylib">
+    <Content Include="$(NativeLibsDir)osx\**">
       <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('OSX'))">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\osx\native</PackagePath>
       <Pack>True</Pack>
-      <Link>libFosterPlatform.dylib</Link>
+      <Link>%(Filename)%(Extension)</Link>
     </Content>
   </ItemGroup>
   

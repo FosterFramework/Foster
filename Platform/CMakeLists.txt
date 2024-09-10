@@ -24,6 +24,19 @@ target_include_directories(${TARGET_NAME}
 	PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
 )
 
+if (MSVC)
+    # Set warning level 3
+    target_compile_options(${TARGET_NAME} PRIVATE /W3)
+
+    # Warnings as Errors Enabled
+    target_compile_options(${TARGET_NAME} PRIVATE /WX)
+endif()
+
+if(WIN32)
+    target_compile_definitions(${TARGET_NAME} PRIVATE _UNICODE UNICODE _CRT_SECURE_NO_WARNINGS)
+    target_compile_definitions(${TARGET_NAME} PRIVATE NOMINMAX)
+endif ()
+
 # Get platform target
 if (FOSTER_OVERRIDE_TARGET)
 	set(FosterTarget ${FOSTER_OVERRIDE_TARGET})
@@ -45,7 +58,30 @@ else()
 	message(FATAL_ERROR "Unknown Target!")
 endif()
 
-# Output libs to platform-specific library
+# Pull in SDL3 from Github, build it as a shared lib
+if (NOT DEFINED FOSTER_SDL3_LIBS)
+	include(FetchContent)
+	set(FETCHCONTENT_QUIET FALSE)
+	set(SDL_TEST_LIBRARY OFF)
+	set(SDL_SHARED ON)
+	set(SDL_STATIC OFF)
+
+	FetchContent_Declare(
+		SDL3
+		GIT_REPOSITORY https://github.com/libsdl-org/sdl
+		GIT_TAG 379aea5
+		GIT_PROGRESS TRUE
+	)
+	FetchContent_MakeAvailable(SDL3)
+	set(FOSTER_SDL3_LIBS SDL3-shared)
+	set(FOSTER_SDL3_INCLUDE ${SDL3_SOURCE_DIRS}/include)
+endif()
+
+# link SDL3
+target_include_directories(${TARGET_NAME} PRIVATE ${FOSTER_SDL3_INCLUDE})
+target_link_libraries(${TARGET_NAME} PRIVATE ${FOSTER_SDL3_LIBS})
+
+# Output main lib to the libs folder
 set_target_properties(${TARGET_NAME}
 	PROPERTIES
 	ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
@@ -56,55 +92,15 @@ set_target_properties(${TARGET_NAME}
 	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
 )
 
-if (MSVC)
-    # Set warning level 3
-    target_compile_options(${TARGET_NAME} PRIVATE /W3)
+# output SDL3 to the libs folder
+set_target_properties(SDL3-shared
+	PROPERTIES
+	ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
+	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
+	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
+	LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
+	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
+	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FosterTarget}"
+)
 
-    # Warnings as Errors Enabled
-    target_compile_options(${TARGET_NAME} PRIVATE /WX)
-endif()
 
-if(WIN32)
-    target_compile_definitions(${TARGET_NAME} PRIVATE _UNICODE UNICODE _CRT_SECURE_NO_WARNINGS)
-    target_compile_definitions(${TARGET_NAME} PRIVATE NOMINMAX)
-endif ()
-
-# tracks which libraries we need to link, depends on Options above
-set(LIBS "")
-
-# Emscripten can import SDL3 directly
-if (EMSCRIPTEN)
-	
-	set_target_properties(${TARGET_NAME} PROPERTIES COMPILE_FLAGS "-s USE_SDL=2")
-	target_link_libraries(${TARGET_NAME} "-s USE_SDL=2 -s USE_WEBGL2=1")
-
-# Pull SDL3 from its Github repo
-else()
-	if (NOT DEFINED FOSTER_SDL3_LIBS)
-		include(FetchContent)
-		set(FETCHCONTENT_QUIET FALSE)
-		set(SDL_TEST_LIBRARY OFF)
-		set(SDL_SHARED OFF)
-		set(SDL_STATIC ON)
-
-		FetchContent_Declare(
-			SDL3
-			GIT_REPOSITORY https://github.com/libsdl-org/sdl
-			GIT_TAG 379aea5
-			GIT_PROGRESS TRUE
-		)
-		FetchContent_MakeAvailable(SDL3)
-		set(FOSTER_SDL3_LIBS SDL3-static)
-		set(FOSTER_SDL3_INCLUDE ${SDL3_SOURCE_DIRS}/include)
-	endif()
-
-	# statically link SDL3 since we're building it ourselve
-	set(LIBS ${LIBS} ${FOSTER_SDL3_LIBS})
-	target_include_directories(${TARGET_NAME} PRIVATE ${FOSTER_SDL3_INCLUDE})
-endif()
-
-# Tell SDL it's going to be a shared lib
-set_property(TARGET ${FOSTER_SDL3_LIBS} PROPERTY POSITION_INDEPENDENT_CODE ON)
-
-# Link SDL3
-target_link_libraries(${TARGET_NAME} PRIVATE ${LIBS})
