@@ -926,9 +926,9 @@ internal static unsafe partial class Renderer
 			{
 				// track which shader uses this pipeline
 				{
-					if (!graphicsPipelinesByResource.TryGetValue(shader.resource, out var pipelineList))
-						graphicsPipelinesByResource[shader.resource] = pipelineList = [];
-					pipelineList.Add(pipeline);
+					if (!graphicsPipelinesByResource.TryGetValue(shader.resource, out var list))
+						graphicsPipelinesByResource[shader.resource] = list = [];
+					list.Add(pipeline);
 				}
 
 				// track which target uses this pipeline
@@ -936,9 +936,9 @@ internal static unsafe partial class Renderer
 				{
 					foreach (var it in target.Attachments)
 					{
-						if (!graphicsPipelinesByResource.TryGetValue(it.resource, out var pipelineList))
-							graphicsPipelinesByResource[it.resource] = pipelineList = [];
-						pipelineList.Add(pipeline);
+						if (!graphicsPipelinesByResource.TryGetValue(it.resource, out var list))
+							graphicsPipelinesByResource[it.resource] = list = [];
+						list.Add(pipeline);
 					}
 				}
 
