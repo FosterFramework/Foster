@@ -56,7 +56,9 @@ internal static unsafe partial class Renderer
 	private static TextureResource swapchain;
 	private static Target? renderPassTarget;
 	private static bool supportsD24S8;
-	private static readonly Dictionary<int, nint> graphicsPipelines = [];
+	private static readonly Dictionary<int, nint> graphicsPipelinesByHash = [];
+	private static readonly Dictionary<nint, int> graphicsPipelinesToHash = [];
+	private static readonly Dictionary<nint, List<nint>> graphicsPipelinesByResource = [];
 	private static readonly Dictionary<TextureSampler, nint> samplers = [];
 	private static nint emptyDefaultTexture;
 
@@ -68,9 +70,9 @@ internal static unsafe partial class Renderer
 			throw new Exception("GPU Device is already created");
 
 		device = SDL_CreateGPUDevice(
-			formatFlags: SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
-			debugMode: 1,
-			null);
+			format_flags: SDL_GPUShaderFormat.SHADERFORMAT_SPIRV,
+			debug_mode: 1,
+			name: nint.Zero);
 
 		SDL_GetGPUDriver(device);
 
@@ -108,7 +110,7 @@ internal static unsafe partial class Renderer
 			device,
 			SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
 			SDL_GPUTextureType.SDL_GPU_TEXTURETYPE_2D,
-			SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET) != 0;
+			SDL_GPUTextureUsageFlags.TEXTUREUSAGE_DEPTH_STENCIL_TARGET) != 0;
 
 		// we always have a command buffer ready
 		AcquireCommandBuffers();
@@ -127,10 +129,23 @@ internal static unsafe partial class Renderer
 		DestroyTexture(emptyDefaultTexture);
 		emptyDefaultTexture = nint.Zero;
 
+		// release pipelines
+		lock (graphicsPipelinesByHash)
+		{
+			foreach (var pipeline in graphicsPipelinesByHash.Values)
+				SDL_ReleaseGPUGraphicsPipeline(device, pipeline);
+			graphicsPipelinesByHash.Clear();
+			graphicsPipelinesToHash.Clear();
+			graphicsPipelinesByResource.Clear();
+		}
+
 		// release samplers
-		foreach (var sampler in samplers.Values)
-			SDL_ReleaseGPUSampler(device, sampler);
-		samplers.Clear();
+		lock (samplers)
+		{
+			foreach (var sampler in samplers.Values)
+				SDL_ReleaseGPUSampler(device, sampler);
+			samplers.Clear();
+		}
 		
 		SDL_ReleaseWindowFromGPUDevice(device, window);
 		
@@ -141,8 +156,6 @@ internal static unsafe partial class Renderer
 		copyPass = nint.Zero;
 		swapchain = default;
 		renderPassTarget = null;
-		graphicsPipelines.Clear();
-		samplers.Clear();
 	}
 
 	public static void Present()
@@ -165,20 +178,20 @@ internal static unsafe partial class Renderer
 					: SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT,
 				_ => throw new InvalidEnumArgumentException()
 			},
-			usageFlags = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER,
+			usage = SDL_GPUTextureUsageFlags.TEXTUREUSAGE_SAMPLER,
 			width = (uint)width,
 			height = (uint)height,
-			layerCountOrDepth = 1,
-			levelCount = 1,
-			sampleCount = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1,
+			layer_count_or_depth = 1,
+			num_levels = 1,
+			sample_count = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1,
 		};
 
 		if (isTarget)
 		{
 			if (format == TextureFormat.Depth24Stencil8)
-				info.usageFlags |= SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
+				info.usage |= SDL_GPUTextureUsageFlags.TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
 			else
-				info.usageFlags |= SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
+				info.usage |= SDL_GPUTextureUsageFlags.TEXTUREUSAGE_COLOR_TARGET;
 		}
 
 		nint texture = SDL_CreateGPUTexture(device, &info);
@@ -209,7 +222,7 @@ internal static unsafe partial class Renderer
 			SDL_GPUTransferBufferCreateInfo info = new()
 			{
 				usage = SDL_GPUTransferBufferUsage.SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-				sizeInBytes = (uint)length,
+				size = (uint)length,
 			};
 			props->TransferBuffer = SDL_CreateGPUTransferBuffer(device, &info);
 		}
@@ -227,10 +240,10 @@ internal static unsafe partial class Renderer
 
 			SDL_GPUTextureTransferInfo info = new()
 			{
-				transferBuffer = props->TransferBuffer,
+				transfer_buffer = props->TransferBuffer,
 				offset = 0,
-				imagePitch = (uint)props->Width,
-				imageHeight = (uint)props->Height,
+				pixels_per_row = (uint)props->Width,
+				rows_per_layer = (uint)props->Height,
 			};
 
 			SDL_GPUTextureRegion region = new()
@@ -255,6 +268,8 @@ internal static unsafe partial class Renderer
 		if (res->Device != device)
 			return;
 
+		ReleaseGraphicsPipelinesAssociatedWith(texture);
+
 		if (res->TransferBuffer != nint.Zero)
 			SDL_ReleaseGPUTransferBuffer(device, res->TransferBuffer);
 
@@ -276,14 +291,14 @@ internal static unsafe partial class Renderer
 	{
 		MeshResource* res = (MeshResource*)mesh;
 		res->VertexFormat = format;
-		UploadMeshBuffer(&res->Vertex, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_VERTEX);
+		UploadMeshBuffer(&res->Vertex, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.BUFFERUSAGE_VERTEX);
 	}
 
 	public static void SetMeshIndexData(nint mesh, nint data, int dataSize, int dataDestOffset, IndexFormat format)
 	{
 		MeshResource* res = (MeshResource*)mesh;
 		res->IndexFormat = format;
-		UploadMeshBuffer(&res->Index, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_INDEX);
+		UploadMeshBuffer(&res->Index, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.BUFFERUSAGE_INDEX);
 	}
 
 	public static void DestroyMesh(nint mesh)
@@ -320,8 +335,8 @@ internal static unsafe partial class Renderer
 
 			SDL_GPUBufferCreateInfo info = new()
 			{
-				usageFlags = usage,
-				sizeInBytes = (uint)size
+				usage = usage,
+				size = (uint)size
 			};
 			
 			res->Buffer = SDL_CreateGPUBuffer(device, &info);
@@ -336,7 +351,7 @@ internal static unsafe partial class Renderer
 			SDL_GPUTransferBufferCreateInfo info = new()
 			{
 				usage = SDL_GPUTransferBufferUsage.SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-				sizeInBytes = (uint)res->Capacity,
+				size = (uint)res->Capacity,
 				props = 0
 			};
 			res->TransferBuffer = SDL_CreateGPUTransferBuffer(device, &info);
@@ -356,7 +371,7 @@ internal static unsafe partial class Renderer
 			SDL_GPUTransferBufferLocation location = new()
 			{
 				offset = 0,
-				transferBuffer = res->TransferBuffer
+				transfer_buffer = res->TransferBuffer
 			};
 
 			SDL_GPUBufferRegion region = new()
@@ -393,15 +408,15 @@ internal static unsafe partial class Renderer
 		{
 			SDL_GPUShaderCreateInfo info = new()
 			{
-				codeSize = (uint)shaderInfo.VertexProgram.Code.Length,
-				code = vertexCode,
-				entryPointName = entryPointPtr,
-				format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
+				code_size = (uint)shaderInfo.VertexProgram.Code.Length,
+				code = new nint(vertexCode),
+				entrypoint = new nint(entryPointPtr),
+				format = SDL_GPUShaderFormat.SHADERFORMAT_SPIRV,
 				stage = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX,
-				samplerCount = (uint)shaderInfo.VertexProgram.SamplerCount,
-				storageTextureCount = 0,
-				storageBufferCount = 0,
-				uniformBufferCount = (uint)(shaderInfo.VertexProgram.Uniforms.Length > 0 ? 1 : 0)
+				num_samplers = (uint)shaderInfo.VertexProgram.SamplerCount,
+				num_storage_textures = 0,
+				num_storage_buffers = 0,
+				num_uniform_buffers = (uint)(shaderInfo.VertexProgram.Uniforms.Length > 0 ? 1 : 0)
 			};
 
 			vertexProgram = SDL_CreateGPUShader(device, &info);
@@ -415,15 +430,15 @@ internal static unsafe partial class Renderer
 		{
 			SDL_GPUShaderCreateInfo info = new()
 			{
-				codeSize = (uint)shaderInfo.FragmentProgram.Code.Length,
-				code = fragmentCode,
-				entryPointName = entryPointPtr,
-				format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
+				code_size = (uint)shaderInfo.FragmentProgram.Code.Length,
+				code = new nint(fragmentCode),
+				entrypoint = new nint(entryPointPtr),
+				format = SDL_GPUShaderFormat.SHADERFORMAT_SPIRV,
 				stage = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT,
-				samplerCount = (uint)shaderInfo.FragmentProgram.SamplerCount,
-				storageTextureCount = 0,
-				storageBufferCount = 0,
-				uniformBufferCount = (uint)(shaderInfo.FragmentProgram.Uniforms.Length > 0 ? 1 : 0)
+				num_samplers = (uint)shaderInfo.FragmentProgram.SamplerCount,
+				num_storage_textures = 0,
+				num_storage_buffers = 0,
+				num_uniform_buffers = (uint)(shaderInfo.FragmentProgram.Uniforms.Length > 0 ? 1 : 0)
 			};
 
 			fragmentProgram = SDL_CreateGPUShader(device, &info);
@@ -448,6 +463,7 @@ internal static unsafe partial class Renderer
 		if (res->Device != device)
 			return;
 		
+		ReleaseGraphicsPipelinesAssociatedWith(shader);
 		SDL_ReleaseGPUShader(device, res->VertexShader);
 		SDL_ReleaseGPUShader(device, res->FragmentShader);
 
@@ -470,7 +486,9 @@ internal static unsafe partial class Renderer
 		if (mesh == null || mesh.IsDisposed)
 			throw new Exception("Mesh is Invalid");
 
-		BeginRenderPass(target, default);
+		// try to start a render pass
+		if (!BeginRenderPass(target, default))
+			return;
 
 		// set scissor
 		if (command.Scissor.HasValue)
@@ -492,7 +510,7 @@ internal static unsafe partial class Renderer
 			{
 				x = command.Viewport.Value.X, y = command.Viewport.Value.Y,
 				w = command.Viewport.Value.Width, h = command.Viewport.Value.Height,
-				minDepth = 0.1f, maxDepth = 1.0f
+				min_depth = 0.1f, max_depth = 1.0f
 			};
 			SDL_SetGPUViewport(renderPass, &viewport);
 		}
@@ -569,23 +587,24 @@ internal static unsafe partial class Renderer
 		if (shader.Vertex.Uniforms.Length > 0)
 		{
 			fixed (byte* ptr = mat.vertexUniformBuffer)
-				SDL_PushGPUVertexUniformData(cmd, 0, ptr, (uint)shader.Vertex.UniformSizeInBytes);
+				SDL_PushGPUVertexUniformData(cmd, 0, new nint(ptr), (uint)shader.Vertex.UniformSizeInBytes);
 		}
 
 		// Upload Fragment Uniforms
 		if (shader.Fragment.Uniforms.Length > 0)
 		{
 			fixed (byte* ptr = mat.fragmentUniformBuffer)
-				SDL_PushGPUFragmentUniformData(cmd, 0, ptr, (uint)shader.Fragment.UniformSizeInBytes);
+				SDL_PushGPUFragmentUniformData(cmd, 0, new nint(ptr), (uint)shader.Fragment.UniformSizeInBytes);
 		}
 
 		// perform draw
-		SDL_DrawGPUIndexedPrimitives(renderPass, 
-			indexCount: (uint)command.MeshIndexCount,
-			instanceCount: 1,
-			firstIndex: (uint)command.MeshIndexStart,
-			vertexOffset: command.MeshVertexOffset,
-			firstInstance: 0
+		SDL_DrawGPUIndexedPrimitives(
+			render_pass: renderPass,
+			num_indices: (uint)command.MeshIndexCount,
+			num_instances: 1,
+			first_index: (uint)command.MeshIndexStart,
+			vertex_offset: command.MeshVertexOffset,
+			first_instance: 0
 		);
 	}
 
@@ -654,7 +673,7 @@ internal static unsafe partial class Renderer
 		copyPass = nint.Zero;
 	}
 
-	private static void BeginRenderPass(Target? target, ClearInfo clear)
+	private static bool BeginRenderPass(Target? target, ClearInfo clear)
 	{
 		// only begin if we're not already in a render pass that is matching
 		if (renderPass != nint.Zero &&
@@ -662,10 +681,13 @@ internal static unsafe partial class Renderer
 			!clear.Color.HasValue && 
 			!clear.Depth.HasValue &&
 			!clear.Stencil.HasValue)
-			return;
+			return true;
 
 		EndRenderPass();
 		EndCopyPass();
+
+		// set next target
+		renderPassTarget = target;
 
 		// configure lists of textures used
 		StackList4<nint> colorTargets = new();
@@ -675,20 +697,30 @@ internal static unsafe partial class Renderer
 		{
 			foreach (var it in target.Attachments)
 			{
-				var res = (TextureResource*)it.resource;
+				var res = ((TextureResource*)it.resource)->Texture;
+
+				// drawing to an invalid target
+				if (it.IsDisposed || !it.IsTargetAttachment || res == nint.Zero)
+					throw new Exception("Drawing to a Disposed or Invalid Texture");
+
 				if (it.Format == TextureFormat.Depth24Stencil8)
-					depthStencilTarget = res->Texture;
+					depthStencilTarget = res;
 				else
-					colorTargets.Add(res->Texture);
+					colorTargets.Add(res);
 			}
 		}
 		else
 		{
+			// there's a chance the swapchain is invalid, in which case we can't
+			// render anything to it and should not start a renderpass
+			if (swapchain.Texture == nint.Zero)
+				return false;
+
 			colorTargets.Add(swapchain.Texture);
 		}
 
-		var colorInfo = stackalloc SDL_GPUColorAttachmentInfo[colorTargets.Count];
-		var depthStencilInfo = new SDL_GPUDepthStencilAttachmentInfo();
+		var colorInfo = stackalloc SDL_GPUColorTargetInfo[colorTargets.Count];
+		var depthStencilInfo = new SDL_GPUDepthStencilTargetInfo();
 
 		// get color infos
 		for (int i = 0; i < colorTargets.Count; i ++)
@@ -696,11 +728,11 @@ internal static unsafe partial class Renderer
 			colorInfo[i] = new()
 			{
 				texture = colorTargets[i],
-				clearColor = GetColor(clear.Color ?? Color.Transparent),
-				loadOp = clear.Color.HasValue ? 
+				clear_color = GetColor(clear.Color ?? Color.Transparent),
+				load_op = clear.Color.HasValue ? 
 					SDL_GPULoadOp.SDL_GPU_LOADOP_CLEAR : 
 					SDL_GPULoadOp.SDL_GPU_LOADOP_LOAD,
-				storeOp = SDL_GPUStoreOp.SDL_GPU_STOREOP_STORE
+				store_op = SDL_GPUStoreOp.SDL_GPU_STOREOP_STORE
 			};
 		}
 
@@ -710,18 +742,17 @@ internal static unsafe partial class Renderer
 			depthStencilInfo = new()
 			{
 				texture = depthStencilTarget,
-				depthStencilClearValue = new() {
-					depth = clear.Depth ?? 0,
-					stencil = (byte)(clear.Stencil ?? 0),
-				},
-				loadOp = clear.Depth.HasValue ?
+				clear_depth = clear.Depth ?? 0,
+				load_op = clear.Depth.HasValue ?
 					SDL_GPULoadOp.SDL_GPU_LOADOP_CLEAR :
 					SDL_GPULoadOp.SDL_GPU_LOADOP_LOAD,
-				storeOp = SDL_GPUStoreOp.SDL_GPU_STOREOP_STORE,
-				stencilLoadOp = clear.Stencil.HasValue ?
+				store_op = SDL_GPUStoreOp.SDL_GPU_STOREOP_STORE,
+				stencil_load_op = clear.Stencil.HasValue ?
 					SDL_GPULoadOp.SDL_GPU_LOADOP_CLEAR :
 					SDL_GPULoadOp.SDL_GPU_LOADOP_LOAD,
-				stencilStoreOp = SDL_GPUStoreOp.SDL_GPU_STOREOP_STORE
+				stencil_store_op = SDL_GPUStoreOp.SDL_GPU_STOREOP_STORE,
+				cycle = 0,
+				clear_stencil = (byte)(clear.Stencil ?? 0),
 			};
 		}
 
@@ -732,7 +763,8 @@ internal static unsafe partial class Renderer
 			(uint)colorTargets.Count,
 			depthStencilTarget != nint.Zero ? &depthStencilInfo : null
 		);
-		renderPassTarget = target;
+
+		return renderPass != nint.Zero;
 	}
 
 	private static void EndRenderPass()
@@ -765,10 +797,10 @@ internal static unsafe partial class Renderer
 		);
 
 		// try to find an existing pipeline
-		if (!graphicsPipelines.TryGetValue(hash, out var pipeline))
+		if (!graphicsPipelinesByHash.TryGetValue(hash, out var pipeline))
 		{
 			var colorBlendState = GetBlendState(command.BlendMode);
-			var colorAttachments = stackalloc SDL_GPUColorAttachmentDescription[4];
+			var colorAttachments = stackalloc SDL_GPUColorTargetDescription[4];
 			var colorAttachmentCount = 0;
 			var depthStencilAttachment = SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_INVALID;
 			var vertexBindings = stackalloc SDL_GPUVertexBinding[1];
@@ -788,7 +820,7 @@ internal static unsafe partial class Renderer
 						colorAttachments[colorAttachmentCount] = new()
 						{
 							format = ((TextureResource*)it.resource)->Format,
-							blendState = colorBlendState
+							blend_state = colorBlendState
 						};
 						colorAttachmentCount++;
 					}
@@ -799,16 +831,17 @@ internal static unsafe partial class Renderer
 				colorAttachments[0] = new()
 				{
 					format = swapchain.Format,
-					blendState = colorBlendState
+					blend_state = colorBlendState
 				};
 				colorAttachmentCount = 1;
 			}
 
-			vertexBindings[0] = new() {
-				binding = 0,
-				stride = (uint)vertexFormat.Stride,
-				inputRate = SDL_GPUVertexInputRate.SDL_GPU_VERTEXINPUTRATE_VERTEX,
-				instanceStepRate = 0
+			vertexBindings[0] = new()
+			{
+				index = 0,
+				pitch = (uint)vertexFormat.Stride,
+				input_rate = SDL_GPUVertexInputRate.SDL_GPU_VERTEXINPUTRATE_VERTEX,
+				instance_step_rate = 0
 			};
 
 			for (int i = 0; i < vertexFormat.Elements.Count; i ++)
@@ -817,7 +850,7 @@ internal static unsafe partial class Renderer
 				vertexAttributes[i] = new()
 				{
 					location = (uint)it.Index,
-					binding = 0,
+					binding_index = 0,
 					format = GetVertexFormat(it.Type, it.Normalized),
 					offset = (uint)vertexOffset
 				};
@@ -826,40 +859,40 @@ internal static unsafe partial class Renderer
 			
 			SDL_GPUGraphicsPipelineCreateInfo info = new()
 			{
-				vertexShader = shaderRes->VertexShader,
-				fragmentShader = shaderRes->FragmentShader,
-				vertexInputState = new()
+				vertex_shader = shaderRes->VertexShader,
+				fragment_shader = shaderRes->FragmentShader,
+				vertex_input_state = new()
 				{
-					vertexBindings = vertexBindings,
-					vertexBindingCount = 1,
-					vertexAttributes = vertexAttributes,
-					vertexAttributeCount = (uint)vertexFormat.Elements.Count
+					vertex_bindings = vertexBindings,
+					num_vertex_bindings = 1,
+					vertex_attributes = vertexAttributes,
+					num_vertex_attributes = (uint)vertexFormat.Elements.Count
 				},
-				primitiveType = SDL_GPUPrimitiveType.SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-				rasterizerState = new()
+				primitive_type = SDL_GPUPrimitiveType.SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+				rasterizer_state = new()
 				{
-					fillMode = SDL_GPUFillMode.SDL_GPU_FILLMODE_FILL,
-					cullMode = command.CullMode switch
+					fill_mode = SDL_GPUFillMode.SDL_GPU_FILLMODE_FILL,
+					cull_mode = command.CullMode switch
 					{
 						CullMode.None => SDL_GPUCullMode.SDL_GPU_CULLMODE_NONE,
 						CullMode.Front => SDL_GPUCullMode.SDL_GPU_CULLMODE_FRONT,
 						CullMode.Back => SDL_GPUCullMode.SDL_GPU_CULLMODE_BACK,
 						_ => throw new NotImplementedException()
 					},
-					frontFace = SDL_GPUFrontFace.SDL_GPU_FRONTFACE_CLOCKWISE,
-					depthBiasEnable = 0
+					front_face = SDL_GPUFrontFace.SDL_GPU_FRONTFACE_CLOCKWISE,
+					enable_depth_bias = 0
 				},
-				multisampleState = new()
+				multisample_state = new()
 				{
-					sampleCount = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1,
-					sampleMask = 0xFFFF
+					sample_count = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1,
+					sample_mask = 0xFFFF
 				},
-				depthStencilState = new()
+				depth_stencil_state = new()
 				{
-					depthTestEnable = (byte)(command.DepthTestEnabled ? 1 : 0),
-					depthWriteEnable = (byte)(command.DepthWriteEnabled ? 1 : 0),
-					stencilTestEnable = 0, // TODO: allow this
-					compareOp = command.DepthCompare switch
+					enable_depth_test = (byte)(command.DepthTestEnabled ? 1 : 0),
+					enable_depth_write = (byte)(command.DepthWriteEnabled ? 1 : 0),
+					enable_stencil_test = 0, // TODO: allow this
+					compare_op = command.DepthCompare switch
 					{
 						DepthCompare.Always => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_ALWAYS,
 						DepthCompare.Never => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_NEVER,
@@ -871,13 +904,17 @@ internal static unsafe partial class Renderer
 						DepthCompare.GreatorOrEqual => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_GREATER_OR_EQUAL,
 						_ => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_NEVER
 					},
+					back_stencil_state = default,
+					front_stencil_state = default,
+					compare_mask = 0xFF,
+					write_mask = 0xFF,
 				},
-				attachmentInfo = new()
+				target_info = new()
 				{
-					colorAttachmentDescriptions = colorAttachments,
-					colorAttachmentCount = (uint)colorAttachmentCount,
-					hasDepthStencilAttachment = (byte)(depthStencilAttachment == SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_INVALID ? 0 : 1),
-					depthStencilFormat = depthStencilAttachment
+					color_target_descriptions = colorAttachments,
+					num_color_targets = (uint)colorAttachmentCount,
+					has_depth_stencil_target = (byte)(depthStencilAttachment == SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_INVALID ? 0 : 1),
+					depth_stencil_format = depthStencilAttachment
 				}
 			};
 
@@ -885,13 +922,53 @@ internal static unsafe partial class Renderer
 			if (pipeline == nint.Zero)
 				throw new Exception($"Failed to create Graphics Pipeline for drawing: {Platform.GetSDLError()}");
 
-			graphicsPipelines[hash] = pipeline;
+			lock (graphicsPipelinesByHash)
+			{
+				// track which shader uses this pipeline
+				{
+					if (!graphicsPipelinesByResource.TryGetValue(shader.resource, out var pipelineList))
+						graphicsPipelinesByResource[shader.resource] = pipelineList = [];
+					pipelineList.Add(pipeline);
+				}
+
+				// track which target uses this pipeline
+				if (target != null)
+				{
+					foreach (var it in target.Attachments)
+					{
+						if (!graphicsPipelinesByResource.TryGetValue(it.resource, out var pipelineList))
+							graphicsPipelinesByResource[it.resource] = pipelineList = [];
+						pipelineList.Add(pipeline);
+					}
+				}
+
+				graphicsPipelinesByHash[hash] = pipeline;
+				graphicsPipelinesToHash[pipeline] = hash;
+			}
 		}
 
 		return pipeline;
 	}
 
-	private static SDL_GPUColorAttachmentBlendState GetBlendState(BlendMode blend)
+	private static void ReleaseGraphicsPipelinesAssociatedWith(nint resource)
+	{
+		lock (graphicsPipelinesByHash)
+		{
+			if (!graphicsPipelinesByResource.Remove(resource, out var pipelines))
+				return;
+
+			foreach (var pipeline in pipelines)
+			{
+				if (!graphicsPipelinesToHash.Remove(pipeline, out var hash))
+					continue;
+
+				graphicsPipelinesByHash.Remove(hash);
+				SDL_ReleaseGPUGraphicsPipeline(device, pipeline);
+			}
+		}
+	}
+
+	private static SDL_GPUColorTargetBlendState GetBlendState(BlendMode blend)
 	{
 		static SDL_GPUBlendFactor GetFactor(BlendFactor factor) => factor switch
 		{
@@ -937,16 +1014,16 @@ internal static unsafe partial class Renderer
 			return flags;
 		}
 
-		SDL_GPUColorAttachmentBlendState state = new()
+		SDL_GPUColorTargetBlendState state = new()
 		{
-			blendEnable = 1,
-			srcColorBlendFactor = GetFactor(blend.ColorSource),
-			dstColorBlendFactor = GetFactor(blend.ColorDestination),
-			colorBlendOp = GetOp(blend.ColorOperation),
-			srcAlphaBlendFactor = GetFactor(blend.AlphaSource),
-			dstAlphaBlendFactor = GetFactor(blend.AlphaDestination),
-			alphaBlendOp = GetOp(blend.AlphaOperation),
-			colorWriteMask = GetFlags(blend.Mask)
+			enable_blend = 1,
+			src_color_blendfactor = GetFactor(blend.ColorSource),
+			dst_color_blendfactor = GetFactor(blend.ColorDestination),
+			color_blend_op = GetOp(blend.ColorOperation),
+			src_alpha_blendfactor = GetFactor(blend.AlphaSource),
+			dst_alpha_blendfactor = GetFactor(blend.AlphaDestination),
+			alpha_blend_op = GetOp(blend.AlphaOperation),
+			color_write_mask = GetFlags(blend.Mask)
 		};
 		return state;
 	}
@@ -973,11 +1050,11 @@ internal static unsafe partial class Renderer
 
 			SDL_GPUSamplerCreateInfo info = new()
 			{
-				minFilter = filter,
-				magFilter = filter,
-				addressModeU = GetWrapMode(sampler.WrapX),
-				addressModeV = GetWrapMode(sampler.WrapY),
-				addressModeW = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+				min_filter = filter,
+				mag_filter = filter,
+				address_mode_u = GetWrapMode(sampler.WrapX),
+				address_mode_v = GetWrapMode(sampler.WrapY),
+				address_mode_w = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
 			};
 			result = SDL_CreateGPUSampler(device, &info);
 			if (result == nint.Zero)

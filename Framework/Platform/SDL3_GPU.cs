@@ -20,96 +20,40 @@ using SDL_GPUFencePtr = nint;
 
 namespace Foster.Framework;
 
-internal static partial class SDL3
+internal static unsafe partial class SDL3
 {
-	public enum SDL_GPUColorComponentFlags : UInt32
+	public enum SDL_GPUPrimitiveType : UInt32
 	{
-		SDL_GPU_COLORCOMPONENT_R = (1u << 0),
-		SDL_GPU_COLORCOMPONENT_G = (1u << 1),
-		SDL_GPU_COLORCOMPONENT_B = (1u << 2),
-		SDL_GPU_COLORCOMPONENT_A = (1u << 3),
+		SDL_GPU_PRIMITIVETYPE_POINTLIST,     
+		SDL_GPU_PRIMITIVETYPE_LINELIST,      
+		SDL_GPU_PRIMITIVETYPE_LINESTRIP,     
+		SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,  
+		SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP  
 	}
 
-	public enum SDL_GPUShaderFormat : UInt32
+	public enum SDL_GPULoadOp : UInt32
 	{
-		SDL_GPU_SHADERFORMAT_PRIVATE  = (1u << 0),
-		SDL_GPU_SHADERFORMAT_SPIRV    = (1u << 1),
-		SDL_GPU_SHADERFORMAT_DXBC     = (1u << 2),
-		SDL_GPU_SHADERFORMAT_DXIL     = (1u << 3),
-		SDL_GPU_SHADERFORMAT_MSL      = (1u << 4),
-		SDL_GPU_SHADERFORMAT_METALLIB = (1u << 5),
+		SDL_GPU_LOADOP_LOAD,      
+		SDL_GPU_LOADOP_CLEAR,     
+		SDL_GPU_LOADOP_DONT_CARE  
 	}
 
-	public enum SDL_GPUBufferUsageFlags : UInt32
+	public enum SDL_GPUStoreOp : UInt32
 	{
-		SDL_GPU_BUFFERUSAGE_VERTEX                = (1u << 0),
-		SDL_GPU_BUFFERUSAGE_INDEX                 = (1u << 1),
-		SDL_GPU_BUFFERUSAGE_INDIRECT              = (1u << 2),
-		SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ = (1u << 3),
-		SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ  = (1u << 4),
-		SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE = (1u << 5),
+		SDL_GPU_STOREOP_STORE,     
+		SDL_GPU_STOREOP_DONT_CARE  
 	}
 
-	public enum SDL_GPUTextureUsageFlags : UInt32
+	public enum SDL_GPUIndexElementSize : UInt32
 	{
-		SDL_GPU_TEXTUREUSAGE_SAMPLER               = (1u << 0),
-		SDL_GPU_TEXTUREUSAGE_COLOR_TARGET          = (1u << 1),
-		SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET  = (1u << 2),
-		SDL_GPU_TEXTUREUSAGE_GRAPHICS_STORAGE_READ = (1u << 3),
-		SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_READ  = (1u << 4),
-		SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_WRITE = (1u << 5),
+		SDL_GPU_INDEXELEMENTSIZE_16BIT, 
+		SDL_GPU_INDEXELEMENTSIZE_32BIT  
 	}
 
-	public const string SDL_PROP_GPU_CREATETEXTURE_D3D12_CLEAR_R_FLOAT        = "SDL.gpu.createtexture.d3d12.clear.r";
-	public const string SDL_PROP_GPU_CREATETEXTURE_D3D12_CLEAR_G_FLOAT        = "SDL.gpu.createtexture.d3d12.clear.g";
-	public const string SDL_PROP_GPU_CREATETEXTURE_D3D12_CLEAR_B_FLOAT        = "SDL.gpu.createtexture.d3d12.clear.b";
-	public const string SDL_PROP_GPU_CREATETEXTURE_D3D12_CLEAR_A_FLOAT        = "SDL.gpu.createtexture.d3d12.clear.a";
-	public const string SDL_PROP_GPU_CREATETEXTURE_D3D12_CLEAR_DEPTH_FLOAT    = "SDL.gpu.createtexture.d3d12.clear.depth";
-	public const string SDL_PROP_GPU_CREATETEXTURE_D3D12_CLEAR_STENCIL_byte   = "SDL.gpu.createtexture.d3d12.clear.stencil";
-	public const string SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOL             = "SDL.gpu.device.create.debugmode";
-	public const string SDL_PROP_GPU_DEVICE_CREATE_PREFERLOWPOWER_BOOL        = "SDL.gpu.device.create.preferlowpower";
-	public const string SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING                = "SDL.gpu.device.create.name";
-	public const string SDL_PROP_GPU_DEVICE_CREATE_SHADERS_PRIVATE_BOOL       = "SDL.gpu.device.create.shaders.private";
-	public const string SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOL         = "SDL.gpu.device.create.shaders.spirv";
-	public const string SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXBC_BOOL          = "SDL.gpu.device.create.shaders.dxbc";
-	public const string SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXIL_BOOL          = "SDL.gpu.device.create.shaders.dxil";
-	public const string SDL_PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOL           = "SDL.gpu.device.create.shaders.msl";
-	public const string SDL_PROP_GPU_DEVICE_CREATE_SHADERS_METALLIB_BOOL      = "SDL.gpu.device.create.shaders.metallib";
-	public const string SDL_PROP_GPU_DEVICE_CREATE_D3D12_SEMANTIC_NAME_STRING = "SDL.gpu.device.create.d3d12.semantic";
-
-	public enum SDL_GPUPrimitiveType
-	{
-		SDL_GPU_PRIMITIVETYPE_POINTLIST,
-		SDL_GPU_PRIMITIVETYPE_LINELIST,
-		SDL_GPU_PRIMITIVETYPE_LINESTRIP,
-		SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-		SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP
-	}
-
-	public enum SDL_GPULoadOp
-	{
-		SDL_GPU_LOADOP_LOAD,
-		SDL_GPU_LOADOP_CLEAR,
-		SDL_GPU_LOADOP_DONT_CARE
-	}
-
-	public enum SDL_GPUStoreOp
-	{
-		SDL_GPU_STOREOP_STORE,
-		SDL_GPU_STOREOP_DONT_CARE
-	}
-
-	public enum SDL_GPUIndexElementSize
-	{
-		SDL_GPU_INDEXELEMENTSIZE_16BIT,
-		SDL_GPU_INDEXELEMENTSIZE_32BIT
-	}
-
-	public enum SDL_GPUTextureFormat
+	public enum SDL_GPUTextureFormat : Int32
 	{
 		SDL_GPU_TEXTUREFORMAT_INVALID = -1,
-
-		/* Unsigned Normalized Float Color Formats */
+		
 		SDL_GPU_TEXTUREFORMAT_A8_UNORM,
 		SDL_GPU_TEXTUREFORMAT_R8_UNORM,
 		SDL_GPU_TEXTUREFORMAT_R8G8_UNORM,
@@ -122,56 +66,56 @@ internal static partial class SDL3
 		SDL_GPU_TEXTUREFORMAT_B5G5R5A1_UNORM,
 		SDL_GPU_TEXTUREFORMAT_B4G4R4A4_UNORM,
 		SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM,
-		/* Compressed Unsigned Normalized Float Color Formats */
+		
 		SDL_GPU_TEXTUREFORMAT_BC1_RGBA_UNORM,
 		SDL_GPU_TEXTUREFORMAT_BC2_RGBA_UNORM,
 		SDL_GPU_TEXTUREFORMAT_BC3_RGBA_UNORM,
 		SDL_GPU_TEXTUREFORMAT_BC4_R_UNORM,
 		SDL_GPU_TEXTUREFORMAT_BC5_RG_UNORM,
 		SDL_GPU_TEXTUREFORMAT_BC7_RGBA_UNORM,
-		/* Compressed Signed Float Color Formats */
+		
 		SDL_GPU_TEXTUREFORMAT_BC6H_RGB_FLOAT,
-		/* Compressed Unsigned Float Color Formats */
+		
 		SDL_GPU_TEXTUREFORMAT_BC6H_RGB_UFLOAT,
-		/* Signed Normalized Float Color Formats  */
+		
 		SDL_GPU_TEXTUREFORMAT_R8_SNORM,
 		SDL_GPU_TEXTUREFORMAT_R8G8_SNORM,
 		SDL_GPU_TEXTUREFORMAT_R8G8B8A8_SNORM,
 		SDL_GPU_TEXTUREFORMAT_R16_SNORM,
 		SDL_GPU_TEXTUREFORMAT_R16G16_SNORM,
 		SDL_GPU_TEXTUREFORMAT_R16G16B16A16_SNORM,
-		/* Signed Float Color Formats */
+		
 		SDL_GPU_TEXTUREFORMAT_R16_FLOAT,
 		SDL_GPU_TEXTUREFORMAT_R16G16_FLOAT,
 		SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT,
 		SDL_GPU_TEXTUREFORMAT_R32_FLOAT,
 		SDL_GPU_TEXTUREFORMAT_R32G32_FLOAT,
 		SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT,
-		/* Unsigned Float Color Formats */
+		
 		SDL_GPU_TEXTUREFORMAT_R11G11B10_UFLOAT,
-		/* Unsigned Integer Color Formats */
+		
 		SDL_GPU_TEXTUREFORMAT_R8_UINT,
 		SDL_GPU_TEXTUREFORMAT_R8G8_UINT,
 		SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UINT,
 		SDL_GPU_TEXTUREFORMAT_R16_UINT,
 		SDL_GPU_TEXTUREFORMAT_R16G16_UINT,
 		SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UINT,
-		/* Signed Integer Color Formats */
+		
 		SDL_GPU_TEXTUREFORMAT_R8_INT,
 		SDL_GPU_TEXTUREFORMAT_R8G8_INT,
 		SDL_GPU_TEXTUREFORMAT_R8G8B8A8_INT,
 		SDL_GPU_TEXTUREFORMAT_R16_INT,
 		SDL_GPU_TEXTUREFORMAT_R16G16_INT,
 		SDL_GPU_TEXTUREFORMAT_R16G16B16A16_INT,
-		/* SRGB Unsigned Normalized Color Formats */
+		
 		SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM_SRGB,
 		SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM_SRGB,
-		/* Compressed SRGB Unsigned Normalized Color Formats */
+		
 		SDL_GPU_TEXTUREFORMAT_BC1_RGBA_UNORM_SRGB,
 		SDL_GPU_TEXTUREFORMAT_BC2_RGBA_UNORM_SRGB,
 		SDL_GPU_TEXTUREFORMAT_BC3_RGBA_UNORM_SRGB,
 		SDL_GPU_TEXTUREFORMAT_BC7_RGBA_UNORM_SRGB,
-		/* Depth Formats */
+		
 		SDL_GPU_TEXTUREFORMAT_D16_UNORM,
 		SDL_GPU_TEXTUREFORMAT_D24_UNORM,
 		SDL_GPU_TEXTUREFORMAT_D32_FLOAT,
@@ -179,23 +123,35 @@ internal static partial class SDL3
 		SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT
 	}
 
-	public enum SDL_GPUTextureType
+	[Flags]
+	public enum SDL_GPUTextureUsageFlags : UInt32
 	{
-		SDL_GPU_TEXTURETYPE_2D,
-		SDL_GPU_TEXTURETYPE_2D_ARRAY,
-		SDL_GPU_TEXTURETYPE_3D,
-		SDL_GPU_TEXTURETYPE_CUBE
+		TEXTUREUSAGE_SAMPLER               = (1u << 0),
+		TEXTUREUSAGE_COLOR_TARGET          = (1u << 1),
+		TEXTUREUSAGE_DEPTH_STENCIL_TARGET  = (1u << 2),
+		TEXTUREUSAGE_GRAPHICS_STORAGE_READ = (1u << 3),
+		TEXTUREUSAGE_COMPUTE_STORAGE_READ  = (1u << 4),
+		TEXTUREUSAGE_COMPUTE_STORAGE_WRITE = (1u << 5),
 	}
 
-	public enum SDL_GPUSampleCount
+	public enum SDL_GPUTextureType : UInt32
 	{
-		SDL_GPU_SAMPLECOUNT_1,
-		SDL_GPU_SAMPLECOUNT_2,
-		SDL_GPU_SAMPLECOUNT_4,
-		SDL_GPU_SAMPLECOUNT_8
+		SDL_GPU_TEXTURETYPE_2D,        
+		SDL_GPU_TEXTURETYPE_2D_ARRAY,  
+		SDL_GPU_TEXTURETYPE_3D,        
+		SDL_GPU_TEXTURETYPE_CUBE       
 	}
 
-	public enum SDL_GPUCubeMapFace
+	public enum SDL_GPUSampleCount : UInt32
+	{
+		SDL_GPU_SAMPLECOUNT_1,  
+		SDL_GPU_SAMPLECOUNT_2,  
+		SDL_GPU_SAMPLECOUNT_4,  
+		SDL_GPU_SAMPLECOUNT_8   
+	}
+
+
+	public enum SDL_GPUCubeMapFace : UInt32
 	{
 		SDL_GPU_CUBEMAPFACE_POSITIVEX,
 		SDL_GPU_CUBEMAPFACE_NEGATIVEX,
@@ -205,177 +161,208 @@ internal static partial class SDL3
 		SDL_GPU_CUBEMAPFACE_NEGATIVEZ
 	}
 
-	public enum SDL_GPUTransferBufferUsage
+	[Flags]
+	public enum SDL_GPUBufferUsageFlags : UInt32
+	{
+		BUFFERUSAGE_VERTEX                = (1u << 0),
+		BUFFERUSAGE_INDEX                 = (1u << 1),
+		BUFFERUSAGE_INDIRECT              = (1u << 2),
+		BUFFERUSAGE_GRAPHICS_STORAGE_READ = (1u << 3),
+		BUFFERUSAGE_COMPUTE_STORAGE_READ  = (1u << 4),
+		BUFFERUSAGE_COMPUTE_STORAGE_WRITE = (1u << 5),
+	}
+
+	public enum SDL_GPUTransferBufferUsage : UInt32
 	{
 		SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
 		SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD
 	}
 
-	public enum SDL_GPUShaderStage
+	public enum SDL_GPUShaderStage : UInt32
 	{
 		SDL_GPU_SHADERSTAGE_VERTEX,
 		SDL_GPU_SHADERSTAGE_FRAGMENT
 	}
 
-	public enum SDL_GPUVertexElementFormat
+	[Flags]
+	public enum SDL_GPUShaderFormat : UInt32
 	{
-		/* 32-bit Signed Integers */
+		SHADERFORMAT_PRIVATE  = (1u << 0),
+		SHADERFORMAT_SPIRV    = (1u << 1),
+		SHADERFORMAT_DXBC     = (1u << 2),
+		SHADERFORMAT_DXIL     = (1u << 3),
+		SHADERFORMAT_MSL      = (1u << 4),
+		SHADERFORMAT_METALLIB = (1u << 5),
+	}
+
+	public enum SDL_GPUVertexElementFormat : UInt32
+	{
+		
 		SDL_GPU_VERTEXELEMENTFORMAT_INT,
 		SDL_GPU_VERTEXELEMENTFORMAT_INT2,
 		SDL_GPU_VERTEXELEMENTFORMAT_INT3,
 		SDL_GPU_VERTEXELEMENTFORMAT_INT4,
 
-		/* 32-bit Unsigned Integers */
+		
 		SDL_GPU_VERTEXELEMENTFORMAT_UINT,
 		SDL_GPU_VERTEXELEMENTFORMAT_UINT2,
 		SDL_GPU_VERTEXELEMENTFORMAT_UINT3,
 		SDL_GPU_VERTEXELEMENTFORMAT_UINT4,
 
-		/* 32-bit Floats */
+		
 		SDL_GPU_VERTEXELEMENTFORMAT_FLOAT,
 		SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
 		SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
 		SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
 
-		/* 8-bit Signed Integers */
+		
 		SDL_GPU_VERTEXELEMENTFORMAT_BYTE2,
 		SDL_GPU_VERTEXELEMENTFORMAT_BYTE4,
 
-		/* 8-bit Unsigned Integers */
+		
 		SDL_GPU_VERTEXELEMENTFORMAT_UBYTE2,
 		SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4,
 
-		/* 8-bit Signed Normalized */
+		
 		SDL_GPU_VERTEXELEMENTFORMAT_BYTE2_NORM,
 		SDL_GPU_VERTEXELEMENTFORMAT_BYTE4_NORM,
 
-		/* 8-bit Unsigned Normalized */
+		
 		SDL_GPU_VERTEXELEMENTFORMAT_UBYTE2_NORM,
 		SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM,
 
-		/* 16-bit Signed Integers */
+		
 		SDL_GPU_VERTEXELEMENTFORMAT_SHORT2,
 		SDL_GPU_VERTEXELEMENTFORMAT_SHORT4,
 
-		/* 16-bit Unsigned Integers */
+		
 		SDL_GPU_VERTEXELEMENTFORMAT_USHORT2,
 		SDL_GPU_VERTEXELEMENTFORMAT_USHORT4,
 
-		/* 16-bit Signed Normalized */
+		
 		SDL_GPU_VERTEXELEMENTFORMAT_SHORT2_NORM,
 		SDL_GPU_VERTEXELEMENTFORMAT_SHORT4_NORM,
 
-		/* 16-bit Unsigned Normalized */
+		
 		SDL_GPU_VERTEXELEMENTFORMAT_USHORT2_NORM,
 		SDL_GPU_VERTEXELEMENTFORMAT_USHORT4_NORM,
 
-		/* 16-bit Floats */
+		
 		SDL_GPU_VERTEXELEMENTFORMAT_HALF2,
 		SDL_GPU_VERTEXELEMENTFORMAT_HALF4
 	}
 
-	public enum SDL_GPUVertexInputRate
+	public enum SDL_GPUVertexInputRate : UInt32
 	{
-		SDL_GPU_VERTEXINPUTRATE_VERTEX = 0,
-		SDL_GPU_VERTEXINPUTRATE_INSTANCE = 1
+		SDL_GPU_VERTEXINPUTRATE_VERTEX = 0,   
+		SDL_GPU_VERTEXINPUTRATE_INSTANCE = 1  
 	}
 
-	public enum SDL_GPUFillMode
+	public enum SDL_GPUFillMode : UInt32
 	{
-		SDL_GPU_FILLMODE_FILL,
-		SDL_GPU_FILLMODE_LINE
+		SDL_GPU_FILLMODE_FILL,  
+		SDL_GPU_FILLMODE_LINE   
 	}
 
-	public enum SDL_GPUCullMode
+	public enum SDL_GPUCullMode : UInt32
 	{
-		SDL_GPU_CULLMODE_NONE,
-		SDL_GPU_CULLMODE_FRONT,
-		SDL_GPU_CULLMODE_BACK
+		SDL_GPU_CULLMODE_NONE,   
+		SDL_GPU_CULLMODE_FRONT,  
+		SDL_GPU_CULLMODE_BACK    
 	}
 
-	public enum SDL_GPUFrontFace
+	public enum SDL_GPUFrontFace : UInt32
 	{
-		SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE,
-		SDL_GPU_FRONTFACE_CLOCKWISE
+		SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE,  
+		SDL_GPU_FRONTFACE_CLOCKWISE           
 	}
 
-	public enum SDL_GPUCompareOp
+	public enum SDL_GPUCompareOp : UInt32
 	{
-		SDL_GPU_COMPAREOP_NEVER,
-		SDL_GPU_COMPAREOP_LESS,
-		SDL_GPU_COMPAREOP_EQUAL,
-		SDL_GPU_COMPAREOP_LESS_OR_EQUAL,
-		SDL_GPU_COMPAREOP_GREATER,
-		SDL_GPU_COMPAREOP_NOT_EQUAL,
-		SDL_GPU_COMPAREOP_GREATER_OR_EQUAL,
-		SDL_GPU_COMPAREOP_ALWAYS
+		SDL_GPU_COMPAREOP_NEVER,             
+		SDL_GPU_COMPAREOP_LESS,              
+		SDL_GPU_COMPAREOP_EQUAL,             
+		SDL_GPU_COMPAREOP_LESS_OR_EQUAL,     
+		SDL_GPU_COMPAREOP_GREATER,           
+		SDL_GPU_COMPAREOP_NOT_EQUAL,         
+		SDL_GPU_COMPAREOP_GREATER_OR_EQUAL,  
+		SDL_GPU_COMPAREOP_ALWAYS             
 	}
 
-	public enum SDL_GPUStencilOp
+	public enum SDL_GPUStencilOp : UInt32
 	{
-		SDL_GPU_STENCILOP_KEEP,
-		SDL_GPU_STENCILOP_ZERO,
-		SDL_GPU_STENCILOP_REPLACE,
-		SDL_GPU_STENCILOP_INCREMENT_AND_CLAMP,
-		SDL_GPU_STENCILOP_DECREMENT_AND_CLAMP,
-		SDL_GPU_STENCILOP_INVERT,
-		SDL_GPU_STENCILOP_INCREMENT_AND_WRAP,
-		SDL_GPU_STENCILOP_DECREMENT_AND_WRAP
+		SDL_GPU_STENCILOP_KEEP,                 
+		SDL_GPU_STENCILOP_ZERO,                 
+		SDL_GPU_STENCILOP_REPLACE,              
+		SDL_GPU_STENCILOP_INCREMENT_AND_CLAMP,  
+		SDL_GPU_STENCILOP_DECREMENT_AND_CLAMP,  
+		SDL_GPU_STENCILOP_INVERT,               
+		SDL_GPU_STENCILOP_INCREMENT_AND_WRAP,   
+		SDL_GPU_STENCILOP_DECREMENT_AND_WRAP    
 	}
 
-	public enum SDL_GPUBlendOp
+	public enum SDL_GPUBlendOp : UInt32
 	{
-		SDL_GPU_BLENDOP_ADD,
-		SDL_GPU_BLENDOP_SUBTRACT,
-		SDL_GPU_BLENDOP_REVERSE_SUBTRACT,
-		SDL_GPU_BLENDOP_MIN,
-		SDL_GPU_BLENDOP_MAX
+		SDL_GPU_BLENDOP_ADD,               
+		SDL_GPU_BLENDOP_SUBTRACT,          
+		SDL_GPU_BLENDOP_REVERSE_SUBTRACT,  
+		SDL_GPU_BLENDOP_MIN,               
+		SDL_GPU_BLENDOP_MAX                
 	}
 
-	public enum SDL_GPUBlendFactor
+	public enum SDL_GPUBlendFactor : UInt32
 	{
-		SDL_GPU_BLENDFACTOR_ZERO,
-		SDL_GPU_BLENDFACTOR_ONE,
-		SDL_GPU_BLENDFACTOR_SRC_COLOR,
-		SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_COLOR,
-		SDL_GPU_BLENDFACTOR_DST_COLOR,
-		SDL_GPU_BLENDFACTOR_ONE_MINUS_DST_COLOR,
-		SDL_GPU_BLENDFACTOR_SRC_ALPHA,
-		SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-		SDL_GPU_BLENDFACTOR_DST_ALPHA,
-		SDL_GPU_BLENDFACTOR_ONE_MINUS_DST_ALPHA,
-		SDL_GPU_BLENDFACTOR_CONSTANT_COLOR,
-		SDL_GPU_BLENDFACTOR_ONE_MINUS_CONSTANT_COLOR,
-		SDL_GPU_BLENDFACTOR_SRC_ALPHA_SATURATE
+		SDL_GPU_BLENDFACTOR_ZERO,                      
+		SDL_GPU_BLENDFACTOR_ONE,                       
+		SDL_GPU_BLENDFACTOR_SRC_COLOR,                 
+		SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_COLOR,       
+		SDL_GPU_BLENDFACTOR_DST_COLOR,                 
+		SDL_GPU_BLENDFACTOR_ONE_MINUS_DST_COLOR,       
+		SDL_GPU_BLENDFACTOR_SRC_ALPHA,                 
+		SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,       
+		SDL_GPU_BLENDFACTOR_DST_ALPHA,                 
+		SDL_GPU_BLENDFACTOR_ONE_MINUS_DST_ALPHA,       
+		SDL_GPU_BLENDFACTOR_CONSTANT_COLOR,            
+		SDL_GPU_BLENDFACTOR_ONE_MINUS_CONSTANT_COLOR,  
+		SDL_GPU_BLENDFACTOR_SRC_ALPHA_SATURATE         
 	}
 
-	public enum SDL_GPUFilter
+	[Flags]
+	public enum SDL_GPUColorComponentFlags : byte
 	{
-		SDL_GPU_FILTER_NEAREST,
-		SDL_GPU_FILTER_LINEAR
+		SDL_GPU_COLORCOMPONENT_R = (byte)(1u << 0),
+		SDL_GPU_COLORCOMPONENT_G = (byte)(1u << 1),
+		SDL_GPU_COLORCOMPONENT_B = (byte)(1u << 2),
+		SDL_GPU_COLORCOMPONENT_A = (byte)(1u << 3),
 	}
 
-	public enum SDL_GPUSamplerMipmapMode
+	public enum SDL_GPUFilter : UInt32
 	{
-		SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
-		SDL_GPU_SAMPLERMIPMAPMODE_LINEAR
+		SDL_GPU_FILTER_NEAREST,  
+		SDL_GPU_FILTER_LINEAR    
 	}
 
-	public enum SDL_GPUSamplerAddressMode
+	public enum SDL_GPUSamplerMipmapMode : UInt32
 	{
-		SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-		SDL_GPU_SAMPLERADDRESSMODE_MIRRORED_REPEAT,
-		SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE
+		SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,  
+		SDL_GPU_SAMPLERMIPMAPMODE_LINEAR    
 	}
 
-	public enum SDL_GPUPresentMode
+	public enum SDL_GPUSamplerAddressMode : UInt32
+	{
+		SDL_GPU_SAMPLERADDRESSMODE_REPEAT,           
+		SDL_GPU_SAMPLERADDRESSMODE_MIRRORED_REPEAT,  
+		SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE     
+	}
+
+	public enum SDL_GPUPresentMode : UInt32
 	{
 		SDL_GPU_PRESENTMODE_VSYNC,
 		SDL_GPU_PRESENTMODE_IMMEDIATE,
 		SDL_GPU_PRESENTMODE_MAILBOX
 	}
 
-	public enum SDL_GPUSwapchainComposition
+	public enum SDL_GPUSwapchainComposition : UInt32
 	{
 		SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
 		SDL_GPU_SWAPCHAINCOMPOSITION_SDR_LINEAR,
@@ -383,812 +370,753 @@ internal static partial class SDL3
 		SDL_GPU_SWAPCHAINCOMPOSITION_HDR10_ST2048
 	}
 
-	public enum SDL_GPUDriver
+	public enum SDL_GPUDriver : Int32
 	{
 		SDL_GPU_DRIVER_INVALID = -1,
-		SDL_GPU_DRIVER_PRIVATE, /* NDA'd platforms */
+		SDL_GPU_DRIVER_PRIVATE, 
 		SDL_GPU_DRIVER_VULKAN,
 		SDL_GPU_DRIVER_D3D11,
 		SDL_GPU_DRIVER_D3D12,
 		SDL_GPU_DRIVER_METAL
 	}
 
-	/* Structures */
-
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUDepthStencilValue
+	public struct SDL_GPUViewport
 	{
-		public float depth;
-		public byte stencil;
-		public byte padding1;
-		public byte padding2;
-		public byte padding3;
+		public float x;          
+		public float y;          
+		public float w;          
+		public float h;          
+		public float min_depth;  
+		public float max_depth;  
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUViewport
+	public struct SDL_GPUTextureTransferInfo
 	{
-		public float x;
-		public float y;
-		public float w;
-		public float h;
-		public float minDepth;
-		public float maxDepth;
+		public SDL_GPUTransferBufferPtr transfer_buffer;  
+		public UInt32 offset;                           
+		public UInt32 pixels_per_row;                   
+		public UInt32 rows_per_layer;                   
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUTextureTransferInfo
+	public struct SDL_GPUTransferBufferLocation
 	{
-		public SDL_GPUTransferBufferPtr transferBuffer;
-		public UInt32 offset;	  /* starting location of the image data */
-		public UInt32 imagePitch;  /* number of pixels from one row to the next */
-		public UInt32 imageHeight; /* number of rows from one layer/depth-slice to the next */
+		public SDL_GPUTransferBufferPtr transfer_buffer;  
+		public UInt32 offset;                           
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUTransferBufferLocation
+	public struct SDL_GPUTextureLocation
 	{
-		public SDL_GPUTransferBufferPtr transferBuffer;
-		public UInt32 offset;
+		public SDL_GPUTexturePtr texture;  
+		public UInt32 mip_level;         
+		public UInt32 layer;             
+		public UInt32 x;                 
+		public UInt32 y;                 
+		public UInt32 z;                 
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUTextureLocation
+	public struct SDL_GPUTextureRegion
 	{
-		public SDL_GPUTexturePtr texture;
-		public UInt32 mipLevel;
-		public UInt32 layer;
-		public UInt32 x;
-		public UInt32 y;
-		public UInt32 z;
+		public SDL_GPUTexturePtr texture;  
+		public UInt32 mip_level;         
+		public UInt32 layer;             
+		public UInt32 x;                 
+		public UInt32 y;                 
+		public UInt32 z;                 
+		public UInt32 w;                 
+		public UInt32 h;                 
+		public UInt32 d;                 
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUTextureRegion
+	public struct SDL_GPUBlitRegion
 	{
-		public SDL_GPUTexturePtr texture;
-		public UInt32 mipLevel;
-		public UInt32 layer;
-		public UInt32 x;
-		public UInt32 y;
-		public UInt32 z;
-		public UInt32 w;
-		public UInt32 h;
-		public UInt32 d;
+		public SDL_GPUTexturePtr texture;  
+		public UInt32 mip_level;             
+		public UInt32 layer_or_depth_plane;  
+		public UInt32 x;                     
+		public UInt32 y;                     
+		public UInt32 w;                     
+		public UInt32 h;                     
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUBlitRegion
+	public struct SDL_GPUBufferLocation
 	{
-		public SDL_GPUTexturePtr texture;
-		public UInt32 mipLevel;
-		public UInt32 layerOrDepthPlane;
-		public UInt32 x;
-		public UInt32 y;
-		public UInt32 w;
-		public UInt32 h;
+		public SDL_GPUBufferPtr buffer;  
+		public UInt32 offset;          
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUBufferLocation
+	public struct SDL_GPUBufferRegion
 	{
-		public SDL_GPUBufferPtr buffer;
-		public UInt32 offset;
+		public SDL_GPUBufferPtr buffer;  
+		public UInt32 offset;          
+		public UInt32 size;            
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUBufferRegion
+	public struct SDL_GPUIndirectDrawCommand
 	{
-		public SDL_GPUBufferPtr buffer;
-		public UInt32 offset;
-		public UInt32 size;
+		public UInt32 num_vertices;   
+		public UInt32 num_instances;  
+		public UInt32 first_vertex;   
+		public UInt32 first_instance; 
 	}
 
-	/* Note that the `firstVertex` and `firstInstance` parameters are NOT compatible with
-	* built-in vertex/instance ID variables in shaders (for example, SV_VertexID). If
-	* your shader depends on these variables, the correlating draw call parameter MUST
-	* be 0.
-	*/
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUIndirectDrawCommand
+	public struct SDL_GPUIndexedIndirectDrawCommand
 	{
-		public UInt32 vertexCount;   /* number of vertices to draw */
-		public UInt32 instanceCount; /* number of instances to draw */
-		public UInt32 firstVertex;   /* index of the first vertex to draw */
-		public UInt32 firstInstance; /* ID of the first instance to draw */
+		public UInt32 num_indices;    
+		public UInt32 num_instances;  
+		public UInt32 first_index;    
+		public Int32 vertex_offset;  
+		public UInt32 first_instance; 
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUIndexedIndirectDrawCommand
+	public struct SDL_GPUIndirectDispatchCommand
 	{
-		public UInt32 indexCount;	/* number of vertices to draw per instance */
-		public UInt32 instanceCount; /* number of instances to draw */
-		public UInt32 firstIndex;	/* base index within the index buffer */
-		public Int32 vertexOffset;  /* value added to vertex index before indexing into the vertex buffer */
-		public UInt32 firstInstance; /* ID of the first instance to draw */
+		public UInt32 groupcount_x;  
+		public UInt32 groupcount_y;  
+		public UInt32 groupcount_z;  
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUIndirectDispatchCommand
+	public struct SDL_GPUSamplerCreateInfo
 	{
-		public UInt32 groupCountX;
-		public UInt32 groupCountY;
-		public UInt32 groupCountZ;
+		public SDL_GPUFilter min_filter;                  
+		public SDL_GPUFilter mag_filter;                  
+		public SDL_GPUSamplerMipmapMode mipmap_mode;      
+		public SDL_GPUSamplerAddressMode address_mode_u;  
+		public SDL_GPUSamplerAddressMode address_mode_v;  
+		public SDL_GPUSamplerAddressMode address_mode_w;  
+		public float mip_lod_bias;                        
+		public float max_anisotropy;                      
+		public SDL_bool enable_anisotropy;                
+		public SDL_bool enable_compare;                   
+		public Byte padding1;
+		public Byte padding2;
+		public SDL_GPUCompareOp compare_op;               
+		public float min_lod;                             
+		public float max_lod;                             
+
+		public SDL_PropertiesID props;                    
 	}
 
-	/* State structures */
-
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUSamplerCreateInfo
+	public struct SDL_GPUVertexBinding
 	{
-		public SDL_GPUFilter minFilter;
-		public SDL_GPUFilter magFilter;
-		public SDL_GPUSamplerMipmapMode mipmapMode;
-		public SDL_GPUSamplerAddressMode addressModeU;
-		public SDL_GPUSamplerAddressMode addressModeV;
-		public SDL_GPUSamplerAddressMode addressModeW;
-		public float mipLodBias;
-		public float maxAnisotropy;
-		public SDL_bool anisotropyEnable;
-		public SDL_bool compareEnable;
-		public byte padding1;
-		public byte padding2;
-		public SDL_GPUCompareOp compareOp;
-		public float minLod;
-		public float maxLod;
-		public SDL_PropertiesID props;
+		public UInt32 index;                     
+		public UInt32 pitch;                       
+		public SDL_GPUVertexInputRate input_rate;  
+		public UInt32 instance_step_rate;          
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUVertexBinding
+	public struct SDL_GPUVertexAttribute
 	{
-		public UInt32 binding;
-		public UInt32 stride;
-		public SDL_GPUVertexInputRate inputRate;
-		public UInt32 instanceStepRate; /* ignored unless inputRate is INSTANCE */
+		public UInt32 location;                    
+		public UInt32 binding_index;               
+		public SDL_GPUVertexElementFormat format;  
+		public UInt32 offset;                      
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUVertexAttribute
+	public struct SDL_GPUVertexInputState
 	{
-		public UInt32 location;
-		public UInt32 binding;
-		public SDL_GPUVertexElementFormat format;
-		public UInt32 offset;
+		public SDL_GPUVertexBinding* vertex_bindings;      
+		public UInt32 num_vertex_bindings;                       
+		public SDL_GPUVertexAttribute* vertex_attributes;  
+		public UInt32 num_vertex_attributes;                     
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUVertexInputState
+	public struct SDL_GPUStencilOpState
 	{
-		public SDL_GPUVertexBinding* vertexBindings;
-		public UInt32 vertexBindingCount;
-		public SDL_GPUVertexAttribute* vertexAttributes;
-		public UInt32 vertexAttributeCount;
+		public SDL_GPUStencilOp fail_op;        
+		public SDL_GPUStencilOp pass_op;        
+		public SDL_GPUStencilOp depth_fail_op;  
+		public SDL_GPUCompareOp compare_op;     
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUStencilOpState
+	public struct SDL_GPUColorTargetBlendState
 	{
-		public SDL_GPUStencilOp failOp;
-		public SDL_GPUStencilOp passOp;
-		public SDL_GPUStencilOp depthFailOp;
-		public SDL_GPUCompareOp compareOp;
+		public SDL_bool enable_blend;                        
+		public Byte padding1;
+		public Byte padding2;
+		public Byte padding3;
+		public SDL_GPUBlendFactor src_color_blendfactor;     
+		public SDL_GPUBlendFactor dst_color_blendfactor;     
+		public SDL_GPUBlendOp color_blend_op;                
+		public SDL_GPUBlendFactor src_alpha_blendfactor;     
+		public SDL_GPUBlendFactor dst_alpha_blendfactor;     
+		public SDL_GPUBlendOp alpha_blend_op;                
+		public SDL_GPUColorComponentFlags color_write_mask;  
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUColorAttachmentBlendState
+	public struct SDL_GPUShaderCreateInfo
 	{
-		public SDL_bool blendEnable;
-		public byte padding1;
-		public byte padding2;
-		public byte padding3;
-		public SDL_GPUBlendFactor srcColorBlendFactor;
-		public SDL_GPUBlendFactor dstColorBlendFactor;
-		public SDL_GPUBlendOp colorBlendOp;
-		public SDL_GPUBlendFactor srcAlphaBlendFactor;
-		public SDL_GPUBlendFactor dstAlphaBlendFactor;
-		public SDL_GPUBlendOp alphaBlendOp;
-		public SDL_GPUColorComponentFlags colorWriteMask;
+		public UInt32 code_size;             
+		public nint code;            
+		public nint entrypoint;       
+		public SDL_GPUShaderFormat format;   
+		public SDL_GPUShaderStage stage;     
+		public UInt32 num_samplers;          
+		public UInt32 num_storage_textures;  
+		public UInt32 num_storage_buffers;   
+		public UInt32 num_uniform_buffers;   
+
+		public SDL_PropertiesID props;       
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUShaderCreateInfo
+	public struct SDL_GPUTextureCreateInfo
 	{
-		public UInt64 codeSize;
-		public byte* code;
-		public byte* entryPointName;
-		public SDL_GPUShaderFormat format;
-		public SDL_GPUShaderStage stage;
-		public UInt32 samplerCount;
-		public UInt32 storageTextureCount;
-		public UInt32 storageBufferCount;
-		public UInt32 uniformBufferCount;
-		public SDL_PropertiesID props;
+		public SDL_GPUTextureType type;          
+		public SDL_GPUTextureFormat format;      
+		public SDL_GPUTextureUsageFlags usage;   
+		public UInt32 width;                     
+		public UInt32 height;                    
+		public UInt32 layer_count_or_depth;      
+		public UInt32 num_levels;                
+		public SDL_GPUSampleCount sample_count;  
+
+		public SDL_PropertiesID props;           
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUTextureCreateInfo
+	public struct SDL_GPUBufferCreateInfo
 	{
-		public SDL_GPUTextureType type;
-		public SDL_GPUTextureFormat format;
-		public SDL_GPUTextureUsageFlags usageFlags;
-		public UInt32 width;
-		public UInt32 height;
-		public UInt32 layerCountOrDepth;
-		public UInt32 levelCount;
-		public SDL_GPUSampleCount sampleCount;
-		public SDL_PropertiesID props;
+		public SDL_GPUBufferUsageFlags usage;  
+		public UInt32 size;                    
+
+		public SDL_PropertiesID props;         
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUBufferCreateInfo
+	public struct SDL_GPUTransferBufferCreateInfo
 	{
-		public SDL_GPUBufferUsageFlags usageFlags;
-		public UInt32 sizeInBytes;
-		public SDL_PropertiesID props;
+		public SDL_GPUTransferBufferUsage usage;  
+		public UInt32 size;                       
+
+		public SDL_PropertiesID props;            
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUTransferBufferCreateInfo
+	public struct SDL_GPURasterizerState
 	{
-		public SDL_GPUTransferBufferUsage usage;
-		public UInt32 sizeInBytes;
-		public SDL_PropertiesID props;
+		public SDL_GPUFillMode fill_mode;         
+		public SDL_GPUCullMode cull_mode;         
+		public SDL_GPUFrontFace front_face;       
+		public SDL_bool enable_depth_bias;        
+		public Byte padding1;
+		public Byte padding2;
+		public Byte padding3;
+		public float depth_bias_constant_factor;  
+		public float depth_bias_clamp;            
+		public float depth_bias_slope_factor;     
 	}
 
-	/* Pipeline state structures */
-
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPURasterizerState
+	public struct SDL_GPUMultisampleState
 	{
-		public SDL_GPUFillMode fillMode;
-		public SDL_GPUCullMode cullMode;
-		public SDL_GPUFrontFace frontFace;
-		public SDL_bool depthBiasEnable;
-		public byte padding1;
-		public byte padding2;
-		public byte padding3;
-		public float depthBiasConstantFactor;
-		public float depthBiasClamp;
-		public float depthBiasSlopeFactor;
+		public SDL_GPUSampleCount sample_count;  
+		public UInt32 sample_mask;               
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUMultisampleState
+	public struct SDL_GPUDepthStencilState
 	{
-		public SDL_GPUSampleCount sampleCount;
-		public UInt32 sampleMask;
+		public SDL_bool enable_depth_test;                 
+		public SDL_bool enable_depth_write;                
+		public SDL_bool enable_stencil_test;               
+		public Byte padding1;
+		public SDL_GPUCompareOp compare_op;                
+		public SDL_GPUStencilOpState back_stencil_state;   
+		public SDL_GPUStencilOpState front_stencil_state;  
+		public Byte compare_mask;                         
+		public Byte write_mask;                           
+		public Byte padding2;
+		public Byte padding3;
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUDepthStencilState
+	public struct SDL_GPUColorTargetDescription
 	{
-		public SDL_bool depthTestEnable;
-		public SDL_bool depthWriteEnable;
-		public SDL_bool stencilTestEnable;
-		public byte padding1;
-		public SDL_GPUCompareOp compareOp;
-		public SDL_GPUStencilOpState backStencilState;
-		public SDL_GPUStencilOpState frontStencilState;
-		public byte compareMask;
-		public byte writeMask;
-		public byte padding2;
-		public byte padding3;
+		public SDL_GPUTextureFormat format;               
+		public SDL_GPUColorTargetBlendState blend_state;  
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUColorAttachmentDescription
+	public struct SDL_GpuGraphicsPipelineTargetInfo
 	{
-		public SDL_GPUTextureFormat format;
-		public SDL_GPUColorAttachmentBlendState blendState;
+		public SDL_GPUColorTargetDescription* color_target_descriptions;  
+		public UInt32 num_color_targets;                                        
+		public SDL_bool has_depth_stencil_target;                               
+		public Byte padding1;
+		public Byte padding2;
+		public Byte padding3;
+		public SDL_GPUTextureFormat depth_stencil_format;                       
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUGraphicsPipelineAttachmentInfo
+	public struct SDL_GPUGraphicsPipelineCreateInfo
 	{
-		public SDL_GPUColorAttachmentDescription* colorAttachmentDescriptions;
-		public UInt32 colorAttachmentCount;
-		public SDL_bool hasDepthStencilAttachment;
-		public byte padding1;
-		public byte padding2;
-		public byte padding3;
-		public SDL_GPUTextureFormat depthStencilFormat;
+		public SDL_GPUShaderPtr vertex_shader;                   
+		public SDL_GPUShaderPtr fragment_shader;                 
+		public SDL_GPUVertexInputState vertex_input_state;     
+		public SDL_GPUPrimitiveType primitive_type;            
+		public SDL_GPURasterizerState rasterizer_state;        
+		public SDL_GPUMultisampleState multisample_state;      
+		public SDL_GPUDepthStencilState depth_stencil_state;   
+		public SDL_GpuGraphicsPipelineTargetInfo target_info;  
+
+		public SDL_PropertiesID props;                         
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUGraphicsPipelineCreateInfo
+	public struct SDL_GPUComputePipelineCreateInfo
 	{
-		public SDL_GPUShaderPtr vertexShader;
-		public SDL_GPUShaderPtr fragmentShader;
-		public SDL_GPUVertexInputState vertexInputState;
-		public SDL_GPUPrimitiveType primitiveType;
-		public SDL_GPURasterizerState rasterizerState;
-		public SDL_GPUMultisampleState multisampleState;
-		public SDL_GPUDepthStencilState depthStencilState;
-		public SDL_GPUGraphicsPipelineAttachmentInfo attachmentInfo;
-		public SDL_PropertiesID props;
+		public UInt32 code_size;                       
+		public nint code;                      
+		public nint entrypoint;                 
+		public SDL_GPUShaderFormat format;             
+		public UInt32 num_readonly_storage_textures;   
+		public UInt32 num_readonly_storage_buffers;    
+		public UInt32 num_writeonly_storage_textures;  
+		public UInt32 num_writeonly_storage_buffers;   
+		public UInt32 num_uniform_buffers;             
+		public UInt32 threadcount_x;                   
+		public UInt32 threadcount_y;                   
+		public UInt32 threadcount_z;                   
+
+		public SDL_PropertiesID props;                 
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUComputePipelineCreateInfo
+	public struct SDL_GPUColorTargetInfo
 	{
-		public UInt64 codeSize;
-		public byte* code;
-		public char* entryPointName;
-		public SDL_GPUShaderFormat format;
-		public UInt32 readOnlyStorageTextureCount;
-		public UInt32 readOnlyStorageBufferCount;
-		public UInt32 writeOnlyStorageTextureCount;
-		public UInt32 writeOnlyStorageBufferCount;
-		public UInt32 uniformBufferCount;
-		public UInt32 threadCountX;
-		public UInt32 threadCountY;
-		public UInt32 threadCountZ;
-		public SDL_PropertiesID props;
+		public SDL_GPUTexturePtr texture;      
+		public UInt32 mip_level;             
+		public UInt32 layer_or_depth_plane;  
+		public SDL_FColor clear_color;       
+		public SDL_GPULoadOp load_op;        
+		public SDL_GPUStoreOp store_op;      
+		public SDL_bool cycle;               
+		public Byte padding1;
+		public Byte padding2;
+		public Byte padding3;
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUColorAttachmentInfo
+	public struct SDL_GPUDepthStencilTargetInfo
 	{
-		public SDL_GPUTexturePtr texture;
-		public UInt32 mipLevel;
-		public UInt32 layerOrDepthPlane;
-		public SDL_FColor clearColor;
-		public SDL_GPULoadOp loadOp;
-		public SDL_GPUStoreOp storeOp;
-		public SDL_bool cycle;
-		public byte padding1;
-		public byte padding2;
-		public byte padding3;
+		public SDL_GPUTexturePtr texture;               
+		public float clear_depth;                     
+		public SDL_GPULoadOp load_op;                 
+		public SDL_GPUStoreOp store_op;               
+		public SDL_GPULoadOp stencil_load_op;         
+		public SDL_GPUStoreOp stencil_store_op;       
+		public SDL_bool cycle;                        
+		public Byte clear_stencil;                   
+		public Byte padding1;
+		public Byte padding2;
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUDepthStencilAttachmentInfo
-	{
-		public SDL_GPUTexturePtr texture;
-		public SDL_GPUDepthStencilValue depthStencilClearValue;
-		public SDL_GPULoadOp loadOp;
-		public SDL_GPUStoreOp storeOp;
-		public SDL_GPULoadOp stencilLoadOp;
-		public SDL_GPUStoreOp stencilStoreOp;
-		public SDL_bool cycle;
-		public byte padding1;
-		public byte padding2;
-		public byte padding3;
+	public struct SDL_GPUBlitInfo {
+		public SDL_GPUBlitRegion source;       
+		public SDL_GPUBlitRegion destination;  
+		public SDL_GPULoadOp load_op;          
+		public SDL_FColor clear_color;         
+		public SDL_FlipMode flip_mode;         
+		public SDL_GPUFilter filter;           
+		public SDL_bool cycle;                 
+		public Byte padding;
+		public Byte padding2;
+		public Byte padding3;
 	}
 
-	/* Binding structs */
-
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUBufferBinding
+	public struct SDL_GPUBufferBinding
 	{
-		public SDL_GPUBufferPtr buffer;
-		public UInt32 offset;
+		public SDL_GPUBufferPtr buffer;  
+		public UInt32 offset;          
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUTextureSamplerBinding
+	public struct SDL_GPUTextureSamplerBinding
 	{
-		public SDL_GPUTexturePtr texture;
-		public SDL_GPUSamplerPtr sampler;
+		public SDL_GPUTexturePtr texture;  
+		public SDL_GPUSamplerPtr sampler;  
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUStorageBufferWriteOnlyBinding
+	public struct SDL_GPUStorageBufferWriteOnlyBinding
 	{
-		public SDL_GPUBufferPtr buffer;
-		public SDL_bool cycle;
-		public byte padding1;
-		public byte padding2;
-		public byte padding3;
+		public SDL_GPUBufferPtr buffer;  
+		public SDL_bool cycle;         
+		public Byte padding1;
+		public Byte padding2;
+		public Byte padding3;
 	}
 
-	
 	[StructLayout(LayoutKind.Sequential)]
-	public unsafe struct SDL_GPUStorageTextureWriteOnlyBinding
+	public struct SDL_GPUStorageTextureWriteOnlyBinding
 	{
-		public SDL_GPUTexturePtr texture;
-		public UInt32 mipLevel;
-		public UInt32 layer;
-		public SDL_bool cycle;
-		public byte padding1;
-		public byte padding2;
-		public byte padding3;
+		public SDL_GPUTexturePtr texture;  
+		public UInt32 mip_level;         
+		public UInt32 layer;             
+		public SDL_bool cycle;           
+		public Byte padding1;
+		public Byte padding2;
+		public Byte padding3;
 	}
-
-	/* Functions */
-
-	/* Device */
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_GPUDevicePtr SDL_CreateGPUDevice(
-		SDL_GPUShaderFormat formatFlags,
-		SDL_bool debugMode,
-		char* name);
+	public static partial SDL_GPUDevicePtr SDL_CreateGPUDevice(
+		SDL_GPUShaderFormat format_flags,
+		SDL_bool debug_mode,
+		nint name);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_GPUDevicePtr SDL_CreateGPUDeviceWithProperties(
+	public static partial SDL_GPUDevicePtr SDL_CreateGPUDeviceWithProperties(
 		SDL_PropertiesID props);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_DestroyGPUDevice(SDL_GPUDevicePtr device);
+	public static partial void SDL_DestroyGPUDevice(SDL_GPUDevicePtr device);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_GPUDriver SDL_GetGPUDriver(SDL_GPUDevicePtr device);
-
-	/* State Creation */
+	public static partial SDL_GPUDriver SDL_GetGPUDriver(SDL_GPUDevicePtr device);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_GPUComputePipelinePtr SDL_CreateGPUComputePipeline(
+	public static partial SDL_GPUComputePipelinePtr SDL_CreateGPUComputePipeline(
 		SDL_GPUDevicePtr device,
-		SDL_GPUComputePipelineCreateInfo* computePipelineCreateInfo);
+		SDL_GPUComputePipelineCreateInfo* createinfo);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_GPUGraphicsPipelinePtr SDL_CreateGPUGraphicsPipeline(
+	public static partial SDL_GPUGraphicsPipelinePtr SDL_CreateGPUGraphicsPipeline(
 		SDL_GPUDevicePtr device,
-		SDL_GPUGraphicsPipelineCreateInfo* pipelineCreateInfo);
+		SDL_GPUGraphicsPipelineCreateInfo* createinfo);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_GPUSamplerPtr SDL_CreateGPUSampler(
+	public static partial SDL_GPUSamplerPtr SDL_CreateGPUSampler(
 		SDL_GPUDevicePtr device,
-		SDL_GPUSamplerCreateInfo* samplerCreateInfo);
+		SDL_GPUSamplerCreateInfo* createinfo);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_GPUShaderPtr SDL_CreateGPUShader(
+	public static partial SDL_GPUShaderPtr SDL_CreateGPUShader(
 		SDL_GPUDevicePtr device,
-		SDL_GPUShaderCreateInfo* shaderCreateInfo);
+		SDL_GPUShaderCreateInfo* createinfo);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_GPUTexturePtr SDL_CreateGPUTexture(
+	public static partial SDL_GPUTexturePtr SDL_CreateGPUTexture(
 		SDL_GPUDevicePtr device,
-		SDL_GPUTextureCreateInfo* textureCreateInfo);
+		SDL_GPUTextureCreateInfo* createinfo);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_GPUBufferPtr SDL_CreateGPUBuffer(
+	public static partial SDL_GPUBufferPtr SDL_CreateGPUBuffer(
 		SDL_GPUDevicePtr device,
-		SDL_GPUBufferCreateInfo* bufferCreateInfo);
+		SDL_GPUBufferCreateInfo* createinfo);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_GPUTransferBufferPtr SDL_CreateGPUTransferBuffer(
+	public static partial SDL_GPUTransferBufferPtr SDL_CreateGPUTransferBuffer(
 		SDL_GPUDevicePtr device,
-		SDL_GPUTransferBufferCreateInfo* transferBufferCreateInfo);
-
-	/* Debug Naming */
+		SDL_GPUTransferBufferCreateInfo* createinfo);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_SetGPUBufferName(
+	public static partial void SDL_SetGPUBufferName(
 		SDL_GPUDevicePtr device,
 		SDL_GPUBufferPtr buffer,
-		char* text);
+		nint text);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_SetGPUTextureName(
+	public static partial void SDL_SetGPUTextureName(
 		SDL_GPUDevicePtr device,
 		SDL_GPUTexturePtr texture,
-		char* text);
+		nint text);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_InsertGPUDebugLabel(
-		SDL_GPUCommandBufferPtr commandBuffer,
-		char* text);
+	public static partial void SDL_InsertGPUDebugLabel(
+		SDL_GPUCommandBufferPtr command_buffer,
+		nint text);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_PushGPUDebugGroup(
-		SDL_GPUCommandBufferPtr commandBuffer,
-		char* name);
+	public static partial void SDL_PushGPUDebugGroup(
+		SDL_GPUCommandBufferPtr command_buffer,
+		nint name);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_PopGPUDebugGroup(
-		SDL_GPUCommandBufferPtr commandBuffer);
-
-	/* Disposal */
+	public static partial void SDL_PopGPUDebugGroup(
+		SDL_GPUCommandBufferPtr command_buffer);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_ReleaseGPUTexture(
+	public static partial void SDL_ReleaseGPUTexture(
 		SDL_GPUDevicePtr device,
 		SDL_GPUTexturePtr texture);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_ReleaseGPUSampler(
+	public static partial void SDL_ReleaseGPUSampler(
 		SDL_GPUDevicePtr device,
 		SDL_GPUSamplerPtr sampler);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_ReleaseGPUBuffer(
+	public static partial void SDL_ReleaseGPUBuffer(
 		SDL_GPUDevicePtr device,
 		SDL_GPUBufferPtr buffer);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_ReleaseGPUTransferBuffer(
+	public static partial void SDL_ReleaseGPUTransferBuffer(
 		SDL_GPUDevicePtr device,
-		SDL_GPUTransferBufferPtr transferBuffer);
+		SDL_GPUTransferBufferPtr transfer_buffer);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_ReleaseGPUComputePipeline(
+	public static partial void SDL_ReleaseGPUComputePipeline(
 		SDL_GPUDevicePtr device,
-		SDL_GPUComputePipelinePtr computePipeline);
+		SDL_GPUComputePipelinePtr compute_pipeline);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_ReleaseGPUShader(
+	public static partial void SDL_ReleaseGPUShader(
 		SDL_GPUDevicePtr device,
 		SDL_GPUShaderPtr shader);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_ReleaseGPUGraphicsPipeline(
+	public static partial void SDL_ReleaseGPUGraphicsPipeline(
 		SDL_GPUDevicePtr device,
-		SDL_GPUGraphicsPipelinePtr graphicsPipeline);
+		SDL_GPUGraphicsPipelinePtr graphics_pipeline);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_GPUCommandBufferPtr SDL_AcquireGPUCommandBuffer(
+	public static partial SDL_GPUCommandBufferPtr SDL_AcquireGPUCommandBuffer(
 		SDL_GPUDevicePtr device);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_PushGPUVertexUniformData(
-		SDL_GPUCommandBufferPtr commandBuffer,
-		UInt32 slotIndex,
-		void* data,
-		UInt32 dataLengthInBytes);
+	public static partial void SDL_PushGPUVertexUniformData(
+		SDL_GPUCommandBufferPtr command_buffer,
+		UInt32 slot_index,
+		nint data,
+		UInt32 length);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_PushGPUFragmentUniformData(
-		SDL_GPUCommandBufferPtr commandBuffer,
-		UInt32 slotIndex,
-		void* data,
-		UInt32 dataLengthInBytes);
+	public static partial void SDL_PushGPUFragmentUniformData(
+		SDL_GPUCommandBufferPtr command_buffer,
+		UInt32 slot_index,
+		nint data,
+		UInt32 length);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_PushGPUComputeUniformData(
-		SDL_GPUCommandBufferPtr commandBuffer,
-		UInt32 slotIndex,
-		void* data,
-		UInt32 dataLengthInBytes);
-
-	/* Graphics State */
+	public static partial void SDL_PushGPUComputeUniformData(
+		SDL_GPUCommandBufferPtr command_buffer,
+		UInt32 slot_index,
+		nint data,
+		UInt32 length);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_GPURenderPassPtr SDL_BeginGPURenderPass(
-		SDL_GPUCommandBufferPtr commandBuffer,
-		SDL_GPUColorAttachmentInfo* colorAttachmentInfos,
-		UInt32 colorAttachmentCount,
-		SDL_GPUDepthStencilAttachmentInfo* depthStencilAttachmentInfo);
+	public static partial SDL_GPURenderPassPtr SDL_BeginGPURenderPass(
+		SDL_GPUCommandBufferPtr command_buffer,
+		SDL_GPUColorTargetInfo* color_target_infos,
+		UInt32 num_color_targets,
+		SDL_GPUDepthStencilTargetInfo* depth_stencil_target_info);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_BindGPUGraphicsPipeline(
-		SDL_GPURenderPassPtr renderPass,
-		SDL_GPUGraphicsPipelinePtr graphicsPipeline);
+	public static partial void SDL_BindGPUGraphicsPipeline(
+		SDL_GPURenderPassPtr render_pass,
+		SDL_GPUGraphicsPipelinePtr graphics_pipeline);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_SetGPUViewport(
-		SDL_GPURenderPassPtr renderPass,
+	public static partial void SDL_SetGPUViewport(
+		SDL_GPURenderPassPtr render_pass,
 		SDL_GPUViewport* viewport);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_SetGPUScissor(
-		SDL_GPURenderPassPtr renderPass,
+	public static partial void SDL_SetGPUScissor(
+		SDL_GPURenderPassPtr render_pass,
 		SDL_Rect* scissor);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_SetGPUBlendConstants(
-		SDL_GPURenderPassPtr renderPass,
-		SDL_FColor blendConstants);
+	public static partial void SDL_SetGPUBlendConstants(
+		SDL_GPURenderPassPtr render_pass,
+		SDL_FColor blend_constants);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_SetGPUStencilReference(
-		SDL_GPURenderPassPtr renderPass,
-		byte reference);
+	public static partial void SDL_SetGPUStencilReference(
+		SDL_GPURenderPassPtr render_pass,
+		Byte reference);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_BindGPUVertexBuffers(
-		SDL_GPURenderPassPtr renderPass,
-		UInt32 firstBinding,
-		SDL_GPUBufferBinding* pBindings,
-		UInt32 bindingCount);
+	public static partial void SDL_BindGPUVertexBuffers(
+		SDL_GPURenderPassPtr render_pass,
+		UInt32 first_binding,
+		SDL_GPUBufferBinding* bindings,
+		UInt32 num_bindings);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_BindGPUIndexBuffer(
-		SDL_GPURenderPassPtr renderPass,
-		SDL_GPUBufferBinding* pBinding,
-		SDL_GPUIndexElementSize indexElementSize);
+	public static partial void SDL_BindGPUIndexBuffer(
+		SDL_GPURenderPassPtr render_pass,
+		SDL_GPUBufferBinding* binding,
+		SDL_GPUIndexElementSize index_element_size);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_BindGPUVertexSamplers(
-		SDL_GPURenderPassPtr renderPass,
-		UInt32 firstSlot,
-		SDL_GPUTextureSamplerBinding* textureSamplerBindings,
-		UInt32 bindingCount);
+	public static partial void SDL_BindGPUVertexSamplers(
+		SDL_GPURenderPassPtr render_pass,
+		UInt32 first_slot,
+		SDL_GPUTextureSamplerBinding* texture_sampler_bindings,
+		UInt32 num_bindings);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_BindGPUVertexStorageTextures(
-		SDL_GPURenderPassPtr renderPass,
-		UInt32 firstSlot,
-		SDL_GPUTexturePtr* storageTextures,
-		UInt32 bindingCount);
+	public static partial void SDL_BindGPUVertexStorageTextures(
+		SDL_GPURenderPassPtr render_pass,
+		UInt32 first_slot,
+		SDL_GPUTexturePtr* storage_textures,
+		UInt32 num_bindings);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_BindGPUVertexStorageBuffers(
-		SDL_GPURenderPassPtr renderPass,
-		UInt32 firstSlot,
-		SDL_GPUBufferPtr* storageBuffers,
-		UInt32 bindingCount);
+	public static partial void SDL_BindGPUVertexStorageBuffers(
+		SDL_GPURenderPassPtr render_pass,
+		UInt32 first_slot,
+		SDL_GPUBufferPtr* storage_buffers,
+		UInt32 num_bindings);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_BindGPUFragmentSamplers(
-		SDL_GPURenderPassPtr renderPass,
-		UInt32 firstSlot,
-		SDL_GPUTextureSamplerBinding* textureSamplerBindings,
-		UInt32 bindingCount);
+	public static partial void SDL_BindGPUFragmentSamplers(
+		SDL_GPURenderPassPtr render_pass,
+		UInt32 first_slot,
+		SDL_GPUTextureSamplerBinding* texture_sampler_bindings,
+		UInt32 num_bindings);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_BindGPUFragmentStorageTextures(
-		SDL_GPURenderPassPtr renderPass,
-		UInt32 firstSlot,
-		SDL_GPUTexturePtr* storageTextures,
-		UInt32 bindingCount);
+	public static partial void SDL_BindGPUFragmentStorageTextures(
+		SDL_GPURenderPassPtr render_pass,
+		UInt32 first_slot,
+		SDL_GPUTexturePtr* storage_textures,
+		UInt32 num_bindings);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_BindGPUFragmentStorageBuffers(
-		SDL_GPURenderPassPtr renderPass,
-		UInt32 firstSlot,
-		SDL_GPUBufferPtr* storageBuffers,
-		UInt32 bindingCount);
-
-	/* Drawing */
+	public static partial void SDL_BindGPUFragmentStorageBuffers(
+		SDL_GPURenderPassPtr render_pass,
+		UInt32 first_slot,
+		SDL_GPUBufferPtr* storage_buffers,
+		UInt32 num_bindings);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_DrawGPUIndexedPrimitives(
-		SDL_GPURenderPassPtr renderPass,
-		UInt32 indexCount,
-		UInt32 instanceCount,
-		UInt32 firstIndex,
-		Int32 vertexOffset,
-		UInt32 firstInstance);
+	public static partial void SDL_DrawGPUIndexedPrimitives(
+		SDL_GPURenderPassPtr render_pass,
+		UInt32 num_indices,
+		UInt32 num_instances,
+		UInt32 first_index,
+		Int32 vertex_offset,
+		UInt32 first_instance);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_DrawGPUPrimitives(
-		SDL_GPURenderPassPtr renderPass,
-		UInt32 vertexCount,
-		UInt32 instanceCount,
-		UInt32 firstVertex,
-		UInt32 firstInstance);
+	public static partial void SDL_DrawGPUPrimitives(
+		SDL_GPURenderPassPtr render_pass,
+		UInt32 num_vertices,
+		UInt32 num_instances,
+		UInt32 first_vertex,
+		UInt32 first_instance);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_DrawGPUPrimitivesIndirect(
-		SDL_GPURenderPassPtr renderPass,
+	public static partial void SDL_DrawGPUPrimitivesIndirect(
+		SDL_GPURenderPassPtr render_pass,
 		SDL_GPUBufferPtr buffer,
-		UInt32 offsetInBytes,
-		UInt32 drawCount,
-		UInt32 stride);
+		UInt32 offset,
+		UInt32 draw_count,
+		UInt32 pitch);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_DrawGPUIndexedPrimitivesIndirect(
-		SDL_GPURenderPassPtr renderPass,
+	public static partial void SDL_DrawGPUIndexedPrimitivesIndirect(
+		SDL_GPURenderPassPtr render_pass,
 		SDL_GPUBufferPtr buffer,
-		UInt32 offsetInBytes,
-		UInt32 drawCount,
-		UInt32 stride);
+		UInt32 offset,
+		UInt32 draw_count,
+		UInt32 pitch);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_EndGPURenderPass(
-		SDL_GPURenderPassPtr renderPass);
-
-	/* Compute Pass */
+	public static partial void SDL_EndGPURenderPass(
+		SDL_GPURenderPassPtr render_pass);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_GPUComputePassPtr SDL_BeginGPUComputePass(
-		SDL_GPUCommandBufferPtr commandBuffer,
-		SDL_GPUStorageTextureWriteOnlyBinding* storageTextureBindings,
-		UInt32 storageTextureBindingCount,
-		SDL_GPUStorageBufferWriteOnlyBinding* storageBufferBindings,
-		UInt32 storageBufferBindingCount);
+	public static partial SDL_GPUComputePassPtr SDL_BeginGPUComputePass(
+		SDL_GPUCommandBufferPtr command_buffer,
+		SDL_GPUStorageTextureWriteOnlyBinding* storage_texture_bindings,
+		UInt32 num_storage_texture_bindings,
+		SDL_GPUStorageBufferWriteOnlyBinding* storage_buffer_bindings,
+		UInt32 num_storage_buffer_bindings);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_BindGPUComputePipeline(
-		SDL_GPUComputePassPtr computePass,
-		SDL_GPUComputePipelinePtr computePipeline);
+	public static partial void SDL_BindGPUComputePipeline(
+		SDL_GPUComputePassPtr compute_pass,
+		SDL_GPUComputePipelinePtr compute_pipeline);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_BindGPUComputeStorageTextures(
-		SDL_GPUComputePassPtr computePass,
-		UInt32 firstSlot,
-		SDL_GPUTexturePtr* storageTextures,
-		UInt32 bindingCount);
+	public static partial void SDL_BindGPUComputeStorageTextures(
+		SDL_GPUComputePassPtr compute_pass,
+		UInt32 first_slot,
+		SDL_GPUTexturePtr* storage_textures,
+		UInt32 num_bindings);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_BindGPUComputeStorageBuffers(
-		SDL_GPUComputePassPtr computePass,
-		UInt32 firstSlot,
-		SDL_GPUBufferPtr* storageBuffers,
-		UInt32 bindingCount);
+	public static partial void SDL_BindGPUComputeStorageBuffers(
+		SDL_GPUComputePassPtr compute_pass,
+		UInt32 first_slot,
+		SDL_GPUBufferPtr* storage_buffers,
+		UInt32 num_bindings);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_DispatchGPUCompute(
-		SDL_GPUComputePassPtr computePass,
-		UInt32 groupCountX,
-		UInt32 groupCountY,
-		UInt32 groupCountZ);
+	public static partial void SDL_DispatchGPUCompute(
+		SDL_GPUComputePassPtr compute_pass,
+		UInt32 groupcount_x,
+		UInt32 groupcount_y,
+		UInt32 groupcount_z);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_DispatchGPUComputeIndirect(
-		SDL_GPUComputePassPtr computePass,
+	public static partial void SDL_DispatchGPUComputeIndirect(
+		SDL_GPUComputePassPtr compute_pass,
 		SDL_GPUBufferPtr buffer,
-		UInt32 offsetInBytes);
+		UInt32 offset);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_EndGPUComputePass(
-		SDL_GPUComputePassPtr computePass);
-
-	/* TransferBuffer Data */
+	public static partial void SDL_EndGPUComputePass(
+		SDL_GPUComputePassPtr compute_pass);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void* SDL_MapGPUTransferBuffer(
+	public static partial void* SDL_MapGPUTransferBuffer(
 		SDL_GPUDevicePtr device,
-		SDL_GPUTransferBufferPtr transferBuffer,
+		SDL_GPUTransferBufferPtr transfer_buffer,
 		SDL_bool cycle);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_UnmapGPUTransferBuffer(
+	public static partial void SDL_UnmapGPUTransferBuffer(
 		SDL_GPUDevicePtr device,
-		SDL_GPUTransferBufferPtr transferBuffer);
-
-	/* Copy Pass */
+		SDL_GPUTransferBufferPtr transfer_buffer);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_GPUCopyPassPtr SDL_BeginGPUCopyPass(
-		SDL_GPUCommandBufferPtr commandBuffer);
+	public static partial SDL_GPUCopyPassPtr SDL_BeginGPUCopyPass(
+		SDL_GPUCommandBufferPtr command_buffer);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_UploadToGPUTexture(
-		SDL_GPUCopyPassPtr copyPass,
+	public static partial void SDL_UploadToGPUTexture(
+		SDL_GPUCopyPassPtr copy_pass,
 		SDL_GPUTextureTransferInfo* source,
 		SDL_GPUTextureRegion* destination,
 		SDL_bool cycle);
 
-	/* Uploads data from a TransferBuffer to a Buffer. */
-
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_UploadToGPUBuffer(
-		SDL_GPUCopyPassPtr copyPass,
+	public static partial void SDL_UploadToGPUBuffer(
+		SDL_GPUCopyPassPtr copy_pass,
 		SDL_GPUTransferBufferLocation* source,
 		SDL_GPUBufferRegion* destination,
 		SDL_bool cycle);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_CopyGPUTextureToTexture(
-		SDL_GPUCopyPassPtr copyPass,
+	public static partial void SDL_CopyGPUTextureToTexture(
+		SDL_GPUCopyPassPtr copy_pass,
 		SDL_GPUTextureLocation* source,
 		SDL_GPUTextureLocation* destination,
 		UInt32 w,
@@ -1196,135 +1124,127 @@ internal static partial class SDL3
 		UInt32 d,
 		SDL_bool cycle);
 
-	/* Copies data from a buffer to a buffer. */
-
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_CopyGPUBufferToBuffer(
-		SDL_GPUCopyPassPtr copyPass,
+	public static partial void SDL_CopyGPUBufferToBuffer(
+		SDL_GPUCopyPassPtr copy_pass,
 		SDL_GPUBufferLocation* source,
 		SDL_GPUBufferLocation* destination,
 		UInt32 size,
 		SDL_bool cycle);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_DownloadFromGPUTexture(
-		SDL_GPUCopyPassPtr copyPass,
+	public static partial void SDL_DownloadFromGPUTexture(
+		SDL_GPUCopyPassPtr copy_pass,
 		SDL_GPUTextureRegion* source,
 		SDL_GPUTextureTransferInfo* destination);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_DownloadFromGPUBuffer(
-		SDL_GPUCopyPassPtr copyPass,
+	public static partial void SDL_DownloadFromGPUBuffer(
+		SDL_GPUCopyPassPtr copy_pass,
 		SDL_GPUBufferRegion* source,
 		SDL_GPUTransferBufferLocation* destination);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_EndGPUCopyPass(
-		SDL_GPUCopyPassPtr copyPass);
+	public static partial void SDL_EndGPUCopyPass(
+		SDL_GPUCopyPassPtr copy_pass);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_GenerateMipmapsForGPUTexture(
-		SDL_GPUCommandBufferPtr commandBuffer,
+	public static partial void SDL_GenerateMipmapsForGPUTexture(
+		SDL_GPUCommandBufferPtr command_buffer,
 		SDL_GPUTexturePtr texture);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_BlitGPUTexture(
-		SDL_GPUCommandBufferPtr commandBuffer,
-		SDL_GPUBlitRegion* source,
-		SDL_GPUBlitRegion* destination,
-		SDL_FlipMode flipMode,
-		SDL_GPUFilter filterMode,
-		SDL_bool cycle);
-
-	/* Submission/Presentation */
+	public static partial void SDL_BlitGPUTexture(
+		SDL_GPUCommandBufferPtr command_buffer,
+		SDL_GPUBlitInfo* info);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_bool SDL_WindowSupportsGPUSwapchainComposition(
+	public static partial SDL_bool SDL_WindowSupportsGPUSwapchainComposition(
 		SDL_GPUDevicePtr device,
 		SDL_WindowPtr window,
-		SDL_GPUSwapchainComposition swapchainComposition);
+		SDL_GPUSwapchainComposition swapchain_composition);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_bool SDL_WindowSupportsGPUPresentMode(
+	public static partial SDL_bool SDL_WindowSupportsGPUPresentMode(
 		SDL_GPUDevicePtr device,
 		SDL_WindowPtr window,
-		SDL_GPUPresentMode presentMode);
+		SDL_GPUPresentMode present_mode);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_bool SDL_ClaimWindowForGPUDevice(
+	public static partial SDL_bool SDL_ClaimWindowForGPUDevice(
 		SDL_GPUDevicePtr device,
 		SDL_WindowPtr window);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_ReleaseWindowFromGPUDevice(
+	public static partial void SDL_ReleaseWindowFromGPUDevice(
 		SDL_GPUDevicePtr device,
 		SDL_WindowPtr window);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_bool SDL_SetGPUSwapchainParameters(
+	public static partial SDL_bool SDL_SetGPUSwapchainParameters(
 		SDL_GPUDevicePtr device,
 		SDL_WindowPtr window,
-		SDL_GPUSwapchainComposition swapchainComposition,
-		SDL_GPUPresentMode presentMode);
+		SDL_GPUSwapchainComposition swapchain_composition,
+		SDL_GPUPresentMode present_mode);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_GPUTextureFormat SDL_GetGPUSwapchainTextureFormat(
+	public static partial SDL_GPUTextureFormat SDL_GetGPUSwapchainTextureFormat(
 		SDL_GPUDevicePtr device,
 		SDL_WindowPtr window);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_GPUTexturePtr SDL_AcquireGPUSwapchainTexture(
-		SDL_GPUCommandBufferPtr commandBuffer,
+	public static partial SDL_GPUTexturePtr SDL_AcquireGPUSwapchainTexture(
+		SDL_GPUCommandBufferPtr command_buffer,
 		SDL_WindowPtr window,
-		UInt32* pWidth,
-		UInt32* pHeight);
+		UInt32* w,
+		UInt32* h);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_SubmitGPUCommandBuffer(
-		SDL_GPUCommandBufferPtr commandBuffer);
+	public static partial void SDL_SubmitGPUCommandBuffer(
+		SDL_GPUCommandBufferPtr command_buffer);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_GPUFencePtr SDL_SubmitGPUCommandBufferAndAcquireFence(
-		SDL_GPUCommandBufferPtr commandBuffer);
+	public static partial SDL_GPUFencePtr SDL_SubmitGPUCommandBufferAndAcquireFence(
+		SDL_GPUCommandBufferPtr command_buffer);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_WaitForGPUIdle(
+	public static partial void SDL_WaitForGPUIdle(
 		SDL_GPUDevicePtr device);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_WaitForGPUFences(
+	public static partial void SDL_WaitForGPUFences(
 		SDL_GPUDevicePtr device,
-		SDL_bool waitAll,
-		SDL_GPUFencePtr* pFences,
-		UInt32 fenceCount);
+		SDL_bool wait_all,
+		SDL_GPUFencePtr* fences,
+		UInt32 num_fences);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_bool SDL_QueryGPUFence(
+	public static partial SDL_bool SDL_QueryGPUFence(
+		SDL_GPUDevicePtr device,
+		SDL_GPUFencePtr fence);
+
+
+	[LibraryImport(DLL)]
+	public static partial void SDL_ReleaseGPUFence(
 		SDL_GPUDevicePtr device,
 		SDL_GPUFencePtr fence);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial void SDL_ReleaseGPUFence(
-		SDL_GPUDevicePtr device,
-		SDL_GPUFencePtr fence);
+	public static partial UInt32 SDL_GPUTextureFormatTexelBlockSize(
+		SDL_GPUTextureFormat format);
 
-	/* Format Info */
 
 	[LibraryImport(DLL)]
-	public static unsafe partial UInt32 SDL_GPUTextureFormatTexelBlockSize(
-		SDL_GPUTextureFormat textureFormat);
-
-	[LibraryImport(DLL)]
-	public static unsafe partial SDL_bool SDL_GPUTextureSupportsFormat(
+	public static partial SDL_bool SDL_GPUTextureSupportsFormat(
 		SDL_GPUDevicePtr device,
 		SDL_GPUTextureFormat format,
 		SDL_GPUTextureType type,
 		SDL_GPUTextureUsageFlags usage);
 
 	[LibraryImport(DLL)]
-	public static unsafe partial SDL_bool SDL_GPUTextureSupportsSampleCount(
+	public static partial SDL_bool SDL_GPUTextureSupportsSampleCount(
 		SDL_GPUDevicePtr device,
 		SDL_GPUTextureFormat format,
-		SDL_GPUSampleCount sampleCount);
+		SDL_GPUSampleCount sample_count);
 
 }
