@@ -88,6 +88,7 @@ internal static unsafe partial class Renderer
 
 	public static void Startup(nint window)
 	{
+		Log.Info($"Graphics Driver: SDL_GPU [{Driver}]");
 		Renderer.window = window;
 
 		if (SDL_ClaimWindowForGPUDevice(device, window) != 1)
@@ -117,8 +118,8 @@ internal static unsafe partial class Renderer
 
 		// default texture we fall back to rendering if passed a material with a missing texture
 		emptyDefaultTexture = CreateTexture(1, 1, TextureFormat.R8G8B8A8, false);
-	
-		Log.Info($"Graphics Driver: SDL_GPU [{Driver}]");
+		var data = stackalloc Color[1] { 0xe82979 };
+		SetTextureData(emptyDefaultTexture, data, 4);
 	}
 
 	public static void Shutdown()
@@ -885,7 +886,7 @@ internal static unsafe partial class Renderer
 				multisample_state = new()
 				{
 					sample_count = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1,
-					sample_mask = 0xFFFF
+					sample_mask = 0xFFFFFFFF
 				},
 				depth_stencil_state = new()
 				{

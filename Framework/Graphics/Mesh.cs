@@ -1,11 +1,9 @@
-using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
 
 /// <summary>
-/// The Mesh contains a buffer of Vertices and optionally a buffer of Indices
-/// used during a DrawCommand.
+/// The Mesh contains a Vertex and Index Buffer used for drawing.
+/// Used in a <seealso cref="DrawCommand"/>.
 /// </summary>
 public class Mesh : IResource
 {
@@ -39,7 +37,7 @@ public class Mesh : IResource
 	/// </summary>
 	public VertexFormat? VertexFormat { get; private set; }
 
-	internal IntPtr resource { get; private set; }
+	internal nint resource { get; private set; }
 	private bool disposed = false;
 
 	/// <summary>
@@ -68,28 +66,49 @@ public class Mesh : IResource
 			_ => throw new NotImplementedException(),
 		};
 
-	/// <summary>
-	/// Uploads the Index Data to the Mesh
-	/// </summary>
-	public unsafe void SetIndices<T>(ReadOnlySpan<T> indices) where T : struct
+	private unsafe void SetIndicesSpan<T>(ReadOnlySpan<T> indices) where T : unmanaged
 	{
-		fixed (byte* ptr = MemoryMarshal.AsBytes(indices))
-		{
-			SetIndices(new IntPtr(ptr), indices.Length, GetIndexFormat<T>());
-		}
+		fixed (void* ptr = indices)
+			SetIndices(new nint(ptr), indices.Length, GetIndexFormat<T>());
+	}
+
+	private unsafe void SetSubIndicesSpan<T>(int offset, ReadOnlySpan<T> indices) where T : unmanaged
+	{
+		if (!IndexFormat.HasValue || IndexFormat.Value != GetIndexFormat<T>())
+			throw new Exception("Index Format mismatch; SetSubIndices must use the existing Format set in SetIndices");
+
+		fixed (void* ptr = indices)
+			SetSubIndices(offset, new nint(ptr), indices.Length);
 	}
 
 	/// <summary>
-	/// Recreates the Index Data to a given size in the Mesh
+	/// Recreates the Mesh's Index Buffer to a given number of indices of the given format.
 	/// </summary>
-	public unsafe void SetIndices<T>(int count, IndexFormat format) where T : struct
-	{
-		SetIndices(IntPtr.Zero, count, format);
-	}
+	public unsafe void SetIndices(int count, IndexFormat format)
+		=> SetIndices(nint.Zero, count, format);
 
 	/// <summary>
-	/// Uploads the Index data to the Mesh.
+	/// Recreates the Mesh's Index Buffer to a given index data.
 	/// </summary>
+	public unsafe void SetIndices(ReadOnlySpan<ushort> indices)
+		=> SetIndicesSpan(indices);
+
+	/// <inheritdoc cref="SetIndices(ReadOnlySpan{ushort})"/>
+	public unsafe void SetIndices(ReadOnlySpan<short> indices)
+		=> SetIndicesSpan(indices);
+
+	/// <inheritdoc cref="SetIndices(ReadOnlySpan{ushort})"/>
+	public unsafe void SetIndices(ReadOnlySpan<uint> indices)
+		=> SetIndicesSpan(indices);
+
+	/// <inheritdoc cref="SetIndices(ReadOnlySpan{ushort})"/>
+	public unsafe void SetIndices(ReadOnlySpan<int> indices)
+		=> SetIndicesSpan(indices);
+
+	/// <inheritdoc cref="SetIndices(ReadOnlySpan{ushort})"/>
+	/// <param name="data">The Index Data to apply</param>
+	/// <param name="count">The number of indices to set. Note this is the number of vertices, not the size.</param>
+	/// <param name="format">The Index Format to use, which is used to calculate the total size in bytes.</param>
 	public void SetIndices(nint data, int count, IndexFormat format)
 	{
 		if (IsDisposed)
@@ -110,26 +129,26 @@ public class Mesh : IResource
 	}
 
 	/// <summary>
-	/// Uploads a sub area of index data to the Mesh.
+	/// Sets a sub region of the Index Buffer to the given data.
 	/// The Mesh must already be able to fit this with a previous call to SetIndices.
-	/// This also cannot modify the existing Index Format.
+	/// This cannot modify the existing Index Format.
 	/// </summary>
-	public unsafe void SetSubIndices<T>(int offset, ReadOnlySpan<T> indices) where T : struct
-	{
-		if (!IndexFormat.HasValue || IndexFormat.Value != GetIndexFormat<T>())
-			throw new Exception("Index Format mismatch; SetSubIndices must use the existing Format set in SetIndices");
+	public void SetSubIndices(int offset, ReadOnlySpan<ushort> indices)
+		=> SetSubIndicesSpan(offset, indices);
 
-		fixed (byte* ptr = MemoryMarshal.AsBytes(indices))
-		{
-			SetSubIndices(offset, new IntPtr(ptr), indices.Length);
-		}
-	}
+	/// <inheritdoc cref="SetSubIndices(int, ReadOnlySpan{ushort})"/>
+	public void SetSubIndices(int offset, ReadOnlySpan<short> indices)
+		=> SetSubIndicesSpan(offset, indices);
 
-	/// <summary>
-	/// Uploads the Index data to the Mesh.
-	/// The Mesh must already be able to fit this with a previous call to SetIndices.
-	/// This also cannot modify the existing Index Format.
-	/// </summary>
+	/// <inheritdoc cref="SetSubIndices(int, ReadOnlySpan{ushort})"/>
+	public void SetSubIndices(int offset, ReadOnlySpan<uint> indices)
+		=> SetSubIndicesSpan(offset, indices);
+
+	/// <inheritdoc cref="SetSubIndices(int, ReadOnlySpan{ushort})"/>
+	public void SetSubIndices(int offset, ReadOnlySpan<int> indices)
+		=> SetSubIndicesSpan(offset, indices);
+
+	/// <inheritdoc cref="SetSubIndices(int, ReadOnlySpan{ushort})"/>
 	public void SetSubIndices(int offset, nint data, int count)
 	{
 		if (IsDisposed)
@@ -156,36 +175,30 @@ public class Mesh : IResource
 	}
 
 	/// <summary>
-	/// Uploads the Vertex data to the Mesh.
+	/// Recreates the Mesh's Vertex Buffer to a given index data.
 	/// </summary>
-	public unsafe void SetVertices<T>(ReadOnlySpan<T> vertices) where T : struct, IVertex
+	public void SetVertices<T>(ReadOnlySpan<T> vertices) where T : unmanaged, IVertex
+		=> SetVertices(vertices, default(T).Format);
+
+	/// <summary>
+	/// Recreates the Mesh's Vertex Buffer to a given index data.
+	/// </summary>
+	public unsafe void SetVertices<T>(ReadOnlySpan<T> vertices, in VertexFormat format) where T : unmanaged
 	{
-		SetVertices(vertices, default(T).Format);
+		fixed (void* ptr = vertices)
+			SetVertices(new nint(ptr), vertices.Length, format);
 	}
 
 	/// <summary>
-	/// Uploads the Vertex data to the Mesh.
+	/// Recreates the Mesh's Vertex Buffer to a given vertex count and format
 	/// </summary>
-	public unsafe void SetVertices<T>(ReadOnlySpan<T> vertices, in VertexFormat format) where T : struct
-	{
-		fixed (byte* ptr = MemoryMarshal.AsBytes(vertices))
-		{
-			SetVertices(new IntPtr(ptr), vertices.Length, format);
-		}
-	}
+	public void SetVertices(int count, in VertexFormat format)
+		=> SetVertices(nint.Zero, count, format);
 
 	/// <summary>
-	/// Recreates the Vertex Data to a given size in the Mesh
+	/// Recreates the Mesh's Vertex Buffer to a given index data.
 	/// </summary>
-	public unsafe void SetVertices(int count, in VertexFormat format)
-	{
-		SetVertices(IntPtr.Zero, count, format);
-	}
-
-	/// <summary>
-	/// Uploads the Vertex data to the Mesh.
-	/// </summary>
-	public unsafe void SetVertices(IntPtr data, int count, in VertexFormat format)
+	public void SetVertices(nint data, int count, in VertexFormat format)
 	{
 		if (IsDisposed)
 			throw new Exception("Resource is Disposed");
@@ -205,24 +218,18 @@ public class Mesh : IResource
 	}
 
 	/// <summary>
-	/// Uploads the Vertex data to the Mesh.
+	/// Sets a sub region of the Vertex Buffer to the given data.
 	/// The Mesh must already be able to fit this with a previous call to SetVertices.
 	/// This also cannot modify the existing Vertex Format.
 	/// </summary>
-	public unsafe void SetSubVertices<T>(int offset, ReadOnlySpan<T> vertices) where T : struct
+	public unsafe void SetSubVertices<T>(int offset, ReadOnlySpan<T> vertices) where T : unmanaged
 	{
-		fixed (byte* ptr = MemoryMarshal.AsBytes(vertices))
-		{
-			SetSubVertices(offset, new IntPtr(ptr), vertices.Length);
-		}
+		fixed (void* ptr = vertices)
+			SetSubVertices(offset, new nint(ptr), vertices.Length);
 	}
 
-	/// <summary>
-	/// Uploads the Vertex data to the Mesh.
-	/// The Mesh must already be able to fit this with a previous call to SetVertices.
-	/// This also cannot modify the existing Vertex Format.
-	/// </summary>
-	public unsafe void SetSubVertices(int offset, IntPtr data, int count)
+	/// <inheritdoc cref="SetSubVertices{T}"/>
+	public unsafe void SetSubVertices(int offset, nint data, int count)
 	{
 		if (IsDisposed)
 			throw new Exception("Resource is Disposed");
@@ -246,8 +253,8 @@ public class Mesh : IResource
 	}
 
 	/// <summary>
-	/// Disposes the graphical resources of the Mesh. Once Disposed, the Mesh
-	/// is no longer usable.
+	/// Disposes the graphical resources of the Mesh. 
+	/// Once Disposed, the Mesh is no longer usable.
 	/// </summary>
 	public void Dispose()
 	{

@@ -1,6 +1,10 @@
 
 namespace Foster.Framework;
 
+/// <summary>
+/// Stores information required to submit a draw command.
+/// Call <seealso cref="Submit"/> to submit the command.
+/// </summary>
 public struct DrawCommand()
 {
 	/// <summary>
