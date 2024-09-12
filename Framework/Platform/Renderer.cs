@@ -568,7 +568,7 @@ internal static unsafe partial class Renderer
 				{
 					x = command.Viewport.Value.X, y = command.Viewport.Value.Y,
 					w = command.Viewport.Value.Width, h = command.Viewport.Value.Height,
-					min_depth = 0.1f, max_depth = 1.0f
+					min_depth = 0, max_depth = float.MaxValue
 				};
 				SDL_SetGPUViewport(renderPass, &viewport);
 			}
