@@ -13,7 +13,7 @@ namespace Foster.Framework
 				if (vsyncEnabled != value)
 				{
 					vsyncEnabled = value;
-					throw new NotImplementedException();
+					Renderer.SetVSync(vsyncEnabled);
 				}
 			}
 		}

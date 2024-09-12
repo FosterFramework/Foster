@@ -60,6 +60,7 @@ internal static unsafe partial class Renderer
 	private static RectInt? renderPassScissor;
 	private static RectInt? renderPassViewport;
 	private static bool supportsD24S8;
+	private static bool supportsMailbox;
 	private static readonly Dictionary<int, nint> graphicsPipelinesByHash = [];
 	private static readonly Dictionary<nint, int> graphicsPipelinesToHash = [];
 	private static readonly Dictionary<nint, List<nint>> graphicsPipelinesByResource = [];
@@ -117,6 +118,9 @@ internal static unsafe partial class Renderer
 			SDL_GPUTextureType.SDL_GPU_TEXTURETYPE_2D,
 			SDL_GPUTextureUsageFlags.TEXTUREUSAGE_DEPTH_STENCIL_TARGET) != 0;
 
+		supportsMailbox = SDL_WindowSupportsGPUPresentMode(device, window,
+			SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX) == 1;
+
 		// we always have a command buffer ready
 		AcquireCommandBuffers();
 
@@ -161,6 +165,19 @@ internal static unsafe partial class Renderer
 		copyPass = nint.Zero;
 		swapchain = default;
 		renderPassTarget = null;
+	}
+
+	public static void SetVSync(bool enabled)
+	{
+		SDL_SetGPUSwapchainParameters(device, window, 
+			swapchain_composition: SDL_GPUSwapchainComposition.SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
+			present_mode: (enabled, supportsMailbox) switch
+			{
+				(true, true) => SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX,
+				(true, false) => SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC,
+				(false, _) => SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE
+			}
+		);
 	}
 
 	public static void Present()
@@ -654,11 +671,10 @@ internal static unsafe partial class Renderer
 
 		if (wait)
 		{
-			var fences = stackalloc nint[2];
+			var fences = stackalloc nint[1];
 			fences[0] = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
-			SDL_WaitForGPUFences(device, 1, fences, 2);
+			SDL_WaitForGPUFences(device, 1, fences, 1);
 			SDL_ReleaseGPUFence(device, fences[0]);
-			SDL_ReleaseGPUFence(device, fences[1]);
 		}
 		else
 		{
