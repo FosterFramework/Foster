@@ -50,11 +50,16 @@ internal static unsafe partial class Renderer
 
 	private static nint device;
 	private static nint window;
-	private static nint cmd;
+	private static nint renderCmd;
+	private static nint uploadCmd;
 	private static nint renderPass;
 	private static nint copyPass;
-	private static TextureResource swapchain;
+	private static TextureResource? swapchain;
 	private static Target? renderPassTarget;
+	private static nint renderPassPipeline;
+	private static nint renderPassMesh;
+	private static RectInt? renderPassScissor;
+	private static RectInt? renderPassViewport;
 	private static bool supportsD24S8;
 	private static readonly Dictionary<int, nint> graphicsPipelinesByHash = [];
 	private static readonly Dictionary<nint, int> graphicsPipelinesToHash = [];
@@ -152,7 +157,7 @@ internal static unsafe partial class Renderer
 		
 		// clear state
 		window = nint.Zero;
-		cmd = nint.Zero;
+		renderCmd = nint.Zero;
 		renderPass = nint.Zero;
 		copyPass = nint.Zero;
 		swapchain = default;
@@ -230,7 +235,7 @@ internal static unsafe partial class Renderer
 
 		// copy data
 		{
-			var dst = SDL_MapGPUTransferBuffer(device, props->TransferBuffer, 1);
+			var dst = SDL_MapGPUTransferBuffer(device, props->TransferBuffer, cycle: 1);
 			Buffer.MemoryCopy(data, dst, length, length);
 			SDL_UnmapGPUTransferBuffer(device, props->TransferBuffer);
 		}
@@ -360,7 +365,7 @@ internal static unsafe partial class Renderer
 
 		// copy data
 		{
-			byte* dst = (byte*)SDL_MapGPUTransferBuffer(device, res->TransferBuffer, 1);
+			byte* dst = (byte*)SDL_MapGPUTransferBuffer(device, res->TransferBuffer, cycle: 1);
 			Buffer.MemoryCopy((void*)data, dst + dataDestOffset, dataSize, dataSize);
 			SDL_UnmapGPUTransferBuffer(device, res->TransferBuffer);
 		}
@@ -492,47 +497,61 @@ internal static unsafe partial class Renderer
 			return;
 
 		// set scissor
-		if (command.Scissor.HasValue)
+		if (command.Scissor != renderPassScissor)
 		{
-			SDL_Rect scissor = new()
+			if (command.Scissor.HasValue)
 			{
-				x = command.Scissor.Value.X, y = command.Scissor.Value.Y,
-				w = command.Scissor.Value.Width, h = command.Scissor.Value.Height,
-			};
-			SDL_SetGPUScissor(renderPass, &scissor);
+				SDL_Rect scissor = new()
+				{
+					x = command.Scissor.Value.X, y = command.Scissor.Value.Y,
+					w = command.Scissor.Value.Width, h = command.Scissor.Value.Height,
+				};
+				SDL_SetGPUScissor(renderPass, &scissor);
+			}
+			else
+				SDL_SetGPUScissor(renderPass, null);
+			renderPassScissor = command.Scissor;
 		}
-		else
-			SDL_SetGPUScissor(renderPass, null);
 
 		// set viewport
-		if (command.Viewport.HasValue)
+		if (command.Viewport != renderPassViewport)
 		{
-			SDL_GPUViewport viewport = new()
+			if (command.Viewport.HasValue)
 			{
-				x = command.Viewport.Value.X, y = command.Viewport.Value.Y,
-				w = command.Viewport.Value.Width, h = command.Viewport.Value.Height,
-				min_depth = 0.1f, max_depth = 1.0f
-			};
-			SDL_SetGPUViewport(renderPass, &viewport);
+				SDL_GPUViewport viewport = new()
+				{
+					x = command.Viewport.Value.X, y = command.Viewport.Value.Y,
+					w = command.Viewport.Value.Width, h = command.Viewport.Value.Height,
+					min_depth = 0.1f, max_depth = 1.0f
+				};
+				SDL_SetGPUViewport(renderPass, &viewport);
+			}
+			else
+				SDL_SetGPUViewport(renderPass, null);
+			renderPassViewport = command.Viewport;
 		}
-		else
-			SDL_SetGPUViewport(renderPass, null);
 
 		// figure out graphics pipeline, potentially create a new one
 		var pipeline = GetGraphicsPipeline(command);
-		SDL_BindGPUGraphicsPipeline(renderPass, pipeline);
+		if (renderPassPipeline != pipeline)
+		{
+			SDL_BindGPUGraphicsPipeline(renderPass, pipeline);
+			renderPassPipeline = pipeline;
+		}
 
 		// bind mesh buffers
+		if (renderPassMesh != mesh.resource)
 		{
-			var meshRes = (MeshResource*)mesh.resource;
+			renderPassMesh = mesh.resource;
+			var it = (MeshResource*)mesh.resource;
 
 			// bind index buffer
 			SDL_GPUBufferBinding indexBinding = new()
 			{
-				buffer = meshRes->Index.Buffer,
+				buffer = it->Index.Buffer,
 				offset = 0
 			};
-			SDL_BindGPUIndexBuffer(renderPass, &indexBinding, meshRes->IndexFormat switch
+			SDL_BindGPUIndexBuffer(renderPass, &indexBinding, it->IndexFormat switch
 			{
 				IndexFormat.Sixteen => SDL_GPUIndexElementSize.SDL_GPU_INDEXELEMENTSIZE_16BIT,
 				IndexFormat.ThirtyTwo => SDL_GPUIndexElementSize.SDL_GPU_INDEXELEMENTSIZE_32BIT,
@@ -542,7 +561,7 @@ internal static unsafe partial class Renderer
 			// bind vertex buffer
 			SDL_GPUBufferBinding vertexBinding = new()
 			{
-				buffer = meshRes->Vertex.Buffer,
+				buffer = it->Vertex.Buffer,
 				offset = 0
 			};
 			SDL_BindGPUVertexBuffers(renderPass, 0, &vertexBinding, 1);
@@ -588,14 +607,14 @@ internal static unsafe partial class Renderer
 		if (shader.Vertex.Uniforms.Length > 0)
 		{
 			fixed (byte* ptr = mat.vertexUniformBuffer)
-				SDL_PushGPUVertexUniformData(cmd, 0, new nint(ptr), (uint)shader.Vertex.UniformSizeInBytes);
+				SDL_PushGPUVertexUniformData(renderCmd, 0, new nint(ptr), (uint)shader.Vertex.UniformSizeInBytes);
 		}
 
 		// Upload Fragment Uniforms
 		if (shader.Fragment.Uniforms.Length > 0)
 		{
 			fixed (byte* ptr = mat.fragmentUniformBuffer)
-				SDL_PushGPUFragmentUniformData(cmd, 0, new nint(ptr), (uint)shader.Fragment.UniformSizeInBytes);
+				SDL_PushGPUFragmentUniformData(renderCmd, 0, new nint(ptr), (uint)shader.Fragment.UniformSizeInBytes);
 		}
 
 		// perform draw
@@ -624,18 +643,10 @@ internal static unsafe partial class Renderer
 
 	private static void AcquireCommandBuffers()
 	{
-		cmd = SDL_AcquireGPUCommandBuffer(device);
-
-		uint w, h;
-		nint swapchainTexture = SDL_AcquireGPUSwapchainTexture(cmd, window, &w, &h);
-
-		swapchain = new()
-		{
-			Texture = swapchainTexture,
-			Format = SDL_GetGPUSwapchainTextureFormat(device, window),
-			Width = (int)w,
-			Height = (int)h
-		};
+		if (renderCmd != nint.Zero || uploadCmd != nint.Zero)
+			throw new Exception("Must Flush Command Buffers first!");
+		renderCmd = SDL_AcquireGPUCommandBuffer(device);
+		uploadCmd = SDL_AcquireGPUCommandBuffer(device);
 	}
 
 	private static void Flush(bool wait)
@@ -645,26 +656,29 @@ internal static unsafe partial class Renderer
 
 		if (wait)
 		{
-			var fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
-			var fences = stackalloc nint[] { fence };
-			SDL_WaitForGPUFences(device, 1, fences, 1);
-			SDL_ReleaseGPUFence(device, fence);
+			var fences = stackalloc nint[2];
+			fences[0] = SDL_SubmitGPUCommandBufferAndAcquireFence(uploadCmd);
+			fences[1] = SDL_SubmitGPUCommandBufferAndAcquireFence(renderCmd);
+			SDL_WaitForGPUFences(device, 1, fences, 2);
+			SDL_ReleaseGPUFence(device, fences[0]);
+			SDL_ReleaseGPUFence(device, fences[1]);
 		}
 		else
 		{
-			SDL_SubmitGPUCommandBuffer(cmd);
+			SDL_SubmitGPUCommandBuffer(uploadCmd);
+			SDL_SubmitGPUCommandBuffer(renderCmd);
 		}
 
-		cmd = nint.Zero;
+		uploadCmd = nint.Zero;
+		renderCmd = nint.Zero;
+		swapchain = default;
 	}
 
 	private static void BeginCopyPass()
 	{
 		if (copyPass != nint.Zero)
 			return;
-
-		EndRenderPass();
-		copyPass = SDL_BeginGPUCopyPass(cmd);
+		copyPass = SDL_BeginGPUCopyPass(uploadCmd);
 	}
 
 	private static void EndCopyPass()
@@ -685,7 +699,6 @@ internal static unsafe partial class Renderer
 			return true;
 
 		EndRenderPass();
-		EndCopyPass();
 
 		// set next target
 		renderPassTarget = target;
@@ -694,6 +707,7 @@ internal static unsafe partial class Renderer
 		StackList4<nint> colorTargets = new();
 		nint depthStencilTarget = default;
 
+		// drawing to a specific target
 		if (target != null)
 		{
 			foreach (var it in target.Attachments)
@@ -710,14 +724,29 @@ internal static unsafe partial class Renderer
 					colorTargets.Add(res);
 			}
 		}
+		// drawing to the backbuffer/swapchain
 		else
 		{
+			// try to get swapchain if we haven't already
+			if (!swapchain.HasValue)
+			{
+				uint w, h;
+				nint swapchainTexture = SDL_AcquireGPUSwapchainTexture(renderCmd, window, &w, &h);
+				swapchain = new()
+				{
+					Texture = swapchainTexture,
+					Format = SDL_GetGPUSwapchainTextureFormat(device, window),
+					Width = (int)w,
+					Height = (int)h
+				};
+			}
+			
 			// there's a chance the swapchain is invalid, in which case we can't
 			// render anything to it and should not start a renderpass
-			if (swapchain.Texture == nint.Zero)
+			if (swapchain.Value.Texture == nint.Zero)
 				return false;
 
-			colorTargets.Add(swapchain.Texture);
+			colorTargets.Add(swapchain.Value.Texture);
 		}
 
 		var colorInfo = stackalloc SDL_GPUColorTargetInfo[colorTargets.Count];
@@ -729,11 +758,14 @@ internal static unsafe partial class Renderer
 			colorInfo[i] = new()
 			{
 				texture = colorTargets[i],
+				mip_level = 0,
+				layer_or_depth_plane = 0,
 				clear_color = GetColor(clear.Color ?? Color.Transparent),
 				load_op = clear.Color.HasValue ? 
 					SDL_GPULoadOp.SDL_GPU_LOADOP_CLEAR : 
 					SDL_GPULoadOp.SDL_GPU_LOADOP_LOAD,
-				store_op = SDL_GPUStoreOp.SDL_GPU_STOREOP_STORE
+				store_op = SDL_GPUStoreOp.SDL_GPU_STOREOP_STORE,
+				cycle = (byte)(clear.Color.HasValue ? 1 : 0)
 			};
 		}
 
@@ -752,14 +784,14 @@ internal static unsafe partial class Renderer
 					SDL_GPULoadOp.SDL_GPU_LOADOP_CLEAR :
 					SDL_GPULoadOp.SDL_GPU_LOADOP_LOAD,
 				stencil_store_op = SDL_GPUStoreOp.SDL_GPU_STOREOP_STORE,
-				cycle = 0,
+				cycle = (byte)(clear.Depth.HasValue && clear.Stencil.HasValue ? 1 : 0),
 				clear_stencil = (byte)(clear.Stencil ?? 0),
 			};
 		}
 
 		// begin pass
 		renderPass = SDL_BeginGPURenderPass(
-			cmd,
+			renderCmd,
 			colorInfo,
 			(uint)colorTargets.Count,
 			depthStencilTarget != nint.Zero ? &depthStencilInfo : null
@@ -774,6 +806,10 @@ internal static unsafe partial class Renderer
 			SDL_EndGPURenderPass(renderPass);
 		renderPass = nint.Zero;
 		renderPassTarget = null;
+		renderPassPipeline = nint.Zero;
+		renderPassMesh = nint.Zero;
+		renderPassViewport = null;
+		renderPassScissor = null;
 	}
 
 	private static nint GetGraphicsPipeline(in DrawCommand command)
@@ -827,14 +863,18 @@ internal static unsafe partial class Renderer
 					}
 				}
 			}
-			else
+			else if (swapchain.HasValue)
 			{
 				colorAttachments[0] = new()
 				{
-					format = swapchain.Format,
+					format = swapchain.Value.Format,
 					blend_state = colorBlendState
 				};
 				colorAttachmentCount = 1;
+			}
+			else
+			{
+				throw new Exception("Trying to create Pipeline on invalid Target");
 			}
 
 			vertexBindings[0] = new()
