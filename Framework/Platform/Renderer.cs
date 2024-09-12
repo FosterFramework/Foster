@@ -66,6 +66,7 @@ internal static unsafe partial class Renderer
 	private static readonly Dictionary<nint, List<nint>> graphicsPipelinesByResource = [];
 	private static readonly Dictionary<TextureSampler, nint> samplers = [];
 	private static nint emptyDefaultTexture;
+	private static readonly Exception deviceNotCreated = new("GPU Device has not been created");
 
 	public static GraphicsDriver Driver { get; private set; } = GraphicsDriver.None;
 
@@ -128,6 +129,9 @@ internal static unsafe partial class Renderer
 		emptyDefaultTexture = CreateTexture(1, 1, TextureFormat.R8G8B8A8, false);
 		var data = stackalloc Color[1] { 0xe82979 };
 		SetTextureData(emptyDefaultTexture, data, 4);
+
+		// default to vsync on
+		SetVSync(true);
 	}
 
 	public static void Shutdown()
@@ -169,6 +173,9 @@ internal static unsafe partial class Renderer
 
 	public static void SetVSync(bool enabled)
 	{
+		if (device == nint.Zero)
+			throw deviceNotCreated;
+
 		SDL_SetGPUSwapchainParameters(device, window, 
 			swapchain_composition: SDL_GPUSwapchainComposition.SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
 			present_mode: (enabled, supportsMailbox) switch
@@ -188,6 +195,9 @@ internal static unsafe partial class Renderer
 
 	public static nint CreateTexture(int width, int height, TextureFormat format, bool isTarget)
 	{
+		if (device == nint.Zero)
+			throw deviceNotCreated;
+
 		SDL_GPUTextureCreateInfo info = new()
 		{
 			type = SDL_GPUTextureType.SDL_GPU_TEXTURETYPE_2D,
@@ -235,6 +245,9 @@ internal static unsafe partial class Renderer
 
 	public static void SetTextureData(nint texture, void* data, int length)
 	{
+		if (device == nint.Zero)
+			throw deviceNotCreated;
+
 		// get texture
 		TextureResource* props = (TextureResource*)texture;
 
@@ -281,6 +294,8 @@ internal static unsafe partial class Renderer
 
 	public static void GetTextureData(nint texture, void* data, int length)
 	{
+		if (device == nint.Zero)
+			throw deviceNotCreated;
 		throw new NotImplementedException();
 	}
 
@@ -301,6 +316,9 @@ internal static unsafe partial class Renderer
 
 	public static nint CreateMesh()
 	{
+		if (device == nint.Zero)
+			throw deviceNotCreated;
+
 		MeshResource* res = (MeshResource*)Marshal.AllocHGlobal(sizeof(MeshResource));
 		*res = new MeshResource()
 		{
@@ -311,6 +329,9 @@ internal static unsafe partial class Renderer
 
 	public static void SetMeshVertexData(nint mesh, nint data, int dataSize, int dataDestOffset, in VertexFormat format)
 	{
+		if (device == nint.Zero)
+			throw deviceNotCreated;
+
 		MeshResource* res = (MeshResource*)mesh;
 		res->VertexFormat = format;
 		UploadMeshBuffer(&res->Vertex, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.BUFFERUSAGE_VERTEX);
@@ -318,6 +339,9 @@ internal static unsafe partial class Renderer
 
 	public static void SetMeshIndexData(nint mesh, nint data, int dataSize, int dataDestOffset, IndexFormat format)
 	{
+		if (device == nint.Zero)
+			throw deviceNotCreated;
+
 		MeshResource* res = (MeshResource*)mesh;
 		res->IndexFormat = format;
 		UploadMeshBuffer(&res->Index, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.BUFFERUSAGE_INDEX);
@@ -420,6 +444,9 @@ internal static unsafe partial class Renderer
 
 	public static nint CreateShader(in ShaderCreateInfo shaderInfo)
 	{
+		if (device == nint.Zero)
+			throw deviceNotCreated;
+
 		var entryPoint = "main"u8;
 		nint vertexProgram;
 		nint fragmentProgram;
@@ -494,6 +521,9 @@ internal static unsafe partial class Renderer
 
 	public static void Draw(DrawCommand command)
 	{
+		if (device == nint.Zero)
+			throw deviceNotCreated;
+
 		var mat = command.Material ?? throw new Exception("Material is Invalid");
 		var shader = mat.Shader;
 		var target = command.Target;
@@ -646,6 +676,9 @@ internal static unsafe partial class Renderer
 
 	public static void Clear(Target? target, Color color, float depth, int stencil, ClearMask mask)
 	{
+		if (device == nint.Zero)
+			throw deviceNotCreated;
+
 		if (mask != ClearMask.None)
 		{
 			BeginRenderPass(target, new()
