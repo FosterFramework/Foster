@@ -171,15 +171,23 @@ public static class App
 
 	/// <summary>
 	/// Gets the Content Scale for the Application Window.
-	/// In the future this should try to use the Display DPI, however the SDL2
-	/// implementation doesn't have very reliable values across platforms.
-	/// (See here: https://wiki.libsdl.org/SDL2/SDL_GetDisplayDPI#remarks)
-	/// Until this has a better underlying solution we are just using the
-	/// pixel size compared to the window size as a rough scaling value.
 	/// </summary>
-	public static Vector2 ContentScale => new Vector2(
-		WidthInPixels / (float)Width,
-		HeightInPixels / (float)Height);
+	public static Vector2 ContentScale
+	{
+		get
+		{
+			var index = SDL_GetDisplayForWindow(window);
+			var scale = SDL_GetDisplayContentScale(index);
+			
+			if (scale <= 0)
+			{
+				Log.Warning($"SDL_GetDisplayForWindow failed: {Platform.GetSDLError()}");
+				return new(WidthInPixels / Width, HeightInPixels / Height);
+			}
+
+			return Vector2.One * scale;
+		}
+	}
 
 	/// <summary>
 	/// Whether the Window is Fullscreen or not

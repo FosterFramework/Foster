@@ -123,6 +123,9 @@ internal static partial class SDL3
 	public static partial SDL_DisplayID SDL_GetDisplayForWindow(nint window);
 
 	[LibraryImport(DLL)]
+	public static partial float SDL_GetDisplayContentScale(SDL_DisplayID displayID);
+
+	[LibraryImport(DLL)]
 	public static unsafe partial SDL_DisplayMode* SDL_GetCurrentDisplayMode(SDL_DisplayID displayID);
 
 	[LibraryImport(DLL)]
