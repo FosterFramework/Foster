@@ -14,20 +14,20 @@ public readonly struct VertexFormat
 	public readonly StackList32<Element> Elements;
 	public readonly int Stride;
 
-	public VertexFormat(int stride, params Element[] elements)
+	public VertexFormat(in ReadOnlySpan<Element> elements, int stride = 0)
 	{
-		Elements = [..elements];
-		Stride = stride;
-	}
+		foreach (var it in elements)
+		{
+			Elements.Add(it);
+			Stride += it.Type.SizeInBytes();
+		}
 
-	public VertexFormat(params Element[] elements)
-	{
-		Elements = [..elements];
-		Stride = Elements.Sum(it => it.Type.SizeInBytes());
+		if (stride != 0)
+			Stride = stride;
 	}
 
 	public static VertexFormat Create<T>(params Element[] elements) where T : struct
-		=> new(Unsafe.SizeOf<T>(), elements);
+		=> new(elements, Unsafe.SizeOf<T>());
 
 	public static bool operator ==(VertexFormat a, VertexFormat b)
 		=> a.Stride == b.Stride && a.Elements.Span.SequenceEqual(b.Elements.Span);

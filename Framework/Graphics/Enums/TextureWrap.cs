@@ -4,6 +4,11 @@ public enum TextureWrap
 {
 	Repeat,
 	MirroredRepeat,
-	ClampToEdge,
-	ClampToBorder
+	Clamp,
+
+	[Obsolete("Use Clamp")]
+	ClampToEdge = Clamp,
+	
+	[Obsolete("Use Clamp")]
+	ClampToBorder = Clamp,
 }

@@ -181,7 +181,7 @@ public static class App
 			
 			if (scale <= 0)
 			{
-				Log.Warning($"SDL_GetDisplayForWindow failed: {Platform.GetSDLError()}");
+				Log.Warning($"SDL_GetDisplayForWindow failed: {Platform.GetErrorFromSDL()}");
 				return new(WidthInPixels / Width, HeightInPixels / Height);
 			}
 
@@ -328,7 +328,7 @@ public static class App
 		MainThreadID = Thread.CurrentThread.ManagedThreadId;
 
 		// set SDL logging method
-		SDL_SetLogOutputFunction(&Platform.HandleLog, IntPtr.Zero);
+		SDL_SetLogOutputFunction(&Platform.HandleLogFromSDL, IntPtr.Zero);
 
 		// by default allow controller presses while unfocused, 
 		// let game decide if it should handle them
@@ -341,10 +341,7 @@ public static class App
 				SDL_InitFlags.JOYSTICK | SDL_InitFlags.GAMEPAD;
 
 			if (!SDL_Init(initFlags))
-			{
-				var error = Platform.ParseUTF8(SDL_GetError());
-				throw new Exception($"Foster SDL_Init Failed: {error}");
-			}
+				throw Platform.CreateExcecptionFromSDL(nameof(SDL_Init));
 
 			// get the UserPath
 			var name = Platform.ToUTF8(applicationName);
@@ -366,10 +363,7 @@ public static class App
 
 			window = SDL_CreateWindow(applicationName, width, height, windowFlags);
 			if (window == IntPtr.Zero)
-			{
-				var error = Platform.ParseUTF8(SDL_GetError());
-				throw new Exception($"Foster SDL_CreateWindow Failed: {error}");
-			}
+				throw Platform.CreateExcecptionFromSDL(nameof(SDL_CreateWindow));
 		}
 
 		Renderer.Startup(window);
@@ -381,7 +375,7 @@ public static class App
 		SDL_ShowCursor();
 
 		// load default input mappings if they exist
-		Input.AddDefaultSdlGamepadMappings(AppContext.BaseDirectory);
+		Input.AddDefaultSDLGamepadMappings(AppContext.BaseDirectory);
 
 		// Clear Time
 		Running = true;

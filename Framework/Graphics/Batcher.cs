@@ -8,30 +8,6 @@ namespace Foster.Framework;
 public class Batcher : IDisposable
 {
 	/// <summary>
-	/// Vertex Format of Batcher.Vertex
-	/// </summary>
-	private static readonly VertexFormat VertexFormat = VertexFormat.Create<Vertex>(
-		new VertexFormat.Element(0, VertexType.Float2, false),
-		new VertexFormat.Element(1, VertexType.Float2, false),
-		new VertexFormat.Element(2, VertexType.UByte4, true),
-		new VertexFormat.Element(3, VertexType.UByte4, true)
-	);
-
-	/// <summary>
-	/// The Vertex Layout used for Sprite Batching
-	/// </summary>
-	[StructLayout(LayoutKind.Sequential, Pack = 1)]
-	public struct Vertex(Vector2 position, Vector2 texcoord, Color color, Color mode) : IVertex
-	{
-		public Vector2 Pos = position;
-		public Vector2 Tex = texcoord;
-		public Color Col = color;
-		public Color Mode = mode;  // R = Multiply, G = Wash, B = Fill, A = Padding
-
-		public readonly VertexFormat Format => VertexFormat;
-	}
-
-	/// <summary>
 	/// The Default shader used by the Batcher.
 	/// </summary>
 	private static Shader? DefaultShader;
@@ -131,7 +107,7 @@ public class Batcher : IDisposable
 		if (meshDirty && indexPtr != IntPtr.Zero && vertexPtr != IntPtr.Zero)
 		{
 			mesh.SetIndices(indexPtr, indexCount, IndexFormat.ThirtyTwo);
-			mesh.SetVertices(vertexPtr, vertexCount, VertexFormat);
+			mesh.SetVertices(vertexPtr, vertexCount, default(BatcherVertex).Format);
 			meshDirty = false;
 		}
 	}
@@ -224,7 +200,7 @@ public class Batcher : IDisposable
 
 		// make sure default shader and material are valid
 		if (DefaultShader == null || DefaultShader.IsDisposed)
-			DefaultShader = new Shader(ShaderDefaults.Default);
+			DefaultShader = new BatcherShader();
 		defaultMaterial.Shader = DefaultShader;
 
 		// render batches
@@ -674,7 +650,7 @@ public class Batcher : IDisposable
 		unsafe
 		{
 			var mode = new Color(0, 0, 255, 0);
-			var vertexArray = new Span<Vertex>((Vertex*)vertexPtr + vertexCount, 4);
+			var vertexArray = new Span<BatcherVertex>((BatcherVertex*)vertexPtr + vertexCount, 4);
 
 			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
 			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
@@ -700,7 +676,7 @@ public class Batcher : IDisposable
 
 		unsafe
 		{
-			var vertexArray = new Span<Vertex>((Vertex*)vertexPtr + vertexCount, 4);
+			var vertexArray = new Span<BatcherVertex>((BatcherVertex*)vertexPtr + vertexCount, 4);
 
 			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
 			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
@@ -734,7 +710,7 @@ public class Batcher : IDisposable
 		unsafe
 		{
 			var mode = new Color(0, 0, 255, 0);
-			var vertexArray = new Span<Vertex>((Vertex*)vertexPtr + vertexCount, 4);
+			var vertexArray = new Span<BatcherVertex>((BatcherVertex*)vertexPtr + vertexCount, 4);
 
 			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
 			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
@@ -760,7 +736,7 @@ public class Batcher : IDisposable
 
 		unsafe
 		{
-			var vertexArray = new Span<Vertex>((Vertex*)vertexPtr + vertexCount, 4);
+			var vertexArray = new Span<BatcherVertex>((BatcherVertex*)vertexPtr + vertexCount, 4);
 
 			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
 			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
@@ -810,7 +786,7 @@ public class Batcher : IDisposable
 		unsafe
 		{
 			var mode = new Color(0, 0, 255, 0);
-			var vertexArray = new Span<Vertex>((Vertex*)vertexPtr + vertexCount, 3);
+			var vertexArray = new Span<BatcherVertex>((BatcherVertex*)vertexPtr + vertexCount, 3);
 
 			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
 			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
@@ -833,7 +809,7 @@ public class Batcher : IDisposable
 
 		unsafe
 		{
-			var vertexArray = new Span<Vertex>((Vertex*)vertexPtr + vertexCount, 3);
+			var vertexArray = new Span<BatcherVertex>((BatcherVertex*)vertexPtr + vertexCount, 3);
 
 			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
 			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
@@ -863,7 +839,7 @@ public class Batcher : IDisposable
 		unsafe
 		{
 			var mode = new Color(0, 0, 255, 0);
-			var vertexArray = new Span<Vertex>((Vertex*)vertexPtr + vertexCount, 3);
+			var vertexArray = new Span<BatcherVertex>((BatcherVertex*)vertexPtr + vertexCount, 3);
 
 			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
 			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
@@ -1101,7 +1077,7 @@ public class Batcher : IDisposable
 			{
 				EnsureVertexCapacity(vertexCount + 12);
 
-				var vertexArray = new Span<Vertex>((Vertex*)vertexPtr + vertexCount, 12);
+				var vertexArray = new Span<BatcherVertex>((BatcherVertex*)vertexPtr + vertexCount, 12);
 
 				var mode = new Color(0, 0, 255, 0);
 
@@ -1757,10 +1733,10 @@ public class Batcher : IDisposable
 			while (index >= vertexCapacity)
 				vertexCapacity *= 2;
 
-			var newPtr = Marshal.AllocHGlobal(sizeof(Vertex) * vertexCapacity);
+			var newPtr = Marshal.AllocHGlobal(sizeof(BatcherVertex) * vertexCapacity);
 
 			if (vertexCount > 0)
-				Buffer.MemoryCopy((void*)vertexPtr, (void*)newPtr, vertexCapacity * sizeof(Vertex), vertexCount * sizeof(Vertex));
+				Buffer.MemoryCopy((void*)vertexPtr, (void*)newPtr, vertexCapacity * sizeof(BatcherVertex), vertexCount * sizeof(BatcherVertex));
 
 			if (vertexPtr != IntPtr.Zero)
 				Marshal.FreeHGlobal(vertexPtr);
@@ -1772,8 +1748,8 @@ public class Batcher : IDisposable
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private unsafe void FlipVerticalUVs(IntPtr ptr, int start, int count)
 	{
-		Vertex* it = (Vertex*)ptr + start;
-		Vertex* end = it + count;
+		BatcherVertex* it = (BatcherVertex*)ptr + start;
+		BatcherVertex* end = it + count;
 		while (it < end)
 		{
 			it->Tex.Y = 1.0f - it->Tex.Y;

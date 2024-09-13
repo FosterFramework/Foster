@@ -10,5 +10,4 @@ public interface IVertex
 	/// This should return a static value, not create a new format every time it's accessed.
 	/// </summary>
 	public VertexFormat Format { get; }
-
 }

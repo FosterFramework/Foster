@@ -85,11 +85,8 @@
 
   <!-- Default Shader Content -->
   <ItemGroup>
-    <EmbeddedResource Include="$(ProjectDir)Content/Default.frag.spv" Visible="false">
-			<LogicalName>Default.frag.spv</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(ProjectDir)Content/Default.vert.spv" Visible="false">
-			<LogicalName>Default.vert.spv</LogicalName>
+    <EmbeddedResource Include="$(ProjectDir)Content/*.spv" Visible="false">
+      <LogicalName>%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
 

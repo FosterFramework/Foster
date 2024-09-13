@@ -80,10 +80,8 @@ internal static unsafe partial class Renderer
 			debug_mode: 1, // TODO: flag?
 			name: nint.Zero);
 
-		SDL_GetGPUDriver(device);
-
 		if (device == IntPtr.Zero)
-			throw new Exception($"Failed to create GPU Device: {Platform.GetSDLError()}");
+			throw Platform.CreateExcecptionFromSDL(nameof(SDL_CreateGPUDevice));
 	}
 	
 	public static void DestroyDevice()
@@ -94,11 +92,7 @@ internal static unsafe partial class Renderer
 
 	public static void Startup(nint window)
 	{
-		Log.Info($"Graphics Driver: SDL_GPU [{Driver}]");
 		Renderer.window = window;
-
-		if (SDL_ClaimWindowForGPUDevice(device, window) != 1)
-			throw new Exception("SDL_GpuClaimWindow failed");
 
 		// provider user what driver is being used
 		Driver = SDL_GetGPUDriver(device) switch
@@ -111,6 +105,11 @@ internal static unsafe partial class Renderer
 			SDL_GPUDriver.SDL_GPU_DRIVER_METAL => GraphicsDriver.Metal,
 			_ => GraphicsDriver.None
 		};
+		
+		Log.Info($"Graphics Driver: SDL_GPU [{Driver}]");
+		
+		if (SDL_ClaimWindowForGPUDevice(device, window) != 1)
+			throw Platform.CreateExcecptionFromSDL(nameof(SDL_ClaimWindowForGPUDevice));
 
 		// some platforms don't support D24S8 depth/stencil format
 		supportsD24S8 = SDL_GPUTextureSupportsFormat(
@@ -228,7 +227,7 @@ internal static unsafe partial class Renderer
 
 		nint texture = SDL_CreateGPUTexture(device, &info);
 		if (texture == nint.Zero)
-			throw new Exception($"Failed to create Texture: {Platform.GetSDLError()}");
+			throw Platform.CreateExcecptionFromSDL(nameof(SDL_CreateGPUTexture));
 
 		TextureResource* res = (TextureResource*)Marshal.AllocHGlobal(sizeof(TextureResource));
 		*res = new TextureResource()
@@ -387,7 +386,7 @@ internal static unsafe partial class Renderer
 			
 			res->Buffer = SDL_CreateGPUBuffer(device, &info);
 			if (res->Buffer == nint.Zero)
-				throw new Exception($"Failed to create Mesh: {Platform.GetSDLError()}");
+				throw Platform.CreateExcecptionFromSDL(nameof(SDL_CreateGPUBuffer), "Mesh Creation Failed");
 			res->Capacity = size;
 		}
 
@@ -470,7 +469,7 @@ internal static unsafe partial class Renderer
 
 			vertexProgram = SDL_CreateGPUShader(device, &info);
 			if (vertexProgram == nint.Zero)
-				throw new Exception($"Failed to create Shader [Vertex]: {Platform.GetSDLError()}");
+				throw Platform.CreateExcecptionFromSDL(nameof(SDL_CreateGPUShader), "Failed to create Vertex Shader");
 		}
 
 		// create fragment program
@@ -492,7 +491,7 @@ internal static unsafe partial class Renderer
 
 			fragmentProgram = SDL_CreateGPUShader(device, &info);
 			if (fragmentProgram == nint.Zero)
-				throw new Exception($"Failed to create Shader [Fragment]: {Platform.GetSDLError()}");
+				throw Platform.CreateExcecptionFromSDL(nameof(SDL_CreateGPUShader), "Failed to create Fragment Shader");
 		}
 
 		ShaderResource* res = (ShaderResource*)Marshal.AllocHGlobal(sizeof(ShaderResource));
@@ -1007,7 +1006,7 @@ internal static unsafe partial class Renderer
 
 			pipeline = SDL_CreateGPUGraphicsPipeline(device, &info);
 			if (pipeline == nint.Zero)
-				throw new Exception($"Failed to create Graphics Pipeline for drawing: {Platform.GetSDLError()}");
+				throw Platform.CreateExcecptionFromSDL(nameof(SDL_CreateGPUGraphicsPipeline));
 
 			lock (graphicsPipelinesByHash)
 			{
@@ -1121,8 +1120,7 @@ internal static unsafe partial class Renderer
 		{
 			TextureWrap.Repeat => SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
 			TextureWrap.MirroredRepeat => SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_MIRRORED_REPEAT,
-			TextureWrap.ClampToEdge => SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
-			TextureWrap.ClampToBorder => SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+			TextureWrap.Clamp => SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
 			_ => throw new NotImplementedException()
 		};
 
@@ -1145,7 +1143,7 @@ internal static unsafe partial class Renderer
 			};
 			result = SDL_CreateGPUSampler(device, &info);
 			if (result == nint.Zero)
-				throw new Exception($"Failed to create Texture Sampler: {Platform.GetSDLError()}");
+				throw Platform.CreateExcecptionFromSDL(nameof(SDL_CreateGPUSampler));
 			samplers[sampler] = result;
 		}
 

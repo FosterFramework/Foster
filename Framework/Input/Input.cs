@@ -71,12 +71,16 @@ public static class Input
 	/// Loads 'gamecontrollerdb.txt' from a local file or falls back to the 
 	/// default embedded SDL gamepad mappings
 	/// </summary>
-	internal static void AddDefaultSdlGamepadMappings(string relativePath)
+	internal static void AddDefaultSDLGamepadMappings(string relativePath)
 	{
 		var path = Path.Combine(relativePath, "gamecontrollerdb.txt");
 		if (File.Exists(path))
-			AddSdlGamepadMappings(File.ReadAllLines(path));
+			AddSDLGamepadMappings(File.ReadAllLines(path));
 	}
+
+	[Obsolete("use AddSDLGamepadMappings")]
+	public static void AddSdlGamepadMappings(string[] mappings)
+		=> AddSDLGamepadMappings(mappings);
 
 	/// <summary>
 	/// Loads a list of SDL Gamepad Mappings.
@@ -84,7 +88,7 @@ public static class Input
 	/// By default, any 'gamecontrollerdb.txt' found adjacent to the application at runtime
 	/// will be loaded automatically.
 	/// </summary>
-	public static void AddSdlGamepadMappings(string[] mappings)
+	public static void AddSDLGamepadMappings(string[] mappings)
 	{
 		foreach (var mapping in mappings)
 			SDL3.SDL_AddGamepadMapping(mapping);

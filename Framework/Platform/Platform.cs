@@ -44,7 +44,27 @@ internal static partial class Platform
 	/// <summary>
 	/// Wrapper around SDL_GetError() to return a C# string
 	/// </summary>
-	public static string GetSDLError() => ParseUTF8(SDL_GetError());
+	public static string GetErrorFromSDL() => ParseUTF8(SDL_GetError());
+
+	/// <summary>
+	/// Creates an Exception with information from SDL_GetError()
+	/// </summary>
+	public static Exception CreateExcecptionFromSDL(string sdlMethod, string? fosterInfo = null)
+		=> new($"{(fosterInfo != null ? $"{fosterInfo}. " : "")}{sdlMethod} failed: {GetErrorFromSDL()}");
+
+	public static byte[] ReadEmbeddedBytes(string name)
+	{
+		var assembly = typeof(Platform).Assembly;
+		using var stream = assembly.GetManifestResourceStream(name);
+		if (stream != null)
+		{
+			var result = new byte[stream.Length];
+			stream.Read(result, 0, result.Length);
+			return result;
+		}
+
+		return [];
+	}
 
 	[LibraryImport(DLL, EntryPoint = "FosterImageLoad")]
 	public static unsafe partial nint ImageLoad(void* memory, int length, out int w, out int h);
@@ -80,7 +100,7 @@ internal static partial class Platform
 	public static partial void FontFree(nint font);
 
 	[UnmanagedCallersOnly]
-	public static void HandleLog(nint userdata, int category, SDL_LogPriority priority, nint message)
+	public static void HandleLogFromSDL(nint userdata, int category, SDL_LogPriority priority, nint message)
 	{
 		switch (priority)
 		{

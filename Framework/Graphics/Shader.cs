@@ -28,6 +28,9 @@ public readonly record struct ShaderCreateInfo(
 	ShaderProgramInfo FragmentProgram
 );
 
+/// <summary>
+/// A combination of a Vertex and Fragment Shader programs used for Rendering
+/// </summary>
 public class Shader : IResource
 {
 	/// <summary>
