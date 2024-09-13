@@ -3,6 +3,9 @@ using System.Runtime.CompilerServices;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// Describes a Vertex Format used in rendering Meshes.
+/// </summary>
 public readonly struct VertexFormat
 {
 	public readonly record struct Element(
