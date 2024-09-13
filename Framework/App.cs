@@ -341,7 +341,7 @@ public static class App
 				SDL_InitFlags.JOYSTICK | SDL_InitFlags.GAMEPAD;
 
 			if (!SDL_Init(initFlags))
-				throw Platform.CreateExcecptionFromSDL(nameof(SDL_Init));
+				throw Platform.CreateExceptionFromSDL(nameof(SDL_Init));
 
 			// get the UserPath
 			var name = Platform.ToUTF8(applicationName);
@@ -363,7 +363,7 @@ public static class App
 
 			window = SDL_CreateWindow(applicationName, width, height, windowFlags);
 			if (window == IntPtr.Zero)
-				throw Platform.CreateExcecptionFromSDL(nameof(SDL_CreateWindow));
+				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateWindow));
 		}
 
 		Renderer.Startup(window);

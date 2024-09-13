@@ -49,9 +49,12 @@ internal static partial class Platform
 	/// <summary>
 	/// Creates an Exception with information from SDL_GetError()
 	/// </summary>
-	public static Exception CreateExcecptionFromSDL(string sdlMethod, string? fosterInfo = null)
+	public static Exception CreateExceptionFromSDL(string sdlMethod, string? fosterInfo = null)
 		=> new($"{(fosterInfo != null ? $"{fosterInfo}. " : "")}{sdlMethod} failed: {GetErrorFromSDL()}");
 
+	/// <summary>
+	/// Returns a byte array for an embedded File
+	/// </summary>
 	public static byte[] ReadEmbeddedBytes(string name)
 	{
 		var assembly = typeof(Platform).Assembly;

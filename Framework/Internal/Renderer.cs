@@ -81,7 +81,7 @@ internal static unsafe partial class Renderer
 			name: nint.Zero);
 
 		if (device == IntPtr.Zero)
-			throw Platform.CreateExcecptionFromSDL(nameof(SDL_CreateGPUDevice));
+			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUDevice));
 	}
 	
 	public static void DestroyDevice()
@@ -109,7 +109,7 @@ internal static unsafe partial class Renderer
 		Log.Info($"Graphics Driver: SDL_GPU [{Driver}]");
 		
 		if (SDL_ClaimWindowForGPUDevice(device, window) != 1)
-			throw Platform.CreateExcecptionFromSDL(nameof(SDL_ClaimWindowForGPUDevice));
+			throw Platform.CreateExceptionFromSDL(nameof(SDL_ClaimWindowForGPUDevice));
 
 		// some platforms don't support D24S8 depth/stencil format
 		supportsD24S8 = SDL_GPUTextureSupportsFormat(
@@ -227,7 +227,7 @@ internal static unsafe partial class Renderer
 
 		nint texture = SDL_CreateGPUTexture(device, &info);
 		if (texture == nint.Zero)
-			throw Platform.CreateExcecptionFromSDL(nameof(SDL_CreateGPUTexture));
+			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUTexture));
 
 		TextureResource* res = (TextureResource*)Marshal.AllocHGlobal(sizeof(TextureResource));
 		*res = new TextureResource()
@@ -386,7 +386,7 @@ internal static unsafe partial class Renderer
 			
 			res->Buffer = SDL_CreateGPUBuffer(device, &info);
 			if (res->Buffer == nint.Zero)
-				throw Platform.CreateExcecptionFromSDL(nameof(SDL_CreateGPUBuffer), "Mesh Creation Failed");
+				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUBuffer), "Mesh Creation Failed");
 			res->Capacity = size;
 		}
 
@@ -469,7 +469,7 @@ internal static unsafe partial class Renderer
 
 			vertexProgram = SDL_CreateGPUShader(device, &info);
 			if (vertexProgram == nint.Zero)
-				throw Platform.CreateExcecptionFromSDL(nameof(SDL_CreateGPUShader), "Failed to create Vertex Shader");
+				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUShader), "Failed to create Vertex Shader");
 		}
 
 		// create fragment program
@@ -491,7 +491,7 @@ internal static unsafe partial class Renderer
 
 			fragmentProgram = SDL_CreateGPUShader(device, &info);
 			if (fragmentProgram == nint.Zero)
-				throw Platform.CreateExcecptionFromSDL(nameof(SDL_CreateGPUShader), "Failed to create Fragment Shader");
+				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUShader), "Failed to create Fragment Shader");
 		}
 
 		ShaderResource* res = (ShaderResource*)Marshal.AllocHGlobal(sizeof(ShaderResource));
@@ -1006,7 +1006,7 @@ internal static unsafe partial class Renderer
 
 			pipeline = SDL_CreateGPUGraphicsPipeline(device, &info);
 			if (pipeline == nint.Zero)
-				throw Platform.CreateExcecptionFromSDL(nameof(SDL_CreateGPUGraphicsPipeline));
+				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUGraphicsPipeline));
 
 			lock (graphicsPipelinesByHash)
 			{
@@ -1143,7 +1143,7 @@ internal static unsafe partial class Renderer
 			};
 			result = SDL_CreateGPUSampler(device, &info);
 			if (result == nint.Zero)
-				throw Platform.CreateExcecptionFromSDL(nameof(SDL_CreateGPUSampler));
+				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUSampler));
 			samplers[sampler] = result;
 		}
 
