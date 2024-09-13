@@ -1,6 +1,9 @@
 #include "foster_platform.h"
 #include <SDL3/SDL.h>
 
+#define SDL_GPU_SHADERCROSS_IMPLEMENTATION
+#include "third_party/SDL_gpu_shadercross.h"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "third_party/stb_image.h"
 
@@ -137,6 +140,26 @@ void FosterFontFree(FosterFont* font)
 {
 	stbtt_fontinfo* info = (stbtt_fontinfo*)font;
 	SDL_free(info);
+}
+
+FosterBool FosterShaderCrossInit()
+{
+	return SDL_ShaderCross_Init();
+}
+
+void FosterShaderCrossQuit()
+{
+	SDL_ShaderCross_Quit();
+}
+
+Uint32 FosterShaderCrossGetFormats()
+{
+	return SDL_ShaderCross_GetSPIRVShaderFormats();
+}
+
+void* FosterShaderCrossCreateShader(void* device, void* createInfo)
+{
+	return SDL_ShaderCross_CompileFromSPIRV((SDL_GPUDevice*)device, createInfo, 0);
 }
 
 // Internal Methods:

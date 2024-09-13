@@ -1,6 +1,8 @@
 #ifndef FOSTER_H
 #define FOSTER_H
 
+#include <SDL3/SDL_stdinc.h>
+
 // Export API
 #if defined _WIN32 || defined __CYGWIN__
 	#define FOSTER_API __declspec(dllexport)
@@ -48,6 +50,14 @@ FOSTER_API void FosterFontGetCharacter(FosterFont* font, int glyph, float scale,
 FOSTER_API void FosterFontGetPixels(FosterFont* font, unsigned char* dest, int glyph, int width, int height, float scale);
 
 FOSTER_API void FosterFontFree(FosterFont* font);
+
+FOSTER_API FosterBool FosterShaderCrossInit();
+
+FOSTER_API void FosterShaderCrossQuit();
+
+FOSTER_API Uint32 FosterShaderCrossGetFormats();
+
+FOSTER_API void* FosterShaderCrossCreateShader(void* device, void* createInfo);
 
 #if __cplusplus
 }
