@@ -42,5 +42,10 @@ public readonly struct VertexFormat
 		=> obj is VertexFormat f && f == this;
 
 	public override int GetHashCode()
-		=> HashCode.Combine(Elements, Stride);
+	{
+		var hash = Stride.GetHashCode();
+		foreach (var it in Elements)
+			hash = HashCode.Combine(hash, it);
+		return hash;
+	}
 }
