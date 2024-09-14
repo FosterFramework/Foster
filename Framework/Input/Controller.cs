@@ -6,10 +6,23 @@ namespace Foster.Framework;
 /// <summary>
 /// Represents a Gamepad or Joystick
 /// </summary>
-public class Controller
+public class Controller(int index)
 {
 	public const int MaxButtons = 64;
 	public const int MaxAxis = 64;
+
+	/// <summary>
+	/// The current Controller Slot Index.
+	/// This does not change while the Controller is connected, even if there are
+	/// empty slots earlier in the list of Controllers.
+	/// </summary>
+	public readonly int Index = index;
+
+	/// <summary>
+	/// A unique ID for the Controller, which persists while it is connected.
+	/// If a Controller is disconected and reconnected, it will be given a new ID.
+	/// </summary>
+	public ControllerID ID { get; private set; }
 
 	/// <summary>
 	/// Name of the Controller if available
@@ -19,7 +32,7 @@ public class Controller
 	/// <summary>
 	/// If the Controller is currently connected
 	/// </summary>
-	public bool Connected { get; private set; } = false;
+	public bool Connected { get; private set; }
 
 	/// <summary>
 	/// If the Controller is considered a Gamepad (ex. an Xbox Controller).
@@ -38,16 +51,13 @@ public class Controller
 	public GamepadProviders GamepadProvider => GamepadType switch
 	{
 		GamepadTypes.Unknown => GamepadProviders.Unknown,
+		GamepadTypes.Standard => GamepadProviders.Xbox,
 		GamepadTypes.Xbox360 => GamepadProviders.Xbox,
 		GamepadTypes.XboxOne => GamepadProviders.Xbox,
 		GamepadTypes.PS3 => GamepadProviders.PlayStation,
 		GamepadTypes.PS4 => GamepadProviders.PlayStation,
-		GamepadTypes.NintendoSwitchPro => GamepadProviders.Nintendo,
-		GamepadTypes.Virtual => GamepadProviders.Unknown,
 		GamepadTypes.PS5 => GamepadProviders.PlayStation,
-		GamepadTypes.AmazonLuna => GamepadProviders.Unknown,
-		GamepadTypes.GoogleStadia => GamepadProviders.Unknown,
-		GamepadTypes.NVidiaShield => GamepadProviders.Unknown,
+		GamepadTypes.NintendoSwitchPro => GamepadProviders.Nintendo,
 		GamepadTypes.NintendoSwitchJoyconLeft => GamepadProviders.Nintendo,
 		GamepadTypes.NintendoSwitchJoyconRight => GamepadProviders.Nintendo,
 		GamepadTypes.NintendoSwitchJoyconPair => GamepadProviders.Nintendo,
@@ -85,21 +95,22 @@ public class Controller
 	/// </summary>
 	public ushort Version { get; private set; } = 0;
 
-	internal readonly bool[] pressed = new bool[MaxButtons];
-	internal readonly bool[] down = new bool[MaxButtons];
-	internal readonly bool[] released = new bool[MaxButtons];
-	internal readonly TimeSpan[] timestamp = new TimeSpan[MaxButtons];
-	internal readonly float[] axis = new float[MaxAxis];
-	internal readonly TimeSpan[] axisTimestamp = new TimeSpan[MaxAxis];
+	private readonly bool[] pressed = new bool[MaxButtons];
+	private readonly bool[] down = new bool[MaxButtons];
+	private readonly bool[] released = new bool[MaxButtons];
+	private readonly TimeSpan[] timestamp = new TimeSpan[MaxButtons];
+	private readonly float[] axis = new float[MaxAxis];
+	private readonly TimeSpan[] axisTimestamp = new TimeSpan[MaxAxis];
 
-	internal void Connect(string name, int buttonCount, int axisCount, bool isGamepad, GamepadTypes type, ushort vendor, ushort product, ushort version)
+	internal void Connect(ControllerID id, string name, int buttonCount, int axisCount, bool isGamepad, GamepadTypes type, ushort vendor, ushort product, ushort version)
 	{
+		ID = id;
+		Connected = true;
 		Name = name;
 		Buttons = Math.Min(buttonCount, MaxButtons);
 		Axes = Math.Min(axisCount, MaxAxis);
 		IsGamepad = isGamepad;
 		GamepadType = type;
-		Connected = true;
 		Vendor = vendor;
 		Product = product;
 		Version = version;
@@ -107,8 +118,9 @@ public class Controller
 
 	internal void Disconnect()
 	{
-		Name = "Unknown";
+		ID = default;
 		Connected = false;
+		Name = "Unknown";
 		IsGamepad = false;
 		GamepadType = GamepadTypes.Unknown;
 		Buttons = 0;
@@ -133,8 +145,9 @@ public class Controller
 
 	internal void Copy(Controller other)
 	{
-		Name = other.Name;
+		ID = other.ID;
 		Connected = other.Connected;
+		Name = other.Name;
 		IsGamepad = other.IsGamepad;
 		GamepadType = other.GamepadType;
 		Buttons = other.Buttons;
@@ -149,6 +162,33 @@ public class Controller
 		Array.Copy(other.timestamp, 0, timestamp, 0, pressed.Length);
 		Array.Copy(other.axis, 0, axis, 0, axis.Length);
 		Array.Copy(other.axisTimestamp, 0, axisTimestamp, 0, axis.Length);
+	}
+
+	internal void OnButton(int buttonIndex, bool buttonPressed)
+	{
+		if (buttonIndex >= 0 && buttonIndex < MaxButtons)
+		{
+			if (buttonPressed)
+			{
+				down[buttonIndex] = true;
+				pressed[buttonIndex] = true;
+				timestamp[buttonIndex] = Time.Duration;
+			}
+			else
+			{
+				down[buttonIndex] = false;
+				released[buttonIndex] = true;
+			}
+		}
+	}
+
+	internal void OnAxis(int axisIndex, float axisValue)
+	{
+		if (axisIndex >= 0 && axisIndex < MaxAxis)
+		{
+			axis[axisIndex] = axisValue;
+			axisTimestamp[axisIndex] = Time.Duration;
+		}
 	}
 
 	public bool Pressed(int buttonIndex) => buttonIndex >= 0 && buttonIndex < MaxButtons && pressed[buttonIndex];
@@ -167,8 +207,8 @@ public class Controller
 	public float Axis(int axisIndex) => (axisIndex >= 0 && axisIndex < MaxAxis) ? axis[axisIndex] : 0f;
 	public float Axis(Axes axis) => Axis((int)axis);
 
-	public Vector2 Axis(int axisX, int axisY) => new Vector2(Axis(axisX), Axis(axisY));
-	public Vector2 Axis(Axes axisX, Axes axisY) => new Vector2(Axis(axisX), Axis(axisY));
+	public Vector2 Axis(int axisX, int axisY) => new(Axis(axisX), Axis(axisY));
+	public Vector2 Axis(Axes axisX, Axes axisY) => new(Axis(axisX), Axis(axisY));
 
 	public Vector2 LeftStick => Axis(Foster.Framework.Axes.LeftX, Foster.Framework.Axes.LeftY);
 	public Vector2 RightStick => Axis(Foster.Framework.Axes.RightX, Foster.Framework.Axes.RightY);

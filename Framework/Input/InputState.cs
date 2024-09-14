@@ -37,11 +37,23 @@ public class InputState
 	{
 		controllers = new Controller[MaxControllers];
 		for (int i = 0; i < controllers.Length; i++)
-			controllers[i] = new Controller();
+			controllers[i] = new Controller(i);
 
 		Controllers = new ReadOnlyCollection<Controller>(controllers);
 		Keyboard = new Keyboard();
 		Mouse = new Mouse();
+	}
+
+	/// <summary>
+	/// Finds a Connected Controller by the given ID.
+	/// If it is not found, or no longer connected, null is returned.
+	/// </summary>
+	public Controller? GetController(ControllerID id)
+	{
+		for (int i = 0; i < controllers.Length; i ++)
+			if (controllers[i].ID == id)
+				return controllers[i];
+		return null;
 	}
 
 	internal void Step()

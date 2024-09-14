@@ -18,6 +18,8 @@ public static class App
 	private static TimeSpan accumulator;
 	private static string title = string.Empty;
 	private static readonly Exception notRunningException = new("Foster is not Running");
+	private static readonly List<(uint ID, nint Ptr)> openJoysticks = [];
+	private static readonly List<(uint ID, nint Ptr)> openGamepads = [];
 	
 	/// <summary>
 	/// Foster Version Number
@@ -513,7 +515,7 @@ public static class App
 		}
 
 		SDL_Event ev = default;
-		while (SDL_PollEvent(&ev))
+		while (SDL_PollEvent(&ev) && ev.type != SDL_EventType.POLL_SENTINEL)
 		{
 			switch (ev.type)
 			{
@@ -553,8 +555,135 @@ public static class App
 				break;
 
 			// joystick
+			case SDL_EventType.JOYSTICK_ADDED:
+				{
+					var id = ev.jdevice.which;
+					if (SDL_IsGamepad(id))
+						break;
+
+					var ptr = SDL_OpenJoystick(id);
+					openJoysticks.Add((id, ptr));
+
+					Input.OnControllerConnect(
+						id: new(id),
+						name: Platform.ParseUTF8(SDL_GetJoystickName(ptr)),
+						buttonCount: SDL_GetJoystickButtons(ptr),
+						axisCount: SDL_GetJoystickAxes(ptr),
+						isGamepad: false,
+						type: GamepadTypes.Unknown,
+						vendor: SDL_GetJoystickVendor(ptr),
+						product: SDL_GetJoystickProduct(ptr),
+						version: SDL_GetJoystickProductVersion(ptr)
+					);
+					break;
+				}
+			case SDL_EventType.JOYSTICK_REMOVED:
+				{
+					var id = ev.jdevice.which;
+					if (SDL_IsGamepad(id))
+						break;
+
+					for (int i = 0; i < openJoysticks.Count; i ++)
+						if (openJoysticks[i].ID == id)
+						{
+							SDL_CloseJoystick(openJoysticks[i].Ptr);
+							openJoysticks.RemoveAt(i);
+						}
+
+					Input.OnControllerDisconnect(new(id));
+					break;
+				}
+			case SDL_EventType.JOYSTICK_BUTTON_DOWN:
+			case SDL_EventType.JOYSTICK_BUTTON_UP:
+				{
+					var id = ev.jbutton.which;
+					if (SDL_IsGamepad(id))
+						break;
+
+					Input.OnControllerButton(
+						id: new(id),
+						button: ev.jbutton.button,
+						pressed: ev.type == SDL_EventType.JOYSTICK_BUTTON_DOWN);
+
+					break;
+				}
+			case SDL_EventType.JOYSTICK_AXIS_MOTION:
+				{
+					var id = ev.jaxis.which;
+					if (SDL_IsGamepad(id))
+						break;
+
+					float value = ev.jaxis.value >= 0
+						? ev.jaxis.value / 32767.0f
+						: ev.jaxis.value / 32768.0f;
+
+					Input.OnControllerAxis(
+						id: new(id),
+						axis: ev.jaxis.axis,
+						value: value);
+
+					break;
+				}
+
 
 			// gamepad
+			case SDL_EventType.GAMEPAD_ADDED:
+				{
+					var id = ev.gdevice.which;
+					var ptr = SDL_OpenGamepad(id);
+					openGamepads.Add((id, ptr));
+
+					Input.OnControllerConnect(
+						id: new(id),
+						name: Platform.ParseUTF8(SDL_GetGamepadName(ptr)),
+						buttonCount: 15,
+						axisCount: 6,
+						isGamepad: true,
+						type: (GamepadTypes)SDL_GetGamepadType(ptr),
+						vendor: SDL_GetGamepadVendor(ptr),
+						product: SDL_GetGamepadProduct(ptr),
+						version: SDL_GetGamepadProductVersion(ptr)
+					);
+					break;
+				}
+			case SDL_EventType.GAMEPAD_REMOVED:
+				{
+					var id = ev.gdevice.which;
+					for (int i = 0; i < openGamepads.Count; i ++)
+						if (openGamepads[i].ID == id)
+						{
+							SDL_CloseGamepad(openGamepads[i].Ptr);
+							openGamepads.RemoveAt(i);
+						}
+
+					Input.OnControllerDisconnect(new(id));
+					break;
+				}
+			case SDL_EventType.GAMEPAD_BUTTON_DOWN:
+			case SDL_EventType.GAMEPAD_BUTTON_UP:
+				{
+					var id = ev.gbutton.which;
+					Input.OnControllerButton(
+						id: new(id),
+						button: (int)Platform.GetButtonFromSDL((SDL_GamepadButton)ev.gbutton.button),
+						pressed: ev.type == SDL_EventType.GAMEPAD_BUTTON_DOWN);
+
+					break;
+				}
+			case SDL_EventType.GAMEPAD_AXIS_MOTION:
+				{
+					var id = ev.gbutton.which;
+					float value = ev.gaxis.value >= 0
+						? ev.gaxis.value / 32767.0f
+						: ev.gaxis.value / 32768.0f;
+
+					Input.OnControllerAxis(
+						id: new(id),
+						axis: (int)Platform.GetAxisFromSDL((SDK_GamepadAxis)ev.gaxis.axis),
+						value: value);
+						
+					break;
+				}
 
 			default:
 				break;

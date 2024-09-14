@@ -203,12 +203,61 @@ internal static partial class SDL3
 
 	[LibraryImport(DLL)]
 	public static partial SDL_MouseButtonFlags SDL_GetRelativeMouseState(out float x, out float y);
-	
 
 	// SDL_gamepad.h
 
 	[LibraryImport(DLL, StringMarshalling = StringMarshalling.Utf8)]
 	public static partial int SDL_AddGamepadMapping(string mapping);
+
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.Bool)] 
+	public static partial bool SDL_IsGamepad(SDL_JoystickID instance_id);
+	
+	[LibraryImport(DLL)]
+	public static partial nint SDL_OpenGamepad(SDL_JoystickID instance_id);
+	
+	[LibraryImport(DLL)]
+	public static partial void SDL_CloseGamepad(nint gamepad);
+
+	[LibraryImport(DLL)]
+	public static partial nint SDL_GetGamepadName(nint gamepad);
+
+	[LibraryImport(DLL)]
+	public static partial uint SDL_GetGamepadType(nint gamepad);
+
+	[LibraryImport(DLL)]
+	public static partial UInt16 SDL_GetGamepadVendor(nint gamepad);
+	
+	[LibraryImport(DLL)]
+	public static partial UInt16 SDL_GetGamepadProduct(nint gamepad);
+	
+	[LibraryImport(DLL)]
+	public static partial UInt16 SDL_GetGamepadProductVersion(nint gamepad);
+
+	// SDL_joystick.h
+
+	[LibraryImport(DLL)]
+	public static partial nint SDL_OpenJoystick(SDL_JoystickID instance_id);
+
+	[LibraryImport(DLL)]
+	public static partial void SDL_CloseJoystick(nint joystick);
+
+	[LibraryImport(DLL)]
+	public static partial nint SDL_GetJoystickName(nint joystick);
+
+	[LibraryImport(DLL)]
+	public static partial int SDL_GetJoystickButtons(nint joystick);
+
+	[LibraryImport(DLL)]
+	public static partial int SDL_GetJoystickAxes(nint joystick);
+
+	[LibraryImport(DLL)]
+	public static partial UInt16 SDL_GetJoystickVendor(nint joystick);
+	
+	[LibraryImport(DLL)]
+	public static partial UInt16 SDL_GetJoystickProduct(nint joystick);
+	
+	[LibraryImport(DLL)]
+	public static partial UInt16 SDL_GetJoystickProductVersion(nint joystick);
 
 	// SDL_clipboard.h
 

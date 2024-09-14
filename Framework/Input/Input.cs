@@ -68,6 +68,12 @@ public static class Input
 	internal static readonly List<WeakReference<VirtualButton>> virtualButtons = [];
 
 	/// <summary>
+	/// Finds a Connected Controller by the given ID.
+	/// If it is not found, or no longer connected, null is returned.
+	/// </summary>
+	public static Controller? GetController(ControllerID id) => State.GetController(id);
+
+	/// <summary>
 	/// Loads 'gamecontrollerdb.txt' from a local file or falls back to the 
 	/// default embedded SDL gamepad mappings
 	/// </summary>
@@ -205,11 +211,15 @@ public static class Input
 		nextState.Mouse.wheelValue = wheel;
 	}
 
-	internal static void OnControllerConnect(int index, string name, int buttonCount, int axisCount, bool isGamepad, GamepadTypes type, ushort vendor, ushort product, ushort version)
+	internal static void OnControllerConnect(ControllerID id, string name, int buttonCount, int axisCount, bool isGamepad, GamepadTypes type, ushort vendor, ushort product, ushort version)
 	{
-		if (index >= 0 && index < InputState.MaxControllers)
+		for (int i = 0; i < InputState.MaxControllers; i++)
 		{
-			nextState.Controllers[index].Connect(
+			if (nextState.Controllers[i].Connected)
+				continue;
+
+			nextState.Controllers[i].Connect(
+				id,
 				name,
 				buttonCount,
 				axisCount,
@@ -219,39 +229,24 @@ public static class Input
 				product,
 				version
 			);
+			break;
 		}
 	}
 
-	internal static void OnControllerDisconnect(int index)
+	internal static void OnControllerDisconnect(ControllerID id)
 	{
-		if (index >= 0 && index < InputState.MaxControllers)
-			nextState.Controllers[index].Disconnect();
+		foreach (var it in nextState.Controllers)
+			if (it.ID == id)
+				it.Disconnect();
 	}
 
-	internal static void OnControllerButton(int index, int button, bool pressed)
+	internal static void OnControllerButton(ControllerID id, int button, bool pressed)
 	{
-		if (index >= 0 && index < InputState.MaxControllers && button >= 0 && button < Controller.MaxButtons)
-		{
-			if (pressed)
-			{
-				nextState.Controllers[index].down[button] = true;
-				nextState.Controllers[index].pressed[button] = true;
-				nextState.Controllers[index].timestamp[button] = Time.Duration;
-			}
-			else
-			{
-				nextState.Controllers[index].down[button] = false;
-				nextState.Controllers[index].released[button] = true;
-			}
-		}
+		nextState.GetController(id)?.OnButton(button, pressed);
 	}
 
-	internal static void OnControllerAxis(int index, int axis, float value)
+	internal static void OnControllerAxis(ControllerID id, int axis, float value)
 	{
-		if (index >= 0 && index < InputState.MaxControllers && axis >= 0 && axis < Controller.MaxAxis)
-		{
-			nextState.Controllers[index].axis[axis] = value;
-			nextState.Controllers[index].axisTimestamp[axis] = Time.Duration;
-		}
+		nextState.GetController(id)?.OnAxis(axis, value);
 	}
 }

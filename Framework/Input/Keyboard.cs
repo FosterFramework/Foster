@@ -18,7 +18,7 @@ public class Keyboard
 	/// <summary>
 	/// Any Text that was typed over the last frame
 	/// </summary>
-	public readonly StringBuilder Text = new StringBuilder();
+	public readonly StringBuilder Text = new();
 
 	/// <summary>
 	/// Checks if the given key was pressed
