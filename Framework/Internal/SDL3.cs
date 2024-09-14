@@ -42,7 +42,7 @@ internal static partial class SDL3
 		CAMERA     = 0x00010000u,
 	}
 
-	[LibraryImport(DLL)] [return:MarshalAs(UnmanagedType.Bool)]
+	[LibraryImport(DLL)] [return:MarshalAs(UnmanagedType.U1)]
 	public static partial bool SDL_Init(SDL_InitFlags flags);
 
 	[LibraryImport(DLL)]
@@ -132,13 +132,13 @@ internal static partial class SDL3
 	public static unsafe partial int SDL_SetWindowFullscreenMode(nint window, SDL_DisplayMode* mode);
 
 	[LibraryImport(DLL)]
-	public static partial int SDL_SetWindowFullscreen(nint window, [MarshalAs(UnmanagedType.Bool)] bool fullscreen);
+	public static partial int SDL_SetWindowFullscreen(nint window, [MarshalAs(UnmanagedType.U1)] bool fullscreen);
 
 	[LibraryImport(DLL)]
-	public static partial int SDL_SetWindowResizable(nint window, [MarshalAs(UnmanagedType.Bool)] bool resizable);
+	public static partial int SDL_SetWindowResizable(nint window, [MarshalAs(UnmanagedType.U1)] bool resizable);
 
 	[LibraryImport(DLL)]
-	public static partial int SDL_SetWindowBordered(nint window, [MarshalAs(UnmanagedType.Bool)] bool bordered);
+	public static partial int SDL_SetWindowBordered(nint window, [MarshalAs(UnmanagedType.U1)] bool bordered);
 
 	[LibraryImport(DLL)]
 	public static partial int SDL_ShowWindow(nint window);
@@ -195,7 +195,7 @@ internal static partial class SDL3
 	[LibraryImport(DLL)]
 	public static partial int SDL_HideCursor();
 
-	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.Bool)]  
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
 	public static partial bool SDL_CursorVisible();
 
 	[LibraryImport(DLL)]
@@ -209,7 +209,7 @@ internal static partial class SDL3
 	[LibraryImport(DLL, StringMarshalling = StringMarshalling.Utf8)]
 	public static partial int SDL_AddGamepadMapping(string mapping);
 
-	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.Bool)] 
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
 	public static partial bool SDL_IsGamepad(SDL_JoystickID instance_id);
 	
 	[LibraryImport(DLL)]
@@ -290,7 +290,7 @@ internal static partial class SDL3
 		public static readonly string SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS = "SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS";
 	}
 
-	[LibraryImport(DLL, StringMarshalling = StringMarshalling.Utf8)][return:MarshalAs(UnmanagedType.Bool)] 
+	[LibraryImport(DLL, StringMarshalling = StringMarshalling.Utf8)][return:MarshalAs(UnmanagedType.U1)]
 	public static partial bool SDL_SetHint(string name, string value);
 
 	// SDL_events.h
@@ -692,6 +692,6 @@ internal static partial class SDL3
 		[FieldOffset(0)] public fixed byte padding[128];
 	}
 
-	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.Bool)] 
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
 	public static unsafe partial bool SDL_PollEvent(SDL_Event* eventPtr);
 }

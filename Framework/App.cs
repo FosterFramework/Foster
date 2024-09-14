@@ -422,6 +422,13 @@ public static class App
 		modules.Clear();
 		Running = false;
 
+		foreach (var it in openJoysticks)
+			SDL_CloseJoystick(it.Ptr);
+		foreach (var it in openGamepads)
+			SDL_CloseGamepad(it.Ptr);
+		openJoysticks.Clear();
+		openGamepads.Clear();
+
 		Renderer.Shutdown();
 		SDL_StopTextInput(window);
 		SDL_DestroyWindow(window);
