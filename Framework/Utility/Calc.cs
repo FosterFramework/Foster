@@ -386,12 +386,6 @@ public static class Calc
 	public static float AngleReflectOnY(float radians)
 		=> AngleWrap(HalfPI - (radians - HalfPI));
 
-	public static float Snap(float value, float snapTo)
-		=> MathF.Round(value / snapTo) * snapTo;
-
-	public static int Snap(int value, int snapTo)
-		=> (value / snapTo) * snapTo;
-
 	public static bool OnInterval(float value, float prevValue, float interval, float offset = 0)
 	{
 		var last = ((prevValue - offset) / interval);
@@ -798,6 +792,118 @@ public static class Calc
 		}
 		return output;
 	}
+
+	#endregion
+
+	#region Snap
+
+	/// <summary>
+	/// Round the value to the nearest interval. Eg: Snap(2.2, 1.2) = 2.4
+	/// </summary>
+	public static float Snap(float value, float snapTo)
+		=> MathF.Round(value / snapTo) * snapTo;
+
+	/// <summary>
+	/// Round the value to the nearest interval. Eg: Snap(3.2, 2) = 4
+	/// </summary>
+	public static int Snap(float value, int snapTo)
+		=> Round(value / snapTo) * snapTo;
+
+	/// <summary>
+	/// Round the vector to the nearest intervals. Eg: Snap([0.8, 1.9], [1.2, 1.2]) = [1.2, 2.4]
+	/// </summary>
+	public static Vector2 Snap(Vector2 value, Vector2 snapTo)
+		=> new(Snap(value.X, snapTo.X), Snap(value.Y, snapTo.Y));
+
+	/// <summary>
+	/// Round the vector to the nearest intervals. Eg: Snap([0.8, 1.6], [1, 1]) = [1, 2]
+	/// </summary>
+	public static Point2 Snap(Vector2 value, Point2 snapTo)
+		=> new(Snap(value.X, snapTo.X), Snap(value.Y, snapTo.Y));
+
+	/// <summary>
+	/// Round the vector to the nearest interval on both axes. Eg: Snap([0.8, 1.9], 1.2) = [1.2, 2.4]
+	/// </summary>
+	public static Vector2 Snap(Vector2 value, float snapTo)
+		=> new(Snap(value.X, snapTo), Snap(value.Y, snapTo));
+
+	/// <summary>
+	/// Round the vector to the nearest interval on both axes. Eg: Snap([0.8, 1.6], 1) = [1, 2]
+	/// </summary>
+	public static Point2 Snap(Vector2 value, int snapTo)
+		=> new(Snap(value.X, snapTo), Snap(value.Y, snapTo));
+
+	/// <summary>
+	/// Floor the value to the nearest interval. Eg: SnapFloor(2.2, 1.2) = 1.2
+	/// </summary>
+	public static float SnapFloor(float value, float snapTo)
+		=> MathF.Floor(value / snapTo) * snapTo;
+
+	/// <summary>
+	/// Floor the value to the nearest interval. Eg: SnapFloor(3.2, 2) = 2
+	/// </summary>
+	public static int SnapFloor(float value, int snapTo)
+		=> Floor(value / snapTo) * snapTo;
+
+	/// <summary>
+	/// Floor the vector to the nearest intervals. Eg: SnapFloor([0.8, 2.3], [0, 1.2]) = [1.2, 1.2]
+	/// </summary>
+	public static Vector2 SnapFloor(Vector2 value, Vector2 snapTo)
+		=> new(SnapFloor(value.X, snapTo.X), SnapFloor(value.Y, snapTo.Y));
+
+	/// <summary>
+	/// Floor the vector to the nearest intervals. Eg: SnapFloor([0.8, 1.6], [1, 1]) = [0, 1]
+	/// </summary>
+	public static Point2 SnapFloor(Vector2 value, Point2 snapTo)
+		=> new(SnapFloor(value.X, snapTo.X), SnapFloor(value.Y, snapTo.Y));
+
+	/// <summary>
+	/// Floor the vector to the nearest interval on both axes. Eg: SnapFloor([0.8, 2.3], 1.2) = [0, 1.2]
+	/// </summary>
+	public static Vector2 SnapFloor(Vector2 value, float snapTo)
+		=> new(SnapFloor(value.X, snapTo), SnapFloor(value.Y, snapTo));
+
+	/// <summary>
+	/// Floor the vector to the nearest interval on both axes. Eg: SnapFloor([0.8, 1.6], 1) = [0, 1]
+	/// </summary>
+	public static Point2 SnapFloor(Vector2 value, int snapTo)
+		=> new(SnapFloor(value.X, snapTo), SnapFloor(value.Y, snapTo));
+
+	/// <summary>
+	/// Ceil the value to the nearest interval. Eg: SnapCeil(1.4, 1.2) = 2.4
+	/// </summary>
+	public static float SnapCeil(float value, float snapTo)
+		=> MathF.Ceiling(value / snapTo) * snapTo;
+
+	/// <summary>
+	/// Ceil the value to the nearest interval. Eg: SnapCeil(2.2, 2) = 4
+	/// </summary>
+	public static int SnapCeil(float value, int snapTo)
+		=> Ceil(value / snapTo) * snapTo;
+
+	/// <summary>
+	/// Ceil the vector to the nearest intervals. Eg: SnapCeil([0.8, 1.3], [0, 1.2]) = [1.2, 2.4]
+	/// </summary>
+	public static Vector2 SnapCeil(Vector2 value, Vector2 snapTo)
+		=> new(SnapCeil(value.X, snapTo.X), SnapCeil(value.Y, snapTo.Y));
+
+	/// <summary>
+	/// Ceil the vector to the nearest intervals. Eg: SnapCeil([0.8, 1.2], [1, 1]) = [1, 2]
+	/// </summary>
+	public static Point2 SnapCeil(Vector2 value, Point2 snapTo)
+		=> new(SnapCeil(value.X, snapTo.X), SnapCeil(value.Y, snapTo.Y));
+
+	/// <summary>
+	/// Ceil the vector to the nearest interval on both axes. Eg: SnapCeil([0.8, 1.3], 1.2) = [1.2, 2.4]
+	/// </summary>
+	public static Vector2 SnapCeil(Vector2 value, float snapTo)
+		=> new(SnapCeil(value.X, snapTo), SnapCeil(value.Y, snapTo));
+
+	/// <summary>
+	/// Ceil the vector to the nearest interval on both axes. Eg: SnapCeil([0.8, 1.2], 1) = [1, 2]
+	/// </summary>
+	public static Point2 SnapCeil(Vector2 value, int snapTo)
+		=> new(SnapCeil(value.X, snapTo), SnapCeil(value.Y, snapTo));
 
 	#endregion
 }
