@@ -415,6 +415,37 @@ public static class Calc
 	public static bool Approx(float a, float b)
 		=> MathF.Abs(a - b) <= 0.001f;
 
+	public static IEnumerable<Point2> GetBresenhamsLine(Point2 a, Point2 b)
+	{
+		bool steep = Math.Abs(b.Y - a.Y) > Math.Abs(b.X - a.X);
+		if (steep)
+		{
+			Swap(ref a.X, ref a.Y);
+			Swap(ref b.X, ref b.Y);
+		}
+		if (a.X > b.X)
+		{
+			Swap(ref a.X, ref b.X);
+			Swap(ref a.Y, ref b.Y);
+		}
+		int dx = b.X - a.X;
+		int dy = Math.Abs(b.Y - a.Y);
+		int error = dx / 2;
+		int ystep = (a.Y < b.Y) ? 1 : -1;
+		int y = a.Y;
+
+		for (int x = a.X; x <= b.X; x++)
+		{
+			yield return new(steep ? y : x, steep ? x : y);
+			error -= dy;
+			if (error < 0)
+			{
+				y += ystep;
+				error += dx;
+			}
+		}
+	}
+
 	#endregion
 
 	#region Triangulation
