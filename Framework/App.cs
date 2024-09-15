@@ -76,18 +76,9 @@ public static class App
 	public static string UserPath { get; private set; } = string.Empty;
 
 	/// <summary>
-	/// Returns whether the Application Window is currently Focused or not.
+	/// The current Renderer API in use
 	/// </summary>
-	public static bool Focused
-	{
-		get
-		{
-			if (!Running)
-				throw notRunningException;
-			var flags = SDL_WindowFlags.INPUT_FOCUS | SDL_WindowFlags.MOUSE_FOCUS;
-			return (SDL_GetWindowFlags(window) & flags) != 0;
-		}
-	}
+	public static GraphicsDriver Driver => Renderer.Driver;
 
 	/// <summary>
 	/// The Window width, which isn't necessarily the size in Pixels depending on the Platform.
@@ -230,13 +221,49 @@ public static class App
 	}
 
 	/// <summary>
+	/// Whether the Window is Maximized
+	/// </summary>
+	public static bool Maximized
+	{
+		get
+		{
+			if (!Running)
+				throw notRunningException;
+			return (SDL_GetWindowFlags(window) & SDL_WindowFlags.MAXIMIZED) != 0;
+		}
+		set
+		{
+			if (!Running)
+				throw notRunningException;
+
+			if (value && !Maximized)
+				SDL_MaximizeWindow(window);
+			else if (!value && Maximized)
+				SDL_RestoreWindow(window);
+		}
+	}
+
+	/// <summary>
+	/// Returns whether the Application Window is currently Focused or not.
+	/// </summary>
+	public static bool Focused
+	{
+		get
+		{
+			if (!Running)
+				throw notRunningException;
+			var flags = SDL_WindowFlags.INPUT_FOCUS | SDL_WindowFlags.MOUSE_FOCUS;
+			return (SDL_GetWindowFlags(window) & flags) != 0;
+		}
+	}
+
+	/// <summary>
 	/// If Vertical Synchronization is enabled
 	/// </summary>
-	[Obsolete("Use Graphics.VSync instead")]
 	public static bool VSync
 	{
-		get => Graphics.VSync;
-		set => Graphics.VSync = value;
+		get => Renderer.GetVSync();
+		set => Renderer.SetVSync(value);
 	}
 
 	/// <summary>
@@ -450,6 +477,25 @@ public static class App
 			Exiting = true;
 	}
 
+	/// <summary>
+	/// Clears the Back Buffer to a given Color
+	/// </summary>
+	public static void Clear(Color color) 
+		=> Renderer.Clear(null, color, 0, 0, ClearMask.Color);
+
+	/// <summary>
+	/// Clears the Back Buffer
+	/// </summary>
+	public static unsafe void Clear(Color color, float depth, int stencil, ClearMask mask)
+		=> Renderer.Clear(null, color, depth, stencil, mask);
+
+	/// <summary>
+	/// Submits a Draw Command to the GPU
+	/// </summary>
+	/// <param name="command"></param>
+	public static unsafe void Draw(in DrawCommand command)
+		=> Renderer.Draw(command);
+
 	private static void Tick()
 	{
 		static void Update(TimeSpan delta)
@@ -631,7 +677,6 @@ public static class App
 
 					break;
 				}
-
 
 			// gamepad
 			case SDL_EventType.GAMEPAD_ADDED:

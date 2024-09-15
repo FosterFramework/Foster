@@ -85,7 +85,6 @@ public class Batcher : IDisposable
 		public TextureSampler Sampler = sampler;
 		public int Offset = offset;
 		public int Elements = elements;
-		public bool FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && Graphics.OriginBottomLeft;
 	}
 
 	public Batcher()
@@ -233,7 +232,7 @@ public class Batcher : IDisposable
 		mat.Set(batch.MaterialState.MatrixUniform, matrix);
 		mat.FragmentSamplers[batch.MaterialState.SamplerIndex] = new(texture, batch.Sampler);
 
-		Graphics.Submit(new(target, mesh, mat)
+		App.Draw(new(target, mesh, mat)
 		{
 			Viewport = viewport,
 			Scissor = trimmed,
@@ -258,14 +257,12 @@ public class Batcher : IDisposable
 		if (currentBatch.Texture == null || currentBatch.Elements == 0)
 		{
 			currentBatch.Texture = texture;
-			currentBatch.FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && Graphics.OriginBottomLeft;
 		}
 		else if (currentBatch.Texture != texture)
 		{
 			batches.Insert(currentBatchInsert, currentBatch);
 
 			currentBatch.Texture = texture;
-			currentBatch.FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && Graphics.OriginBottomLeft;
 			currentBatch.Offset += currentBatch.Elements;
 			currentBatch.Elements = 0;
 			currentBatchInsert++;
@@ -694,9 +691,6 @@ public class Batcher : IDisposable
 			vertexArray[1].Mode = mode;
 			vertexArray[2].Mode = mode;
 			vertexArray[3].Mode = mode;
-
-			if (currentBatch.FlipVerticalUV)
-				FlipVerticalUVs(vertexPtr, vertexCount, 4);
 		}
 
 		vertexCount += 4;
@@ -754,9 +748,6 @@ public class Batcher : IDisposable
 			vertexArray[1].Mode = mode;
 			vertexArray[2].Mode = mode;
 			vertexArray[3].Mode = mode;
-
-			if (currentBatch.FlipVerticalUV)
-				FlipVerticalUVs(vertexPtr, vertexCount, 4);
 		}
 
 		vertexCount += 4;
@@ -823,9 +814,6 @@ public class Batcher : IDisposable
 			vertexArray[0].Mode = mode;
 			vertexArray[1].Mode = mode;
 			vertexArray[2].Mode = mode;
-
-			if (currentBatch.FlipVerticalUV)
-				FlipVerticalUVs(vertexPtr, vertexCount, 3);
 		}
 
 		vertexCount += 3;
@@ -850,9 +838,6 @@ public class Batcher : IDisposable
 			vertexArray[0].Mode = mode;
 			vertexArray[1].Mode = mode;
 			vertexArray[2].Mode = mode;
-
-			if (currentBatch.FlipVerticalUV)
-				FlipVerticalUVs(vertexPtr, vertexCount, 3);
 		}
 
 		vertexCount += 3;

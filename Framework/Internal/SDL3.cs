@@ -143,6 +143,15 @@ internal static partial class SDL3
 	[LibraryImport(DLL)]
 	public static partial int SDL_ShowWindow(nint window);
 
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
+	public static partial bool SDL_MaximizeWindow(nint window);
+
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
+	public static partial bool SDL_MinimizeWindow(nint window);
+
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
+	public static partial bool SDL_RestoreWindow(nint window);
+
 	// SDL_filesystem.h
 
 	[LibraryImport(DLL)]

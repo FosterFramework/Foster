@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Numerics;
-using System.Runtime.InteropServices;
-using System.Text;
 
 namespace Foster.Framework;
 
@@ -119,7 +115,7 @@ public static class Input
 	/// <summary>
 	/// Run at the beginning of a frame to step the input state.
 	/// After this, the Application will poll the platform for more inputs, which call back
-	/// to the various Input.On internal methods.
+	/// to the various Input internal methods.
 	/// </summary>
 	internal static void Step()
 	{
