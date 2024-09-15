@@ -4,7 +4,7 @@ using System.Numerics;
 namespace Foster.Framework;
 
 /// <summary>
-/// A Material references a Shader and holds the applied values for each Uniform.
+/// A Material references a Shader and holds the applied values for each Uniform and Texture Sampler.
 /// This way, you can have a single Shader in memory but many different applied values.
 /// </summary>
 public class Material
@@ -73,6 +73,36 @@ public class Material
 		Array.Copy(FragmentSamplers, other.FragmentSamplers, FragmentSamplers.Length);
 		Array.Copy(vertexUniformBuffer, other.vertexUniformBuffer, Math.Min(vertexUniformBuffer.Length, other.vertexUniformBuffer.Length));
 		Array.Copy(fragmentUniformBuffer, other.fragmentUniformBuffer, Math.Min(fragmentUniformBuffer.Length, other.fragmentUniformBuffer.Length));
+	}
+
+	public bool Has(string uniform)
+		=> Has(uniform, out _, out _);
+
+	public bool Has(string uniform, out UniformType type, out int arrayElements)
+	{
+		type = UniformType.None;
+		arrayElements = 0;
+
+		if (shader == null)
+			return false;
+
+		foreach (var it in shader.Vertex.Uniforms)
+			if (it.Name.Equals(uniform))
+			{
+				type = it.Type;
+				arrayElements = it.ArrayElements;
+				return true;
+			}
+
+		foreach (var it in shader.Fragment.Uniforms)
+			if (it.Name.Equals(uniform))
+			{
+				type = it.Type;
+				arrayElements = it.ArrayElements;
+				return true;
+			}
+			
+		return false;
 	}
 
 	public void Set(string uniform, float value)
@@ -148,34 +178,35 @@ public class Material
 
 	public unsafe void Set(string uniform, ReadOnlySpan<float> values)
 	{
-		static void FindUniformAndCopyData(string name, ShaderUniform[] uniforms, in ReadOnlySpan<float> sourceBuffer, byte[] targetBuffer)
-		{
-			fixed (float* ptr = sourceBuffer)
-			{
-				var src = new Span<byte>(ptr, sourceBuffer.Length * sizeof(float));
+		fixed (void* ptr = values)
+			Set(uniform, new ReadOnlySpan<byte>(ptr, values.Length * sizeof(float)));
+	}
 
-				int offset = 0;
-				foreach (var it in uniforms)
+	public void Set(string uniform, ReadOnlySpan<byte> data)
+	{
+		static unsafe void FindUniformAndCopyData(string name, ShaderUniform[] uniforms, in ReadOnlySpan<byte> srcBuffer, Span<byte> dstBuffer)
+		{
+			var src = srcBuffer;
+			var offset = 0;
+			foreach (var it in uniforms)
+			{
+				if (it.Name == name)
 				{
-					if (it.Name == name)
-					{
-						var dst = targetBuffer.AsSpan(offset);
-						if (src.Length > dst.Length)
-							src = src[0..dst.Length];
-						src.CopyTo(dst);
-						break;
-					}
-					offset += it.Type.SizeInBytes() * it.ArrayElements;
+					var dst = dstBuffer[offset..];
+					if (src.Length > dst.Length)
+						src = src[0..dst.Length];
+					src.CopyTo(dst);
+					break;
 				}
+				offset += it.Type.SizeInBytes() * it.ArrayElements;
 			}
 		}
 
-		if (shader == null)
-			return;
-
-		FindUniformAndCopyData(uniform, shader.Vertex.Uniforms, values, vertexUniformBuffer);
-		FindUniformAndCopyData(uniform, shader.Fragment.Uniforms, values, fragmentUniformBuffer);
-		
+		if (shader != null)
+		{
+			FindUniformAndCopyData(uniform, shader.Vertex.Uniforms, data, vertexUniformBuffer);
+			FindUniformAndCopyData(uniform, shader.Fragment.Uniforms, data, fragmentUniformBuffer);
+		}
 	}
 
 }

@@ -13,19 +13,18 @@ public readonly record struct ShaderUniform(
 /// <summary>
 /// Reflection Data used to create a new Shader Program
 /// </summary>
-public class ShaderProgramInfo(byte[] code, int samplerCount, params ShaderUniform[] uniforms)
-{
-	public readonly byte[] Code = code;
-	public readonly int SamplerCount = samplerCount;
-	public readonly ShaderUniform[] Uniforms = uniforms;
-}
+public readonly record struct ShaderProgramInfo(
+	byte[] Code,
+	int SamplerCount,
+	ShaderUniform[] Uniforms
+);
 
 /// <summary>
 /// Data Required to create a new Shader
 /// </summary>
 public readonly record struct ShaderCreateInfo(
-	ShaderProgramInfo VertexProgram, 
-	ShaderProgramInfo FragmentProgram
+	ShaderProgramInfo Vertex, 
+	ShaderProgramInfo Fragment
 );
 
 /// <summary>
@@ -38,7 +37,7 @@ public class Shader : IResource
 	/// </summary>
 	public class Program(int samplerCount, ShaderUniform[] uniforms)
 	{
-		public int SamplerCount = samplerCount;
+		public readonly int SamplerCount = samplerCount;
 		public readonly ShaderUniform[] Uniforms = uniforms;
 		public readonly int UniformSizeInBytes = uniforms.Sum(it => it.Type.SizeInBytes() * it.ArrayElements);
 	}
@@ -68,19 +67,26 @@ public class Shader : IResource
 
 	public Shader(ShaderCreateInfo createInfo)
 	{
+		// validate that uniforms are unique, or matching.
+		// we treat vertex/fragment shaders as a combined singular shader, and thus
+		// the uniforms between them must be unique (or at least matching in type)
+		foreach (var uni0 in createInfo.Vertex.Uniforms)
+			foreach (var uni1 in createInfo.Fragment.Uniforms)
+			{
+				if (uni0.Name == uni1.Name && (uni0.Type != uni1.Type || uni0.ArrayElements != uni1.ArrayElements))
+					throw new Exception($"Uniform names must be unique between Vertex and Fragment shaders, or they must be matching types. (Uniform '{uni0.Name}' types aren't equal)");
+			}
+
 		resource = Renderer.CreateShader(createInfo);
-		Vertex = new(createInfo.VertexProgram.SamplerCount, createInfo.VertexProgram.Uniforms);
-		Fragment = new(createInfo.FragmentProgram.SamplerCount, createInfo.FragmentProgram.Uniforms);
+		Vertex = new(createInfo.Vertex.SamplerCount, createInfo.Vertex.Uniforms);
+		Fragment = new(createInfo.Fragment.SamplerCount, createInfo.Fragment.Uniforms);
 	}
 
 	~Shader()
 	{
 		Dispose(false);
 	}
-		
-	/// <summary>
-	/// Disposes of the Shader
-	/// </summary>
+	
 	public void Dispose()
 	{
 		Dispose(true);

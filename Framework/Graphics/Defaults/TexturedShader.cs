@@ -7,17 +7,17 @@ namespace Foster.Framework;
 public class TexturedShader() : Shader(info)
 {
 	private static readonly ShaderCreateInfo info = new(
-		VertexProgram: new(
-			code: Platform.ReadEmbeddedBytes("Textured.vert.spv"),
-			samplerCount: 0,
-			uniforms: [
+		Vertex: new(
+			Code: Platform.ReadEmbeddedBytes("Textured.vert.spv"),
+			SamplerCount: 0,
+			Uniforms: [
 				new("Matrix", UniformType.Mat4x4)
 			]
 		),
-		FragmentProgram: new(
-			code: Platform.ReadEmbeddedBytes("Textured.frag.spv"),
-			samplerCount: 1,
-			uniforms: []
+		Fragment: new(
+			Code: Platform.ReadEmbeddedBytes("Textured.frag.spv"),
+			SamplerCount: 1,
+			Uniforms: []
 		)
 	);
 }

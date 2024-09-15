@@ -460,19 +460,19 @@ internal static unsafe partial class Renderer
 
 		// create vertex shader
 		fixed (byte* entryPointPtr = entryPoint)
-		fixed (byte* vertexCode = shaderInfo.VertexProgram.Code)
+		fixed (byte* vertexCode = shaderInfo.Vertex.Code)
 		{
 			SDL_GPUShaderCreateInfo info = new()
 			{
-				code_size = (uint)shaderInfo.VertexProgram.Code.Length,
+				code_size = (uint)shaderInfo.Vertex.Code.Length,
 				code = new nint(vertexCode),
 				entrypoint = new nint(entryPointPtr),
 				format = SDL_GPUShaderFormat.SHADERFORMAT_SPIRV,
 				stage = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX,
-				num_samplers = (uint)shaderInfo.VertexProgram.SamplerCount,
+				num_samplers = (uint)shaderInfo.Vertex.SamplerCount,
 				num_storage_textures = 0,
 				num_storage_buffers = 0,
-				num_uniform_buffers = (uint)(shaderInfo.VertexProgram.Uniforms.Length > 0 ? 1 : 0)
+				num_uniform_buffers = (uint)(shaderInfo.Vertex.Uniforms.Length > 0 ? 1 : 0)
 			};
 
 			vertexProgram = Platform.ShaderCrossCreateShader(device, new nint(&info));
@@ -482,19 +482,19 @@ internal static unsafe partial class Renderer
 
 		// create fragment program
 		fixed (byte* entryPointPtr = entryPoint)
-		fixed (byte* fragmentCode = shaderInfo.FragmentProgram.Code)
+		fixed (byte* fragmentCode = shaderInfo.Fragment.Code)
 		{
 			SDL_GPUShaderCreateInfo info = new()
 			{
-				code_size = (uint)shaderInfo.FragmentProgram.Code.Length,
+				code_size = (uint)shaderInfo.Fragment.Code.Length,
 				code = new nint(fragmentCode),
 				entrypoint = new nint(entryPointPtr),
 				format = SDL_GPUShaderFormat.SHADERFORMAT_SPIRV,
 				stage = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT,
-				num_samplers = (uint)shaderInfo.FragmentProgram.SamplerCount,
+				num_samplers = (uint)shaderInfo.Fragment.SamplerCount,
 				num_storage_textures = 0,
 				num_storage_buffers = 0,
-				num_uniform_buffers = (uint)(shaderInfo.FragmentProgram.Uniforms.Length > 0 ? 1 : 0)
+				num_uniform_buffers = (uint)(shaderInfo.Fragment.Uniforms.Length > 0 ? 1 : 0)
 			};
 
 			fragmentProgram = Platform.ShaderCrossCreateShader(device, new nint(&info));
