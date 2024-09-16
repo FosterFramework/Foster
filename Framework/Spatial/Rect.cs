@@ -202,6 +202,12 @@ public struct Rect : IConvexShape, IEquatable<Rect>
 
 	}
 
+	public Rect(in Vector2 pos, float w, float h)
+		: this(pos.X, pos.Y, w, h)
+	{
+
+	}
+
 	public Rect(in Vector2 from, in Vector2 to)
 	{
 		X = Math.Min(from.X, to.X);
