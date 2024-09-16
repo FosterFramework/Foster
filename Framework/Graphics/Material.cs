@@ -42,8 +42,9 @@ public class Material
 	public Material(Shader? shader) => SetShader(shader);
 
 	private Shader? shader;
-	internal byte[] vertexUniformBuffer = [];
-	internal byte[] fragmentUniformBuffer = [];
+
+	internal byte[] VertexUniformBuffer = [];
+	internal byte[] FragmentUniformBuffer = [];
 
 	public void SetShader(Shader? shader)
 	{
@@ -53,10 +54,10 @@ public class Material
 		if (shader == null)
 			return;
 
-		if (vertexUniformBuffer.Length < shader.Vertex.UniformSizeInBytes)
-			Array.Resize(ref vertexUniformBuffer, shader.Vertex.UniformSizeInBytes);
-		if (fragmentUniformBuffer.Length < shader.Fragment.UniformSizeInBytes)
-			Array.Resize(ref fragmentUniformBuffer, shader.Fragment.UniformSizeInBytes);
+		if (VertexUniformBuffer.Length < shader.Vertex.UniformSizeInBytes)
+			Array.Resize(ref VertexUniformBuffer, shader.Vertex.UniformSizeInBytes);
+		if (FragmentUniformBuffer.Length < shader.Fragment.UniformSizeInBytes)
+			Array.Resize(ref FragmentUniformBuffer, shader.Fragment.UniformSizeInBytes);
 	}
 
 	public void Clear()
@@ -71,8 +72,8 @@ public class Material
 		other.SetShader(shader);
 		Array.Copy(VertexSamplers, other.VertexSamplers, VertexSamplers.Length);
 		Array.Copy(FragmentSamplers, other.FragmentSamplers, FragmentSamplers.Length);
-		Array.Copy(vertexUniformBuffer, other.vertexUniformBuffer, Math.Min(vertexUniformBuffer.Length, other.vertexUniformBuffer.Length));
-		Array.Copy(fragmentUniformBuffer, other.fragmentUniformBuffer, Math.Min(fragmentUniformBuffer.Length, other.fragmentUniformBuffer.Length));
+		Array.Copy(VertexUniformBuffer, other.VertexUniformBuffer, Math.Min(VertexUniformBuffer.Length, other.VertexUniformBuffer.Length));
+		Array.Copy(FragmentUniformBuffer, other.FragmentUniformBuffer, Math.Min(FragmentUniformBuffer.Length, other.FragmentUniformBuffer.Length));
 	}
 
 	public bool Has(string uniform)
@@ -204,8 +205,8 @@ public class Material
 
 		if (shader != null)
 		{
-			FindUniformAndCopyData(uniform, shader.Vertex.Uniforms, data, vertexUniformBuffer);
-			FindUniformAndCopyData(uniform, shader.Fragment.Uniforms, data, fragmentUniformBuffer);
+			FindUniformAndCopyData(uniform, shader.Vertex.Uniforms, data, VertexUniformBuffer);
+			FindUniformAndCopyData(uniform, shader.Fragment.Uniforms, data, FragmentUniformBuffer);
 		}
 	}
 

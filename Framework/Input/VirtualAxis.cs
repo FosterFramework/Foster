@@ -1,4 +1,6 @@
-﻿namespace Foster.Framework;
+﻿using System.Numerics;
+
+namespace Foster.Framework;
 
 /// <summary>
 /// A Virtual Input Axis that can be mapped to different keyboards and gamepads
@@ -136,6 +138,13 @@ public class VirtualAxis
 	public VirtualAxis AddNegative(int controller, Axes axis, int sign, float deadzone = 0f)
 	{
 		Negative.Add(controller, axis, sign, deadzone);
+		return this;
+	}
+
+	public VirtualAxis AddMouseMotion(Vector2 axis, float maximumValue)
+	{
+		Negative.AddMouseMotion(axis, -1, maximumValue);
+		Positive.AddMouseMotion(axis, 1, maximumValue);
 		return this;
 	}
 	

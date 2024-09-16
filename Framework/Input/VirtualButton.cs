@@ -1,4 +1,6 @@
 ﻿
+using System.Numerics;
+
 namespace Foster.Framework;
 
 /// <summary>
@@ -64,6 +66,22 @@ public class VirtualButton
 		}
 	}
 
+	public record MouseMotionBinding(Vector2 Axis, int Sign, float MinimumValue, float MaximumValue) : IBinding
+	{
+		public bool IsPressed => GetValue(Input.State) > 0 && GetValue(Input.LastState) <= 0;
+		public bool IsDown => GetValue(Input.State) > 0;
+		public bool IsReleased => GetValue(Input.State) <= 0 && GetValue(Input.LastState) > 0;
+		public float Value => GetValue(Input.State);
+		public float ValueNoDeadzone => GetValue(Input.State);
+		public ConditionFn? Enabled { get; set; }
+
+		private float GetValue(InputState state)
+		{
+			var value = Vector2.Dot(Axis, state.Mouse.Delta);
+			return Calc.ClampedMap(value, Sign * MinimumValue, Sign * MaximumValue, 0, 1);
+		}
+	}
+
 	/// <summary>
 	/// Optional Virtual Button name
 	/// </summary>
@@ -72,7 +90,7 @@ public class VirtualButton
 	/// <summary>
 	/// Button Bindings
 	/// </summary>
-	public readonly List<IBinding> Bindings = new();
+	public readonly List<IBinding> Bindings = [];
 
 	/// <summary>
 	/// How long before invoking the first Repeated signal
@@ -150,7 +168,7 @@ public class VirtualButton
 		// This way it's automatically collected if the user is no longer
 		// using it, and we don't require the user to call a Dispose or 
 		// Unsubscribe callback
-		Input.virtualButtons.Add(new WeakReference<VirtualButton>(this));
+		Input.VirtualButtons.Add(new WeakReference<VirtualButton>(this));
 
 		Name = name;
 		Buffer = buffer;
@@ -212,6 +230,12 @@ public class VirtualButton
 	public VirtualButton Add(ConditionFn condition, int controller, Axes axis, int sign, float threshold)
 	{
 		Bindings.Add(new AxisBinding(controller, axis, sign, threshold) { Enabled = condition });
+		return this;
+	}
+
+	public VirtualButton AddMouseMotion(Vector2 normal, int sign, float maximumValue)
+	{
+		Bindings.Add(new MouseMotionBinding(normal, sign, 0, maximumValue));
 		return this;
 	}
 

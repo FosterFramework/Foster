@@ -69,6 +69,12 @@ internal static partial class Platform
 		return [];
 	}
 
+	public enum ImageWriteFormat
+	{
+		Png,
+		Qoi
+	}
+
 	[LibraryImport(DLL, EntryPoint = "FosterImageLoad")]
 	public static unsafe partial nint ImageLoad(void* memory, int length, out int w, out int h);
 	

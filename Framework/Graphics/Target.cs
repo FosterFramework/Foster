@@ -39,7 +39,7 @@ public class Target : IResource
 	/// </summary>
 	public readonly Texture[] Attachments;
 
-	internal bool disposed = false;
+	private bool disposed = false;
 
 	public Target(int width, int height)
 		: this(width, height, defaultFormats) { }

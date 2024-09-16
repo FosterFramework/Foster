@@ -10,10 +10,10 @@ public class Keyboard
 {
 	public const int MaxKeys = 512;
 
-	internal readonly bool[] pressed = new bool[MaxKeys];
-	internal readonly bool[] down = new bool[MaxKeys];
-	internal readonly bool[] released = new bool[MaxKeys];
-	internal readonly TimeSpan[] timestamp = new TimeSpan[MaxKeys];
+	private readonly bool[] pressed = new bool[MaxKeys];
+	private readonly bool[] down = new bool[MaxKeys];
+	private readonly bool[] released = new bool[MaxKeys];
+	private readonly TimeSpan[] timestamp = new TimeSpan[MaxKeys];
 
 	/// <summary>
 	/// Any Text that was typed over the last frame
@@ -283,4 +283,21 @@ public class Keyboard
 		Text.Clear();
 	}
 
+	internal void OnKey(int keyIndex, bool keyPressed)
+	{
+		if (keyIndex >= 0 && keyIndex < MaxKeys)
+		{
+			if (keyPressed)
+			{
+				down[keyIndex] = true;
+				pressed[keyIndex] = true;
+				timestamp[keyIndex] = Time.Duration;
+			}
+			else
+			{
+				down[keyIndex] = false;
+				released[keyIndex] = true;
+			}
+		}
+	}
 }

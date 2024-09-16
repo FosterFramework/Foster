@@ -1,7 +1,8 @@
 namespace Foster.Framework;
 
 /// <summary>
-/// Structure representing an OS Mouse Cursor
+/// Structure representing an OS Mouse Cursor.
+/// Use <seealso cref="Input.SetMouseCursor(Foster.Framework.Cursor?)"/> to bind the Cursor.
 /// </summary>
 public sealed class Cursor : IDisposable
 {
@@ -90,7 +91,7 @@ public sealed class Cursor : IDisposable
 
 	/// <summary>
 	/// Creates a new cursor from a built in System type.
-	/// Note that FocusPoint and Size will not have valid values.
+	/// Note that <seealso cref="FocusPoint"/> and <seealso cref="Size"/> will not have valid values.
 	/// </summary>
 	public unsafe Cursor(SystemTypes type)
 	{
@@ -107,6 +108,11 @@ public sealed class Cursor : IDisposable
 	~Cursor()
 		=> Dispose();
 
+	/// <summary>
+	/// Disposes the Cursor's resources.
+	/// If the Cursor is currently bound through <seealso cref="Input.SetMouseCursor(Cursor?)"/>, the Mouse
+	/// will change back to the default OS cursor.
+	/// </summary>
 	public void Dispose()
 	{
 		if (Handle != nint.Zero)

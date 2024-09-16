@@ -164,7 +164,7 @@ public class Image : IDisposable
 	/// </summary>
 	public void WritePng(Stream stream)
 	{
-		Write(stream, ImageWriteFormat.Png);
+		Write(stream, Platform.ImageWriteFormat.Png);
 	}
 
 	/// <summary>
@@ -181,10 +181,10 @@ public class Image : IDisposable
 	/// </summary>
 	public void WriteQoi(Stream stream)
 	{
-		Write(stream, ImageWriteFormat.Qoi);
+		Write(stream, Platform.ImageWriteFormat.Qoi);
 	}
 
-	private unsafe void Write(Stream stream, ImageWriteFormat format)
+	private unsafe void Write(Stream stream, Platform.ImageWriteFormat format)
 	{
 		[UnmanagedCallersOnly]
 		static unsafe void Write(IntPtr context, IntPtr data, int size)

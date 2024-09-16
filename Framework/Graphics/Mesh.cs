@@ -37,7 +37,7 @@ public class Mesh : IResource
 	/// </summary>
 	public VertexFormat? VertexFormat { get; private set; }
 
-	internal nint resource { get; private set; }
+	internal nint Resource { get; private set; }
 	private bool disposed = false;
 
 	/// <summary>
@@ -116,11 +116,11 @@ public class Mesh : IResource
 
 		IndexCount = count;
 
-		if (resource == nint.Zero)
-			resource = Renderer.CreateMesh();
+		if (Resource == nint.Zero)
+			Resource = Renderer.CreateMesh();
 
 		Renderer.SetMeshIndexData(
-			resource,
+			Resource,
 			data,
 			GetIndexFormatSize(format) * count,
 			0,
@@ -162,11 +162,11 @@ public class Mesh : IResource
 
 		var size = GetIndexFormatSize(IndexFormat.Value);
 
-		if (resource == nint.Zero)
-			resource = Renderer.CreateMesh();
+		if (Resource == nint.Zero)
+			Resource = Renderer.CreateMesh();
 
 		Renderer.SetMeshIndexData(
-			resource,
+			Resource,
 			data,
 			size * count,
 			size * offset,
@@ -205,11 +205,11 @@ public class Mesh : IResource
 
 		VertexCount = count;
 
-		if (resource == nint.Zero)
-			resource = Renderer.CreateMesh();
+		if (Resource == nint.Zero)
+			Resource = Renderer.CreateMesh();
 
 		Renderer.SetMeshVertexData(
-			resource,
+			Resource,
 			data,
 			format.Stride * count,
 			0,
@@ -240,11 +240,11 @@ public class Mesh : IResource
 		if (offset + count > VertexCount)
 			throw new Exception("SetSubVertices is out of range of the existing Vertex Buffer");
 
-		if (resource == nint.Zero)
-			resource = Renderer.CreateMesh();
+		if (Resource == nint.Zero)
+			Resource = Renderer.CreateMesh();
 
 		Renderer.SetMeshVertexData(
-			resource,
+			Resource,
 			data,
 			VertexFormat.Value.Stride * count,
 			VertexFormat.Value.Stride * offset,
@@ -267,9 +267,9 @@ public class Mesh : IResource
 		if (!disposed)
 		{
 			disposed = true;
-			if (resource != nint.Zero)
-				Renderer.DestroyMesh(resource);
-			resource = nint.Zero;
+			if (Resource != nint.Zero)
+				Renderer.DestroyMesh(Resource);
+			Resource = nint.Zero;
 		}
 	}
 }

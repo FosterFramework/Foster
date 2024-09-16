@@ -4,17 +4,17 @@ using System.Numerics;
 namespace Foster.Framework;
 
 /// <summary>
-/// Stores a Mouse State
+/// Stores the state of the Mouse
 /// </summary>
 public class Mouse
 {
 	public const int MaxButtons = 5;
 
-	internal readonly bool[] pressed = new bool[MaxButtons];
-	internal readonly bool[] down = new bool[MaxButtons];
-	internal readonly bool[] released = new bool[MaxButtons];
-	internal readonly TimeSpan[] timestamp = new TimeSpan[MaxButtons];
-	internal Vector2 wheelValue;
+	private readonly bool[] pressed = new bool[MaxButtons];
+	private readonly bool[] down = new bool[MaxButtons];
+	private readonly bool[] released = new bool[MaxButtons];
+	private readonly TimeSpan[] timestamp = new TimeSpan[MaxButtons];
+	private Vector2 wheelValue;
 
 	/// <summary>
 	/// Mouse position, relative to the window, in Pixel Coordinates.
@@ -85,4 +85,25 @@ public class Mouse
 		Array.Fill(released, false);
 		wheelValue = Vector2.Zero;
 	}
+
+	internal void OnButton(int buttonIndex, bool buttonPressed)
+	{
+		if (buttonIndex >= 0 && buttonIndex < MaxButtons)
+		{
+			if (buttonPressed)
+			{
+				down[buttonIndex] = true;
+				pressed[buttonIndex] = true;
+				timestamp[buttonIndex] = Time.Duration;
+			}
+			else
+			{
+				down[buttonIndex] = false;
+				released[buttonIndex] = true;
+			}
+		}
+	}
+
+	internal void OnWheel(in Vector2 value)
+		=> wheelValue = value;
 }

@@ -62,8 +62,8 @@ public class Shader : IResource
 	/// </summary>
 	public readonly Program Fragment;
 
-	internal readonly IntPtr resource;
-	internal bool disposed = false;
+	internal readonly IntPtr Resource;
+	private bool disposed = false;
 
 	public Shader(ShaderCreateInfo createInfo)
 	{
@@ -77,7 +77,7 @@ public class Shader : IResource
 					throw new Exception($"Uniform names must be unique between Vertex and Fragment shaders, or they must be matching types. (Uniform '{uni0.Name}' types aren't equal)");
 			}
 
-		resource = Renderer.CreateShader(createInfo);
+		Resource = Renderer.CreateShader(createInfo);
 		Vertex = new(createInfo.Vertex.SamplerCount, createInfo.Vertex.Uniforms);
 		Fragment = new(createInfo.Fragment.SamplerCount, createInfo.Fragment.Uniforms);
 	}
@@ -98,7 +98,7 @@ public class Shader : IResource
 		if (!disposed)
 		{
 			disposed = true;
-			Renderer.DestroyShader(resource);
+			Renderer.DestroyShader(Resource);
 		}
 	}
 }

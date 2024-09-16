@@ -132,6 +132,13 @@ public class VirtualStick
 		Vertical.Add(Keys.Up, Keys.Down);
 		return this;
 	}
+
+	public VirtualStick AddMouseMotion(float maximumValue)
+	{
+		Horizontal.AddMouseMotion(Vector2.UnitX, maximumValue);
+		Vertical.AddMouseMotion(Vector2.UnitY, maximumValue);
+		return this;
+	}
 	
 	public void Consume()
 	{

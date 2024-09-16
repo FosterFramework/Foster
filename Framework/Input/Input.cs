@@ -39,7 +39,7 @@ public static class Input
 	public static ReadOnlyCollection<Controller> Controllers => State.Controllers;
 
 	/// <summary>
-	/// Default delay before a key or button starts repeating
+	/// Default delay before a key or button starts repeating, in seconds
 	/// </summary>
 	public static float RepeatDelay = 0.4f;
 
@@ -61,12 +61,12 @@ public static class Input
 	/// <summary>
 	/// Holds references to all Virtual Buttons so they can be updated.
 	/// </summary>
-	internal static readonly List<WeakReference<VirtualButton>> virtualButtons = [];
+	internal static readonly List<WeakReference<VirtualButton>> VirtualButtons = [];
 
 	/// <summary>
 	/// Holds a reference to the current cursor in use, to avoid it getting collected.
 	/// </summary>
-	internal static Cursor? currentCursor;
+	private static Cursor? currentCursor;
 
 	/// <summary>
 	/// Finds a Connected Controller by the given ID.
@@ -183,13 +183,13 @@ public static class Input
 		nextState.Step();
 
 		// update virtual buttons, remove unreferenced ones
-		for (int i = virtualButtons.Count - 1; i >= 0; i--)
+		for (int i = VirtualButtons.Count - 1; i >= 0; i--)
 		{
-			var button = virtualButtons[i];
+			var button = VirtualButtons[i];
 			if (button.TryGetTarget(out var target))
 				target.Update();
 			else
-				virtualButtons.RemoveAt(i);
+				VirtualButtons.RemoveAt(i);
 		}
 	}
 
@@ -217,40 +217,10 @@ public static class Input
 	}
 
 	internal static void OnKey(int key, bool pressed)
-	{
-		if (key >= 0 && key < Keyboard.MaxKeys)
-		{
-			if (pressed)
-			{
-				nextState.Keyboard.down[key] = true;
-				nextState.Keyboard.pressed[key] = true;
-				nextState.Keyboard.timestamp[key] = Time.Duration;
-			}
-			else
-			{
-				nextState.Keyboard.down[key] = false;
-				nextState.Keyboard.released[key] = true;
-			}
-		}
-	}
+		=> nextState.Keyboard.OnKey(key, pressed);
 
 	internal static void OnMouseButton(int button, bool pressed)
-	{
-		if (button >= 0 && button < Mouse.MaxButtons)
-		{
-			if (pressed)
-			{
-				nextState.Mouse.down[button] = true;
-				nextState.Mouse.pressed[button] = true;
-				nextState.Mouse.timestamp[button] = Time.Duration;
-			}
-			else
-			{
-				nextState.Mouse.down[button] = false;
-				nextState.Mouse.released[button] = true;
-			}
-		}
-	}
+		=> nextState.Mouse.OnButton(button, pressed);
 
 	internal static void OnMouseMove(Vector2 position, Vector2 delta)
 	{
@@ -263,9 +233,7 @@ public static class Input
 	}
 
 	internal static void OnMouseWheel(Vector2 wheel)
-	{
-		nextState.Mouse.wheelValue = wheel;
-	}
+		=> nextState.Mouse.OnWheel(wheel);
 
 	internal static void OnControllerConnect(ControllerID id, string name, int buttonCount, int axisCount, bool isGamepad, GamepadTypes type, ushort vendor, ushort product, ushort version)
 	{
@@ -297,12 +265,8 @@ public static class Input
 	}
 
 	internal static void OnControllerButton(ControllerID id, int button, bool pressed)
-	{
-		nextState.GetController(id)?.OnButton(button, pressed);
-	}
+		=> nextState.GetController(id)?.OnButton(button, pressed);
 
 	internal static void OnControllerAxis(ControllerID id, int axis, float value)
-	{
-		nextState.GetController(id)?.OnAxis(axis, value);
-	}
+		=> nextState.GetController(id)?.OnAxis(axis, value);
 }

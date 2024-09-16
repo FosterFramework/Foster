@@ -3,7 +3,7 @@
 namespace Foster.Framework;
 
 /// <summary>
-/// Stores an Input State
+/// Captures a single frame of input state.
 /// </summary>
 public class InputState
 {

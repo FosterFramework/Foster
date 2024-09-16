@@ -592,10 +592,10 @@ internal static unsafe partial class Renderer
 		}
 
 		// bind mesh buffers
-		if (renderPassMesh != mesh.resource)
+		if (renderPassMesh != mesh.Resource)
 		{
-			renderPassMesh = mesh.resource;
-			var it = (MeshResource*)mesh.resource;
+			renderPassMesh = mesh.Resource;
+			var it = (MeshResource*)mesh.Resource;
 
 			// bind index buffer
 			SDL_GPUBufferBinding indexBinding = new()
@@ -658,14 +658,14 @@ internal static unsafe partial class Renderer
 		// Upload Vertex Uniforms
 		if (shader.Vertex.Uniforms.Length > 0)
 		{
-			fixed (byte* ptr = mat.vertexUniformBuffer)
+			fixed (byte* ptr = mat.VertexUniformBuffer)
 				SDL_PushGPUVertexUniformData(cmd, 0, new nint(ptr), (uint)shader.Vertex.UniformSizeInBytes);
 		}
 
 		// Upload Fragment Uniforms
 		if (shader.Fragment.Uniforms.Length > 0)
 		{
-			fixed (byte* ptr = mat.fragmentUniformBuffer)
+			fixed (byte* ptr = mat.FragmentUniformBuffer)
 				SDL_PushGPUFragmentUniformData(cmd, 0, new nint(ptr), (uint)shader.Fragment.UniformSizeInBytes);
 		}
 
@@ -870,13 +870,13 @@ internal static unsafe partial class Renderer
 		var mesh = command.Mesh;
 		var material = command.Material;
 		var shader = material.Shader!;
-		var shaderRes = (ShaderResource*)shader.resource;
+		var shaderRes = (ShaderResource*)shader.Resource;
 		var vertexFormat = mesh.VertexFormat!.Value;
 
 		// build a big hashcode of everything in use
 		var hash = HashCode.Combine(
 			target,
-			shader.resource,
+			shader.Resource,
 			mesh.VertexFormat,
 			command.CullMode,
 			command.DepthCompare,
@@ -1019,8 +1019,8 @@ internal static unsafe partial class Renderer
 			{
 				// track which shader uses this pipeline
 				{
-					if (!graphicsPipelinesByResource.TryGetValue(shader.resource, out var list))
-						graphicsPipelinesByResource[shader.resource] = list = [];
+					if (!graphicsPipelinesByResource.TryGetValue(shader.Resource, out var list))
+						graphicsPipelinesByResource[shader.Resource] = list = [];
 					list.Add(pipeline);
 				}
 
