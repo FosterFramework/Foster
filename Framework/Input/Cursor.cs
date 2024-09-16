@@ -61,7 +61,7 @@ public sealed class Cursor : IDisposable
 	/// <summary>
 	/// Creates a new Cursor
 	/// </summary>
-	/// <param name="image">The Image of the Cursor to use</param>
+	/// <param name="image">The Image for the Cursor to use</param>
 	/// <param name="focusPoint">The Focus Point of the Cursor, which is where active point is</param>
 	public unsafe Cursor(Image image, Point2 focusPoint)
 	{

@@ -174,7 +174,7 @@ public static class Input
 	internal static void Step()
 	{
 		// warp mouse to center of the window if Relative Mode is enabled
-		if (SDL3.SDL_GetWindowRelativeMouseMode(App.Window))
+		if (SDL3.SDL_GetWindowRelativeMouseMode(App.Window) && App.Focused)
 			SDL3.SDL_WarpMouseInWindow(App.Window, App.Width / 2, App.Height / 2);
 
 		// step state
