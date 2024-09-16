@@ -3,6 +3,10 @@ using static Foster.Framework.SDL3;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// Shows OS File Dialogs if the platform supports it.
+/// Note that all File Dialog operations are only available from the Main thread.
+/// </summary>
 public static class FileDialog
 {
 	public enum Result
@@ -29,7 +33,7 @@ public static class FileDialog
 	public delegate void Callback(string[] paths, Result result);
 
 	/// <summary>
-	/// Callback with the result file path the user selected
+	/// Callback with the resulting file path the user selected
 	/// </summary>
 	public delegate void CallbackSingleFile(string path, Result result);
 	
@@ -48,7 +52,7 @@ public static class FileDialog
 	/// Shows an "Open File" Dialog
 	/// </summary>
 	public static unsafe void OpenFile(Callback callback, ReadOnlySpan<Filter> filters, string? defaultLocation = null, bool allowMany = false)
-		=> ShowDialog(Modes.OpenFile, callback, filters, defaultLocation, allowMany);
+		=> ShowDialogOnMainThread(Modes.OpenFile, callback, filters, defaultLocation, allowMany);
 
 	/// <summary>
 	/// Shows an "Open File" Dialog
@@ -60,7 +64,7 @@ public static class FileDialog
 	/// Shows an "Open Folder" Dialog
 	/// </summary>
 	public static void OpenFolder(Callback callback, string? defaultLocation = null, bool allowMany = false)
-		=> ShowDialog(Modes.OpenFolder, callback, [], defaultLocation, allowMany);
+		=> ShowDialogOnMainThread(Modes.OpenFolder, callback, [], defaultLocation, allowMany);
 
 	/// <summary>
 	/// Shows a "Save File" Dialog
@@ -76,7 +80,7 @@ public static class FileDialog
 		void Singular(string[] files, Result result)
 			=> callback(files.FirstOrDefault() ?? string.Empty, result);
 		
-		ShowDialog(Modes.SaveFile, Singular, filters, defaultLocation, false);
+		ShowDialogOnMainThread(Modes.SaveFile, Singular, filters, defaultLocation, false);
 	}
 
 	private enum Modes
@@ -86,7 +90,7 @@ public static class FileDialog
 		SaveFile
 	}
 
-	private static unsafe void ShowDialog(
+	private static unsafe void ShowDialogOnMainThread(
 		Modes mode,
 		Callback callback,
 		ReadOnlySpan<Filter> filters,
@@ -125,6 +129,11 @@ public static class FileDialog
 			}
 		}
 
+		// as per SDL docs, these methods can only be called from the main thread
+		if (App.IsMainThread())
+			throw new Exception("Showing File Dialogs is only supported from the Main thread");
+
+		// fallback to where we think the application is running from
 		if (string.IsNullOrEmpty(defaultLocation))
 			defaultLocation = Directory.GetCurrentDirectory();
 
@@ -137,6 +146,7 @@ public static class FileDialog
 			filtersUtf8[i].pattern = Platform.ToUTF8(filters[i].Pattern);
 		}
 
+		// create a pointer to our user callback so that SDL can pass it around
 		var handle = GCHandle.Alloc(callback);
 		var userdata = GCHandle.ToIntPtr(handle);
 
