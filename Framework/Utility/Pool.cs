@@ -63,14 +63,10 @@ public static class Pool<T> where T : class, new()
 public static class Pool
 {
 	public static T Get<T>() where T : class, new()
-	{
-		return Pool<T>.Get();
-	}
+		=> Pool<T>.Get();
 
 	public static void Return<T>(T instance) where T : class, new()
-	{
-		Pool<T>.Return(instance);
-	}
+		=> Pool<T>.Return(instance);
 }
 
 /// <summary>
@@ -79,13 +75,11 @@ public static class Pool
 public static class FramePool<T> where T : class, new()
 {
 	private static readonly Queue<T> available = new();
-	private static readonly List<T> usedThisFrame = new();
+	private static readonly List<T> usedThisFrame = [];
 	private static readonly object mutex = new();
 
 	static FramePool()
-	{
-		FramePool.nextFrame += NextFrame;
-	}
+		=> FramePool.RegisterNextFrame(NextFrame);
 
 	/// <summary>
 	/// Gets an instance from the Pool, or creates one if it doesn't exit
@@ -142,21 +136,23 @@ public static class FramePool
 	/// Action to perform when stepping to the next frame.
 	/// <see cref="FramePool{T}"/> registers its NextFrame function with this event.
 	/// </summary>
-	internal static event Action? nextFrame;
+	private static event Action? OnNextFrame;
 
 	/// <summary>
 	/// Shorthand to Generic <see cref="FramePool{T}.Get"/>.
 	/// </summary>
 	public static T Get<T>() where T : class, new()
-	{
-		return FramePool<T>.Get();
-	}
+		=> FramePool<T>.Get();
 
 	/// <summary>
 	/// Steps the Frame Pools to the next frame
 	/// </summary>
 	internal static void NextFrame()
-	{
-		nextFrame?.Invoke();
-	}
+		=> OnNextFrame?.Invoke();
+
+	/// <summary>
+	/// Registers an action to perform on the next frame
+	/// </summary>
+	internal static void RegisterNextFrame(Action action)
+		=> OnNextFrame += action;
 }
