@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -34,7 +35,7 @@ public static class App
 	/// <summary>
 	/// SDL Window Pointer
 	/// </summary>
-	internal static nint Window;
+	internal static nint Window { get; private set; }
 
 	private static readonly List<Module> modules = [];
 	private static readonly List<Func<Module>> registrations = [];
@@ -47,6 +48,7 @@ public static class App
 	private static readonly List<(uint ID, nint Ptr)> openJoysticks = [];
 	private static readonly List<(uint ID, nint Ptr)> openGamepads = [];
 	private static int mainThreadID;
+	private static readonly ConcurrentQueue<Action> mainThreadQueue = [];
 	
 	/// <summary>
 	/// Foster Version Number
@@ -389,7 +391,7 @@ public static class App
 		{
 			var sdlv = SDL_GetVersion();
 			Log.Info($"Foster: v{Version.Major}.{Version.Minor}.{Version.Build}");
-			Log.Info($"SDL: v{sdlv / 1000000}.{((sdlv) / 1000) % 1000}.{(sdlv) % 1000}");
+			Log.Info($"SDL: v{sdlv / 1000000}.{(sdlv / 1000) % 1000}.{sdlv % 1000}");
 			Log.Info($"Platform: {RuntimeInformation.OSDescription} ({RuntimeInformation.OSArchitecture})");
 			Log.Info($"Framework: {RuntimeInformation.FrameworkDescription}");
 		}
@@ -483,6 +485,10 @@ public static class App
 		while (!Exiting)
 			Tick();
 
+		// make sure all queued main thread actions have been run
+		while (mainThreadQueue.TryDequeue(out var action))
+			action.Invoke();
+
 		// shutdown
 		for (int i = modules.Count - 1; i >= 0; i --)
 			modules[i].Shutdown();
@@ -502,6 +508,7 @@ public static class App
 		Renderer.DestroyDevice();
 		SDL_Quit();
 
+		mainThreadQueue.Clear();
 		Window = IntPtr.Zero;
 		started = false;
 		Exiting = false;
@@ -542,6 +549,18 @@ public static class App
 	public static bool IsMainThread()
 		=> Environment.CurrentManagedThreadId == mainThreadID;
 
+	/// <summary>
+	/// Queues an action to be run on the Main Thread.
+	/// If this is called from the main thread, it is invoked immediately.
+	/// </summary>
+	public static void RunOnMainThread(Action action)
+	{
+		if (Running && IsMainThread())
+			action();
+		else
+			mainThreadQueue.Enqueue(action);
+	}
+
 	private static void Tick()
 	{
 		static void Update(TimeSpan delta)
@@ -552,6 +571,9 @@ public static class App
 			Input.Step();
 			PollEvents();
 			FramePool.NextFrame();
+
+			while (mainThreadQueue.TryDequeue(out var action))
+				action.Invoke();
 
 			for (int i = 0; i < modules.Count; i ++)
 				modules[i].Update();

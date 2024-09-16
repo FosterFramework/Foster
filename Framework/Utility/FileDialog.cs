@@ -5,7 +5,6 @@ namespace Foster.Framework;
 
 /// <summary>
 /// Shows OS File Dialogs if the platform supports it.
-/// Note that all File Dialog operations are only available from the Main thread.
 /// </summary>
 public static class FileDialog
 {
@@ -51,8 +50,8 @@ public static class FileDialog
 	/// <summary>
 	/// Shows an "Open File" Dialog
 	/// </summary>
-	public static unsafe void OpenFile(Callback callback, ReadOnlySpan<Filter> filters, string? defaultLocation = null, bool allowMany = false)
-		=> ShowDialogOnMainThread(Modes.OpenFile, callback, filters, defaultLocation, allowMany);
+	public static unsafe void OpenFile(Callback callback, Filter[] filters, string? defaultLocation = null, bool allowMany = false)
+		=> ShowFileDialog(new(Modes.OpenFile, callback, filters, defaultLocation, allowMany));
 
 	/// <summary>
 	/// Shows an "Open File" Dialog
@@ -64,7 +63,7 @@ public static class FileDialog
 	/// Shows an "Open Folder" Dialog
 	/// </summary>
 	public static void OpenFolder(Callback callback, string? defaultLocation = null, bool allowMany = false)
-		=> ShowDialogOnMainThread(Modes.OpenFolder, callback, [], defaultLocation, allowMany);
+		=> ShowFileDialog(new(Modes.OpenFolder, callback, [], defaultLocation, allowMany));
 
 	/// <summary>
 	/// Shows a "Save File" Dialog
@@ -75,12 +74,12 @@ public static class FileDialog
 	/// <summary>
 	/// Shows a "Save File" Dialog
 	/// </summary>
-	public static unsafe void SaveFile(CallbackSingleFile callback, ReadOnlySpan<Filter> filters, string? defaultLocation = null)
+	public static unsafe void SaveFile(CallbackSingleFile callback, Filter[] filters, string? defaultLocation = null)
 	{
 		void Singular(string[] files, Result result)
 			=> callback(files.FirstOrDefault() ?? string.Empty, result);
 		
-		ShowDialogOnMainThread(Modes.SaveFile, Singular, filters, defaultLocation, false);
+		ShowFileDialog(new(Modes.SaveFile, Singular, filters, defaultLocation, false));
 	}
 
 	private enum Modes
@@ -90,12 +89,15 @@ public static class FileDialog
 		SaveFile
 	}
 
-	private static unsafe void ShowDialogOnMainThread(
-		Modes mode,
-		Callback callback,
-		ReadOnlySpan<Filter> filters,
-		string? defaultLocation,
-		bool allowMany)
+	private readonly record struct ShowProperties(
+		Modes Mode,
+		Callback Callback,
+		Filter[] Filters,
+		string? DefaultLocation,
+		bool AllowMany
+	);
+
+	private static unsafe void ShowFileDialog(ShowProperties properties)
 	{
 		[UnmanagedCallersOnly]
 		static void CallbackFromSDL(nint userdata, nint files, int filter)
@@ -105,6 +107,9 @@ public static class FileDialog
 			var callback = handle.Target as Callback;
 			handle.Free();
 
+			string[] paths;
+			Result result;
+
 			// get list of files (list of utf8)
 			var ptr = (byte**)files;
 
@@ -112,64 +117,85 @@ public static class FileDialog
 			if (ptr == null)
 			{
 				Log.Error(Platform.GetErrorFromSDL());
-				callback?.Invoke([], Result.Failed);
+				paths = [];
+				result = Result.Failed;
 			}
 			// empty list means the action was cancelled by the user
 			else if (ptr[0] == null)
 			{
-				callback?.Invoke([], Result.Cancelled);
+				paths = [];
+				result = Result.Cancelled;
 			}
 			// otherwise return the files
 			else
 			{
-				var result = new List<string>();
+				var list = new List<string>();
 				for (int i = 0; ptr[i] != null; i ++)
-					result.Add(Platform.ParseUTF8(new nint(ptr[i])));
-				callback?.Invoke([..result], Result.Success);
+					list.Add(Platform.ParseUTF8(new nint(ptr[i])));
+				paths = [..list];
+				result = Result.Success;
 			}
+
+			// the callback can be invoked from any thread as per the SDL docs
+			// but for ease-of-use we want it to always be called from the Main thread
+			App.RunOnMainThread(() => callback?.Invoke(paths, result));
 		}
 
-		// as per SDL docs, these methods can only be called from the main thread
-		if (App.IsMainThread())
-			throw new Exception("Showing File Dialogs is only supported from the Main thread");
-
-		// fallback to where we think the application is running from
-		if (string.IsNullOrEmpty(defaultLocation))
-			defaultLocation = Directory.GetCurrentDirectory();
-
-		// get UTF8 string data for SDL
-		var defaultLocationUtf8 = Platform.ToUTF8(defaultLocation);
-		var filtersUtf8 = stackalloc SDL_DialogFileFilter[filters.Length];
-		for (int i = 0; i < filters.Length; i ++)
+		static void Show(ShowProperties properties)
 		{
-			filtersUtf8[i].name = Platform.ToUTF8(filters[i].Name);
-			filtersUtf8[i].pattern = Platform.ToUTF8(filters[i].Pattern);
+			// fallback to where we think the application is running from
+			string? defaultLocation = properties.DefaultLocation;
+			if (string.IsNullOrEmpty(defaultLocation))
+				defaultLocation = Directory.GetCurrentDirectory();
+
+			// get UTF8 string data for SDL
+			var locationUtf8 = Platform.ToUTF8(defaultLocation);
+			var filtersUtf8 = stackalloc SDL_DialogFileFilter[properties.Filters.Length];
+			for (int i = 0; i < properties.Filters.Length; i ++)
+			{
+				filtersUtf8[i].name = Platform.ToUTF8(properties.Filters[i].Name);
+				filtersUtf8[i].pattern = Platform.ToUTF8(properties.Filters[i].Pattern);
+			}
+
+			// create a pointer to our user callback so that SDL can pass it around
+			var handle = GCHandle.Alloc(properties.Callback);
+			var userdata = GCHandle.ToIntPtr(handle);
+
+			// open file dialog
+			switch (properties.Mode)
+			{
+				case Modes.OpenFile:
+					SDL_ShowOpenFileDialog(
+						&CallbackFromSDL, userdata, App.Window, filtersUtf8, 
+						properties.Filters.Length, locationUtf8, properties.AllowMany);
+					break;
+				case Modes.SaveFile:
+					SDL_ShowSaveFileDialog(
+						&CallbackFromSDL, userdata, App.Window, filtersUtf8,
+						properties.Filters.Length, locationUtf8);
+					break;
+				case Modes.OpenFolder:
+					SDL_ShowOpenFolderDialog(
+						&CallbackFromSDL, userdata, App.Window, 
+						locationUtf8, properties.AllowMany);
+					break;
+			}
+
+			// clear UTF8 string memory
+			foreach (var it in new Span<SDL_DialogFileFilter>(filtersUtf8, properties.Filters.Length))
+			{
+				Platform.FreeUTF8(it.name);
+				Platform.FreeUTF8(it.pattern);
+			}
+			Platform.FreeUTF8(locationUtf8);
 		}
 
-		// create a pointer to our user callback so that SDL can pass it around
-		var handle = GCHandle.Alloc(callback);
-		var userdata = GCHandle.ToIntPtr(handle);
-
-		// open file dialog
-		switch (mode)
-		{
-			case Modes.OpenFile:
-				SDL_ShowOpenFileDialog(&CallbackFromSDL, userdata, App.Width, filtersUtf8, filters.Length, defaultLocationUtf8, allowMany);
-				break;
-			case Modes.SaveFile:
-				SDL_ShowSaveFileDialog(&CallbackFromSDL, userdata, App.Width, filtersUtf8, filters.Length, defaultLocationUtf8);
-				break;
-			case Modes.OpenFolder:
-				SDL_ShowOpenFolderDialog(&CallbackFromSDL, userdata, App.Width, defaultLocationUtf8, allowMany);
-				break;
-		}
-
-		// clear UTF8 string memory
-		foreach (var it in new Span<SDL_DialogFileFilter>(filtersUtf8, filters.Length))
-		{
-			Platform.FreeUTF8(it.name);
-			Platform.FreeUTF8(it.pattern);
-		}
-		Platform.FreeUTF8(defaultLocationUtf8);
+		// Application must be running for these methods to work
+		// as per SDL docs, some platforms require the events to be polled
+		if (!App.Running)
+			throw new Exception("Showing File Dialogs is only supported while the Application is running");
+		
+		// SDL docs say that showing file dialogs must be invoked from the Main Thread
+		App.RunOnMainThread(() => Show(properties));
 	}
 }
