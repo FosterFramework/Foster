@@ -302,6 +302,25 @@ internal static partial class SDL3
 	[LibraryImport(DLL, StringMarshalling = StringMarshalling.Utf8)][return:MarshalAs(UnmanagedType.U1)]
 	public static partial bool SDL_SetHint(string name, string value);
 
+	// SDL_dialog.h
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct SDL_DialogFileFilter
+	{
+		public nint name;
+		public nint pattern;
+	}
+
+	[LibraryImport(DLL)]
+	public static unsafe partial void SDL_ShowOpenFileDialog(delegate* unmanaged<nint, nint, int, void> callback, nint userdata, nint window, SDL_DialogFileFilter* filters, int nfilters, nint default_location, [MarshalAs(UnmanagedType.U1)] bool allow_many);
+	
+	[LibraryImport(DLL)]
+	public static unsafe partial void SDL_ShowSaveFileDialog(delegate* unmanaged<nint, nint, int, void> callback, nint userdata, nint window, SDL_DialogFileFilter* filters, int nfilters, nint default_location);
+	
+	[LibraryImport(DLL)]
+	public static unsafe partial void SDL_ShowOpenFolderDialog(delegate* unmanaged<nint, nint, int, void> callback, nint userdata, nint window, nint default_location, [MarshalAs(UnmanagedType.U1)] bool allow_many);
+
+
 	// SDL_events.h
 
 	public enum SDL_EventType : UInt32

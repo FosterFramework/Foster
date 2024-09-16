@@ -7,9 +7,35 @@ using static Foster.Framework.SDL3.Hints;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// Application Information struct, to be provided to <seealso cref="App.Run(in AppRunInfo)"/>
+/// <param name="ApplicationName">Application Name used for storing data and representing the Application</param>
+/// <param name="WindowTitle">What to display in the Window Title</param>
+/// <param name="Width">The Window Width</param>
+/// <param name="Height">The Window Height</param>
+/// <param name="Fullscreen">If the Window should default to Fullscreen</param>
+/// <param name="Resizable">If the Window should be resizable</param>
+/// </summary>
+public readonly record struct AppRunInfo
+(
+	string ApplicationName,
+	string WindowTitle,
+	int Width,
+	int Height,
+	bool Fullscreen = false,
+	bool Resizable = true
+);
+
+/// <summary>
+/// The Application runs and updates your game.
+/// </summary>
 public static class App
 {
-	private static nint window;
+	/// <summary>
+	/// SDL Window Pointer
+	/// </summary>
+	internal static nint Window;
+
 	private static readonly List<Module> modules = [];
 	private static readonly List<Func<Module>> registrations = [];
 	private static readonly Stopwatch timer = new();
@@ -20,6 +46,7 @@ public static class App
 	private static readonly Exception notRunningException = new("Foster is not Running");
 	private static readonly List<(uint ID, nint Ptr)> openJoysticks = [];
 	private static readonly List<(uint ID, nint Ptr)> openGamepads = [];
+	private static int mainThreadID;
 	
 	/// <summary>
 	/// Foster Version Number
@@ -56,7 +83,7 @@ public static class App
 			if (title != value)
 			{
 				title = value;
-				SDL_SetWindowTitle(window, value);
+				SDL_SetWindowTitle(Window, value);
 			}
 		}
 	}
@@ -110,14 +137,14 @@ public static class App
 		{
 			if (!Running)
 				throw notRunningException;
-			SDL_GetWindowSize(window, out int w, out int h);
+			SDL_GetWindowSize(Window, out int w, out int h);
 			return new(w, h);
 		}
 		set
 		{
 			if (!Running)
 				throw notRunningException;
-			SDL_SetWindowSize(window, value.X, value.Y);
+			SDL_SetWindowSize(Window, value.X, value.Y);
 		}
 	}
 
@@ -140,7 +167,7 @@ public static class App
 		{
 			if (!Running)
 				throw notRunningException;
-			SDL_GetWindowSizeInPixels(window, out int w, out int h);
+			SDL_GetWindowSizeInPixels(Window, out int w, out int h);
 			return new(w, h);
 		}
 	}
@@ -154,7 +181,7 @@ public static class App
 		{
 			if (!Running)
 				throw notRunningException;
-			var index = SDL_GetDisplayForWindow(window);
+			var index = SDL_GetDisplayForWindow(Window);
 			var mode = SDL_GetCurrentDisplayMode(index);
 			if (mode == null)
 				return Point2.Zero;
@@ -169,7 +196,7 @@ public static class App
 	{
 		get
 		{
-			var index = SDL_GetDisplayForWindow(window);
+			var index = SDL_GetDisplayForWindow(Window);
 			var scale = SDL_GetDisplayContentScale(index);
 			
 			if (scale <= 0)
@@ -191,13 +218,13 @@ public static class App
 		{
 			if (!Running)
 				throw notRunningException;
-			return (SDL_GetWindowFlags(window) & SDL_WindowFlags.FULLSCREEN) != 0;
+			return (SDL_GetWindowFlags(Window) & SDL_WindowFlags.FULLSCREEN) != 0;
 		}
 		set
 		{
 			if (!Running)
 				throw notRunningException;
-			SDL_SetWindowFullscreen(window, value);
+			SDL_SetWindowFullscreen(Window, value);
 		}
 	}
 
@@ -210,13 +237,13 @@ public static class App
 		{
 			if (!Running)
 				throw notRunningException;
-			return (SDL_GetWindowFlags(window) & SDL_WindowFlags.RESIZABLE) != 0;
+			return (SDL_GetWindowFlags(Window) & SDL_WindowFlags.RESIZABLE) != 0;
 		}
 		set
 		{
 			if (!Running)
 				throw notRunningException;
-			SDL_SetWindowResizable(window, value);
+			SDL_SetWindowResizable(Window, value);
 		}
 	}
 
@@ -229,7 +256,7 @@ public static class App
 		{
 			if (!Running)
 				throw notRunningException;
-			return (SDL_GetWindowFlags(window) & SDL_WindowFlags.MAXIMIZED) != 0;
+			return (SDL_GetWindowFlags(Window) & SDL_WindowFlags.MAXIMIZED) != 0;
 		}
 		set
 		{
@@ -237,9 +264,9 @@ public static class App
 				throw notRunningException;
 
 			if (value && !Maximized)
-				SDL_MaximizeWindow(window);
+				SDL_MaximizeWindow(Window);
 			else if (!value && Maximized)
-				SDL_RestoreWindow(window);
+				SDL_RestoreWindow(Window);
 		}
 	}
 
@@ -253,7 +280,7 @@ public static class App
 			if (!Running)
 				throw notRunningException;
 			var flags = SDL_WindowFlags.INPUT_FOCUS | SDL_WindowFlags.MOUSE_FOCUS;
-			return (SDL_GetWindowFlags(window) & flags) != 0;
+			return (SDL_GetWindowFlags(Window) & flags) != 0;
 		}
 	}
 
@@ -301,11 +328,6 @@ public static class App
 	public static Action? OnHotReload;
 
 	/// <summary>
-	/// The Main Thread that the Application was Run on
-	/// </summary>
-	public static int MainThreadID { get; private set; }
-
-	/// <summary>
 	/// Registers a Module that will be run within the Application once it has started.
 	/// If the Application is already running, the Module's Startup method will immediately be invoked.
 	/// </summary>
@@ -331,19 +353,37 @@ public static class App
 	/// Functionally the same as calling <see cref="Register{T}"/> followed by <see cref="Run(string, int, int, bool)"/>
 	/// </summary>
 	public static void Run<T>(string applicationName, int width, int height, bool fullscreen = false) where T : Module, new()
+		=> Run<T>(new(applicationName, applicationName, width, height, fullscreen));
+
+	/// <summary>
+	/// Runs the Application with the given Module automatically registered.
+	/// Functionally the same as calling <see cref="Register{T}"/> followed by <see cref="Run(in AppRunInfo)"/>
+	/// </summary>
+	public static void Run<T>(in AppRunInfo info) where T : Module, new()
 	{
 		Register<T>();
-		Run(applicationName, width, height, fullscreen);
+		Run(info);
 	}
 
 	/// <summary>
 	/// Runs the Application
 	/// </summary>
 	public static unsafe void Run(string applicationName, int width, int height, bool fullscreen = false)
+		=> Run(new(applicationName, applicationName, width, height, fullscreen));
+
+	/// <summary>
+	/// Runs the Application
+	/// </summary>
+	public static unsafe void Run(in AppRunInfo info)
 	{
-		Debug.Assert(!Running, "Application is already running");
-		Debug.Assert(!Exiting, "Application is still exiting");
-		Debug.Assert(width > 0 && height > 0, "Width or height is <= 0");
+		if (Running)
+			throw new Exception("Application is already running");
+		if (Exiting)
+			throw new Exception("Application is still exiting");
+		if (info.Width <= 0 || info.Height <= 0)
+			throw new Exception("Width or height is <= 0");
+		if (string.IsNullOrEmpty(info.ApplicationName) || string.IsNullOrWhiteSpace(info.ApplicationName))
+			throw new Exception("Invalid Application Name");
 
 		// log info
 		{
@@ -354,7 +394,7 @@ public static class App
 			Log.Info($"Framework: {RuntimeInformation.FrameworkDescription}");
 		}
 
-		MainThreadID = Thread.CurrentThread.ManagedThreadId;
+		mainThreadID = Environment.CurrentManagedThreadId;
 
 		// set SDL logging method
 		SDL_SetLogOutputFunction(&Platform.HandleLogFromSDL, IntPtr.Zero);
@@ -373,7 +413,7 @@ public static class App
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_Init));
 
 			// get the UserPath
-			var name = Platform.ToUTF8(applicationName);
+			var name = Platform.ToUTF8(info.ApplicationName);
 			UserPath = Platform.ParseUTF8(SDL_GetPrefPath(IntPtr.Zero, name));
 			Platform.FreeUTF8(name);
 		}
@@ -387,20 +427,20 @@ public static class App
 				SDL_WindowFlags.HIGH_PIXEL_DENSITY | SDL_WindowFlags.RESIZABLE | 
 				SDL_WindowFlags.HIDDEN;
 
-			if (fullscreen)
+			if (info.Fullscreen)
 				windowFlags |= SDL_WindowFlags.FULLSCREEN;
 
-			window = SDL_CreateWindow(applicationName, width, height, windowFlags);
-			if (window == IntPtr.Zero)
+			Window = SDL_CreateWindow(info.WindowTitle, info.Width, info.Height, windowFlags);
+			if (Window == IntPtr.Zero)
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateWindow));
 		}
 
-		Renderer.Startup(window);
+		Renderer.Startup(Window);
 
 		// toggle flags and show window
-		SDL_StartTextInput(window);
-		SDL_SetWindowFullscreenMode(window, null);
-		SDL_SetWindowBordered(window, true);
+		SDL_StartTextInput(Window);
+		SDL_SetWindowFullscreenMode(Window, null);
+		SDL_SetWindowBordered(Window, true);
 		SDL_ShowCursor();
 
 		// load default input mappings if they exist
@@ -436,7 +476,7 @@ public static class App
 		}
 		
 		// Display Window now that we're ready
-		SDL_ShowWindow(window);
+		SDL_ShowWindow(Window);
 
 		// begin normal game loop
 		started = true;
@@ -457,12 +497,12 @@ public static class App
 		openGamepads.Clear();
 
 		Renderer.Shutdown();
-		SDL_StopTextInput(window);
-		SDL_DestroyWindow(window);
+		SDL_StopTextInput(Window);
+		SDL_DestroyWindow(Window);
 		Renderer.DestroyDevice();
 		SDL_Quit();
 
-		window = IntPtr.Zero;
+		Window = IntPtr.Zero;
 		started = false;
 		Exiting = false;
 	}
@@ -495,6 +535,12 @@ public static class App
 	/// <param name="command"></param>
 	public static unsafe void Draw(in DrawCommand command)
 		=> Renderer.Draw(command);
+
+	/// <summary>
+	/// If the current thread is the Main thread the Application was Run on
+	/// </summary>
+	public static bool IsMainThread()
+		=> Environment.CurrentManagedThreadId == mainThreadID;
 
 	private static void Tick()
 	{
