@@ -198,15 +198,12 @@ public static class App
 	{
 		get
 		{
-			var index = SDL_GetDisplayForWindow(Window);
-			var scale = SDL_GetDisplayContentScale(index);
-			
+			var scale = SDL_GetWindowDisplayScale(Window);
 			if (scale <= 0)
 			{
-				Log.Warning($"SDL_GetDisplayForWindow failed: {Platform.GetErrorFromSDL()}");
+				Log.Warning($"SDL_GetWindowDisplayScale failed: {Platform.GetErrorFromSDL()}");
 				return new(WidthInPixels / Width, HeightInPixels / Height);
 			}
-
 			return Vector2.One * scale;
 		}
 	}
@@ -293,28 +290,6 @@ public static class App
 	{
 		get => Renderer.GetVSync();
 		set => Renderer.SetVSync(value);
-	}
-
-	/// <summary>
-	/// If the Mouse is Hidden when over the Window
-	/// </summary>
-	public static bool MouseVisible
-	{
-		get
-		{
-			if (!Running)
-				throw notRunningException;
-			return SDL_CursorVisible();
-		}
-		set
-		{
-			if (!Running)
-				throw notRunningException;
-			if (value)
-				SDL_ShowCursor();
-			else
-				SDL_HideCursor();
-		}
 	}
 
 	/// <summary>

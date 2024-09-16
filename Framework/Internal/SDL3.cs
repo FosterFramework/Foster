@@ -2,14 +2,12 @@ using System.Runtime.InteropServices;
 
 using SDL_DisplayID = System.UInt32;
 using SDL_WindowID = System.UInt32;
-using SDL_PixelFormat = System.UInt32;
 using SDL_KeyboardID = System.UInt32;
 using SDL_Keycode = System.UInt32;
 using SDL_Keymod = System.UInt16;
 using SDL_MouseID = System.UInt32;
 using SDL_MouseButtonFlags = System.UInt32;
 using SDL_JoystickID = System.UInt32;
-using System.Runtime.InteropServices.Marshalling;
 
 namespace Foster.Framework;
 
@@ -152,6 +150,9 @@ internal static partial class SDL3
 	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
 	public static partial bool SDL_RestoreWindow(nint window);
 
+	[LibraryImport(DLL)]
+	public static partial float SDL_GetWindowDisplayScale(nint window);
+
 	// SDL_filesystem.h
 
 	[LibraryImport(DLL)]
@@ -175,6 +176,74 @@ internal static partial class SDL3
 
 	// SDL_pixels.h
 
+	public enum SDL_PixelFormat : UInt32
+	{
+		SDL_PIXELFORMAT_UNKNOWN = 0,
+		SDL_PIXELFORMAT_INDEX1LSB = 0x11100100u,
+		SDL_PIXELFORMAT_INDEX1MSB = 0x11200100u,
+		SDL_PIXELFORMAT_INDEX2LSB = 0x1c100200u,
+		SDL_PIXELFORMAT_INDEX2MSB = 0x1c200200u,
+		SDL_PIXELFORMAT_INDEX4LSB = 0x12100400u,
+		SDL_PIXELFORMAT_INDEX4MSB = 0x12200400u,
+		SDL_PIXELFORMAT_INDEX8 = 0x13000801u,
+		SDL_PIXELFORMAT_RGB332 = 0x14110801u,
+		SDL_PIXELFORMAT_XRGB4444 = 0x15120c02u,
+		SDL_PIXELFORMAT_XBGR4444 = 0x15520c02u,
+		SDL_PIXELFORMAT_XRGB1555 = 0x15130f02u,
+		SDL_PIXELFORMAT_XBGR1555 = 0x15530f02u,
+		SDL_PIXELFORMAT_ARGB4444 = 0x15321002u,
+		SDL_PIXELFORMAT_RGBA4444 = 0x15421002u,
+		SDL_PIXELFORMAT_ABGR4444 = 0x15721002u,
+		SDL_PIXELFORMAT_BGRA4444 = 0x15821002u,
+		SDL_PIXELFORMAT_ARGB1555 = 0x15331002u,
+		SDL_PIXELFORMAT_RGBA5551 = 0x15441002u,
+		SDL_PIXELFORMAT_ABGR1555 = 0x15731002u,
+		SDL_PIXELFORMAT_BGRA5551 = 0x15841002u,
+		SDL_PIXELFORMAT_RGB565 = 0x15151002u,
+		SDL_PIXELFORMAT_BGR565 = 0x15551002u,
+		SDL_PIXELFORMAT_RGB24 = 0x17101803u,
+		SDL_PIXELFORMAT_BGR24 = 0x17401803u,
+		SDL_PIXELFORMAT_XRGB8888 = 0x16161804u,
+		SDL_PIXELFORMAT_RGBX8888 = 0x16261804u,
+		SDL_PIXELFORMAT_XBGR8888 = 0x16561804u,
+		SDL_PIXELFORMAT_BGRX8888 = 0x16661804u,
+		SDL_PIXELFORMAT_ARGB8888 = 0x16362004u,
+		SDL_PIXELFORMAT_RGBA8888 = 0x16462004u,
+		SDL_PIXELFORMAT_ABGR8888 = 0x16762004u,
+		SDL_PIXELFORMAT_BGRA8888 = 0x16862004u,
+		SDL_PIXELFORMAT_XRGB2101010 = 0x16172004u,
+		SDL_PIXELFORMAT_XBGR2101010 = 0x16572004u,
+		SDL_PIXELFORMAT_ARGB2101010 = 0x16372004u,
+		SDL_PIXELFORMAT_ABGR2101010 = 0x16772004u,
+		SDL_PIXELFORMAT_RGB48 = 0x18103006u,
+		SDL_PIXELFORMAT_BGR48 = 0x18403006u,
+		SDL_PIXELFORMAT_RGBA64 = 0x18204008u,
+		SDL_PIXELFORMAT_ARGB64 = 0x18304008u,
+		SDL_PIXELFORMAT_BGRA64 = 0x18504008u,
+		SDL_PIXELFORMAT_ABGR64 = 0x18604008u,
+		SDL_PIXELFORMAT_RGB48_FLOAT = 0x1a103006u,
+		SDL_PIXELFORMAT_BGR48_FLOAT = 0x1a403006u,
+		SDL_PIXELFORMAT_RGBA64_FLOAT = 0x1a204008u,
+		SDL_PIXELFORMAT_ARGB64_FLOAT = 0x1a304008u,
+		SDL_PIXELFORMAT_BGRA64_FLOAT = 0x1a504008u,
+		SDL_PIXELFORMAT_ABGR64_FLOAT = 0x1a604008u,
+		SDL_PIXELFORMAT_RGB96_FLOAT = 0x1b10600cu,
+		SDL_PIXELFORMAT_BGR96_FLOAT = 0x1b40600cu,
+		SDL_PIXELFORMAT_RGBA128_FLOAT = 0x1b208010u,
+		SDL_PIXELFORMAT_ARGB128_FLOAT = 0x1b308010u,
+		SDL_PIXELFORMAT_BGRA128_FLOAT = 0x1b508010u,
+		SDL_PIXELFORMAT_ABGR128_FLOAT = 0x1b608010u,
+		SDL_PIXELFORMAT_YV12 = 0x32315659u,
+		SDL_PIXELFORMAT_IYUV = 0x56555949u,
+		SDL_PIXELFORMAT_YUY2 = 0x32595559u,
+		SDL_PIXELFORMAT_UYVY = 0x59565955u,
+		SDL_PIXELFORMAT_YVYU = 0x55595659u,
+		SDL_PIXELFORMAT_NV12 = 0x3231564eu,
+		SDL_PIXELFORMAT_NV21 = 0x3132564eu,
+		SDL_PIXELFORMAT_P010 = 0x30313050u,
+		SDL_PIXELFORMAT_EXTERNAL_OES = 0x2053454fu
+	}
+
 	[StructLayout(LayoutKind.Sequential)]
 	public struct SDL_FColor
 	{
@@ -190,6 +259,12 @@ internal static partial class SDL3
 		SDL_FLIP_VERTICAL
 	}
 
+	[LibraryImport(DLL)]
+	public static partial nint SDL_CreateSurfaceFrom(int width, int height, SDL_PixelFormat format, nint pixels, int pitch);
+	
+	[LibraryImport(DLL)]
+	public static partial void SDL_DestroySurface(nint surface);
+
 	// SDL_mouse.h
 
 	public enum SDL_MouseWheelDirection : int
@@ -198,11 +273,11 @@ internal static partial class SDL3
 		FLIPPED
 	}
 
-	[LibraryImport(DLL)]
-	public static partial int SDL_ShowCursor();
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
+	public static partial bool SDL_ShowCursor();
 
-	[LibraryImport(DLL)]
-	public static partial int SDL_HideCursor();
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
+	public static partial bool SDL_HideCursor();
 
 	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
 	public static partial bool SDL_CursorVisible();
@@ -212,6 +287,33 @@ internal static partial class SDL3
 
 	[LibraryImport(DLL)]
 	public static partial SDL_MouseButtonFlags SDL_GetRelativeMouseState(out float x, out float y);
+
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
+	public static partial bool SDL_SetWindowRelativeMouseMode(nint window, [MarshalAs(UnmanagedType.U1)] bool enabled);
+
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
+	public static partial bool SDL_GetWindowRelativeMouseMode(nint window);
+
+	[LibraryImport(DLL)]
+	public static partial void SDL_WarpMouseInWindow(nint window, float x, float y);
+
+	[LibraryImport(DLL)]
+	public static partial nint SDL_CreateColorCursor(nint surface, int hot_x, int hot_y);
+
+	[LibraryImport(DLL)]
+	public static partial nint SDL_CreateSystemCursor(UInt32 id);
+	
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
+	public static partial bool SDL_SetCursor(nint cursor);
+	
+	[LibraryImport(DLL)]
+	public static partial nint SDL_GetCursor();
+	
+	[LibraryImport(DLL)]
+	public static partial nint SDL_GetDefaultCursor();
+	
+	[LibraryImport(DLL)]
+	public static partial void SDL_DestroyCursor(nint cursor);
 
 	// SDL_gamepad.h
 
@@ -319,7 +421,6 @@ internal static partial class SDL3
 	
 	[LibraryImport(DLL)]
 	public static unsafe partial void SDL_ShowOpenFolderDialog(delegate* unmanaged<nint, nint, int, void> callback, nint userdata, nint window, nint default_location, [MarshalAs(UnmanagedType.U1)] bool allow_many);
-
 
 	// SDL_events.h
 

@@ -64,10 +64,64 @@ public static class Input
 	internal static readonly List<WeakReference<VirtualButton>> virtualButtons = [];
 
 	/// <summary>
+	/// Holds a reference to the current cursor in use, to avoid it getting collected.
+	/// </summary>
+	internal static Cursor? currentCursor;
+
+	/// <summary>
 	/// Finds a Connected Controller by the given ID.
 	/// If it is not found, or no longer connected, null is returned.
 	/// </summary>
 	public static Controller? GetController(ControllerID id) => State.GetController(id);
+
+	/// <summary>
+	/// Sets whether the Mouse Cursor should be visible while over the Application Window
+	/// </summary>
+	public static void SetMouseVisible(bool enabled)
+	{
+		bool result;
+		if (enabled)
+			result = SDL3.SDL_ShowCursor();
+		else
+			result = SDL3.SDL_HideCursor();
+		if (!result)
+			Log.Warning($"Failed to set Mouse visibility: {Platform.GetErrorFromSDL()}");
+	}
+
+	/// <summary>
+	/// Sets whether the Mouse is in Relative Mode.
+	/// While in Relative Mode, the Mouse Cursor is not visible, and the mouse
+	/// is constrained to the Window while still updating Mouse delta.
+	/// </summary>
+	public static void SetMouseRelativeMode(bool enabled)
+	{
+		if (!SDL3.SDL_SetWindowRelativeMouseMode(App.Window, enabled))
+			Log.Warning($"Failed to set Mouse Relative Mode: {Platform.GetErrorFromSDL()}");
+
+		if (enabled)
+			SDL3.SDL_WarpMouseInWindow(App.Window, App.Width / 2, App.Height / 2);
+	}
+
+	/// <summary>
+	/// Sets the Mouse Cursor. If null, resets the Cursor to the default OS cursor.
+	/// </summary>
+	public static void SetMouseCursor(Cursor? cursor)
+	{
+		if (cursor == null)
+		{
+			currentCursor = null;
+			SDL3.SDL_SetCursor(SDL3.SDL_GetDefaultCursor());
+			return;
+		}
+
+		if (cursor.Disposed)
+			throw new Exception("Using an invalid cursor!");
+
+		if (!SDL3.SDL_SetCursor(cursor.Handle))
+			Log.Warning($"Failed to set Mouse Cursor: {Platform.GetErrorFromSDL()}");
+		else
+			currentCursor = cursor;
+	}
 
 	/// <summary>
 	/// Loads 'gamecontrollerdb.txt' from a local file or falls back to the 
@@ -119,10 +173,16 @@ public static class Input
 	/// </summary>
 	internal static void Step()
 	{
+		// warp mouse to center of the window if Relative Mode is enabled
+		if (SDL3.SDL_GetWindowRelativeMouseMode(App.Window))
+			SDL3.SDL_WarpMouseInWindow(App.Window, App.Width / 2, App.Height / 2);
+
+		// step state
 		LastState.Copy(State);
 		State.Copy(nextState);
 		nextState.Step();
 
+		// update virtual buttons, remove unreferenced ones
 		for (int i = virtualButtons.Count - 1; i >= 0; i--)
 		{
 			var button = virtualButtons[i];
