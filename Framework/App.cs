@@ -122,7 +122,7 @@ public static class App
 	
 	/// <summary>
 	/// The current Update Mode used by the Application.
-	/// This can be changed with <seealso cref="SetFixedUpdate(int)"/> and <seealso cref="SetUnlockedUpdate"/>
+	/// This can be changed with <seealso cref="SetFixedUpdate(int, bool)"/> and <seealso cref="SetUnlockedUpdate"/>
 	/// </summary>
 	public static UpdateModes UpdateMode { get; private set; } = UpdateModes.Fixed;
 
@@ -674,7 +674,6 @@ public static class App
 		// update in Unlocked Mode
 		else
 		{
-			fixedAccumulator = TimeSpan.Zero;
 			Update(deltaTime);
 		}
 
