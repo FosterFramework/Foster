@@ -308,7 +308,7 @@ public struct Rect : IConvexShape, IEquatable<Rect>
 	}
 
 	/// <summary>
-	/// Return the sector that the point falls within (see diagram in comments below)
+	/// Return the sector that the point falls within (see diagram in comments below). A result of zero indicates a point inside the rectangle
 	/// </summary>
 	//  0101 | 0100 | 0110
 	// ------+------+------

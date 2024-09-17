@@ -409,8 +409,10 @@ public static class Calc
 	public static bool Approx(float a, float b)
 		=> MathF.Abs(a - b) <= 0.001f;
 
-	public static IEnumerable<Point2> GetBresenhamsLine(Point2 a, Point2 b)
+	public static IReadOnlyList<Point2> GetBresenhamsLine(Point2 a, Point2 b)
 	{
+		var list = FramePool<List<Point2>>.Get();
+
 		bool steep = Math.Abs(b.Y - a.Y) > Math.Abs(b.X - a.X);
 		if (steep)
 		{
@@ -430,7 +432,7 @@ public static class Calc
 
 		for (int x = a.X; x <= b.X; x++)
 		{
-			yield return new(steep ? y : x, steep ? x : y);
+			list.Add(new(steep ? y : x, steep ? x : y));
 			error -= dy;
 			if (error < 0)
 			{
@@ -438,6 +440,8 @@ public static class Calc
 				error += dx;
 			}
 		}
+
+		return list;
 	}
 
 	#endregion

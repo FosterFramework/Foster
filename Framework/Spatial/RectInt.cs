@@ -363,6 +363,104 @@ public struct RectInt : IEquatable<RectInt>
 			return new(X, Y - distance, Width, distance);
 	}
 
+	/// <summary>
+	/// Return the sector that the point falls within (see diagram in comments below). A result of zero indicates a point inside the rectangle
+	/// </summary>
+	//  0101 | 0100 | 0110
+	// ------+------+------
+	//  0001 | 0000 | 0010
+	// ------+------+------
+	//  1001 | 1000 | 1010
+	public readonly byte GetPointSector(in Vector2 pt)
+	{
+		byte sector = 0;
+		if (pt.X < X)
+			sector |= 0b0001;
+		else if (pt.X >= X + Width)
+			sector |= 0b0010;
+		if (pt.Y < Y)
+			sector |= 0b0100;
+		else if (pt.Y >= Y + Height)
+			sector |= 0b1000;
+		return sector;
+	}
+
+	public readonly bool Overlaps(in Line line)
+	{
+		var secA = GetPointSector(line.From);
+		var secB = GetPointSector(line.To);
+
+		if (secA == 0 || secB == 0)
+			return true;
+		else if ((secA & secB) != 0)
+			return false;
+		else
+		{
+			// Do line checks against the edges
+			var both = secA | secB;
+
+			// top check
+			if ((both & 0b0100) != 0
+			&& line.Intersects(new Line(TopLeft, TopRight)))	
+				return true;
+
+			// bottom check
+			if ((both & 0b1000) != 0
+			&& line.Intersects(new Line(BottomLeft, BottomRight)))
+				return true;
+
+			// left edge check
+			if ((both & 0b0001) != 0
+			&& line.Intersects(new Line(TopLeft, BottomLeft)))
+				return true;
+
+			// right edge check
+			if ((both & 0b0010) != 0
+			&& line.Intersects(new Line(TopRight, BottomRight)))
+				return true;
+
+			return false;
+		}
+	}
+
+	public readonly bool Overlaps(in LineInt line)
+	{
+		var secA = GetPointSector(line.From);
+		var secB = GetPointSector(line.To);
+
+		if (secA == 0 || secB == 0)
+			return true;
+		else if ((secA & secB) != 0)
+			return false;
+		else
+		{
+			// Do line checks against the edges
+			var both = secA | secB;
+
+			// top check
+			if ((both & 0b0100) != 0
+			&& line.Intersects(new LineInt(TopLeft, TopRight)))
+				return true;
+
+			// bottom check
+			if ((both & 0b1000) != 0
+			&& line.Intersects(new LineInt(BottomLeft, BottomRight)))
+				return true;
+
+			// left edge check
+			if ((both & 0b0001) != 0
+			&& line.Intersects(new LineInt(TopLeft, BottomLeft)))
+				return true;
+
+			// right edge check
+			if ((both & 0b0010) != 0
+			&& line.Intersects(new LineInt(TopRight, BottomRight)))
+				return true;
+
+			return false;
+		}
+	}
+
 	public override readonly bool Equals(object? obj) => (obj is RectInt other) && (this == other);
 	public readonly bool Equals(RectInt other) => this == other;
 
