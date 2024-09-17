@@ -32,7 +32,7 @@ public class InputState
 	/// Note that they aren't necessarily connected
 	/// </summary>
 	public readonly ReadOnlyCollection<Controller> Controllers;
-
+	
 	public InputState()
 	{
 		controllers = new Controller[MaxControllers];

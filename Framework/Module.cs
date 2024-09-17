@@ -22,4 +22,9 @@ public abstract class Module
 	/// Called whenever the Application renders
 	/// </summary>
 	public virtual void Render() { }
+
+	/// <summary>
+	/// Called when a specific Application Event has occured
+	/// </summary>
+	public virtual void OnEvent(Events applicationEvent) { }
 }

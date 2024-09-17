@@ -41,14 +41,30 @@ public static class App
 	private static readonly List<Func<Module>> registrations = [];
 	private static readonly Stopwatch timer = new();
 	private static bool started = false;
-	private static TimeSpan lastTime;
-	private static TimeSpan accumulator;
+	private static TimeSpan lastUpdateTime;
+	private static TimeSpan fixedAccumulator;
 	private static string title = string.Empty;
 	private static readonly Exception notRunningException = new("Foster is not Running");
 	private static readonly List<(uint ID, nint Ptr)> openJoysticks = [];
 	private static readonly List<(uint ID, nint Ptr)> openGamepads = [];
 	private static int mainThreadID;
 	private static readonly ConcurrentQueue<Action> mainThreadQueue = [];
+
+	/// <summary>
+	/// How the Application will run its update loop
+	/// </summary>
+	public enum UpdateModes
+	{
+		/// <summary>
+		/// The Application will update on a fixed time
+		/// </summary>
+		Fixed,
+		
+		/// <summary>
+		/// How the Application will update as fast as it can
+		/// </summary>
+		Unlocked,
+	}
 	
 	/// <summary>
 	/// Foster Version Number
@@ -64,12 +80,6 @@ public static class App
 	/// If the Application is exiting. Call <see cref="Exit"/> to exit the Application.
 	/// </summary>
 	public static bool Exiting { get; private set; } = false;
-
-	/// <summary>
-	/// Gets the Stopwatch used to evaluate Application time.
-	/// Note: Modifying this can break your update loop!
-	/// </summary>
-	public static Stopwatch Timer => timer;
 
 	/// <summary>
 	/// The Window Title
@@ -103,6 +113,34 @@ public static class App
 	/// where as on Linux it's usually in ~/.local/share/{App.Name}
 	/// </summary>
 	public static string UserPath { get; private set; } = string.Empty;
+
+	/// <summary>
+	/// Gets the Timer used to calculcate Application Time.
+	/// This is polled immediately when requested.
+	/// </summary>
+	public static TimeSpan Timer => timer.Elapsed;
+	
+	/// <summary>
+	/// The current Update Mode used by the Application.
+	/// This can be changed with <seealso cref="SetFixedUpdate(int)"/> and <seealso cref="SetUnlockedUpdate"/>
+	/// </summary>
+	public static UpdateModes UpdateMode { get; private set; } = UpdateModes.Fixed;
+
+	/// <summary>
+	/// The target time per frame for a Fixed Update
+	/// </summary>
+	public static TimeSpan FixedUpdateTargetTime { get; private set; }
+
+	/// <summary>
+	/// The maximum amount of time a Fixed Update is allowed to take before the Application starts dropping frames.
+	/// </summary>
+	public static TimeSpan FixedUpdateMaxTime { get; private set; }
+
+	/// <summary>
+	/// This will force the main thread to wait until another Fixed update is ready.
+	/// This uses less CPU but means that your render loop can not happen any faster than your fixed update rate.
+	/// </summary>
+	public static bool FixedUpdateWaitEnabled { get; private set; }
 
 	/// <summary>
 	/// The current Renderer API in use
@@ -373,6 +411,9 @@ public static class App
 
 		mainThreadID = Environment.CurrentManagedThreadId;
 
+		// default to fixed update
+		SetFixedUpdate(60);
+
 		// set SDL logging method
 		SDL_SetLogOutputFunction(&Platform.HandleLogFromSDL, IntPtr.Zero);
 
@@ -426,9 +467,11 @@ public static class App
 		// Clear Time
 		Running = true;
 		Time.Frame = 0;
+		Time.Delta = 0;
 		Time.Duration = new();
-		lastTime = TimeSpan.Zero;
-		accumulator = TimeSpan.Zero;
+		Time.RenderFrame = 0;
+		lastUpdateTime = TimeSpan.Zero;
+		fixedAccumulator = TimeSpan.Zero;
 		timer.Restart();
 
 		// poll events once, so input has controller state before Startup
@@ -536,6 +579,40 @@ public static class App
 			mainThreadQueue.Enqueue(action);
 	}
 
+	/// <summary>
+	/// The Update loop will run at a fixed rate.
+	/// </summary>
+	/// <param name="targetTimePerFrame">The target time per frame</param>
+	/// <param name="maxTimePerFrame">The maximum time allowed per frame before the Application intentially starts lagging.</param>
+	/// <param name="waitForNextUpdate">The thread will sleep while waiting for a fixed update. This essentially will also lock your render to the Fixed Update rate, but will use less CPU.</param>
+	public static void SetFixedUpdate(
+		TimeSpan targetTimePerFrame,
+		TimeSpan? maxTimePerFrame = null,
+		bool waitForNextUpdate = true)
+	{
+		UpdateMode = UpdateModes.Fixed;
+		FixedUpdateTargetTime = targetTimePerFrame;
+		FixedUpdateMaxTime = maxTimePerFrame ?? (targetTimePerFrame * 5);
+		FixedUpdateWaitEnabled = waitForNextUpdate;
+	}
+
+	/// <summary>
+	/// The Update loop will run at a fixed rate.
+	/// </summary>
+	/// <param name="fps">The target frames per second</param>
+	/// <param name="waitForNextUpdate">The thread will sleep while waiting for a fixed update. This essentially will also lock your render to the Fixed Update rate, but will use less CPU.</param>
+	public static void SetFixedUpdate(int fps, bool waitForNextUpdate = true)
+		=> SetFixedUpdate(TimeSpan.FromSeconds(1.0f / fps), null, waitForNextUpdate);
+
+	/// <summary>
+	/// The Update loop will run as fast as it can.
+	/// This means there will be one update per Render.
+	/// </summary>
+	public static void SetUnlockedUpdate()
+	{
+		UpdateMode = UpdateModes.Unlocked;
+	}
+
 	private static void Tick()
 	{
 		static void Update(TimeSpan delta)
@@ -553,56 +630,71 @@ public static class App
 			for (int i = 0; i < modules.Count; i ++)
 				modules[i].Update();
 		}
-
+		
 		var currentTime = timer.Elapsed;
-		var deltaTime = currentTime - lastTime;
-		lastTime = currentTime;
+		var deltaTime = currentTime - lastUpdateTime;
+		lastUpdateTime = currentTime;
 
-		if (Time.FixedStep)
+		// update in Fixed Mode
+		if (UpdateMode == UpdateModes.Fixed)
 		{
-			accumulator += deltaTime;
+			fixedAccumulator += deltaTime;
 
 			// Do not let us run too fast
-			while (accumulator < Time.FixedStepTarget)
+			if (FixedUpdateWaitEnabled)
 			{
-				int milliseconds = (int)(Time.FixedStepTarget - accumulator).TotalMilliseconds;
-				Thread.Sleep(milliseconds);
+				while (fixedAccumulator < FixedUpdateTargetTime)
+				{
+					int milliseconds = (int)(FixedUpdateTargetTime - fixedAccumulator).TotalMilliseconds;
+					Thread.Sleep(milliseconds);
 
-				currentTime = timer.Elapsed;
-				deltaTime = currentTime - lastTime;
-				lastTime = currentTime;
-				accumulator += deltaTime;
+					currentTime = timer.Elapsed;
+					deltaTime = currentTime - lastUpdateTime;
+					lastUpdateTime = currentTime;
+					fixedAccumulator += deltaTime;
+				}
 			}
 
 			// Do not allow any update to take longer than our maximum.
-			if (accumulator > Time.FixedStepMaxElapsedTime)
+			if (fixedAccumulator > FixedUpdateMaxTime)
 			{
-				Time.Advance(accumulator - Time.FixedStepMaxElapsedTime);
-				accumulator = Time.FixedStepMaxElapsedTime;
+				Time.Advance(fixedAccumulator - FixedUpdateMaxTime);
+				fixedAccumulator = FixedUpdateMaxTime;
 			}
 
 			// Do as many fixed updates as we can
-			while (accumulator >= Time.FixedStepTarget)
+			while (fixedAccumulator >= FixedUpdateTargetTime)
 			{
-				accumulator -= Time.FixedStepTarget;
-				Update(Time.FixedStepTarget);
+				fixedAccumulator -= FixedUpdateTargetTime;
+				Update(FixedUpdateTargetTime);
 				if (Exiting)
 					break;
 			}
 		}
+		// update in Unlocked Mode
 		else
 		{
+			fixedAccumulator = TimeSpan.Zero;
 			Update(deltaTime);
 		}
 
-		for (int i = 0; i < modules.Count; i ++)
-			modules[i].Render();
-		
-		Renderer.Present();
+		// render
+		{
+			Time.RenderFrame++;
+			for (int i = 0; i < modules.Count; i ++)
+				modules[i].Render();
+			Renderer.Present();
+		}
 	}
 
 	private static unsafe void PollEvents()
 	{
+		static void NotifyModules(Events appEvent)
+		{
+			for (int i = 0; i < modules.Count; i ++)
+				modules[i].OnEvent(appEvent);
+		}
+
 		// always perform a mouse-move event
 		{
 			SDL_GetMouseState(out float mouseX, out float mouseY);
@@ -671,6 +763,7 @@ public static class App
 						product: SDL_GetJoystickProduct(ptr),
 						version: SDL_GetJoystickProductVersion(ptr)
 					);
+					NotifyModules(Events.ControllerConnect);
 					break;
 				}
 			case SDL_EventType.JOYSTICK_REMOVED:
@@ -687,6 +780,7 @@ public static class App
 						}
 
 					Input.OnControllerDisconnect(new(id));
+					NotifyModules(Events.ControllerDisconnect);
 					break;
 				}
 			case SDL_EventType.JOYSTICK_BUTTON_DOWN:
@@ -739,6 +833,7 @@ public static class App
 						product: SDL_GetGamepadProduct(ptr),
 						version: SDL_GetGamepadProductVersion(ptr)
 					);
+					NotifyModules(Events.ControllerConnect);
 					break;
 				}
 			case SDL_EventType.GAMEPAD_REMOVED:
@@ -752,6 +847,7 @@ public static class App
 						}
 
 					Input.OnControllerDisconnect(new(id));
+					NotifyModules(Events.ControllerDisconnect);
 					break;
 				}
 			case SDL_EventType.GAMEPAD_BUTTON_DOWN:
@@ -779,6 +875,37 @@ public static class App
 						
 					break;
 				}
+
+			case SDL_EventType.WINDOW_FOCUS_GAINED:
+				NotifyModules(Events.FocusGain);
+				break;
+			case SDL_EventType.WINDOW_FOCUS_LOST:
+				NotifyModules(Events.FocusLost);
+				break;
+			case SDL_EventType.WINDOW_MOUSE_ENTER:
+				NotifyModules(Events.MouseEnter);
+				break;
+			case SDL_EventType.WINDOW_MOUSE_LEAVE:
+				NotifyModules(Events.MouseLeave);
+				break;
+			case SDL_EventType.WINDOW_RESIZED:
+				NotifyModules(Events.Resize);
+				break;
+			case SDL_EventType.WINDOW_RESTORED:
+				NotifyModules(Events.Restore);
+				break;
+			case SDL_EventType.WINDOW_MAXIMIZED:
+				NotifyModules(Events.Maximize);
+				break;
+			case SDL_EventType.WINDOW_MINIMIZED:
+				NotifyModules(Events.Minimize);
+				break;
+			case SDL_EventType.WINDOW_ENTER_FULLSCREEN:
+				NotifyModules(Events.FullscreenEnter);
+				break;
+			case SDL_EventType.WINDOW_LEAVE_FULLSCREEN:
+				NotifyModules(Events.FullscreenExit);
+				break;
 
 			default:
 				break;

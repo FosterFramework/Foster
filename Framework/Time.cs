@@ -3,43 +3,33 @@ namespace Foster.Framework;
 public static class Time
 {
 	/// <summary>
-	/// Time in Seconds since our last Update.
-	/// In Fixed Timestep this always returns a constant value.
+	/// Requests the current time since the Application was started.
+	/// This is different than Time.Duration which is only incremented once per frame.
+	/// This is also not affected by Fixed Update Mode.
+	/// </summary>
+	public static TimeSpan Now => App.Timer;
+
+	/// <summary>
+	/// Time, in Seconds, since our last Update.
+	/// In Fixed Update Mode this always returns a constant value.
 	/// </summary>
 	public static float Delta;
 
 	/// <summary>
 	/// An Accumulation of the Delta Time, incremented each Update.
-	/// In Fixed Timestep this is incremented by a constant value.
+	/// In Fixed Update Mode this is incremented by a constant value.
 	/// </summary>
 	public static TimeSpan Duration;
 
 	/// <summary>
-	/// Requests the current time since the Application was started.
-	/// This is different than Time.Duration which is only incremented once per frame.
-	/// This is also not affected by Fixed Timestep.
+	/// Current frame index, incremented every Update
 	/// </summary>
-	public static TimeSpan Now => App.Timer.Elapsed;
-
+	public static ulong Frame;
+	
 	/// <summary>
-	/// Current frame index
+	/// Current render frame index, incremented every Render.
 	/// </summary>
-	public static ulong Frame = 0;
-
-	/// <summary>
-	/// If the Application should run in Fixed Timestep mode
-	/// </summary>
-	public static bool FixedStep = true;
-
-	/// <summary>
-	/// What the Fixed Timestep target is (defaults to 60fps, or 0.016s per frame)
-	/// </summary>
-	public static TimeSpan FixedStepTarget = TimeSpan.FromSeconds(1.0f / 60.0f);
-
-	/// <summary>
-	/// The maximum amount of time a Fixed Update is allowed to take before the Application starts dropping frames.
-	/// </summary>
-	public static TimeSpan FixedStepMaxElapsedTime = TimeSpan.FromSeconds(5.0f / 60.0f);
+	public static ulong RenderFrame;
 
 	/// <summary>
 	/// Advances the Time.Duration by the given delta, and assigns Time.Delta.
