@@ -513,6 +513,7 @@ public static class App
 		modules.Clear();
 		Running = false;
 
+		// release joystick/gamepads
 		foreach (var it in openJoysticks)
 			SDL_CloseJoystick(it.Ptr);
 		foreach (var it in openGamepads)

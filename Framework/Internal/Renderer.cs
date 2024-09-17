@@ -1024,7 +1024,7 @@ internal static unsafe partial class Renderer
 					list.Add(pipeline);
 				}
 
-				// track which target uses this pipeline
+				// track which textures uses this pipeline
 				if (target != null)
 				{
 					foreach (var it in target.Attachments)
