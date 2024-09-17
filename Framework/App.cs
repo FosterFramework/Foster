@@ -755,7 +755,7 @@ public static class App
 						id: new(id),
 						name: Platform.ParseUTF8(SDL_GetJoystickName(ptr)),
 						buttonCount: SDL_GetJoystickButtons(ptr),
-						axisCount: SDL_GetJoystickAxes(ptr),
+						axisCount: SDL_GetJoystickAxis(ptr),
 						isGamepad: false,
 						type: GamepadTypes.Unknown,
 						vendor: SDL_GetJoystickVendor(ptr),

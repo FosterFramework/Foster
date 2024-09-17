@@ -604,17 +604,19 @@ extern void *SDL_ShaderCross_CompileFromHLSL(SDL_GPUDevice *device,
                                              const char *hlslSource,
                                              const char *shaderProfile)
 {
-    switch (SDL_GetGPUDriver(device)) {
-    case SDL_GPU_DRIVER_D3D11:
+    SDL_GPUShaderFormat format = SDL_GetGPUShaderFormats(device);
+    if (format & SDL_GPU_SHADERFORMAT_DXBC) {
         return SDL_ShaderCross_INTERNAL_CompileFXC(device, createInfo, hlslSource, shaderProfile);
-    case SDL_GPU_DRIVER_D3D12:
-        return SDL_ShaderCross_INTERNAL_CompileDXC(device, createInfo, hlslSource, shaderProfile, DXC_CP_ACP, SDL_FALSE);
-    case SDL_GPU_DRIVER_VULKAN:
-        return SDL_ShaderCross_INTERNAL_CompileDXC(device, createInfo, hlslSource, shaderProfile, DXC_CP_ACP, SDL_TRUE);
-    default:
-        SDL_SetError("SDL_ShaderCross_CompileFromHLSL: Unexpected SDL_GPUBackend");
-        return NULL;
     }
+    if (format & SDL_GPU_SHADERFORMAT_DXIL) {
+        return SDL_ShaderCross_INTERNAL_CompileDXC(device, createInfo, hlslSource, shaderProfile, DXC_CP_ACP, SDL_FALSE);
+    }
+    if (format & SDL_GPU_SHADERFORMAT_SPIRV) {
+        return SDL_ShaderCross_INTERNAL_CompileDXC(device, createInfo, hlslSource, shaderProfile, DXC_CP_ACP, SDL_TRUE);
+    }
+
+    SDL_SetError("SDL_ShaderCross_CompileFromHLSL: Unexpected SDL_GPUShaderFormat");
+    return NULL;
 }
 
 #endif /* SDL_GPU_SHADERCROSS_HLSL */
@@ -702,26 +704,26 @@ void *SDL_ShaderCross_CompileFromSPIRV(
     const char *cleansed_entrypoint;
     void *compiledResult;
 
-    switch (SDL_GetGPUDriver(device)) {
-    case SDL_GPU_DRIVER_VULKAN:
+    SDL_GPUShaderFormat shader_formats = SDL_GetGPUShaderFormats(device);
+
+    if (shader_formats & SDL_GPU_SHADERFORMAT_SPIRV) {
         if (isCompute) {
             return SDL_CreateGPUComputePipeline(device, (SDL_GPUComputePipelineCreateInfo *)originalCreateInfo);
         } else {
             return SDL_CreateGPUShader(device, (SDL_GPUShaderCreateInfo *)originalCreateInfo);
         }
-    case SDL_GPU_DRIVER_D3D11:
+    } else if (shader_formats & SDL_GPU_SHADERFORMAT_DXBC) {
         backend = SPVC_BACKEND_HLSL;
         format = SDL_GPU_SHADERFORMAT_DXBC;
-        break;
-    case SDL_GPU_DRIVER_D3D12:
+        shadermodel = 50;
+    } else if (shader_formats & SDL_GPU_SHADERFORMAT_DXIL) {
         backend = SPVC_BACKEND_HLSL;
         format = SDL_GPU_SHADERFORMAT_DXIL;
-        break;
-    case SDL_GPU_DRIVER_METAL:
+        shadermodel = 60;
+    } else if (shader_formats & SDL_GPU_SHADERFORMAT_MSL) {
         backend = SPVC_BACKEND_MSL;
         format = SDL_GPU_SHADERFORMAT_MSL;
-        break;
-    default:
+    } else {
         SDL_SetError("SDL_ShaderCross_CompileFromSPIRV: Unexpected SDL_GPUBackend");
         return NULL;
     }
@@ -764,11 +766,6 @@ void *SDL_ShaderCross_CompileFromSPIRV(
     }
 
     if (backend == SPVC_BACKEND_HLSL) {
-        if (SDL_GetGPUDriver(device) == SDL_GPU_DRIVER_D3D11) {
-            shadermodel = 50;
-        } else {
-            shadermodel = 60;
-        }
         SDL_spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_HLSL_SHADER_MODEL, shadermodel);
         SDL_spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_HLSL_NONWRITABLE_UAV_TEXTURE_AS_SRV, 1);
     }

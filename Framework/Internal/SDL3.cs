@@ -102,20 +102,20 @@ internal static partial class SDL3
 	[LibraryImport(DLL)]
 	public static partial void SDL_DestroyWindow(nint window);
 
-	[LibraryImport(DLL, StringMarshalling = StringMarshalling.Utf8)]
-	public static partial void SDL_SetWindowTitle(nint window, string title);
+	[LibraryImport(DLL, StringMarshalling = StringMarshalling.Utf8)][return:MarshalAs(UnmanagedType.U1)]
+	public static partial bool SDL_SetWindowTitle(nint window, string title);
 
 	[LibraryImport(DLL)]
 	public static partial SDL_WindowFlags SDL_GetWindowFlags(nint window);
 
-	[LibraryImport(DLL)]
-	public static partial int SDL_GetWindowSize(nint window, out int w, out int h);
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
+	public static partial bool SDL_GetWindowSize(nint window, out int w, out int h);
 
-	[LibraryImport(DLL)]
-	public static partial int SDL_SetWindowSize(nint window, int w, int h);
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
+	public static partial bool SDL_SetWindowSize(nint window, int w, int h);
 
-	[LibraryImport(DLL)]
-	public static partial int SDL_GetWindowSizeInPixels(nint window, out int w, out int h);
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
+	public static partial bool SDL_GetWindowSizeInPixels(nint window, out int w, out int h);
 
 	[LibraryImport(DLL)]
 	public static partial SDL_DisplayID SDL_GetDisplayForWindow(nint window);
@@ -126,20 +126,20 @@ internal static partial class SDL3
 	[LibraryImport(DLL)]
 	public static unsafe partial SDL_DisplayMode* SDL_GetCurrentDisplayMode(SDL_DisplayID displayID);
 
-	[LibraryImport(DLL)]
-	public static unsafe partial int SDL_SetWindowFullscreenMode(nint window, SDL_DisplayMode* mode);
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
+	public static unsafe partial bool SDL_SetWindowFullscreenMode(nint window, SDL_DisplayMode* mode);
 
-	[LibraryImport(DLL)]
-	public static partial int SDL_SetWindowFullscreen(nint window, [MarshalAs(UnmanagedType.U1)] bool fullscreen);
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
+	public static partial bool SDL_SetWindowFullscreen(nint window, [MarshalAs(UnmanagedType.U1)] bool fullscreen);
 
-	[LibraryImport(DLL)]
-	public static partial int SDL_SetWindowResizable(nint window, [MarshalAs(UnmanagedType.U1)] bool resizable);
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
+	public static partial bool SDL_SetWindowResizable(nint window, [MarshalAs(UnmanagedType.U1)] bool resizable);
 
-	[LibraryImport(DLL)]
-	public static partial int SDL_SetWindowBordered(nint window, [MarshalAs(UnmanagedType.U1)] bool bordered);
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
+	public static partial bool SDL_SetWindowBordered(nint window, [MarshalAs(UnmanagedType.U1)] bool bordered);
 
-	[LibraryImport(DLL)]
-	public static partial int SDL_ShowWindow(nint window);
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
+	public static partial bool SDL_ShowWindow(nint window);
 
 	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
 	public static partial bool SDL_MaximizeWindow(nint window);
@@ -160,11 +160,11 @@ internal static partial class SDL3
 
 	// SDL_keyboard.h
 
-	[LibraryImport(DLL)]
-	public static unsafe partial int SDL_StartTextInput(nint window);
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
+	public static unsafe partial bool SDL_StartTextInput(nint window);
 
-	[LibraryImport(DLL)]
-	public static unsafe partial int SDL_StopTextInput(nint window);
+	[LibraryImport(DLL)][return:MarshalAs(UnmanagedType.U1)]
+	public static unsafe partial bool SDL_StopTextInput(nint window);
 
 	// SDL_rect.h
 
@@ -359,7 +359,7 @@ internal static partial class SDL3
 	public static partial int SDL_GetJoystickButtons(nint joystick);
 
 	[LibraryImport(DLL)]
-	public static partial int SDL_GetJoystickAxes(nint joystick);
+	public static partial int SDL_GetJoystickAxis(nint joystick);
 
 	[LibraryImport(DLL)]
 	public static partial UInt16 SDL_GetJoystickVendor(nint joystick);
@@ -372,8 +372,8 @@ internal static partial class SDL3
 
 	// SDL_clipboard.h
 
-	[LibraryImport(DLL, StringMarshalling = StringMarshalling.Utf8)]
-	public static partial int SDL_SetClipboardText(string text);
+	[LibraryImport(DLL, StringMarshalling = StringMarshalling.Utf8)][return:MarshalAs(UnmanagedType.U1)]
+	public static partial bool SDL_SetClipboardText(string text);
 
 	[LibraryImport(DLL)]
 	public static partial nint SDL_GetClipboardText();
