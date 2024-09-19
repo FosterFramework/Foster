@@ -1,6 +1,6 @@
-The Platform library is a small C99 library that implements the native methods required to run an application. This includes a small rendering API, image and font loading, and window & input management.
+The Platform library is a small C99 utility library that implements the native methods required to run an application, as well as compiling and dynamically linking SDL3.
 
-The repo already contains prebuilt binaries for 64-bit Windows/Linux/macOS, but you can also build it yourself using CMake:
+The repo already contains many prebuilt binaries, but you can also build it yourself using CMake:
 ```sh
 mkdir build
 cd build

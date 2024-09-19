@@ -551,6 +551,7 @@ internal static unsafe partial class Renderer
 		// set scissor
 		if (command.Scissor != renderPassScissor)
 		{
+			renderPassScissor = command.Scissor;
 			if (command.Scissor.HasValue)
 			{
 				SDL_Rect scissor = new()
@@ -562,12 +563,12 @@ internal static unsafe partial class Renderer
 			}
 			else
 				SDL_SetGPUScissor(renderPass, null);
-			renderPassScissor = command.Scissor;
 		}
 
 		// set viewport
 		if (command.Viewport != renderPassViewport)
 		{
+			renderPassViewport = command.Viewport;
 			if (command.Viewport.HasValue)
 			{
 				SDL_GPUViewport viewport = new()
@@ -580,15 +581,14 @@ internal static unsafe partial class Renderer
 			}
 			else
 				SDL_SetGPUViewport(renderPass, null);
-			renderPassViewport = command.Viewport;
 		}
 
 		// figure out graphics pipeline, potentially create a new one
 		var pipeline = GetGraphicsPipeline(command);
 		if (renderPassPipeline != pipeline)
 		{
-			SDL_BindGPUGraphicsPipeline(renderPass, pipeline);
 			renderPassPipeline = pipeline;
+			SDL_BindGPUGraphicsPipeline(renderPass, pipeline);
 		}
 
 		// bind mesh buffers
@@ -620,6 +620,7 @@ internal static unsafe partial class Renderer
 		}
 
 		// bind fragment samplers
+		// TODO: only do this if Samplers change
 		if (shader.Fragment.SamplerCount > 0)
 		{
 			var samplers = stackalloc SDL_GPUTextureSamplerBinding[shader.Fragment.SamplerCount];
@@ -638,6 +639,7 @@ internal static unsafe partial class Renderer
 		}
 
 		// bind vertex samplers
+		// TODO: only do this if Samplers change
 		if (shader.Vertex.SamplerCount > 0)
 		{
 			var samplers = stackalloc SDL_GPUTextureSamplerBinding[shader.Vertex.SamplerCount];
@@ -656,6 +658,7 @@ internal static unsafe partial class Renderer
 		}
 
 		// Upload Vertex Uniforms
+		// TODO: only do this if Uniforms change
 		if (shader.Vertex.Uniforms.Length > 0)
 		{
 			fixed (byte* ptr = mat.VertexUniformBuffer)
@@ -663,6 +666,7 @@ internal static unsafe partial class Renderer
 		}
 
 		// Upload Fragment Uniforms
+		// TODO: only do this if Uniforms change
 		if (shader.Fragment.Uniforms.Length > 0)
 		{
 			fixed (byte* ptr = mat.FragmentUniformBuffer)

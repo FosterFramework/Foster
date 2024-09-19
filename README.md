@@ -17,17 +17,16 @@ Check out [Discussons](https://github.com/FosterFramework/Foster/discussions) or
 
 ### Dependencies
  - [dotnet 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) and [C# 12](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-12)
- - [SDL2](https://github.com/libsdl-org/sdl) is the only external dependency, which is required by the [Platform library](https://github.com/FosterFramework/Foster/tree/main/Platform). By default this is statically compiled.
+ - [SDL3](https://github.com/libsdl-org/sdl) is the only external dependency, which is dynamically built and included by the Platform library by default.
 
 ### Platform Library
  - The [Platform library](https://github.com/FosterFramework/Foster/tree/main/Platform) is a C library that implements native methods required to run the application.
- - By default, it is currently being built for 64-bit Linux, MacOS, and Windows through [Github Actions](https://github.com/FosterFramework/Foster/actions/workflows/build-libs.yml).
+ - It is automatically built for 64-bit Linux, MacOS, and Windows through [Github Actions](https://github.com/FosterFramework/Foster/actions/workflows/build-libs.yml).
  - To add support for more platforms, you need to build the [Platform library](https://github.com/FosterFramework/Foster/tree/main/Platform) and then include it in [Foster.Framework.csproj](https://github.com/FosterFramework/Foster/blob/main/Framework/Foster.Framework.csproj#L27)
 
 ### Rendering
- - Implemented in OpenGL for Linux/Mac/Windows and D3D11 for Windows.
- - Separate Shaders are required depending on which rendering API you're targetting.
- - Planning to replace the rendering implementation with [SDL3 GPU when it is complete](https://github.com/FosterFramework/Foster/issues/1).
+ - Rendering is implemented using SDL_GPU, which supports many rendering APIs.
+ - Shaders should be provided in SPIR-V and must follow the [SDL_GPU shader resource requirements](https://wiki.libsdl.org/SDL3/SDL_CreateGPUShader#remarks).
 
 ### Notes
  - Taken a lot of inspiration from other Frameworks and APIs, namely [FNA](https://fna-xna.github.io/).
