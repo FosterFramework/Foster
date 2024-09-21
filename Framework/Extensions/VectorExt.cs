@@ -167,10 +167,16 @@ public static class VectorExt
 	/// <summary>
 	/// Returns a Vector2 with the X-value of this Vector2, but zero Y
 	/// </summary>
-	public static Vector2 ZeroY(this Vector2 vector) => new Vector2(vector.X, 0);
+	public static Vector2 ZeroY(this Vector2 vector) => new(vector.X, 0);
 
 	/// <summary>
 	/// Returns a Vector2 with the Y-value of this Vector2, but zero X
 	/// </summary>
-	public static Vector2 ZeroX(this Vector2 vector) => new Vector2(0, vector.Y);
+	public static Vector2 ZeroX(this Vector2 vector) => new(0, vector.Y);
+
+	/// <summary>
+	/// Returns a Vector2 with the Abs of both our components
+	/// </summary>
+	public static Vector2 Abs(this Vector2 vector)
+		=> new(MathF.Abs(vector.X), MathF.Abs(vector.Y));
 }

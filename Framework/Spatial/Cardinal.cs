@@ -32,7 +32,8 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 	public Cardinal TurnLeft => new ((Value + 3) % 4);
 
 	public bool Horizontal => Value % 2 == 0;
-	public bool Vertical => Value % 2 == 1;	
+	public bool Vertical => Value % 2 == 1;
+	public Point2 Point => new(X, Y);
 
 	public int X => Value switch
 		{
@@ -61,10 +62,11 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 		};
 
 	public static implicit operator Cardinal(Facing f) => f.Sign > 0 ? Right : Left;
-	public static implicit operator Point2(Cardinal c) => new(c.X, c.Y);
+	public static implicit operator Point2(Cardinal c) => c.Point;
 	public static bool operator ==(Cardinal a, Cardinal b) => a.Value == b.Value;
 	public static bool operator !=(Cardinal a, Cardinal b) => a.Value != b.Value;
 	public static Point2 operator *(Cardinal a, int b) => (Point2)a * b;
+	public static Cardinal operator -(Cardinal a) => a.Reverse;
 
 	public override int GetHashCode() => Value;
 
