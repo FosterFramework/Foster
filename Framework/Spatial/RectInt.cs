@@ -226,6 +226,10 @@ public struct RectInt : IEquatable<RectInt>
 		=> X + Width > against.X && Y + Height > against.Y && X < against.X + against.Width && Y < against.Y + against.Height;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly RectInt At(in Point2 pos)
+		=> new(pos.X, pos.Y, Width, Height);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly RectInt Conflate(in RectInt other)
 	{
 		var min = Point2.Min(Min, other.Min);
