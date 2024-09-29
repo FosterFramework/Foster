@@ -29,6 +29,7 @@ internal static unsafe partial class Renderer
 	{
 		public nint Buffer;
 		public int Capacity;
+		public bool Dirty;
 	}
 
 	private struct ShaderResource
@@ -45,12 +46,14 @@ internal static unsafe partial class Renderer
 		public int? Stencil;
 	}
 
+	private const int MaxFramesInFlight = 3;
 	private const uint TransferBufferSize = 16 * 1024 * 1024; // 16MB
 	private const uint MaxUploadCycleCount = 4;
 
 	private static nint device;
 	private static nint window;
-	private static nint cmd;
+	private static nint cmdUpload;
+	private static nint cmdRender;
 	private static nint renderPass;
 	private static nint copyPass;
 	private static TextureResource? swapchain;
@@ -74,6 +77,11 @@ internal static unsafe partial class Renderer
 	private static nint bufferUploadBuffer;
 	private static uint bufferUploadBufferOffset;
 	private static uint bufferUploadCycleCount;
+	private static int frameCounter;
+	private static nint[][] fenceGroups =
+		Enumerable.Range(0, MaxFramesInFlight)
+		.Select(_ => new nint[2])
+		.ToArray();
 
 	public static GraphicsDriver Driver { get; private set; } = GraphicsDriver.None;
 
@@ -134,7 +142,7 @@ internal static unsafe partial class Renderer
 			SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX);
 
 		// we always have a command buffer ready
-		AcquireCommandBuffers();
+		ResetCommandBufferState();
 
 		// create texture upload buffer
 		{
@@ -171,7 +179,9 @@ internal static unsafe partial class Renderer
 
 	public static void Shutdown()
 	{
-		Flush(true);
+		// submit remaining commands
+		SDL_SubmitGPUCommandBuffer(cmdRender);
+		SDL_SubmitGPUCommandBuffer(cmdUpload);
 
 		// destroy default texture
 		DestroyTexture(emptyDefaultTexture);
@@ -182,6 +192,28 @@ internal static unsafe partial class Renderer
 		textureUploadBuffer = nint.Zero;
 		SDL_ReleaseGPUTransferBuffer(device, bufferUploadBuffer);
 		bufferUploadBuffer = nint.Zero;
+
+		// release fences
+		foreach (var fenceGroup in fenceGroups)
+		{
+			if (fenceGroup[0] != nint.Zero)
+			{
+				SDL_ReleaseGPUFence(
+					device,
+					fenceGroup[0]
+				);
+				fenceGroup[0] = nint.Zero;
+			}
+
+			if (fenceGroup[1] != nint.Zero)
+			{
+				SDL_ReleaseGPUFence(
+					device,
+					fenceGroup[1]
+				);
+				fenceGroup[1] = nint.Zero;
+			}
+		}
 
 		// release pipelines
 		lock (graphicsPipelinesByHash)
@@ -205,12 +237,14 @@ internal static unsafe partial class Renderer
 
 		// clear state
 		window = nint.Zero;
-		cmd = nint.Zero;
+		cmdUpload = nint.Zero;
+		cmdRender = nint.Zero;
 		renderPass = nint.Zero;
 		copyPass = nint.Zero;
 		swapchain = default;
 		renderPassTarget = null;
 		Driver = GraphicsDriver.None;
+		// TODO: make sure _everything_ is cleared
 	}
 
 	public static bool GetVSync() => vsyncEnabled;
@@ -220,6 +254,10 @@ internal static unsafe partial class Renderer
 		if (device == nint.Zero)
 			throw deviceNotCreated;
 
+		// TODO: Mailbox and immediate cause a lot of issues
+		// Not all frames have a non null swapchain, which means render passes cannot begin but copy work is still completed
+		// Perhaps we should be stalling in some way?
+		// At the very least SDL_GPU_PRESENTMODE_MAILBOX should not be used instead of SDL_GPU_PRESENTMODE_VSYNC
 		SDL_SetGPUSwapchainParameters(device, window,
 			swapchain_composition: SDL_GPUSwapchainComposition.SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
 			present_mode: (enabled, supportsMailbox) switch
@@ -235,8 +273,7 @@ internal static unsafe partial class Renderer
 
 	public static void Present()
 	{
-		Flush(false);
-		AcquireCommandBuffers();
+		SwapBuffers();
 	}
 
 	public static nint CreateTexture(int width, int height, TextureFormat format, bool isTarget)
@@ -320,7 +357,7 @@ internal static unsafe partial class Renderer
 		}
 		else if (textureUploadBufferOffset + length >= TransferBufferSize)
 		{
-			if (textureUploadCycleCount < MaxUploadCycleCount || true)
+			if (textureUploadCycleCount < MaxUploadCycleCount)
 			{
 				transferCycle = true;
 				textureUploadCycleCount += 1;
@@ -329,7 +366,8 @@ internal static unsafe partial class Renderer
 			}
 			else
 			{
-				// TODO: Flush
+				FlushCommandsAndStall();
+				BeginCopyPass();
 				transferCycle = true;
 				transferOffset = 0;
 			}
@@ -424,6 +462,7 @@ internal static unsafe partial class Renderer
 
 		MeshResource* res = (MeshResource*)mesh;
 		res->VertexFormat = format;
+		res->Vertex.Dirty = true;
 		UploadMeshBuffer(&res->Vertex, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_VERTEX);
 	}
 
@@ -434,6 +473,7 @@ internal static unsafe partial class Renderer
 
 		MeshResource* res = (MeshResource*)mesh;
 		res->IndexFormat = format;
+		res->Index.Dirty = true;
 		UploadMeshBuffer(&res->Index, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_INDEX);
 	}
 
@@ -503,7 +543,7 @@ internal static unsafe partial class Renderer
 		}
 		else if (bufferUploadBufferOffset + dataSize >= TransferBufferSize)
 		{
-			if (bufferUploadCycleCount < MaxUploadCycleCount || true)
+			if (bufferUploadCycleCount < MaxUploadCycleCount)
 			{
 				transferCycle = true;
 				bufferUploadCycleCount += 1;
@@ -512,7 +552,8 @@ internal static unsafe partial class Renderer
 			}
 			else
 			{
-				// TODO: Flush
+				FlushCommandsAndStall();
+				BeginCopyPass(); // TODO: FNA3D does not have this, but maybe it should? It had it for texture data.
 				transferCycle = true;
 				transferOffset = 0;
 			}
@@ -656,7 +697,7 @@ internal static unsafe partial class Renderer
 		if (target != null && target.IsDisposed)
 			throw new Exception("Target is Invalid");
 
-		if (mesh == null || mesh.IsDisposed)
+		if (mesh == null || mesh.Resource == nint.Zero || mesh.IsDisposed)
 			throw new Exception("Mesh is Invalid");
 
 		// try to start a render pass
@@ -712,18 +753,24 @@ internal static unsafe partial class Renderer
 		}
 
 		// bind mesh buffers
-		if (renderPassMesh != mesh.Resource)
+		var meshResource = (MeshResource*)mesh.Resource;
+		if (renderPassMesh != mesh.Resource
+			|| meshResource->Vertex.Dirty
+			|| meshResource->Index.Dirty
+			|| meshResource->Instance.Dirty)
 		{
 			renderPassMesh = mesh.Resource;
-			var it = (MeshResource*)mesh.Resource;
+			meshResource->Vertex.Dirty = false;
+			meshResource->Index.Dirty = false;
+			meshResource->Instance.Dirty = false;
 
 			// bind index buffer
 			SDL_GPUBufferBinding indexBinding = new()
 			{
-				buffer = it->Index.Buffer,
+				buffer = meshResource->Index.Buffer,
 				offset = 0
 			};
-			SDL_BindGPUIndexBuffer(renderPass, &indexBinding, it->IndexFormat switch
+			SDL_BindGPUIndexBuffer(renderPass, &indexBinding, meshResource->IndexFormat switch
 			{
 				IndexFormat.Sixteen => SDL_GPUIndexElementSize.SDL_GPU_INDEXELEMENTSIZE_16BIT,
 				IndexFormat.ThirtyTwo => SDL_GPUIndexElementSize.SDL_GPU_INDEXELEMENTSIZE_32BIT,
@@ -733,7 +780,7 @@ internal static unsafe partial class Renderer
 			// bind vertex buffer
 			SDL_GPUBufferBinding vertexBinding = new()
 			{
-				buffer = it->Vertex.Buffer,
+				buffer = meshResource->Vertex.Buffer,
 				offset = 0
 			};
 			SDL_BindGPUVertexBuffers(renderPass, 0, &vertexBinding, 1);
@@ -782,7 +829,7 @@ internal static unsafe partial class Renderer
 		if (shader.Vertex.Uniforms.Length > 0)
 		{
 			fixed (byte* ptr = mat.VertexUniformBuffer)
-				SDL_PushGPUVertexUniformData(cmd, 0, ptr, (uint)shader.Vertex.UniformSizeInBytes);
+				SDL_PushGPUVertexUniformData(cmdRender, 0, ptr, (uint)shader.Vertex.UniformSizeInBytes);
 		}
 
 		// Upload Fragment Uniforms
@@ -790,7 +837,7 @@ internal static unsafe partial class Renderer
 		if (shader.Fragment.Uniforms.Length > 0)
 		{
 			fixed (byte* ptr = mat.FragmentUniformBuffer)
-				SDL_PushGPUFragmentUniformData(cmd, 0, ptr, (uint)shader.Fragment.UniformSizeInBytes);
+				SDL_PushGPUFragmentUniformData(cmdRender, 0, ptr, (uint)shader.Fragment.UniformSizeInBytes);
 		}
 
 		// perform draw
@@ -820,32 +867,12 @@ internal static unsafe partial class Renderer
 		}
 	}
 
-	private static void AcquireCommandBuffers()
+	private static void ResetCommandBufferState()
 	{
-		if (cmd != nint.Zero)
-			throw new Exception("Must Flush Command Buffers first!");
-		cmd = SDL_AcquireGPUCommandBuffer(device);
-	}
+		cmdRender = SDL_AcquireGPUCommandBuffer(device);
+		cmdUpload = SDL_AcquireGPUCommandBuffer(device);
 
-	private static void Flush(bool wait)
-	{
-		EndCopyPass();
-		EndRenderPass();
-
-		if (wait)
-		{
-			var fences = stackalloc nint[1];
-			fences[0] = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
-			SDL_WaitForGPUFences(device, true, fences, 1);
-			SDL_ReleaseGPUFence(device, fences[0]);
-		}
-		else
-		{
-			SDL_SubmitGPUCommandBuffer(cmd);
-		}
-
-		cmd = nint.Zero;
-		swapchain = default;
+		// TODO: Ensure _all_ state is reset
 
 		textureUploadBufferOffset = 0;
 		textureUploadCycleCount = 0;
@@ -853,12 +880,117 @@ internal static unsafe partial class Renderer
 		bufferUploadCycleCount = 0;
 	}
 
+	private static void FlushCommandsAndAcquireFence(
+		out nint uploadFence,
+		out nint renderFence
+	)
+	{
+		EndCopyPass();
+		EndRenderPass();
+
+		uploadFence = SDL_SubmitGPUCommandBufferAndAcquireFence(
+			cmdUpload
+		);
+
+		renderFence = SDL_SubmitGPUCommandBufferAndAcquireFence(
+			cmdRender
+		);
+
+		ResetCommandBufferState();
+	}
+
+	private static void FlushCommands()
+	{
+		EndCopyPass();
+		EndRenderPass();
+		SDL_SubmitGPUCommandBuffer(cmdUpload);
+		SDL_SubmitGPUCommandBuffer(cmdRender);
+		ResetCommandBufferState();
+	}
+
+	private static void FlushCommandsAndStall()
+	{
+		var fences = stackalloc nint[2];
+
+		FlushCommandsAndAcquireFence(out fences[0], out fences[1]);
+
+		SDL_WaitForGPUFences(
+			device,
+			true,
+			fences,
+			2
+		);
+
+		SDL_ReleaseGPUFence(
+			device,
+			fences[0]
+		);
+
+		SDL_ReleaseGPUFence(
+			device,
+			fences[1]
+		);
+	}
+
+	private static void SwapBuffers()
+	{
+		EndCopyPass();
+		EndRenderPass();
+
+		if (fenceGroups[frameCounter][0] != nint.Zero)
+		{
+			/* Wait for the least-recent fence */
+			fixed (nint* fences = fenceGroups[frameCounter])
+			{
+				SDL_WaitForGPUFences(
+					device,
+					true,
+					fences,
+					2
+				);
+			}
+
+			SDL_ReleaseGPUFence(
+				device,
+				fenceGroups[frameCounter][0]
+			);
+
+			SDL_ReleaseGPUFence(
+				device,
+				fenceGroups[frameCounter][1]
+			);
+
+			fenceGroups[frameCounter][0] = nint.Zero;
+			fenceGroups[frameCounter][1] = nint.Zero;
+		}
+
+		// TODO: I'm not sure about the placement of this
+		// FNA3D does it here, but it all uses a faux frame buffer...
+		uint w, h;
+		nint swapchainTexture = SDL_AcquireGPUSwapchainTexture(cmdRender, window, &w, &h);
+		swapchain = new()
+		{
+			Texture = swapchainTexture,
+			Format = SDL_GetGPUSwapchainTextureFormat(device, window),
+			Width = (int)w,
+			Height = (int)h
+		};
+
+		FlushCommandsAndAcquireFence(
+			out fenceGroups[frameCounter][0],
+			out fenceGroups[frameCounter][1]
+		);
+
+		frameCounter = (frameCounter + 1) % MaxFramesInFlight;
+
+		// TODO: Reset bound RT state?
+	}
+
 	private static void BeginCopyPass()
 	{
 		if (copyPass != nint.Zero)
 			return;
-		EndRenderPass();
-		copyPass = SDL_BeginGPUCopyPass(cmd);
+		copyPass = SDL_BeginGPUCopyPass(cmdUpload);
 	}
 
 	private static void EndCopyPass()
@@ -878,7 +1010,6 @@ internal static unsafe partial class Renderer
 			!clear.Stencil.HasValue)
 			return true;
 
-		EndCopyPass();
 		EndRenderPass();
 
 		// set next target
@@ -908,23 +1039,9 @@ internal static unsafe partial class Renderer
 		// drawing to the backbuffer/swapchain
 		else
 		{
-			// try to get swapchain if we haven't already
-			if (!swapchain.HasValue)
-			{
-				uint w, h;
-				nint swapchainTexture = SDL_AcquireGPUSwapchainTexture(cmd, window, &w, &h);
-				swapchain = new()
-				{
-					Texture = swapchainTexture,
-					Format = SDL_GetGPUSwapchainTextureFormat(device, window),
-					Width = (int)w,
-					Height = (int)h
-				};
-			}
-
 			// there's a chance the swapchain is invalid, in which case we can't
 			// render anything to it and should not start a renderpass
-			if (swapchain.Value.Texture == nint.Zero)
+			if (swapchain == null || swapchain.Value.Texture == nint.Zero)
 				return false;
 
 			colorTargets.Add(swapchain.Value.Texture);
@@ -972,7 +1089,7 @@ internal static unsafe partial class Renderer
 
 		// begin pass
 		renderPass = SDL_BeginGPURenderPass(
-			cmd,
+			cmdRender,
 			colorInfo,
 			(uint)colorTargets.Count,
 			depthStencilTarget != nint.Zero ? &depthStencilInfo : null
