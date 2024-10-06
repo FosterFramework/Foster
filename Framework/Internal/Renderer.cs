@@ -177,9 +177,6 @@ internal static unsafe partial class Renderer
 
 		// default to vsync on
 		SetVSync(true);
-
-		// get the first swapchain
-		AcquireSwapchain();
 	}
 
 	public static void Shutdown()
@@ -300,7 +297,6 @@ internal static unsafe partial class Renderer
 			out fenceGroups[frameCounter][0],
 			out fenceGroups[frameCounter][1]
 		);
-		AcquireSwapchain();
 		frameCounter = (frameCounter + 1) % MaxFramesInFlight;
 
 		// TODO: Reset bound RT state?
@@ -910,6 +906,7 @@ internal static unsafe partial class Renderer
 		SDL_SubmitGPUCommandBuffer(cmdRender);
 		cmdUpload = nint.Zero;
 		cmdRender = nint.Zero;
+		swapchain = null;
 		ResetCommandBufferState();
 	}
 
@@ -921,6 +918,7 @@ internal static unsafe partial class Renderer
 		renderFence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmdRender);
 		cmdUpload = nint.Zero;
 		cmdRender = nint.Zero;
+		swapchain = null;
 		ResetCommandBufferState();
 	}
 
@@ -943,30 +941,11 @@ internal static unsafe partial class Renderer
 
 		// TODO: Ensure _all_ state is reset
 
+		swapchain = null;
 		textureUploadBufferOffset = 0;
 		textureUploadCycleCount = 0;
 		bufferUploadBufferOffset = 0;
 		bufferUploadCycleCount = 0;
-	}
-
-	private static void AcquireSwapchain()
-	{
-		if (SDL_AcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
-		{
-			swapchain = new()
-			{
-				Texture = scTex,
-				Format = SDL_GetGPUSwapchainTextureFormat(device, window),
-				Width = (int)scW,
-				Height = (int)scH,
-			};
-		}
-		else
-		{
-			// TODO: is this a valid result? should this throw?
-			Log.Warning($"SDL_AcquireGPUSwapchainTexture failed: {Platform.GetErrorFromSDL()}");
-			swapchain = default;
-		}
 	}
 
 	private static void BeginCopyPass()
@@ -1024,8 +1003,28 @@ internal static unsafe partial class Renderer
 		// drawing to the backbuffer/swapchain
 		else
 		{
-			// there's a chance the swapchain is invalid, in which case we can't
-			// render anything to it and should not start a renderpass
+			// try to acquire the swapchain if we don't have it yet
+			if (swapchain == null)
+			{
+				if (SDL_AcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
+				{
+					swapchain = new()
+					{
+						Texture = scTex,
+						Format = SDL_GetGPUSwapchainTextureFormat(device, window),
+						Width = (int)scW,
+						Height = (int)scH,
+					};
+				}
+				else
+				{
+					// TODO: is this a valid result? should this throw?
+					swapchain = new();
+					Log.Warning($"SDL_AcquireGPUSwapchainTexture failed: {Platform.GetErrorFromSDL()}");
+				}
+			}
+
+			// don't render anything if the swapchain is invalid
 			if (swapchain == null || swapchain.Value.Texture == nint.Zero)
 				return false;
 
