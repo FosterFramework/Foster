@@ -24,6 +24,15 @@
  *
  */
 
+// Changes for Foster:
+// SDL_SetWindowFullscreenMode: change 'mode' to ptr to allow nullptr
+// SDL_CreateGPUDevice: change 'name' to ptr to allow nullptr
+// SDL_ShowOpenFileDialog: change delegate signature to work with fn ptr
+// SDL_ShowSaveFileDialog: change delegate signature to work with fn ptr
+// SDL_ShowOpenFolderDialog: change delegate signature to work with fn ptr
+// SDL_BeginGPURenderPass: change 'depth_stencil_target_info' to ptr to allow nullptr
+// SDL_SetLogOutputFunction: change delegate signature to work with fn ptr
+
 // NOTE: This file is auto-generated.
 using System;
 using System.Runtime.CompilerServices;
