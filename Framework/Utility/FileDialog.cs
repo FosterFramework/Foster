@@ -1,5 +1,6 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using static Foster.Framework.SDL3;
+using static SDL3.SDL;
 
 namespace Foster.Framework;
 
@@ -99,7 +100,7 @@ public static class FileDialog
 
 	private static unsafe void ShowFileDialog(ShowProperties properties)
 	{
-		[UnmanagedCallersOnly]
+		[UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
 		static void CallbackFromSDL(nint userdata, nint files, int filter)
 		{
 			// get actual callback, release held handle
@@ -149,12 +150,11 @@ public static class FileDialog
 				defaultLocation = Directory.GetCurrentDirectory();
 
 			// get UTF8 string data for SDL
-			var locationUtf8 = Platform.ToUTF8(defaultLocation);
-			var filtersUtf8 = stackalloc SDL_DialogFileFilter[properties.Filters.Length];
+			Span<SDL_DialogFileFilter> filtersUtf8 = stackalloc SDL_DialogFileFilter[properties.Filters.Length];
 			for (int i = 0; i < properties.Filters.Length; i ++)
 			{
-				filtersUtf8[i].name = Platform.ToUTF8(properties.Filters[i].Name);
-				filtersUtf8[i].pattern = Platform.ToUTF8(properties.Filters[i].Pattern);
+				filtersUtf8[i].name = (byte*)Platform.ToUTF8(properties.Filters[i].Name);
+				filtersUtf8[i].pattern = (byte*)Platform.ToUTF8(properties.Filters[i].Pattern);
 			}
 
 			// create a pointer to our user callback so that SDL can pass it around
@@ -167,27 +167,26 @@ public static class FileDialog
 				case Modes.OpenFile:
 					SDL_ShowOpenFileDialog(
 						&CallbackFromSDL, userdata, App.Window, filtersUtf8, 
-						properties.Filters.Length, locationUtf8, properties.AllowMany);
+						properties.Filters.Length, defaultLocation, properties.AllowMany);
 					break;
 				case Modes.SaveFile:
 					SDL_ShowSaveFileDialog(
 						&CallbackFromSDL, userdata, App.Window, filtersUtf8,
-						properties.Filters.Length, locationUtf8);
+						properties.Filters.Length, defaultLocation);
 					break;
 				case Modes.OpenFolder:
 					SDL_ShowOpenFolderDialog(
 						&CallbackFromSDL, userdata, App.Window, 
-						locationUtf8, properties.AllowMany);
+						defaultLocation, properties.AllowMany);
 					break;
 			}
 
 			// clear UTF8 string memory
-			foreach (var it in new Span<SDL_DialogFileFilter>(filtersUtf8, properties.Filters.Length))
+			foreach (var it in filtersUtf8)
 			{
-				Platform.FreeUTF8(it.name);
-				Platform.FreeUTF8(it.pattern);
+				Platform.FreeUTF8(new nint(it.name));
+				Platform.FreeUTF8(new nint(it.pattern));
 			}
-			Platform.FreeUTF8(locationUtf8);
 		}
 
 		// Application must be running for these methods to work

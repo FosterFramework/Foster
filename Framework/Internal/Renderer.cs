@@ -1,6 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
-using static Foster.Framework.SDL3;
+using static SDL3.SDL;
 
 namespace Foster.Framework;
 
@@ -58,6 +58,7 @@ internal static unsafe partial class Renderer
 	private static nint copyPass;
 	private static TextureResource? swapchain;
 	private static Target? renderPassTarget;
+	private static Point2 renderPassTargetSize;
 	private static nint renderPassPipeline;
 	private static nint renderPassMesh;
 	private static RectInt? renderPassScissor;
@@ -115,7 +116,7 @@ internal static unsafe partial class Renderer
 		Renderer.window = window;
 
 		// provider user what driver is being used
-		var driverName = Platform.ParseUTF8(SDL_GetGPUDeviceDriver(device));
+		var driverName = SDL_GetGPUDeviceDriver(device);
 		Driver = driverName switch
 		{
 			"private" => GraphicsDriver.Private,
@@ -146,25 +147,23 @@ internal static unsafe partial class Renderer
 
 		// create texture upload buffer
 		{
-			SDL_GPUTransferBufferCreateInfo info = new()
+			textureUploadBuffer = SDL_CreateGPUTransferBuffer(device, new()
 			{
 				usage = SDL_GPUTransferBufferUsage.SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
 				size = TransferBufferSize,
 				props = 0
-			};
-			textureUploadBuffer = SDL_CreateGPUTransferBuffer(device, &info);
+			});
 			textureUploadBufferOffset = 0;
 		}
 
 		// create buffer upload buffer
 		{
-			SDL_GPUTransferBufferCreateInfo info = new()
+			bufferUploadBuffer = SDL_CreateGPUTransferBuffer(device, new()
 			{
 				usage = SDL_GPUTransferBufferUsage.SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
 				size = TransferBufferSize,
 				props = 0
-			};
-			bufferUploadBuffer = SDL_CreateGPUTransferBuffer(device, &info);
+			});
 			bufferUploadBufferOffset = 0;
 		}
 
@@ -309,7 +308,7 @@ internal static unsafe partial class Renderer
 				info.usage |= SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
 		}
 
-		nint texture = SDL_CreateGPUTexture(device, &info);
+		nint texture = SDL_CreateGPUTexture(device, info);
 		if (texture == nint.Zero)
 			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUTexture));
 
@@ -350,7 +349,7 @@ internal static unsafe partial class Renderer
 				size = (uint)length,
 				props = 0
 			};
-			transferBuffer = SDL_CreateGPUTransferBuffer(device, &info);
+			transferBuffer = SDL_CreateGPUTransferBuffer(device, info);
 			usingTemporaryTransferBuffer = true;
 			transferCycle = false;
 			transferOffset = 0;
@@ -405,7 +404,7 @@ internal static unsafe partial class Renderer
 				d = 0
 			};
 
-			SDL_UploadToGPUTexture(copyPass, &info, &region, cycle: false); // TODO: FNA uses false, we were using true
+			SDL_UploadToGPUTexture(copyPass, info, region, cycle: false); // TODO: FNA uses false, we were using true
 		}
 
 		// transfer buffer management
@@ -515,7 +514,7 @@ internal static unsafe partial class Renderer
 				props = 0
 			};
 
-			res->Buffer = SDL_CreateGPUBuffer(device, &info);
+			res->Buffer = SDL_CreateGPUBuffer(device, info);
 			if (res->Buffer == nint.Zero)
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUBuffer), "Mesh Creation Failed");
 			res->Capacity = size;
@@ -536,7 +535,7 @@ internal static unsafe partial class Renderer
 				size = (uint)dataSize,
 				props = 0
 			};
-			transferBuffer = SDL_CreateGPUTransferBuffer(device, &info);
+			transferBuffer = SDL_CreateGPUTransferBuffer(device, info);
 			usingTemporaryTransferBuffer = true;
 			transferCycle = false;
 			transferOffset = 0;
@@ -583,7 +582,7 @@ internal static unsafe partial class Renderer
 				size = (uint)dataSize
 			};
 
-			SDL_UploadToGPUBuffer(copyPass, &location, &region, cycle);
+			SDL_UploadToGPUBuffer(copyPass, location, region, cycle);
 		}
 
 		// transfer buffer management
@@ -622,7 +621,7 @@ internal static unsafe partial class Renderer
 			{
 				code_size = (nuint)shaderInfo.Vertex.Code.Length,
 				code = vertexCode,
-				entrypoint = new nint(entryPointPtr),
+				entrypoint = entryPointPtr,
 				format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
 				stage = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX,
 				num_samplers = (uint)shaderInfo.Vertex.SamplerCount,
@@ -644,7 +643,7 @@ internal static unsafe partial class Renderer
 			{
 				code_size = (nuint)shaderInfo.Fragment.Code.Length,
 				code = fragmentCode,
-				entrypoint = new nint(entryPointPtr),
+				entrypoint = entryPointPtr,
 				format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
 				stage = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT,
 				num_samplers = (uint)shaderInfo.Fragment.SamplerCount,
@@ -710,17 +709,20 @@ internal static unsafe partial class Renderer
 			renderPassScissor = command.Scissor;
 			if (command.Scissor.HasValue)
 			{
-				SDL_Rect scissor = new()
+				SDL_SetGPUScissor(renderPass, new()
 				{
-					x = command.Scissor.Value.X,
-					y = command.Scissor.Value.Y,
-					w = command.Scissor.Value.Width,
-					h = command.Scissor.Value.Height,
-				};
-				SDL_SetGPUScissor(renderPass, &scissor);
+					x = command.Scissor.Value.X, y = command.Scissor.Value.Y,
+					w = command.Scissor.Value.Width, h = command.Scissor.Value.Height,
+				});
 			}
 			else
-				SDL_SetGPUScissor(renderPass, null);
+			{
+				SDL_SetGPUScissor(renderPass, new()
+				{
+					x = 0, y = 0,
+					w = renderPassTargetSize.X, h = renderPassTargetSize.Y,
+				});
+			}
 		}
 
 		// set viewport
@@ -729,19 +731,22 @@ internal static unsafe partial class Renderer
 			renderPassViewport = command.Viewport;
 			if (command.Viewport.HasValue)
 			{
-				SDL_GPUViewport viewport = new()
+				SDL_SetGPUViewport(renderPass, new()
 				{
-					x = command.Viewport.Value.X,
-					y = command.Viewport.Value.Y,
-					w = command.Viewport.Value.Width,
-					h = command.Viewport.Value.Height,
-					min_depth = 0,
-					max_depth = float.MaxValue
-				};
-				SDL_SetGPUViewport(renderPass, &viewport);
+					x = command.Viewport.Value.X, y = command.Viewport.Value.Y,
+					w = command.Viewport.Value.Width, h = command.Viewport.Value.Height,
+					min_depth = 0, max_depth = float.MaxValue
+				});
 			}
 			else
-				SDL_SetGPUViewport(renderPass, null);
+			{
+				SDL_SetGPUViewport(renderPass, new()
+				{
+					x = 0, y = 0,
+					w = renderPassTargetSize.X, h = renderPassTargetSize.Y,
+					min_depth = 0, max_depth = float.MaxValue
+				});
+			}
 		}
 
 		// figure out graphics pipeline, potentially create a new one
@@ -770,7 +775,7 @@ internal static unsafe partial class Renderer
 				buffer = meshResource->Index.Buffer,
 				offset = 0
 			};
-			SDL_BindGPUIndexBuffer(renderPass, &indexBinding, meshResource->IndexFormat switch
+			SDL_BindGPUIndexBuffer(renderPass, indexBinding, meshResource->IndexFormat switch
 			{
 				IndexFormat.Sixteen => SDL_GPUIndexElementSize.SDL_GPU_INDEXELEMENTSIZE_16BIT,
 				IndexFormat.ThirtyTwo => SDL_GPUIndexElementSize.SDL_GPU_INDEXELEMENTSIZE_32BIT,
@@ -783,14 +788,14 @@ internal static unsafe partial class Renderer
 				buffer = meshResource->Vertex.Buffer,
 				offset = 0
 			};
-			SDL_BindGPUVertexBuffers(renderPass, 0, &vertexBinding, 1);
+			SDL_BindGPUVertexBuffers(renderPass, 0, [vertexBinding], 1);
 		}
 
 		// bind fragment samplers
 		// TODO: only do this if Samplers change
 		if (shader.Fragment.SamplerCount > 0)
 		{
-			var samplers = stackalloc SDL_GPUTextureSamplerBinding[shader.Fragment.SamplerCount];
+			Span<SDL_GPUTextureSamplerBinding> samplers = stackalloc SDL_GPUTextureSamplerBinding[shader.Fragment.SamplerCount];
 
 			for (int i = 0; i < shader.Fragment.SamplerCount; i++)
 			{
@@ -809,7 +814,7 @@ internal static unsafe partial class Renderer
 		// TODO: only do this if Samplers change
 		if (shader.Vertex.SamplerCount > 0)
 		{
-			var samplers = stackalloc SDL_GPUTextureSamplerBinding[shader.Vertex.SamplerCount];
+			Span<SDL_GPUTextureSamplerBinding> samplers = stackalloc SDL_GPUTextureSamplerBinding[shader.Vertex.SamplerCount];
 
 			for (int i = 0; i < shader.Vertex.SamplerCount; i++)
 			{
@@ -829,7 +834,7 @@ internal static unsafe partial class Renderer
 		if (shader.Vertex.Uniforms.Length > 0)
 		{
 			fixed (byte* ptr = mat.VertexUniformBuffer)
-				SDL_PushGPUVertexUniformData(cmdRender, 0, ptr, (uint)shader.Vertex.UniformSizeInBytes);
+				SDL_PushGPUVertexUniformData(cmdRender, 0, new nint(ptr), (uint)shader.Vertex.UniformSizeInBytes);
 		}
 
 		// Upload Fragment Uniforms
@@ -837,7 +842,7 @@ internal static unsafe partial class Renderer
 		if (shader.Fragment.Uniforms.Length > 0)
 		{
 			fixed (byte* ptr = mat.FragmentUniformBuffer)
-				SDL_PushGPUFragmentUniformData(cmdRender, 0, ptr, (uint)shader.Fragment.UniformSizeInBytes);
+				SDL_PushGPUFragmentUniformData(cmdRender, 0, new nint(ptr), (uint)shader.Fragment.UniformSizeInBytes);
 		}
 
 		// perform draw
@@ -910,7 +915,7 @@ internal static unsafe partial class Renderer
 
 	private static void FlushCommandsAndStall()
 	{
-		var fences = stackalloc nint[2];
+		Span<nint> fences = stackalloc nint[2];
 
 		FlushCommandsAndAcquireFence(out fences[0], out fences[1]);
 
@@ -939,16 +944,13 @@ internal static unsafe partial class Renderer
 
 		if (fenceGroups[frameCounter][0] != nint.Zero)
 		{
-			/* Wait for the least-recent fence */
-			fixed (nint* fences = fenceGroups[frameCounter])
-			{
-				SDL_WaitForGPUFences(
-					device,
-					true,
-					fences,
-					2
-				);
-			}
+			// Wait for the least-recent fence
+			SDL_WaitForGPUFences(
+				device,
+				true,
+				fenceGroups[frameCounter].AsSpan(),
+				2
+			);
 
 			SDL_ReleaseGPUFence(
 				device,
@@ -966,15 +968,18 @@ internal static unsafe partial class Renderer
 
 		// TODO: I'm not sure about the placement of this
 		// FNA3D does it here, but it all uses a faux frame buffer...
-		uint w, h;
-		nint swapchainTexture = SDL_AcquireGPUSwapchainTexture(cmdRender, window, &w, &h);
-		swapchain = new()
+		if (SDL_AcquireGPUSwapchainTexture(cmdRender, window, out var swapchainTexture, out var swapchainWidth, out var swapchainHeight))
 		{
-			Texture = swapchainTexture,
-			Format = SDL_GetGPUSwapchainTextureFormat(device, window),
-			Width = (int)w,
-			Height = (int)h
-		};
+			swapchain = new()
+			{
+				Texture = swapchainTexture,
+				Format = SDL_GetGPUSwapchainTextureFormat(device, window),
+				Width = (int)swapchainWidth,
+				Height = (int)swapchainHeight,
+			};
+		}
+		else
+			swapchain = default;
 
 		FlushCommandsAndAcquireFence(
 			out fenceGroups[frameCounter][0],
@@ -1022,6 +1027,8 @@ internal static unsafe partial class Renderer
 		// drawing to a specific target
 		if (target != null)
 		{
+			renderPassTargetSize = target.Bounds.Size;
+
 			foreach (var it in target.Attachments)
 			{
 				var res = ((TextureResource*)it.resource)->Texture;
@@ -1044,10 +1051,11 @@ internal static unsafe partial class Renderer
 			if (swapchain == null || swapchain.Value.Texture == nint.Zero)
 				return false;
 
+			renderPassTargetSize = new (swapchain.Value.Width, swapchain.Value.Height);
 			colorTargets.Add(swapchain.Value.Texture);
 		}
 
-		var colorInfo = stackalloc SDL_GPUColorTargetInfo[colorTargets.Count];
+		Span<SDL_GPUColorTargetInfo> colorInfo = stackalloc SDL_GPUColorTargetInfo[colorTargets.Count];
 		var depthStencilInfo = new SDL_GPUDepthStencilTargetInfo();
 
 		// get color infos
@@ -1257,7 +1265,7 @@ internal static unsafe partial class Renderer
 				}
 			};
 
-			pipeline = SDL_CreateGPUGraphicsPipeline(device, &info);
+			pipeline = SDL_CreateGPUGraphicsPipeline(device, info);
 			if (pipeline == nint.Zero)
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUGraphicsPipeline));
 
@@ -1394,7 +1402,7 @@ internal static unsafe partial class Renderer
 				address_mode_v = GetWrapMode(sampler.WrapY),
 				address_mode_w = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
 			};
-			result = SDL_CreateGPUSampler(device, &info);
+			result = SDL_CreateGPUSampler(device, info);
 			if (result == nint.Zero)
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUSampler));
 			samplers[sampler] = result;

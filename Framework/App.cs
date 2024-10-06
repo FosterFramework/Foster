@@ -3,8 +3,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-using static Foster.Framework.SDL3;
-using static Foster.Framework.SDL3.Hints;
+using static SDL3.SDL;
 
 namespace Foster.Framework;
 
@@ -222,7 +221,7 @@ public static class App
 			if (!Running)
 				throw notRunningException;
 			var index = SDL_GetDisplayForWindow(Window);
-			var mode = SDL_GetCurrentDisplayMode(index);
+			var mode = (SDL_DisplayMode*)SDL_GetCurrentDisplayMode(index);
 			if (mode == null)
 				return Point2.Zero;
 			return new(mode->w, mode->h);
@@ -255,7 +254,7 @@ public static class App
 		{
 			if (!Running)
 				throw notRunningException;
-			return (SDL_GetWindowFlags(Window) & SDL_WindowFlags.FULLSCREEN) != 0;
+			return (SDL_GetWindowFlags(Window) & SDL_WindowFlags.SDL_WINDOW_FULLSCREEN) != 0;
 		}
 		set
 		{
@@ -274,7 +273,7 @@ public static class App
 		{
 			if (!Running)
 				throw notRunningException;
-			return (SDL_GetWindowFlags(Window) & SDL_WindowFlags.RESIZABLE) != 0;
+			return (SDL_GetWindowFlags(Window) & SDL_WindowFlags.SDL_WINDOW_RESIZABLE) != 0;
 		}
 		set
 		{
@@ -293,7 +292,7 @@ public static class App
 		{
 			if (!Running)
 				throw notRunningException;
-			return (SDL_GetWindowFlags(Window) & SDL_WindowFlags.MAXIMIZED) != 0;
+			return (SDL_GetWindowFlags(Window) & SDL_WindowFlags.SDL_WINDOW_MAXIMIZED) != 0;
 		}
 		set
 		{
@@ -316,7 +315,7 @@ public static class App
 		{
 			if (!Running)
 				throw notRunningException;
-			var flags = SDL_WindowFlags.INPUT_FOCUS | SDL_WindowFlags.MOUSE_FOCUS;
+			var flags = SDL_WindowFlags.SDL_WINDOW_INPUT_FOCUS | SDL_WindowFlags.SDL_WINDOW_MOUSE_FOCUS;
 			return (SDL_GetWindowFlags(Window) & flags) != 0;
 		}
 	}
@@ -424,16 +423,14 @@ public static class App
 		// initialize SDL3
 		{
 			var initFlags = 
-				SDL_InitFlags.VIDEO | SDL_InitFlags.TIMER | SDL_InitFlags.EVENTS |
-				SDL_InitFlags.JOYSTICK | SDL_InitFlags.GAMEPAD;
+				SDL_InitFlags.SDL_INIT_VIDEO | SDL_InitFlags.SDL_INIT_TIMER | SDL_InitFlags.SDL_INIT_EVENTS |
+				SDL_InitFlags.SDL_INIT_JOYSTICK | SDL_InitFlags.SDL_INIT_GAMEPAD;
 
 			if (!SDL_Init(initFlags))
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_Init));
 
 			// get the UserPath
-			var name = Platform.ToUTF8(info.ApplicationName);
-			UserPath = Platform.ParseUTF8(SDL_GetPrefPath(IntPtr.Zero, name));
-			Platform.FreeUTF8(name);
+			UserPath = SDL_GetPrefPath(string.Empty, info.ApplicationName);
 		}
 
 		// create the graphics device
@@ -442,11 +439,11 @@ public static class App
 		// create the window
 		{
 			var windowFlags = 
-				SDL_WindowFlags.HIGH_PIXEL_DENSITY | SDL_WindowFlags.RESIZABLE | 
-				SDL_WindowFlags.HIDDEN;
+				SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WindowFlags.SDL_WINDOW_RESIZABLE | 
+				SDL_WindowFlags.SDL_WINDOW_HIDDEN;
 
 			if (info.Fullscreen)
-				windowFlags |= SDL_WindowFlags.FULLSCREEN;
+				windowFlags |= SDL_WindowFlags.SDL_WINDOW_FULLSCREEN;
 
 			Window = SDL_CreateWindow(info.WindowTitle, info.Width, info.Height, windowFlags);
 			if (Window == IntPtr.Zero)
@@ -702,12 +699,11 @@ public static class App
 			Input.OnMouseMove(new Vector2(mouseX, mouseY), new Vector2(deltaX, deltaY));
 		}
 
-		SDL_Event ev = default;
-		while (SDL_PollEvent(&ev) && ev.type != SDL_EventType.POLL_SENTINEL)
+		while (SDL_PollEvent(out var ev) && ev.type != (uint)SDL_EventType.SDL_EVENT_POLL_SENTINEL)
 		{
-			switch (ev.type)
+			switch ((SDL_EventType)ev.type)
 			{
-			case SDL_EventType.QUIT:
+			case SDL_EventType.SDL_EVENT_QUIT:
 				if (started)
 				{
 					if (OnExitRequested != null)
@@ -718,32 +714,32 @@ public static class App
 				break;
 
 			// mouse
-			case SDL_EventType.MOUSE_BUTTON_DOWN:
+			case SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN:
 				Input.OnMouseButton((int)Platform.GetMouseFromSDL(ev.button.button), true);
 				break;
-			case SDL_EventType.MOUSE_BUTTON_UP:
+			case SDL_EventType.SDL_EVENT_MOUSE_BUTTON_UP:
 				Input.OnMouseButton((int)Platform.GetMouseFromSDL(ev.button.button), false);
 				break;
-			case SDL_EventType.MOUSE_WHEEL:
+			case SDL_EventType.SDL_EVENT_MOUSE_WHEEL:
 				Input.OnMouseWheel(new(ev.wheel.x, ev.wheel.y));
 				break;
 
 			// keyboard
-			case SDL_EventType.KEY_DOWN:
-				if (ev.key.repeat == 0)
+			case SDL_EventType.SDL_EVENT_KEY_DOWN:
+				if (!ev.key.repeat)
 					Input.OnKey((int)Platform.GetKeyFromSDL(ev.key.scancode), true);
 				break;
-			case SDL_EventType.KEY_UP:
-				if (ev.key.repeat == 0)
+			case SDL_EventType.SDL_EVENT_KEY_UP:
+				if (!ev.key.repeat)
 					Input.OnKey((int)Platform.GetKeyFromSDL(ev.key.scancode), false);
 				break;
 
-			case SDL_EventType.TEXT_INPUT:
-				Input.OnText(ev.text.text);
+			case SDL_EventType.SDL_EVENT_TEXT_INPUT:
+				Input.OnText(new nint(ev.text.text));
 				break;
 
 			// joystick
-			case SDL_EventType.JOYSTICK_ADDED:
+			case SDL_EventType.SDL_EVENT_JOYSTICK_ADDED:
 				{
 					var id = ev.jdevice.which;
 					if (SDL_IsGamepad(id))
@@ -754,9 +750,9 @@ public static class App
 
 					Input.OnControllerConnect(
 						id: new(id),
-						name: Platform.ParseUTF8(SDL_GetJoystickName(ptr)),
-						buttonCount: SDL_GetJoystickButtons(ptr),
-						axisCount: SDL_GetJoystickAxis(ptr),
+						name: SDL_GetJoystickName(ptr),
+						buttonCount: SDL_GetNumJoystickButtons(ptr),
+						axisCount: SDL_GetNumJoystickAxes(ptr),
 						isGamepad: false,
 						type: GamepadTypes.Unknown,
 						vendor: SDL_GetJoystickVendor(ptr),
@@ -766,7 +762,7 @@ public static class App
 					NotifyModules(Events.ControllerConnect);
 					break;
 				}
-			case SDL_EventType.JOYSTICK_REMOVED:
+			case SDL_EventType.SDL_EVENT_JOYSTICK_REMOVED:
 				{
 					var id = ev.jdevice.which;
 					if (SDL_IsGamepad(id))
@@ -783,8 +779,8 @@ public static class App
 					NotifyModules(Events.ControllerDisconnect);
 					break;
 				}
-			case SDL_EventType.JOYSTICK_BUTTON_DOWN:
-			case SDL_EventType.JOYSTICK_BUTTON_UP:
+			case SDL_EventType.SDL_EVENT_JOYSTICK_BUTTON_DOWN:
+			case SDL_EventType.SDL_EVENT_JOYSTICK_BUTTON_UP:
 				{
 					var id = ev.jbutton.which;
 					if (SDL_IsGamepad(id))
@@ -793,11 +789,11 @@ public static class App
 					Input.OnControllerButton(
 						id: new(id),
 						button: ev.jbutton.button,
-						pressed: ev.type == SDL_EventType.JOYSTICK_BUTTON_DOWN);
+						pressed: ev.type == (uint)SDL_EventType.SDL_EVENT_JOYSTICK_BUTTON_DOWN);
 
 					break;
 				}
-			case SDL_EventType.JOYSTICK_AXIS_MOTION:
+			case SDL_EventType.SDL_EVENT_JOYSTICK_AXIS_MOTION:
 				{
 					var id = ev.jaxis.which;
 					if (SDL_IsGamepad(id))
@@ -816,7 +812,7 @@ public static class App
 				}
 
 			// gamepad
-			case SDL_EventType.GAMEPAD_ADDED:
+			case SDL_EventType.SDL_EVENT_GAMEPAD_ADDED:
 				{
 					var id = ev.gdevice.which;
 					var ptr = SDL_OpenGamepad(id);
@@ -824,7 +820,7 @@ public static class App
 
 					Input.OnControllerConnect(
 						id: new(id),
-						name: Platform.ParseUTF8(SDL_GetGamepadName(ptr)),
+						name: SDL_GetGamepadName(ptr),
 						buttonCount: 15,
 						axisCount: 6,
 						isGamepad: true,
@@ -836,7 +832,7 @@ public static class App
 					NotifyModules(Events.ControllerConnect);
 					break;
 				}
-			case SDL_EventType.GAMEPAD_REMOVED:
+			case SDL_EventType.SDL_EVENT_GAMEPAD_REMOVED:
 				{
 					var id = ev.gdevice.which;
 					for (int i = 0; i < openGamepads.Count; i ++)
@@ -850,18 +846,18 @@ public static class App
 					NotifyModules(Events.ControllerDisconnect);
 					break;
 				}
-			case SDL_EventType.GAMEPAD_BUTTON_DOWN:
-			case SDL_EventType.GAMEPAD_BUTTON_UP:
+			case SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+			case SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_UP:
 				{
 					var id = ev.gbutton.which;
 					Input.OnControllerButton(
 						id: new(id),
 						button: (int)Platform.GetButtonFromSDL((SDL_GamepadButton)ev.gbutton.button),
-						pressed: ev.type == SDL_EventType.GAMEPAD_BUTTON_DOWN);
+						pressed: ev.type == (uint)SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_DOWN);
 
 					break;
 				}
-			case SDL_EventType.GAMEPAD_AXIS_MOTION:
+			case SDL_EventType.SDL_EVENT_GAMEPAD_AXIS_MOTION:
 				{
 					var id = ev.gbutton.which;
 					float value = ev.gaxis.value >= 0
@@ -870,40 +866,40 @@ public static class App
 
 					Input.OnControllerAxis(
 						id: new(id),
-						axis: (int)Platform.GetAxisFromSDL((SDK_GamepadAxis)ev.gaxis.axis),
+						axis: (int)Platform.GetAxisFromSDL((SDL_GamepadAxis)ev.gaxis.axis),
 						value: value);
 						
 					break;
 				}
 
-			case SDL_EventType.WINDOW_FOCUS_GAINED:
+			case SDL_EventType.SDL_EVENT_WINDOW_FOCUS_GAINED:
 				NotifyModules(Events.FocusGain);
 				break;
-			case SDL_EventType.WINDOW_FOCUS_LOST:
+			case SDL_EventType.SDL_EVENT_WINDOW_FOCUS_LOST:
 				NotifyModules(Events.FocusLost);
 				break;
-			case SDL_EventType.WINDOW_MOUSE_ENTER:
+			case SDL_EventType.SDL_EVENT_WINDOW_MOUSE_ENTER:
 				NotifyModules(Events.MouseEnter);
 				break;
-			case SDL_EventType.WINDOW_MOUSE_LEAVE:
+			case SDL_EventType.SDL_EVENT_WINDOW_MOUSE_LEAVE:
 				NotifyModules(Events.MouseLeave);
 				break;
-			case SDL_EventType.WINDOW_RESIZED:
+			case SDL_EventType.SDL_EVENT_WINDOW_RESIZED:
 				NotifyModules(Events.Resize);
 				break;
-			case SDL_EventType.WINDOW_RESTORED:
+			case SDL_EventType.SDL_EVENT_WINDOW_RESTORED:
 				NotifyModules(Events.Restore);
 				break;
-			case SDL_EventType.WINDOW_MAXIMIZED:
+			case SDL_EventType.SDL_EVENT_WINDOW_MAXIMIZED:
 				NotifyModules(Events.Maximize);
 				break;
-			case SDL_EventType.WINDOW_MINIMIZED:
+			case SDL_EventType.SDL_EVENT_WINDOW_MINIMIZED:
 				NotifyModules(Events.Minimize);
 				break;
-			case SDL_EventType.WINDOW_ENTER_FULLSCREEN:
+			case SDL_EventType.SDL_EVENT_WINDOW_ENTER_FULLSCREEN:
 				NotifyModules(Events.FullscreenEnter);
 				break;
-			case SDL_EventType.WINDOW_LEAVE_FULLSCREEN:
+			case SDL_EventType.SDL_EVENT_WINDOW_LEAVE_FULLSCREEN:
 				NotifyModules(Events.FullscreenExit);
 				break;
 

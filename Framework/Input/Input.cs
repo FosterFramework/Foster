@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Numerics;
+using static SDL3.SDL;
 
 namespace Foster.Framework;
 
@@ -81,9 +82,9 @@ public static class Input
 	{
 		bool result;
 		if (enabled)
-			result = SDL3.SDL_ShowCursor();
+			result = SDL_ShowCursor();
 		else
-			result = SDL3.SDL_HideCursor();
+			result = SDL_HideCursor();
 		if (!result)
 			Log.Warning($"Failed to set Mouse visibility: {Platform.GetErrorFromSDL()}");
 	}
@@ -95,11 +96,11 @@ public static class Input
 	/// </summary>
 	public static void SetMouseRelativeMode(bool enabled)
 	{
-		if (!SDL3.SDL_SetWindowRelativeMouseMode(App.Window, enabled))
+		if (!SDL_SetWindowRelativeMouseMode(App.Window, enabled))
 			Log.Warning($"Failed to set Mouse Relative Mode: {Platform.GetErrorFromSDL()}");
 
 		if (enabled)
-			SDL3.SDL_WarpMouseInWindow(App.Window, App.Width / 2, App.Height / 2);
+			SDL_WarpMouseInWindow(App.Window, App.Width / 2, App.Height / 2);
 	}
 
 	/// <summary>
@@ -110,14 +111,14 @@ public static class Input
 		if (cursor == null)
 		{
 			currentCursor = null;
-			SDL3.SDL_SetCursor(SDL3.SDL_GetDefaultCursor());
+			SDL_SetCursor(SDL_GetDefaultCursor());
 			return;
 		}
 
 		if (cursor.Disposed)
 			throw new Exception("Using an invalid cursor!");
 
-		if (!SDL3.SDL_SetCursor(cursor.Handle))
+		if (!SDL_SetCursor(cursor.Handle))
 			Log.Warning($"Failed to set Mouse Cursor: {Platform.GetErrorFromSDL()}");
 		else
 			currentCursor = cursor;
@@ -147,7 +148,7 @@ public static class Input
 	public static void AddSDLGamepadMappings(string[] mappings)
 	{
 		foreach (var mapping in mappings)
-			SDL3.SDL_AddGamepadMapping(mapping);
+			SDL_AddGamepadMapping(mapping);
 	}
 
 	/// <summary>
@@ -155,7 +156,7 @@ public static class Input
 	/// </summary>
 	public static void SetClipboardString(string value)
 	{
-		SDL3.SDL_SetClipboardText(value);
+		SDL_SetClipboardText(value);
 	}
 
 	/// <summary>
@@ -163,7 +164,7 @@ public static class Input
 	/// </summary>
 	public static string GetClipboardString()
 	{
-		return Platform.ParseUTF8(SDL3.SDL_GetClipboardText());
+		return SDL_GetClipboardText();
 	}
 
 	/// <summary>
@@ -174,8 +175,8 @@ public static class Input
 	internal static void Step()
 	{
 		// warp mouse to center of the window if Relative Mode is enabled
-		if (SDL3.SDL_GetWindowRelativeMouseMode(App.Window) && App.Focused)
-			SDL3.SDL_WarpMouseInWindow(App.Window, App.Width / 2, App.Height / 2);
+		if (SDL_GetWindowRelativeMouseMode(App.Window) && App.Focused)
+			SDL_WarpMouseInWindow(App.Window, App.Width / 2, App.Height / 2);
 
 		// step state
 		LastState.Copy(State);

@@ -1,3 +1,5 @@
+using static SDL3.SDL;
+
 namespace Foster.Framework;
 
 /// <summary>
@@ -71,22 +73,22 @@ public sealed class Cursor : IDisposable
 		SystemType = null;
 
 		// create SDL surface from image
-		var surface = SDL3.SDL_CreateSurfaceFrom(
+		var surface = SDL_CreateSurfaceFrom(
 			image.Width,
 			image.Height,
-			SDL3.SDL_PixelFormat.SDL_PIXELFORMAT_RGBA8888,
+			SDL_PixelFormat.SDL_PIXELFORMAT_RGBA8888,
 			image.Pointer,
 			image.Width * sizeof(Color));
 		if (surface == nint.Zero)
-			throw Platform.CreateExceptionFromSDL(nameof(SDL3.SDL_CreateSurfaceFrom));
+			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateSurfaceFrom));
 
 		// create cursor, free surface
-		Handle = SDL3.SDL_CreateColorCursor(surface, focusPoint.X, focusPoint.Y);
-		SDL3.SDL_DestroySurface(surface);
+		Handle = SDL_CreateColorCursor(surface, focusPoint.X, focusPoint.Y);
+		SDL_DestroySurface(surface);
 
 		// validate that cursor was created successfully
 		if (Handle == nint.Zero)
-			throw Platform.CreateExceptionFromSDL(nameof(SDL3.SDL_CreateColorCursor));
+			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateColorCursor));
 	}
 
 	/// <summary>
@@ -98,11 +100,11 @@ public sealed class Cursor : IDisposable
 		FocusPoint = Point2.Zero;
 		Size = Point2.Zero;
 		SystemType = type;
-		Handle = SDL3.SDL_CreateSystemCursor((uint)type);
+		Handle = SDL_CreateSystemCursor((SDL_SystemCursor)type);
 
 		// validate that cursor was created successfully
 		if (Handle == nint.Zero)
-			throw Platform.CreateExceptionFromSDL(nameof(SDL3.SDL_CreateSystemCursor));
+			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateSystemCursor));
 	}
 
 	~Cursor()
@@ -117,7 +119,7 @@ public sealed class Cursor : IDisposable
 	{
 		if (Handle != nint.Zero)
 		{
-			SDL3.SDL_DestroyCursor(Handle);
+			SDL_DestroyCursor(Handle);
 			Handle = nint.Zero;
 		}
 		GC.SuppressFinalize(this);

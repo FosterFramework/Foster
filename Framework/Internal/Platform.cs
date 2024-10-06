@@ -1,7 +1,7 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
-
-using static Foster.Framework.SDL3;
+using static SDL3.SDL;
 
 namespace Foster.Framework;
 
@@ -44,7 +44,7 @@ internal static partial class Platform
 	/// <summary>
 	/// Wrapper around SDL_GetError() to return a C# string
 	/// </summary>
-	public static string GetErrorFromSDL() => ParseUTF8(SDL_GetError());
+	public static string GetErrorFromSDL() => SDL_GetError();
 
 	/// <summary>
 	/// Creates an Exception with information from SDL_GetError()
@@ -120,44 +120,44 @@ internal static partial class Platform
 	[LibraryImport(DLL, EntryPoint = "FosterShaderCrossCreateShader")]
 	public static partial nint ShaderCrossCreateShader(nint device, nint createInfo);
 
-	[UnmanagedCallersOnly]
-	public static void HandleLogFromSDL(nint userdata, int category, SDL_LogPriority priority, nint message)
+	[UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+	public static unsafe void HandleLogFromSDL(IntPtr userdata, int category, SDL_LogPriority priority, byte* message)
 	{
 		switch (priority)
 		{
 			case SDL_LogPriority.SDL_LOG_PRIORITY_VERBOSE:
 			case SDL_LogPriority.SDL_LOG_PRIORITY_DEBUG:
 			case SDL_LogPriority.SDL_LOG_PRIORITY_INFO:
-				Log.Info(message);
+				Log.Info(new nint(message));
 				break;
 			case SDL_LogPriority.SDL_LOG_PRIORITY_WARN:
-				Log.Warning(message);
+				Log.Warning(new nint(message));
 				break;
 			case SDL_LogPriority.SDL_LOG_PRIORITY_ERROR:
 			case SDL_LogPriority.SDL_LOG_PRIORITY_CRITICAL:
-				Log.Error(message);
+				Log.Error(new nint(message));
 				break;
 		}
 	}
 	
 	public static Buttons GetButtonFromSDL(SDL_GamepadButton button) => button switch
 	{
-		SDL_GamepadButton.INVALID => Buttons.None,
-		SDL_GamepadButton.SOUTH => Buttons.South,
-		SDL_GamepadButton.EAST => Buttons.East,
-		SDL_GamepadButton.WEST => Buttons.West,
-		SDL_GamepadButton.NORTH => Buttons.North,
-		SDL_GamepadButton.BACK => Buttons.Back,
-		SDL_GamepadButton.GUIDE => Buttons.Select,
-		SDL_GamepadButton.START => Buttons.Start,
-		SDL_GamepadButton.LEFT_STICK => Buttons.LeftStick,
-		SDL_GamepadButton.RIGHT_STICK => Buttons.RightStick,
-		SDL_GamepadButton.LEFT_SHOULDER => Buttons.LeftShoulder,
-		SDL_GamepadButton.RIGHT_SHOULDER => Buttons.RightShoulder,
-		SDL_GamepadButton.DPAD_UP => Buttons.Up,
-		SDL_GamepadButton.DPAD_DOWN => Buttons.Down,
-		SDL_GamepadButton.DPAD_LEFT => Buttons.Left,
-		SDL_GamepadButton.DPAD_RIGHT => Buttons.Right,
+		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_INVALID => Buttons.None,
+		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_SOUTH => Buttons.South,
+		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_EAST => Buttons.East,
+		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_WEST => Buttons.West,
+		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_NORTH => Buttons.North,
+		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_BACK => Buttons.Back,
+		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_GUIDE => Buttons.Select,
+		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_START => Buttons.Start,
+		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_LEFT_STICK => Buttons.LeftStick,
+		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_RIGHT_STICK => Buttons.RightStick,
+		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_LEFT_SHOULDER => Buttons.LeftShoulder,
+		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER => Buttons.RightShoulder,
+		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_UP => Buttons.Up,
+		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_DOWN => Buttons.Down,
+		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_LEFT => Buttons.Left,
+		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_RIGHT => Buttons.Right,
 		_ => Buttons.None,
 	};
 
@@ -169,15 +169,15 @@ internal static partial class Platform
 		_ => MouseButtons.None,
 	};
 
-	public static Axes GetAxisFromSDL(SDK_GamepadAxis axis) => axis switch
+	public static Axes GetAxisFromSDL(SDL_GamepadAxis axis) => axis switch
 	{
-		SDK_GamepadAxis.INVALID => Axes.None,
-		SDK_GamepadAxis.LEFTX => Axes.LeftX,
-		SDK_GamepadAxis.LEFTY => Axes.LeftY,
-		SDK_GamepadAxis.RIGHTX => Axes.RightX,
-		SDK_GamepadAxis.RIGHTY => Axes.RightY,
-		SDK_GamepadAxis.LEFT_TRIGGER => Axes.LeftTrigger,
-		SDK_GamepadAxis.RIGHT_TRIGGER => Axes.RightTrigger,
+		SDL_GamepadAxis.SDL_GAMEPAD_AXIS_INVALID => Axes.None,
+		SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFTX => Axes.LeftX,
+		SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFTY => Axes.LeftY,
+		SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHTX => Axes.RightX,
+		SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHTY => Axes.RightY,
+		SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFT_TRIGGER => Axes.LeftTrigger,
+		SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHT_TRIGGER => Axes.RightTrigger,
 		_ => Axes.None,
 	};
 

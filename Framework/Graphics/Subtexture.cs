@@ -11,22 +11,6 @@ public struct Subtexture
 	public static readonly Subtexture Empty = new();
 
 	/// <summary>
-	/// The Texture coordinates. These are set automatically based on the Source rectangle
-	/// </summary>
-	public Vector2 TexCoords0 = new();
-	public Vector2 TexCoords1 = new();
-	public Vector2 TexCoords2 = new();
-	public Vector2 TexCoords3 = new();
-
-	/// <summary>
-	/// The draw coordinates. These are set automatically based on the Source and Frame rectangle
-	/// </summary>
-	public Vector2 DrawCoords0 = new();
-	public Vector2 DrawCoords1 = new();
-	public Vector2 DrawCoords2 = new();
-	public Vector2 DrawCoords3 = new();
-
-	/// <summary>
 	/// The Texture this Subtexture is... a subtexture of
 	/// </summary>
 	public Texture? Texture;
@@ -43,6 +27,22 @@ public struct Subtexture
 	public Rect Frame;
 
 	/// <summary>
+	/// The Texture coordinates. These are set automatically based on the Source rectangle
+	/// </summary>
+	public Vector2 TexCoords0;
+	public Vector2 TexCoords1;
+	public Vector2 TexCoords2;
+	public Vector2 TexCoords3;
+
+	/// <summary>
+	/// The draw coordinates. These are set automatically based on the Source and Frame rectangle
+	/// </summary>
+	public Vector2 DrawCoords0;
+	public Vector2 DrawCoords1;
+	public Vector2 DrawCoords2;
+	public Vector2 DrawCoords3;
+
+	/// <summary>
 	/// The Draw Width of the Subtexture
 	/// </summary>
 	public readonly float Width => Frame.Width;
@@ -52,22 +52,13 @@ public struct Subtexture
 	/// </summary>
 	public readonly float Height => Frame.Height;
 
-	public Subtexture()
-	{
-
-	}
+	public Subtexture() {}
 
 	public Subtexture(Texture? texture)
-		: this(texture, new Rect(0, 0, texture?.Width ?? 0, texture?.Height ?? 0), new Rect(0, 0, texture?.Width ?? 0, texture?.Height ?? 0))
-	{
-
-	}
+		: this(texture, new Rect(0, 0, texture?.Width ?? 0, texture?.Height ?? 0), new Rect(0, 0, texture?.Width ?? 0, texture?.Height ?? 0)) {}
 
 	public Subtexture(Texture? texture, Rect source)
-		: this(texture, source, new Rect(0, 0, source.Width, source.Height))
-	{
-
-	}
+		: this(texture, source, new Rect(0, 0, source.Width, source.Height)) {}
 
 	public Subtexture(Texture? texture, Rect source, Rect frame)
 	{

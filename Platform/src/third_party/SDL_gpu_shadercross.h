@@ -1,3 +1,24 @@
+/*
+  Simple DirectMedia Layer Shader Cross Compiler
+  Copyright (C) 2024 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
 #ifndef SDL_GPU_SHADERCROSS_H
 #define SDL_GPU_SHADERCROSS_H
 
@@ -16,7 +37,7 @@
  *
  * \threadsafety This should only be called once, from a single thread.
  */
-extern SDL_bool SDL_ShaderCross_Init();
+extern bool SDL_ShaderCross_Init(void);
 /**
  * De-initializes SDL_gpu_shadercross
  *
@@ -30,7 +51,7 @@ extern void SDL_ShaderCross_Quit(void);
  *
  * \threadsafety It is safe to call this function from any thread.
  */
-extern SDL_GPUShaderFormat SDL_ShaderCross_GetSPIRVShaderFormats();
+extern SDL_GPUShaderFormat SDL_ShaderCross_GetSPIRVShaderFormats(void);
 
 /**
  * Compile an SDL shader from SPIRV code.
@@ -45,8 +66,8 @@ extern SDL_GPUShaderFormat SDL_ShaderCross_GetSPIRVShaderFormats();
  * \threadsafety It is safe to call this function from any thread.
  */
 extern void *SDL_ShaderCross_CompileFromSPIRV(SDL_GPUDevice *device,
-                                              void *createInfo,
-                                              SDL_bool isCompute);
+                                              const void *createInfo,
+                                              bool isCompute);
 #endif /* SDL_GPU_SHADERCROSS_SPIRVCROSS */
 
 #if SDL_GPU_SHADERCROSS_HLSL
@@ -55,7 +76,7 @@ extern void *SDL_ShaderCross_CompileFromSPIRV(SDL_GPUDevice *device,
  *
  * \threadsafety It is safe to call this function from any thread.
  */
-extern SDL_GPUShaderFormat SDL_ShaderCross_GetHLSLShaderFormats();
+extern SDL_GPUShaderFormat SDL_ShaderCross_GetHLSLShaderFormats(void);
 
 /**
  * Compile an SDL shader from HLSL code.
@@ -71,7 +92,7 @@ extern SDL_GPUShaderFormat SDL_ShaderCross_GetHLSLShaderFormats();
  * \threadsafety It is safe to call this function from any thread.
  */
 extern void *SDL_ShaderCross_CompileFromHLSL(SDL_GPUDevice *device,
-                                             void *createInfo,
+                                             const void *createInfo,
                                              const char *hlslSource,
                                              const char *shaderProfile);
 #endif /* SDL_GPU_SHADERCROSS_HLSL */
@@ -333,7 +354,7 @@ struct IDxcCompiler3
 /* *INDENT-ON* */ // clang-format on
 
 /* DXCompiler */
-static void *dxcompiler_dll = NULL;
+static SDL_SharedObject *dxcompiler_dll = NULL;
 
 typedef HRESULT(__stdcall *DxcCreateInstanceProc)(
     REFCLSID rclsid,
@@ -344,11 +365,11 @@ static DxcCreateInstanceProc SDL_DxcCreateInstance = NULL;
 
 static void *SDL_ShaderCross_INTERNAL_CompileDXC(
     SDL_GPUDevice *device,
-    void *createInfo,
+    const void *createInfo,
     const char *hlslSource,
     const char *shaderProfile,
     UINT encoding,
-    SDL_bool spirv)
+    bool spirv)
 {
     DxcBuffer source;
     IDxcResult *dxcResult;
@@ -449,7 +470,7 @@ static void *SDL_ShaderCross_INTERNAL_CompileDXC(
 
     if (shaderProfile[0] == 'c' && shaderProfile[1] == 's') {
         SDL_GPUComputePipelineCreateInfo newCreateInfo;
-        newCreateInfo = *(SDL_GPUComputePipelineCreateInfo *)createInfo;
+        newCreateInfo = *(const SDL_GPUComputePipelineCreateInfo *)createInfo;
         newCreateInfo.code = (const Uint8 *)blob->lpVtbl->GetBufferPointer(blob);
         newCreateInfo.code_size = blob->lpVtbl->GetBufferSize(blob);
         newCreateInfo.format = spirv ? SDL_GPU_SHADERFORMAT_SPIRV : SDL_GPU_SHADERFORMAT_DXIL;
@@ -457,7 +478,7 @@ static void *SDL_ShaderCross_INTERNAL_CompileDXC(
         result = SDL_CreateGPUComputePipeline(device, &newCreateInfo);
     } else {
         SDL_GPUShaderCreateInfo newCreateInfo;
-        newCreateInfo = *(SDL_GPUShaderCreateInfo *)createInfo;
+        newCreateInfo = *(const SDL_GPUShaderCreateInfo *)createInfo;
         newCreateInfo.code = (const Uint8 *)blob->lpVtbl->GetBufferPointer(blob);
         newCreateInfo.code_size = blob->lpVtbl->GetBufferSize(blob);
         newCreateInfo.format = spirv ? SDL_GPU_SHADERFORMAT_SPIRV : SDL_GPU_SHADERFORMAT_DXIL;
@@ -527,7 +548,7 @@ struct ID3DBlob
 #define ID3D10Blob ID3DBlob
 
 /* D3DCompiler */
-static void *d3dcompiler_dll = NULL;
+static SDL_SharedObject *d3dcompiler_dll = NULL;
 
 typedef HRESULT(__stdcall *pfn_D3DCompile)(
     LPCVOID pSrcData,
@@ -546,7 +567,7 @@ static pfn_D3DCompile SDL_D3DCompile = NULL;
 
 static void *SDL_ShaderCross_INTERNAL_CompileFXC(
     SDL_GPUDevice *device,
-    void *createInfo,
+    const void *createInfo,
     const char *hlslSource,
     const char *shaderProfile)
 {
@@ -561,7 +582,7 @@ static void *SDL_ShaderCross_INTERNAL_CompileFXC(
         NULL,
         NULL,
         NULL,
-        ((SDL_GPUShaderCreateInfo *)createInfo)->entrypoint,
+        ((const SDL_GPUShaderCreateInfo *)createInfo)->entrypoint,
         shaderProfile,
         0,
         0,
@@ -578,7 +599,7 @@ static void *SDL_ShaderCross_INTERNAL_CompileFXC(
 
     if (shaderProfile[0] == 'c' && shaderProfile[1] == 's') {
         SDL_GPUComputePipelineCreateInfo newCreateInfo;
-        newCreateInfo = *(SDL_GPUComputePipelineCreateInfo *)createInfo;
+        newCreateInfo = *(const SDL_GPUComputePipelineCreateInfo *)createInfo;
         newCreateInfo.code = (const Uint8 *)blob->lpVtbl->GetBufferPointer(blob);
         newCreateInfo.code_size = blob->lpVtbl->GetBufferSize(blob);
         newCreateInfo.format = SDL_GPU_SHADERFORMAT_DXBC;
@@ -586,7 +607,7 @@ static void *SDL_ShaderCross_INTERNAL_CompileFXC(
         result = SDL_CreateGPUComputePipeline(device, &newCreateInfo);
     } else {
         SDL_GPUShaderCreateInfo newCreateInfo;
-        newCreateInfo = *(SDL_GPUShaderCreateInfo *)createInfo;
+        newCreateInfo = *(const SDL_GPUShaderCreateInfo *)createInfo;
         newCreateInfo.code = (const Uint8 *)blob->lpVtbl->GetBufferPointer(blob);
         newCreateInfo.code_size = blob->lpVtbl->GetBufferSize(blob);
         newCreateInfo.format = SDL_GPU_SHADERFORMAT_DXBC;
@@ -600,7 +621,7 @@ static void *SDL_ShaderCross_INTERNAL_CompileFXC(
 }
 
 extern void *SDL_ShaderCross_CompileFromHLSL(SDL_GPUDevice *device,
-                                             void *createInfo,
+                                             const void *createInfo,
                                              const char *hlslSource,
                                              const char *shaderProfile)
 {
@@ -609,10 +630,10 @@ extern void *SDL_ShaderCross_CompileFromHLSL(SDL_GPUDevice *device,
         return SDL_ShaderCross_INTERNAL_CompileFXC(device, createInfo, hlslSource, shaderProfile);
     }
     if (format & SDL_GPU_SHADERFORMAT_DXIL) {
-        return SDL_ShaderCross_INTERNAL_CompileDXC(device, createInfo, hlslSource, shaderProfile, DXC_CP_ACP, SDL_FALSE);
+        return SDL_ShaderCross_INTERNAL_CompileDXC(device, createInfo, hlslSource, shaderProfile, DXC_CP_ACP, false);
     }
     if (format & SDL_GPU_SHADERFORMAT_SPIRV) {
-        return SDL_ShaderCross_INTERNAL_CompileDXC(device, createInfo, hlslSource, shaderProfile, DXC_CP_ACP, SDL_TRUE);
+        return SDL_ShaderCross_INTERNAL_CompileDXC(device, createInfo, hlslSource, shaderProfile, DXC_CP_ACP, true);
     }
 
     SDL_SetError("SDL_ShaderCross_CompileFromHLSL: Unexpected SDL_GPUShaderFormat");
@@ -641,7 +662,7 @@ extern void *SDL_ShaderCross_CompileFromHLSL(SDL_GPUDevice *device,
 #endif
 #endif /* SDL_GPU_SPIRV_CROSS_DLL */
 
-static void *spirvcross_dll = NULL;
+static SDL_SharedObject *spirvcross_dll = NULL;
 
 typedef spvc_result (*pfn_spvc_context_create)(spvc_context *context);
 typedef void (*pfn_spvc_context_destroy)(spvc_context);
@@ -688,10 +709,10 @@ static pfn_spvc_compiler_get_cleansed_entry_point_name SDL_spvc_compiler_get_cle
 
 void *SDL_ShaderCross_CompileFromSPIRV(
     SDL_GPUDevice *device,
-    void *originalCreateInfo,
-    SDL_bool isCompute)
+    const void *originalCreateInfo,
+    bool isCompute)
 {
-    SDL_GPUShaderCreateInfo *createInfo;
+    const SDL_GPUShaderCreateInfo *createInfo;
     spvc_result result;
     spvc_backend backend;
     unsigned shadermodel;
@@ -708,9 +729,9 @@ void *SDL_ShaderCross_CompileFromSPIRV(
 
     if (shader_formats & SDL_GPU_SHADERFORMAT_SPIRV) {
         if (isCompute) {
-            return SDL_CreateGPUComputePipeline(device, (SDL_GPUComputePipelineCreateInfo *)originalCreateInfo);
+            return SDL_CreateGPUComputePipeline(device, (const SDL_GPUComputePipelineCreateInfo *)originalCreateInfo);
         } else {
-            return SDL_CreateGPUShader(device, (SDL_GPUShaderCreateInfo *)originalCreateInfo);
+            return SDL_CreateGPUShader(device, (const SDL_GPUShaderCreateInfo *)originalCreateInfo);
         }
     } else if (shader_formats & SDL_GPU_SHADERFORMAT_DXBC) {
         backend = SPVC_BACKEND_HLSL;
@@ -739,7 +760,7 @@ void *SDL_ShaderCross_CompileFromSPIRV(
      * share the same struct layout for their first 3 members, which
      * is all we need to transpile them!
      */
-    createInfo = (SDL_GPUShaderCreateInfo *)originalCreateInfo;
+    createInfo = (const SDL_GPUShaderCreateInfo *)originalCreateInfo;
 
     /* Parse the SPIR-V into IR */
     result = SDL_spvc_context_parse_spirv(context, (const SpvId *)createInfo->code, createInfo->code_size / sizeof(SpvId), &ir);
@@ -768,6 +789,9 @@ void *SDL_ShaderCross_CompileFromSPIRV(
     if (backend == SPVC_BACKEND_HLSL) {
         SDL_spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_HLSL_SHADER_MODEL, shadermodel);
         SDL_spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_HLSL_NONWRITABLE_UAV_TEXTURE_AS_SRV, 1);
+        SDL_spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_HLSL_FLATTEN_MATRIX_VERTEX_INPUT_SEMANTICS, 1);
+    } else if (backend == SPVC_BACKEND_MSL) {
+        SDL_spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_MSL_ENABLE_DECORATION_BINDING, 1);
     }
 
     result = SDL_spvc_compiler_install_compiler_options(compiler, options);
@@ -794,7 +818,7 @@ void *SDL_ShaderCross_CompileFromSPIRV(
     /* Copy the original create info, but with the new source code */
     if (isCompute) {
         SDL_GPUComputePipelineCreateInfo newCreateInfo;
-        newCreateInfo = *(SDL_GPUComputePipelineCreateInfo *)createInfo;
+        newCreateInfo = *(const SDL_GPUComputePipelineCreateInfo *)createInfo;
         newCreateInfo.format = format;
         newCreateInfo.entrypoint = cleansed_entrypoint;
 
@@ -842,13 +866,13 @@ void *SDL_ShaderCross_CompileFromSPIRV(
 
 #endif /* SDL_GPU_SHADERCROSS_SPIRVCROSS */
 
-SDL_bool SDL_ShaderCross_Init(void)
+bool SDL_ShaderCross_Init(void)
 {
     dxcompiler_dll = SDL_LoadObject(DXCOMPILER_DLL);
     if (dxcompiler_dll != NULL) {
 #ifndef _GAMING_XBOX
         /* Try to load DXIL, we don't need it directly but if it doesn't exist the code will not be loadable */
-        void *dxil_dll = SDL_LoadObject(DXIL_DLL);
+        SDL_SharedObject *dxil_dll = SDL_LoadObject(DXIL_DLL);
         if (dxil_dll == NULL) {
             SDL_LogError(SDL_LOG_CATEGORY_GPU, "Failed to load DXIL library, this will cause pipeline creation failures!");
 
@@ -880,12 +904,12 @@ SDL_bool SDL_ShaderCross_Init(void)
         }
     }
 
-    SDL_bool spvc_loaded = SDL_FALSE;
+    bool spvc_loaded = false;
 
 #ifndef SDL_GPU_SHADERCROSS_STATIC
     spirvcross_dll = SDL_LoadObject(SDL_GPU_SPIRV_CROSS_DLL);
     if (spirvcross_dll != NULL) {
-        spvc_loaded = SDL_TRUE;
+        spvc_loaded = true;
     }
 
     if (spvc_loaded) {
@@ -893,7 +917,7 @@ SDL_bool SDL_ShaderCross_Init(void)
     if (SDL_##func == NULL) {                                             \
         SDL_##func = (pfn_##func)SDL_LoadFunction(spirvcross_dll, #func); \
         if (SDL_##func == NULL) {                                         \
-            spvc_loaded = SDL_FALSE;                                      \
+            spvc_loaded = false;                                      \
         }                                                                 \
     }
         CHECK_FUNC(spvc_context_create)
@@ -916,7 +940,7 @@ SDL_bool SDL_ShaderCross_Init(void)
     }
 #endif /* SDL_GPU_SHADERCROSS_STATIC */
 
-    return SDL_TRUE;
+    return true;
 }
 
 void SDL_ShaderCross_Quit(void)
@@ -961,7 +985,7 @@ void SDL_ShaderCross_Quit(void)
 
 #ifdef SDL_GPU_SHADERCROSS_SPIRVCROSS
 
-SDL_GPUShaderFormat SDL_ShaderCross_GetSPIRVShaderFormats()
+SDL_GPUShaderFormat SDL_ShaderCross_GetSPIRVShaderFormats(void)
 {
     /* SPIRV can always be output as-is with no preprocessing */
     SDL_GPUShaderFormat supportedFormats = SDL_GPU_SHADERFORMAT_SPIRV;
@@ -996,7 +1020,7 @@ SDL_GPUShaderFormat SDL_ShaderCross_GetSPIRVShaderFormats()
 
 #if SDL_GPU_SHADERCROSS_HLSL
 
-SDL_GPUShaderFormat SDL_ShaderCross_GetHLSLShaderFormats()
+SDL_GPUShaderFormat SDL_ShaderCross_GetHLSLShaderFormats(void)
 {
     SDL_GPUShaderFormat supportedFormats = 0;
 
