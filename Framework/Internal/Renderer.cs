@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using static SDL3.SDL;
 
@@ -79,7 +80,7 @@ internal static unsafe partial class Renderer
 	private static uint bufferUploadBufferOffset;
 	private static uint bufferUploadCycleCount;
 	private static int frameCounter;
-	private static nint[][] fenceGroups =
+	private static readonly nint[][] fenceGroups =
 		Enumerable.Range(0, MaxFramesInFlight)
 		.Select(_ => new nint[2])
 		.ToArray();
@@ -168,12 +169,17 @@ internal static unsafe partial class Renderer
 		}
 
 		// default texture we fall back to rendering if passed a material with a missing texture
-		emptyDefaultTexture = CreateTexture(1, 1, TextureFormat.R8G8B8A8, false);
-		var data = stackalloc Color[1] { 0xe82979 };
-		SetTextureData(emptyDefaultTexture, data, 4);
+		{
+			emptyDefaultTexture = CreateTexture(1, 1, TextureFormat.R8G8B8A8, false);
+			var data = stackalloc Color[1] { 0xe82979 };
+			SetTextureData(emptyDefaultTexture, data, 4);
+		}
 
 		// default to vsync on
 		SetVSync(true);
+
+		// get the first swapchain
+		AcquireSwapchain();
 	}
 
 	public static void Shutdown()
@@ -272,7 +278,32 @@ internal static unsafe partial class Renderer
 
 	public static void Present()
 	{
-		SwapBuffers();
+		// Wait for the least-recent fence
+		if (fenceGroups[frameCounter][0] != nint.Zero)
+		{
+			SDL_WaitForGPUFences(
+				device,
+				true,
+				fenceGroups[frameCounter].AsSpan(),
+				2
+			);
+
+			for (int i = 0; i < 2; i ++)
+			{
+				SDL_ReleaseGPUFence(device, fenceGroups[frameCounter][i]);
+				fenceGroups[frameCounter][i] = nint.Zero;
+			}
+		}
+
+		// flush commands from this frame, get next swapchain
+		FlushCommandsAndAcquireFence(
+			out fenceGroups[frameCounter][0],
+			out fenceGroups[frameCounter][1]
+		);
+		AcquireSwapchain();
+		frameCounter = (frameCounter + 1) % MaxFramesInFlight;
+
+		// TODO: Reset bound RT state?
 	}
 
 	public static nint CreateTexture(int width, int height, TextureFormat format, bool isTarget)
@@ -529,13 +560,12 @@ internal static unsafe partial class Renderer
 		// acquire transfer buffer
 		if (dataSize >= TransferBufferSize)
 		{
-			SDL_GPUTransferBufferCreateInfo info = new()
+			transferBuffer = SDL_CreateGPUTransferBuffer(device, new()
 			{
 				usage = SDL_GPUTransferBufferUsage.SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
 				size = (uint)dataSize,
 				props = 0
-			};
-			transferBuffer = SDL_CreateGPUTransferBuffer(device, info);
+			});
 			usingTemporaryTransferBuffer = true;
 			transferCycle = false;
 			transferOffset = 0;
@@ -872,8 +902,42 @@ internal static unsafe partial class Renderer
 		}
 	}
 
+	private static void FlushCommands()
+	{
+		EndCopyPass();
+		EndRenderPass();
+		SDL_SubmitGPUCommandBuffer(cmdUpload);
+		SDL_SubmitGPUCommandBuffer(cmdRender);
+		cmdUpload = nint.Zero;
+		cmdRender = nint.Zero;
+		ResetCommandBufferState();
+	}
+
+	private static void FlushCommandsAndAcquireFence(out nint uploadFence, out nint renderFence)
+	{
+		EndCopyPass();
+		EndRenderPass();
+		uploadFence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmdUpload);
+		renderFence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmdRender);
+		cmdUpload = nint.Zero;
+		cmdRender = nint.Zero;
+		ResetCommandBufferState();
+	}
+
+	private static void FlushCommandsAndStall()
+	{
+		Span<nint> fences = stackalloc nint[2];
+		FlushCommandsAndAcquireFence(out fences[0], out fences[1]);
+		SDL_WaitForGPUFences(device, true, fences, 2);
+		SDL_ReleaseGPUFence(device, fences[0]);
+		SDL_ReleaseGPUFence(device, fences[1]);
+	}
+
 	private static void ResetCommandBufferState()
 	{
+		if (cmdRender != nint.Zero || cmdUpload != nint.Zero)
+			throw new Exception("Must submit previous command buffers!");
+
 		cmdRender = SDL_AcquireGPUCommandBuffer(device);
 		cmdUpload = SDL_AcquireGPUCommandBuffer(device);
 
@@ -885,110 +949,24 @@ internal static unsafe partial class Renderer
 		bufferUploadCycleCount = 0;
 	}
 
-	private static void FlushCommandsAndAcquireFence(
-		out nint uploadFence,
-		out nint renderFence
-	)
+	private static void AcquireSwapchain()
 	{
-		EndCopyPass();
-		EndRenderPass();
-
-		uploadFence = SDL_SubmitGPUCommandBufferAndAcquireFence(
-			cmdUpload
-		);
-
-		renderFence = SDL_SubmitGPUCommandBufferAndAcquireFence(
-			cmdRender
-		);
-
-		ResetCommandBufferState();
-	}
-
-	private static void FlushCommands()
-	{
-		EndCopyPass();
-		EndRenderPass();
-		SDL_SubmitGPUCommandBuffer(cmdUpload);
-		SDL_SubmitGPUCommandBuffer(cmdRender);
-		ResetCommandBufferState();
-	}
-
-	private static void FlushCommandsAndStall()
-	{
-		Span<nint> fences = stackalloc nint[2];
-
-		FlushCommandsAndAcquireFence(out fences[0], out fences[1]);
-
-		SDL_WaitForGPUFences(
-			device,
-			true,
-			fences,
-			2
-		);
-
-		SDL_ReleaseGPUFence(
-			device,
-			fences[0]
-		);
-
-		SDL_ReleaseGPUFence(
-			device,
-			fences[1]
-		);
-	}
-
-	private static void SwapBuffers()
-	{
-		EndCopyPass();
-		EndRenderPass();
-
-		if (fenceGroups[frameCounter][0] != nint.Zero)
-		{
-			// Wait for the least-recent fence
-			SDL_WaitForGPUFences(
-				device,
-				true,
-				fenceGroups[frameCounter].AsSpan(),
-				2
-			);
-
-			SDL_ReleaseGPUFence(
-				device,
-				fenceGroups[frameCounter][0]
-			);
-
-			SDL_ReleaseGPUFence(
-				device,
-				fenceGroups[frameCounter][1]
-			);
-
-			fenceGroups[frameCounter][0] = nint.Zero;
-			fenceGroups[frameCounter][1] = nint.Zero;
-		}
-
-		// TODO: I'm not sure about the placement of this
-		// FNA3D does it here, but it all uses a faux frame buffer...
-		if (SDL_AcquireGPUSwapchainTexture(cmdRender, window, out var swapchainTexture, out var swapchainWidth, out var swapchainHeight))
+		if (SDL_AcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
 		{
 			swapchain = new()
 			{
-				Texture = swapchainTexture,
+				Texture = scTex,
 				Format = SDL_GetGPUSwapchainTextureFormat(device, window),
-				Width = (int)swapchainWidth,
-				Height = (int)swapchainHeight,
+				Width = (int)scW,
+				Height = (int)scH,
 			};
 		}
 		else
+		{
+			// TODO: is this a valid result? should this throw?
+			Log.Warning($"SDL_AcquireGPUSwapchainTexture failed: {Platform.GetErrorFromSDL()}");
 			swapchain = default;
-
-		FlushCommandsAndAcquireFence(
-			out fenceGroups[frameCounter][0],
-			out fenceGroups[frameCounter][1]
-		);
-
-		frameCounter = (frameCounter + 1) % MaxFramesInFlight;
-
-		// TODO: Reset bound RT state?
+		}
 	}
 
 	private static void BeginCopyPass()
