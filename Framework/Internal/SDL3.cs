@@ -25,12 +25,10 @@
  */
 
 // Changes for Foster:
-// SDL_SetWindowFullscreenMode: change 'mode' to ptr to allow nullptr
-// SDL_CreateGPUDevice: change 'name' to ptr to allow nullptr
+// SDL_BeginGPURenderPass: change 'depth_stencil_target_info' to ptr to allow nullptr
 // SDL_ShowOpenFileDialog: change delegate signature to work with fn ptr
 // SDL_ShowSaveFileDialog: change delegate signature to work with fn ptr
 // SDL_ShowOpenFolderDialog: change delegate signature to work with fn ptr
-// SDL_BeginGPURenderPass: change 'depth_stencil_target_info' to ptr to allow nullptr
 // SDL_SetLogOutputFunction: change delegate signature to work with fn ptr
 
 // NOTE: This file is auto-generated.
@@ -2202,7 +2200,7 @@ public static unsafe partial class SDL
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_SetWindowFullscreenMode(IntPtr window, SDL_DisplayMode* mode);
+	public static partial SDLBool SDL_SetWindowFullscreenMode(IntPtr window, ref SDL_DisplayMode mode);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
@@ -5845,7 +5843,7 @@ public static unsafe partial class SDL
 
 	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_CreateGPUDevice(SDL_GPUShaderFormat format_flags, SDLBool debug_mode, nint name);
+	public static partial IntPtr SDL_CreateGPUDevice(SDL_GPUShaderFormat format_flags, SDLBool debug_mode, string name);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]

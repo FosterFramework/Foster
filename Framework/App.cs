@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 using static SDL3.SDL;
@@ -454,7 +455,7 @@ public static class App
 
 		// toggle flags and show window
 		SDL_StartTextInput(Window);
-		SDL_SetWindowFullscreenMode(Window, null);
+		SDL_SetWindowFullscreenMode(Window, ref Unsafe.NullRef<SDL_DisplayMode>());
 		SDL_SetWindowBordered(Window, true);
 		SDL_ShowCursor();
 

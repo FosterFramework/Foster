@@ -120,7 +120,7 @@ internal static unsafe partial class Renderer
 		Device = SDL_CreateGPUDevice(
 			format_flags: Platform.ShaderCrossGetFormats(),
 			debug_mode: true, // TODO: flag?
-			name: nint.Zero);
+			name: null!);
 
 		if (Device == IntPtr.Zero)
 			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUDevice));
