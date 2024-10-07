@@ -37,6 +37,11 @@ public static class App
 	/// </summary>
 	internal static nint Window { get; private set; }
 
+	/// <summary>
+	/// Application Renderer
+	/// </summary>
+	internal static Renderer Renderer => renderer ?? throw notRunningException;
+
 	private static readonly List<Module> modules = [];
 	private static readonly List<Func<Module>> registrations = [];
 	private static readonly Stopwatch timer = new();
@@ -49,6 +54,7 @@ public static class App
 	private static readonly List<(uint ID, nint Ptr)> openGamepads = [];
 	private static int mainThreadID;
 	private static readonly ConcurrentQueue<Action> mainThreadQueue = [];
+	private static Renderer? renderer = null;
 
 	/// <summary>
 	/// How the Application will run its update loop
@@ -145,7 +151,7 @@ public static class App
 	/// <summary>
 	/// The current Renderer API in use
 	/// </summary>
-	public static GraphicsDriver Driver => Renderer.Driver;
+	public static GraphicsDriver Driver => renderer?.Driver ?? GraphicsDriver.None;
 
 	/// <summary>
 	/// The Window width, which isn't necessarily the size in Pixels depending on the Platform.
@@ -326,7 +332,7 @@ public static class App
 	/// </summary>
 	public static bool VSync
 	{
-		get => Renderer.GetVSync();
+		get => renderer?.GetVSync() ?? true;
 		set => Renderer.SetVSync(value);
 	}
 
@@ -435,7 +441,8 @@ public static class App
 		}
 
 		// create the graphics device
-		Renderer.CreateDevice();
+		renderer = new RendererSDL();
+		renderer.CreateDevice();
 
 		// create the window
 		{
@@ -451,7 +458,7 @@ public static class App
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateWindow));
 		}
 
-		Renderer.Startup(Window);
+		renderer.Startup(Window);
 
 		// toggle flags and show window
 		SDL_StartTextInput(Window);
@@ -519,10 +526,11 @@ public static class App
 		openJoysticks.Clear();
 		openGamepads.Clear();
 
-		Renderer.Shutdown();
+		renderer.Shutdown();
 		SDL_StopTextInput(Window);
 		SDL_DestroyWindow(Window);
-		Renderer.DestroyDevice();
+		renderer.DestroyDevice();
+		renderer = null;
 		SDL_Quit();
 
 		mainThreadQueue.Clear();

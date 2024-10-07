@@ -15,7 +15,7 @@ public class Mesh : IResource
 	/// <summary>
 	/// If the Mesh has been disposed
 	/// </summary>
-	public bool IsDisposed => disposed || (device != nint.Zero && device != Renderer.Device);
+	public bool IsDisposed => disposed || (device != nint.Zero && device != App.Renderer.Device);
 
 	/// <summary>
 	/// Number of Vertices in the Mesh
@@ -119,11 +119,11 @@ public class Mesh : IResource
 
 		if (Resource == nint.Zero)
 		{
-			Resource = Renderer.CreateMesh();
-			device = Renderer.Device;
+			Resource = App.Renderer.CreateMesh();
+			device = App.Renderer.Device;
 		}
 
-		Renderer.SetMeshIndexData(
+		App.Renderer.SetMeshIndexData(
 			Resource,
 			data,
 			GetIndexFormatSize(format) * count,
@@ -168,11 +168,11 @@ public class Mesh : IResource
 
 		if (Resource == nint.Zero)
 		{
-			Resource = Renderer.CreateMesh();
-			device = Renderer.Device;
+			Resource = App.Renderer.CreateMesh();
+			device = App.Renderer.Device;
 		}
 
-		Renderer.SetMeshIndexData(
+		App.Renderer.SetMeshIndexData(
 			Resource,
 			data,
 			size * count,
@@ -214,11 +214,11 @@ public class Mesh : IResource
 
 		if (Resource == nint.Zero)
 		{
-			Resource = Renderer.CreateMesh();
-			device = Renderer.Device;
+			Resource = App.Renderer.CreateMesh();
+			device = App.Renderer.Device;
 		}
 
-		Renderer.SetMeshVertexData(
+		App.Renderer.SetMeshVertexData(
 			Resource,
 			data,
 			format.Stride * count,
@@ -252,11 +252,11 @@ public class Mesh : IResource
 
 		if (Resource == nint.Zero)
 		{
-			Resource = Renderer.CreateMesh();
-			device = Renderer.Device;
+			Resource = App.Renderer.CreateMesh();
+			device = App.Renderer.Device;
 		}
 
-		Renderer.SetMeshVertexData(
+		App.Renderer.SetMeshVertexData(
 			Resource,
 			data,
 			VertexFormat.Value.Stride * count,
@@ -281,7 +281,7 @@ public class Mesh : IResource
 		{
 			disposed = true;
 			if (Resource != nint.Zero)
-				Renderer.DestroyMesh(Resource);
+				App.Renderer.DestroyMesh(Resource);
 			Resource = nint.Zero;
 		}
 	}

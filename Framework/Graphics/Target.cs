@@ -17,7 +17,7 @@ public class Target : IResource
 	/// <summary>
 	/// Ii the Target has been disposed.
 	/// </summary>
-	public bool IsDisposed => disposed || Renderer.Device != device;
+	public bool IsDisposed => disposed || App.Renderer.Device != device;
 
 	/// <summary>
 	/// The Width of the Target.
@@ -53,7 +53,7 @@ public class Target : IResource
 		if (attachments == null || attachments.Length <= 0)
 			throw new ArgumentException("Target needs at least 1 color attachment");
 
-		device = Renderer.Device;
+		device = App.Renderer.Device;
 		Width = width;
 		Height = height;
 		Bounds = new RectInt(0, 0, Width, Height);
@@ -82,7 +82,7 @@ public class Target : IResource
 	{
 		if (IsDisposed)
 			throw new Exception("Resource is Disposed");
-		Renderer.Clear(this, color, depth, stencil, mask);
+		App.Renderer.Clear(this, color, depth, stencil, mask);
 	}
 
 	/// <summary>

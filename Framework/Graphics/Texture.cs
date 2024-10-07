@@ -16,7 +16,7 @@ public class Texture : IResource
 	/// <summary>
 	/// If the Texture has been disposed
 	/// </summary>
-	public bool IsDisposed => disposed || Renderer.Device != device;
+	public bool IsDisposed => disposed || App.Renderer.Device != device;
 
 	/// <summary>
 	/// Gets the Width of the Texture
@@ -69,8 +69,8 @@ public class Texture : IResource
 		if (width <= 0 || height <= 0)
 			throw new Exception("Texture must have a size larger than 0");
 
-		device = Renderer.Device;
-		resource = Renderer.CreateTexture(width, height, format, isTargetAttachment);
+		device = App.Renderer.Device;
+		resource = App.Renderer.CreateTexture(width, height, format, isTargetAttachment);
 		Width = width;
 		Height = height;
 		Format = format;
@@ -109,7 +109,7 @@ public class Texture : IResource
 		fixed (byte* ptr = MemoryMarshal.AsBytes(data))
 		{
 			int length = Unsafe.SizeOf<T>()  * data.Length;
-			Renderer.SetTextureData(resource, ptr, length);
+			App.Renderer.SetTextureData(resource, new nint(ptr), length);
 		}
 	}
 
@@ -127,7 +127,7 @@ public class Texture : IResource
 		fixed (byte* ptr = MemoryMarshal.AsBytes(data))
 		{
 			int length = Unsafe.SizeOf<T>() * data.Length;
-			Renderer.GetTextureData(resource, ptr, length);
+			App.Renderer.GetTextureData(resource, new nint(ptr), length);
 		}
 	}
 
@@ -142,7 +142,7 @@ public class Texture : IResource
 		if (!disposed)
 		{
 			disposed = true;
-			Renderer.DestroyTexture(resource);
+			App.Renderer.DestroyTexture(resource);
 		}
 	}
 }

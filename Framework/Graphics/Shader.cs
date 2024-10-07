@@ -50,7 +50,7 @@ public class Shader : IResource
 	/// <summary>
 	/// If the Shader is disposed
 	/// </summary>
-	public bool IsDisposed => disposed || Renderer.Device != device;
+	public bool IsDisposed => disposed || App.Renderer.Device != device;
 
 	/// <summary>
 	/// Vertex Shader Program Reflection
@@ -78,8 +78,8 @@ public class Shader : IResource
 					throw new Exception($"Uniform names must be unique between Vertex and Fragment shaders, or they must be matching types. (Uniform '{uni0.Name}' types aren't equal)");
 			}
 
-		device = Renderer.Device;
-		Resource = Renderer.CreateShader(createInfo);
+		device = App.Renderer.Device;
+		Resource = App.Renderer.CreateShader(createInfo);
 		Vertex = new(createInfo.Vertex.SamplerCount, createInfo.Vertex.Uniforms);
 		Fragment = new(createInfo.Fragment.SamplerCount, createInfo.Fragment.Uniforms);
 	}
@@ -100,7 +100,7 @@ public class Shader : IResource
 		if (!disposed)
 		{
 			disposed = true;
-			Renderer.DestroyShader(Resource);
+			App.Renderer.DestroyShader(Resource);
 		}
 	}
 }

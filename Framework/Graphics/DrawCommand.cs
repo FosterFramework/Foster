@@ -86,5 +86,5 @@ public struct DrawCommand()
 	}
 
 	public readonly void Submit()
-		=> Renderer.Draw(this);
+		=> App.Renderer.Draw(this);
 }
