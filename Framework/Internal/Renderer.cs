@@ -278,7 +278,6 @@ internal static unsafe partial class Renderer
 		SDL_ReleaseWindowFromGPUDevice(Device, window);
 
 		// clear state
-		Device = nint.Zero;
 		window = nint.Zero;
 		cmdUpload = nint.Zero;
 		cmdRender = nint.Zero;
@@ -1072,6 +1071,7 @@ internal static unsafe partial class Renderer
 		else
 		{
 			// try to acquire the swapchain if we don't have it yet
+			// TODO: should this be acquired here? or should it be acquired immediately when the cmdRender is created?
 			if (swapchain == null)
 			{
 				if (SDL_AcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
@@ -1088,7 +1088,7 @@ internal static unsafe partial class Renderer
 				{
 					// TODO: is this a valid result? should this throw?
 					swapchain = new();
-					Log.Warning($"SDL_AcquireGPUSwapchainTexture failed: {Platform.GetErrorFromSDL()}");
+					Log.Warning($"{nameof(SDL_AcquireGPUSwapchainTexture)} failed: {Platform.GetErrorFromSDL()}");
 				}
 			}
 
