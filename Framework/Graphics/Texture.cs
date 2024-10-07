@@ -16,7 +16,7 @@ public class Texture : IResource
 	/// <summary>
 	/// If the Texture has been disposed
 	/// </summary>
-	public bool IsDisposed => disposed;
+	public bool IsDisposed => disposed || Renderer.Device != device;
 
 	/// <summary>
 	/// Gets the Width of the Texture
@@ -50,6 +50,7 @@ public class Texture : IResource
 
 	internal readonly nint resource;
 	internal bool disposed = false;
+	private readonly nint device;
 
 	public Texture(int width, int height, TextureFormat format = TextureFormat.Color)
 		: this(width, height, format, isTargetAttachment: false) {}
@@ -68,6 +69,7 @@ public class Texture : IResource
 		if (width <= 0 || height <= 0)
 			throw new Exception("Texture must have a size larger than 0");
 
+		device = Renderer.Device;
 		resource = Renderer.CreateTexture(width, height, format, isTargetAttachment);
 		Width = width;
 		Height = height;

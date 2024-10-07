@@ -17,7 +17,7 @@ public class Target : IResource
 	/// <summary>
 	/// Ii the Target has been disposed.
 	/// </summary>
-	public bool IsDisposed => disposed;
+	public bool IsDisposed => disposed || Renderer.Device != device;
 
 	/// <summary>
 	/// The Width of the Target.
@@ -40,6 +40,7 @@ public class Target : IResource
 	public readonly Texture[] Attachments;
 
 	private bool disposed = false;
+	private readonly nint device;
 
 	public Target(int width, int height)
 		: this(width, height, defaultFormats) { }
@@ -52,6 +53,7 @@ public class Target : IResource
 		if (attachments == null || attachments.Length <= 0)
 			throw new ArgumentException("Target needs at least 1 color attachment");
 
+		device = Renderer.Device;
 		Width = width;
 		Height = height;
 		Bounds = new RectInt(0, 0, Width, Height);

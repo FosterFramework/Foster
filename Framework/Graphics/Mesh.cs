@@ -15,7 +15,7 @@ public class Mesh : IResource
 	/// <summary>
 	/// If the Mesh has been disposed
 	/// </summary>
-	public bool IsDisposed => disposed;
+	public bool IsDisposed => disposed || (device != nint.Zero && device != Renderer.Device);
 
 	/// <summary>
 	/// Number of Vertices in the Mesh
@@ -39,6 +39,7 @@ public class Mesh : IResource
 
 	internal nint Resource { get; private set; }
 	private bool disposed = false;
+	private nint device;
 
 	/// <summary>
 	/// Disposes the Mesh resources
@@ -117,7 +118,10 @@ public class Mesh : IResource
 		IndexCount = count;
 
 		if (Resource == nint.Zero)
+		{
 			Resource = Renderer.CreateMesh();
+			device = Renderer.Device;
+		}
 
 		Renderer.SetMeshIndexData(
 			Resource,
@@ -163,7 +167,10 @@ public class Mesh : IResource
 		var size = GetIndexFormatSize(IndexFormat.Value);
 
 		if (Resource == nint.Zero)
+		{
 			Resource = Renderer.CreateMesh();
+			device = Renderer.Device;
+		}
 
 		Renderer.SetMeshIndexData(
 			Resource,
@@ -206,7 +213,10 @@ public class Mesh : IResource
 		VertexCount = count;
 
 		if (Resource == nint.Zero)
+		{
 			Resource = Renderer.CreateMesh();
+			device = Renderer.Device;
+		}
 
 		Renderer.SetMeshVertexData(
 			Resource,
@@ -241,7 +251,10 @@ public class Mesh : IResource
 			throw new Exception("SetSubVertices is out of range of the existing Vertex Buffer");
 
 		if (Resource == nint.Zero)
+		{
 			Resource = Renderer.CreateMesh();
+			device = Renderer.Device;
+		}
 
 		Renderer.SetMeshVertexData(
 			Resource,
