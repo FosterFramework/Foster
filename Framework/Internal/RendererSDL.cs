@@ -104,10 +104,21 @@ internal unsafe class RendererSDL : Renderer
 		.Select(_ => new nint[2])
 		.ToArray();
 
+	private readonly GraphicsDriver preferred;
+	private readonly Version version;
+
 	public override nint Device => device;
 	public override GraphicsDriver Driver => driver;
+	public override Version DriverVersion => version;
 
-	public override bool CreateDevice()
+	public RendererSDL(GraphicsDriver preferred)
+	{
+		this.preferred = preferred;
+		var sdlv = SDL_GetVersion();
+		version = new(sdlv / 1000000, (sdlv / 1000) % 1000, sdlv % 1000);
+	}
+
+	public override void CreateDevice()
 	{
 		if (Device != nint.Zero)
 			throw new Exception("GPU Device is already created");
@@ -116,15 +127,25 @@ internal unsafe class RendererSDL : Renderer
 		if (Platform.ShaderCrossInit() != 1)
 			throw Platform.CreateExceptionFromSDL("SDL_ShaderCross_Init");
 
+		string? driverName = preferred switch
+		{
+			GraphicsDriver.None => null,
+			GraphicsDriver.Private => "private",
+			GraphicsDriver.Vulkan => "vulkan",
+			GraphicsDriver.D3D11 => "direct3d11",
+			GraphicsDriver.D3D12 => "direct3d12",
+			GraphicsDriver.Metal => "metal",
+			GraphicsDriver.OpenGL => throw new NotImplementedException(),
+			_ => null,
+		};
+
 		device = SDL_CreateGPUDevice(
 			format_flags: Platform.ShaderCrossGetFormats(),
 			debug_mode: true, // TODO: flag?
-			name: null!);
+			name: driverName!);
 
 		if (Device == IntPtr.Zero)
 			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUDevice));
-
-		return true;
 	}
 
 	public override void DestroyDevice()

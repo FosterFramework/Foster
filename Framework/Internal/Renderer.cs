@@ -5,8 +5,9 @@ internal abstract class Renderer
 {
 	public abstract nint Device { get; }
 	public abstract GraphicsDriver Driver { get; }
+	public abstract Version DriverVersion { get; }
 
-	public abstract bool CreateDevice();
+	public abstract void CreateDevice();
 	public abstract void DestroyDevice();
 
 	public abstract void Startup(nint window);

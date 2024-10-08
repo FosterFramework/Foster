@@ -7,5 +7,6 @@ public enum GraphicsDriver
 	Vulkan,
 	D3D11,
 	D3D12,
-	Metal
+	Metal,
+	OpenGL
 }

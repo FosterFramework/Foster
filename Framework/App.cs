@@ -16,6 +16,7 @@ namespace Foster.Framework;
 /// <param name="Height">The Window Height</param>
 /// <param name="Fullscreen">If the Window should default to Fullscreen</param>
 /// <param name="Resizable">If the Window should be resizable</param>
+/// <param name="PreferredGraphicsDriver">The preferred graphics driver, or None to use the platform-default</param>
 /// </summary>
 public readonly record struct AppRunInfo
 (
@@ -24,7 +25,8 @@ public readonly record struct AppRunInfo
 	int Width,
 	int Height,
 	bool Fullscreen = false,
-	bool Resizable = true
+	bool Resizable = true,
+	GraphicsDriver PreferredGraphicsDriver = GraphicsDriver.None
 );
 
 /// <summary>
@@ -149,9 +151,14 @@ public static class App
 	public static bool FixedUpdateWaitEnabled { get; private set; }
 
 	/// <summary>
-	/// The current Renderer API in use
+	/// The current Renderer Driver API in use
 	/// </summary>
 	public static GraphicsDriver Driver => renderer?.Driver ?? GraphicsDriver.None;
+
+	/// <summary>
+	/// The current Renderer Driver Version
+	/// </summary>
+	public static Version DriverVersion => renderer?.DriverVersion ?? throw notRunningException;
 
 	/// <summary>
 	/// The Window width, which isn't necessarily the size in Pixels depending on the Platform.
@@ -441,7 +448,7 @@ public static class App
 		}
 
 		// create the graphics device
-		renderer = new RendererSDL();
+		renderer = Platform.CreateRenderer(info.PreferredGraphicsDriver);
 		renderer.CreateDevice();
 
 		// create the window
@@ -452,6 +459,9 @@ public static class App
 
 			if (info.Fullscreen)
 				windowFlags |= SDL_WindowFlags.SDL_WINDOW_FULLSCREEN;
+
+			if (renderer.Driver == GraphicsDriver.OpenGL)
+				windowFlags |= SDL_WindowFlags.SDL_WINDOW_OPENGL;
 
 			Window = SDL_CreateWindow(info.WindowTitle, info.Width, info.Height, windowFlags);
 			if (Window == IntPtr.Zero)

@@ -10,6 +10,32 @@ internal static partial class Platform
 	public const string DLL = "FosterPlatform";
 
 	/// <summary>
+	/// Creates a new Renderer based on the current Platform and preferred Driver
+	/// </summary>
+	public static Renderer CreateRenderer(GraphicsDriver preferred)
+	{
+		// no driver preferred, let foster/sdl decide
+		if (preferred == GraphicsDriver.None)
+		{
+			// TODO: Emscripten needs to default to opengl
+			// TODO: Once shader cross stuff is working every platform can default to SDL renderer
+
+			// Windows/Linux should default to SDL renderer, everything else can use OpenGL for now
+			if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) &&
+				!RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
+				!RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
+				preferred = GraphicsDriver.OpenGL;
+		}
+
+		// explicit driver preferred
+		return preferred switch
+		{
+			GraphicsDriver.OpenGL => new RendererOpenGL(),
+			_ => new RendererSDL(preferred)
+		};
+	}
+
+	/// <summary>
 	/// Converts a utf8 null-terminating string into a C# string
 	/// </summary>
 	public static unsafe string ParseUTF8(nint s)
@@ -69,11 +95,7 @@ internal static partial class Platform
 		return [];
 	}
 
-	public enum ImageWriteFormat
-	{
-		Png,
-		Qoi
-	}
+	public enum ImageWriteFormat { Png, Qoi }
 
 	[LibraryImport(DLL, EntryPoint = "FosterImageLoad")]
 	public static unsafe partial nint ImageLoad(void* memory, int length, out int w, out int h);
