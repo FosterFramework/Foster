@@ -16,7 +16,7 @@ public class Texture : IResource
 	/// <summary>
 	/// If the Texture has been disposed
 	/// </summary>
-	public bool IsDisposed => disposed || App.Renderer.Device != device;
+	public bool IsDisposed => Resource.Disposed;
 
 	/// <summary>
 	/// Gets the Width of the Texture
@@ -48,12 +48,10 @@ public class Texture : IResource
 	/// </summary>
 	public int MemorySize => Width * Height * Format.Size();
 
-	internal readonly nint resource;
-	internal bool disposed = false;
-	private readonly nint device;
+	internal readonly Renderer.IHandle Resource;
 
 	public Texture(int width, int height, TextureFormat format = TextureFormat.Color)
-		: this(width, height, format, isTargetAttachment: false) {}
+		: this(width, height, format, targetBinding: null) {}
 
 	public Texture(int width, int height, ReadOnlySpan<Color> pixels)
 		: this(width, height, TextureFormat.Color) => SetData<Color>(pixels);
@@ -64,29 +62,16 @@ public class Texture : IResource
 	public Texture(Image image) 
 		: this(image.Width, image.Height, TextureFormat.Color) => SetData<Color>(image.Data);
 
-	internal Texture(int width, int height, TextureFormat format, bool isTargetAttachment)
+	internal Texture(int width, int height, TextureFormat format, Target? targetBinding)
 	{
 		if (width <= 0 || height <= 0)
 			throw new Exception("Texture must have a size larger than 0");
 
-		device = App.Renderer.Device;
-		resource = App.Renderer.CreateTexture(width, height, format, isTargetAttachment);
+		Resource = App.Renderer.CreateTexture(width, height, format, targetBinding?.Resource);
 		Width = width;
 		Height = height;
 		Format = format;
-		IsTargetAttachment = isTargetAttachment;
-	}
-
-	internal Texture(nint resource, int width, int height, TextureFormat format, bool isTargetAttachment)
-	{
-		if (width <= 0 || height <= 0)
-			throw new Exception("Texture must have a size larger than 0");
-
-		this.resource = resource;
-		Width = width;
-		Height = height;
-		Format = format;
-		IsTargetAttachment = isTargetAttachment;
+		IsTargetAttachment = targetBinding != null;
 	}
 
 	~Texture()
@@ -109,7 +94,7 @@ public class Texture : IResource
 		fixed (byte* ptr = MemoryMarshal.AsBytes(data))
 		{
 			int length = Unsafe.SizeOf<T>()  * data.Length;
-			App.Renderer.SetTextureData(resource, new nint(ptr), length);
+			App.Renderer.SetTextureData(Resource, new nint(ptr), length);
 		}
 	}
 
@@ -127,7 +112,7 @@ public class Texture : IResource
 		fixed (byte* ptr = MemoryMarshal.AsBytes(data))
 		{
 			int length = Unsafe.SizeOf<T>() * data.Length;
-			App.Renderer.GetTextureData(resource, new nint(ptr), length);
+			App.Renderer.GetTextureData(Resource, new nint(ptr), length);
 		}
 	}
 
@@ -139,10 +124,8 @@ public class Texture : IResource
 
 	private void Dispose(bool disposing)
 	{
-		if (!disposed)
-		{
-			disposed = true;
-			App.Renderer.DestroyTexture(resource);
-		}
+		// Targets should dispose their Texture Attachments
+		if (!IsTargetAttachment)
+			App.Renderer.DestroyResource(Resource);
 	}
 }

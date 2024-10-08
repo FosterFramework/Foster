@@ -3,6 +3,11 @@ namespace Foster.Framework;
 
 internal abstract class Renderer
 {
+	public interface IHandle
+	{
+		public bool Disposed { get; }
+	}
+
 	public abstract nint Device { get; }
 	public abstract GraphicsDriver Driver { get; }
 	public abstract Version DriverVersion { get; }
@@ -18,18 +23,19 @@ internal abstract class Renderer
 
 	public abstract void Present();
 
-	public abstract nint CreateTexture(int width, int height, TextureFormat format, bool isTarget);
-	public abstract void SetTextureData(nint texture, nint data, int length);
-	public abstract void GetTextureData(nint texture, nint data, int length);
-	public abstract void DestroyTexture(nint texture);
+	public abstract IHandle CreateTexture(int width, int height, TextureFormat format, IHandle? targetBinding);
+	public abstract void SetTextureData(IHandle texture, nint data, int length);
+	public abstract void GetTextureData(IHandle texture, nint data, int length);
 
-	public abstract nint CreateMesh();
-	public abstract void SetMeshVertexData(nint mesh, nint data, int dataSize, int dataDestOffset, in VertexFormat format);
-	public abstract void SetMeshIndexData(nint mesh, nint data, int dataSize, int dataDestOffset, IndexFormat format);
-	public abstract void DestroyMesh(nint mesh);
+	public abstract IHandle CreateTarget(int width, int height);
 
-	public abstract nint CreateShader(in ShaderCreateInfo shaderInfo);
-	public abstract void DestroyShader(nint shader);
+	public abstract IHandle CreateMesh();
+	public abstract void SetMeshVertexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, in VertexFormat format);
+	public abstract void SetMeshIndexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, IndexFormat format);
+
+	public abstract IHandle CreateShader(in ShaderCreateInfo shaderInfo);
+
+	public abstract void DestroyResource(IHandle resource);
 
 	public abstract void Draw(DrawCommand command);
 	public abstract void Clear(Target? target, Color color, float depth, int stencil, ClearMask mask);

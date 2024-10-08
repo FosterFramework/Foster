@@ -1,50 +1,53 @@
 using System.ComponentModel;
-using System.Runtime.InteropServices;
 using static SDL3.SDL;
 
 namespace Foster.Framework;
 
 internal unsafe class RendererSDL : Renderer
 {
-	private struct TextureResource
+	private class TextureResource(Renderer renderer) : IHandle
 	{
-		public nint Device;
+		public readonly Renderer Renderer = renderer;
+		public bool Destroyed;
 		public nint Texture;
 		public int Width;
 		public int Height;
 		public SDL_GPUTextureFormat Format;
+		public bool Disposed => Destroyed || Renderer != App.Renderer;
 	}
 
-	private struct MeshResource
+	private class TargetResource(Renderer renderer) : IHandle
 	{
-		public nint Device;
-		public BufferResource Index;
-		public BufferResource Vertex;
-		public BufferResource Instance;
+		public readonly Renderer Renderer = renderer;
+		public readonly List<TextureResource> Attachments = [];
+		public bool Destroyed;
+		public bool Disposed => Destroyed || Renderer != App.Renderer;
+	}
+
+	private class MeshResource(Renderer renderer) : IHandle
+	{
+		public record struct Buffer(nint Handle, int Capacity, bool Dirty);
+
+		public readonly Renderer Renderer = renderer;
+		public bool Destroyed;
+		public Buffer Index = new();
+		public Buffer Vertex = new();
+		public Buffer Instance = new();
 		public IndexFormat IndexFormat;
 		public VertexFormat VertexFormat;
+		public bool Disposed => Destroyed || Renderer != App.Renderer;
 	}
 
-	private struct BufferResource
+	private class ShaderResource(Renderer renderer) : IHandle
 	{
-		public nint Buffer;
-		public int Capacity;
-		public bool Dirty;
-	}
-
-	private struct ShaderResource
-	{
-		public nint Device;
+		public readonly Renderer Renderer = renderer;
+		public bool Destroyed;
 		public nint VertexShader;
 		public nint FragmentShader;
+		public bool Disposed => Destroyed || Renderer != App.Renderer;
 	}
 
-	private struct ClearInfo
-	{
-		public Color? Color;
-		public float? Depth;
-		public int? Stencil;
-	}
+	private record struct ClearInfo(Color? Color, float? Depth, int? Stencil);
 
 	private const int MaxFramesInFlight = 3;
 	private const uint TransferBufferSize = 16 * 1024 * 1024; // 16MB
@@ -62,10 +65,12 @@ internal unsafe class RendererSDL : Renderer
 	private Target? renderPassTarget;
 	private Point2 renderPassTargetSize;
 	private nint renderPassPipeline;
-	private nint renderPassMesh;
+	private IHandle? renderPassMesh;
 	private RectInt? renderPassScissor;
 	private RectInt? renderPassViewport;
-	private TextureResource? swapchain;
+	private nint? swapchain;
+	private Point2 swapchainSize;
+	private SDL_GPUTextureFormat swapchainFormat;
 
 	// supported feature set
 	private bool supportsD24S8;
@@ -78,12 +83,10 @@ internal unsafe class RendererSDL : Renderer
 	// tracked / allocated resources
 	private readonly Dictionary<int, nint> graphicsPipelinesByHash = [];
 	private readonly Dictionary<nint, int> graphicsPipelinesToHash = [];
-	private readonly Dictionary<nint, List<nint>> graphicsPipelinesByResource = [];
-	private readonly HashSet<nint> textures = [];
-	private readonly HashSet<nint> meshes = [];
-	private readonly HashSet<nint> shaders = [];
+	private readonly Dictionary<IHandle, List<nint>> graphicsPipelinesByResource = [];
+	private readonly HashSet<IHandle> resources = [];
 	private readonly Dictionary<TextureSampler, nint> samplers = [];
-	private nint emptyDefaultTexture;
+	private IHandle? emptyDefaultTexture;
 
 	// texture/mesh transfer buffers
 	private nint textureUploadBuffer;
@@ -213,7 +216,7 @@ internal unsafe class RendererSDL : Renderer
 
 		// default texture we fall back to rendering if passed a material with a missing texture
 		{
-			emptyDefaultTexture = CreateTexture(1, 1, TextureFormat.R8G8B8A8, false);
+			emptyDefaultTexture = CreateTexture(1, 1, TextureFormat.R8G8B8A8, null);
 			var data = stackalloc Color[1] { 0xe82979 };
 			SetTextureData(emptyDefaultTexture, new nint(data), 4);
 		}
@@ -230,29 +233,15 @@ internal unsafe class RendererSDL : Renderer
 
 		// destroy default texture
 		{
-			DestroyTexture(emptyDefaultTexture);
-			emptyDefaultTexture = nint.Zero;
+			DestroyTexture(emptyDefaultTexture!);
+			emptyDefaultTexture = null;
 		}
 
-		// destroy textures
+		// destroy resources
 		{
-			nint[] destroying = [.. textures];
+			IHandle[] destroying = [.. resources];
 			foreach (var it in destroying)
-				DestroyTexture(it);
-		}
-
-		// destroy meshes
-		{
-			nint[] destroying = [.. meshes];
-			foreach (var it in destroying)
-				DestroyMesh(it);
-		}
-
-		// destroy shaders
-		{
-			nint[] destroying = [.. shaders];
-			foreach (var it in destroying)
-				DestroyShader(it);
+				DestroyResource(it);
 		}
 
 		// destroy transfer buffers
@@ -355,7 +344,7 @@ internal unsafe class RendererSDL : Renderer
 		frameCounter = (frameCounter + 1) % MaxFramesInFlight;
 	}
 
-	public override nint CreateTexture(int width, int height, TextureFormat format, bool isTarget)
+	public override IHandle CreateTexture(int width, int height, TextureFormat format, IHandle? targetBinding)
 	{
 		if (Device == nint.Zero)
 			throw deviceNotCreated;
@@ -380,7 +369,7 @@ internal unsafe class RendererSDL : Renderer
 			sample_count = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1,
 		};
 
-		if (isTarget)
+		if (targetBinding != null)
 		{
 			if (format == TextureFormat.Depth24Stencil8)
 				info.usage |= SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
@@ -392,30 +381,31 @@ internal unsafe class RendererSDL : Renderer
 		if (texture == nint.Zero)
 			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUTexture));
 
-		TextureResource* res = (TextureResource*)Marshal.AllocHGlobal(sizeof(TextureResource));
-		*res = new TextureResource()
+		TextureResource res = new(this)
 		{
-			Device = Device,
 			Texture = texture,
 			Width = width,
 			Height = height,
 			Format = info.format
 		};
 
-		lock (textures)
-			textures.Add(new nint(res));
+		lock (resources)
+			resources.Add(res);
 
-		return new nint(res);
+		return res;
 	}
 
-	public override void SetTextureData(nint texture, nint data, int length)
+	public override void SetTextureData(IHandle texture, nint data, int length)
 	{
+		static uint RoundToAlignment(uint value, uint alignment)
+			=> alignment * ((value + alignment - 1) / alignment);
+
 		if (Device == nint.Zero)
 			throw deviceNotCreated;
 
 		// get texture
-		TextureResource* res = (TextureResource*)texture;
-		if (res->Device != Device)
+		TextureResource res = (TextureResource)texture;
+		if (res.Renderer != this)
 			throw deviceWasDestroyed;
 
 		bool transferCycle = textureUploadBufferOffset == 0;
@@ -423,7 +413,7 @@ internal unsafe class RendererSDL : Renderer
 		nint transferBuffer = textureUploadBuffer;
 		uint transferOffset;
 
-		textureUploadBufferOffset = RoundToAlignment(textureUploadBufferOffset, SDL_GPUTextureFormatTexelBlockSize(res->Format));
+		textureUploadBufferOffset = RoundToAlignment(textureUploadBufferOffset, SDL_GPUTextureFormatTexelBlockSize(res.Format));
 		transferOffset = textureUploadBufferOffset;
 
 		// acquire transfer buffer
@@ -473,20 +463,20 @@ internal unsafe class RendererSDL : Renderer
 			{
 				transfer_buffer = transferBuffer,
 				offset = transferOffset,
-				pixels_per_row = (uint)res->Width, // TODO: FNA3D uses 0
-				rows_per_layer = (uint)res->Height, // TODO: FNA3D uses 0
+				pixels_per_row = (uint)res.Width, // TODO: FNA3D uses 0
+				rows_per_layer = (uint)res.Height, // TODO: FNA3D uses 0
 			};
 
 			SDL_GPUTextureRegion region = new()
 			{
-				texture = res->Texture,
+				texture = res.Texture,
 				layer = 0,
 				mip_level = 0,
 				x = 0,
 				y = 0,
 				z = 0,
-				w = (uint)res->Width,
-				h = (uint)res->Height,
+				w = (uint)res.Width,
+				h = (uint)res.Height,
 				d = 0
 			};
 
@@ -504,104 +494,128 @@ internal unsafe class RendererSDL : Renderer
 		}
 	}
 
-	private uint RoundToAlignment(uint value, uint alignment)
+	public override void GetTextureData(IHandle texture, nint data, int length)
 	{
-		return alignment * ((value + alignment - 1) / alignment);
-	}
-
-	public override void GetTextureData(nint texture, nint data, int length)
-	{
-		if (Device == nint.Zero)
-			throw deviceNotCreated;
 		throw new NotImplementedException();
 	}
 
-	public override void DestroyTexture(nint texture)
+	public void DestroyTexture(IHandle texture)
 	{
-		TextureResource* res = (TextureResource*)texture;
-		if (res->Device == Device)
+		if (!texture.Disposed)
 		{
-			lock (textures)
-				textures.Remove(texture);
+			var res = (TextureResource)texture;
+
+			lock (resources)
+			{
+				resources.Remove(texture);
+				res.Destroyed = true;
+			}
+
 			ReleaseGraphicsPipelinesAssociatedWith(texture);
-			SDL_ReleaseGPUTexture(Device, res->Texture);
+			SDL_ReleaseGPUTexture(Device, res.Texture);
 		}
-		Marshal.FreeHGlobal(texture);
 	}
 
-	public override nint CreateMesh()
+	public override IHandle CreateTarget(int width, int height)
 	{
-		if (Device == nint.Zero)
-			throw deviceNotCreated;
-
-		MeshResource* res = (MeshResource*)Marshal.AllocHGlobal(sizeof(MeshResource));
-		*res = new MeshResource() { Device = Device };
-
-		lock (meshes)
-			meshes.Add(new nint(res));
-
-		return new nint(res);
+		var res = new TargetResource(this);
+		lock (resources)
+			resources.Add(res);
+		return res;
 	}
 
-	public override void SetMeshVertexData(nint mesh, nint data, int dataSize, int dataDestOffset, in VertexFormat format)
+	public void DestroyTarget(IHandle target)
 	{
-		if (Device == nint.Zero)
-			throw deviceNotCreated;
-
-		MeshResource* res = (MeshResource*)mesh;
-		if (res->Device != Device)
-			throw deviceWasDestroyed;
-
-		res->VertexFormat = format;
-		res->Vertex.Dirty = true;
-		UploadMeshBuffer(&res->Vertex, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_VERTEX);
-	}
-
-	public override void SetMeshIndexData(nint mesh, nint data, int dataSize, int dataDestOffset, IndexFormat format)
-	{
-		if (Device == nint.Zero)
-			throw deviceNotCreated;
-
-		MeshResource* res = (MeshResource*)mesh;
-		if (res->Device != Device)
-			throw deviceWasDestroyed;
-
-		res->IndexFormat = format;
-		res->Index.Dirty = true;
-		UploadMeshBuffer(&res->Index, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_INDEX);
-	}
-
-	public override void DestroyMesh(nint mesh)
-	{
-		MeshResource* res = (MeshResource*)mesh;
-		if (res->Device == Device)
+		if (!target.Disposed)
 		{
-			lock (meshes)
-				meshes.Remove(mesh);
+			var res = (TargetResource)target;
 
-			DestroyMeshBuffer(&res->Vertex);
-			DestroyMeshBuffer(&res->Index);
-			DestroyMeshBuffer(&res->Instance);
+			foreach (var it in res.Attachments)
+				DestroyTexture(it);
+
+			lock (resources)
+			{
+				resources.Remove(target);
+				res.Destroyed = true;
+			}
 		}
-		Marshal.FreeHGlobal(mesh);
 	}
 
-	private void UploadMeshBuffer(BufferResource* res, nint data, int dataSize, int dataDestOffset, SDL_GPUBufferUsageFlags usage)
+	public override IHandle CreateMesh()
+	{
+		if (Device == nint.Zero)
+			throw deviceNotCreated;
+
+		var res = new MeshResource(this);
+
+		lock (resources)
+			resources.Add(res);
+
+		return res;
+	}
+
+	public override void SetMeshVertexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, in VertexFormat format)
+	{
+		if (Device == nint.Zero)
+			throw deviceNotCreated;
+
+		var res = (MeshResource)mesh;
+		if (res.Renderer != this)
+			throw deviceWasDestroyed;
+
+		res.VertexFormat = format;
+		res.Vertex.Dirty = true;
+		UploadMeshBuffer(ref res.Vertex, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_VERTEX);
+	}
+
+	public override void SetMeshIndexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, IndexFormat format)
+	{
+		if (Device == nint.Zero)
+			throw deviceNotCreated;
+
+		var res = (MeshResource)mesh;
+		if (res.Renderer != this)
+			throw deviceWasDestroyed;
+
+		res.IndexFormat = format;
+		res.Index.Dirty = true;
+		UploadMeshBuffer(ref res.Index, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_INDEX);
+	}
+
+	public void DestroyMesh(IHandle mesh)
+	{
+		if (!mesh.Disposed)
+		{
+			var res = (MeshResource)mesh;
+			
+			lock (resources)
+			{
+				resources.Remove(mesh);
+				res.Destroyed = true;
+			}
+
+			DestroyMeshBuffer(ref res.Vertex);
+			DestroyMeshBuffer(ref res.Index);
+			DestroyMeshBuffer(ref res.Instance);
+		}
+	}
+
+	private void UploadMeshBuffer(ref MeshResource.Buffer res, nint data, int dataSize, int dataDestOffset, SDL_GPUBufferUsageFlags usage)
 	{
 		// (re)create buffer if needed
 		var required = dataSize + dataDestOffset;
-		if (required > res->Capacity ||
-			res->Buffer == nint.Zero)
+		if (required > res.Capacity ||
+			res.Handle == nint.Zero)
 		{
 			// TODO: A resize wipes all contents, not particularly ideal
-			if (res->Buffer != nint.Zero)
+			if (res.Handle != nint.Zero)
 			{
-				SDL_ReleaseGPUBuffer(Device, res->Buffer);
-				res->Buffer = nint.Zero;
+				SDL_ReleaseGPUBuffer(Device, res.Handle);
+				res.Handle = nint.Zero;
 			}
 
 			// TODO: Upon first creation we should probably just create a perfectly sized buffer, and afterward next Po2
-			var size = Math.Max(res->Capacity, 8);
+			var size = Math.Max(res.Capacity, 8);
 			while (size < required)
 				size *= 2;
 
@@ -612,10 +626,10 @@ internal unsafe class RendererSDL : Renderer
 				props = 0
 			};
 
-			res->Buffer = SDL_CreateGPUBuffer(Device, info);
-			if (res->Buffer == nint.Zero)
+			res.Handle = SDL_CreateGPUBuffer(Device, info);
+			if (res.Handle == nint.Zero)
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUBuffer), "Mesh Creation Failed");
-			res->Capacity = size;
+			res.Capacity = size;
 		}
 
 		bool cycle = true; // TODO: this is controlled by hints/logic in FNA3D, where it can lead to a potential flush
@@ -674,7 +688,7 @@ internal unsafe class RendererSDL : Renderer
 
 			SDL_GPUBufferRegion region = new()
 			{
-				buffer = res->Buffer,
+				buffer = res.Handle,
 				offset = (uint)dataDestOffset,
 				size = (uint)dataSize
 			};
@@ -693,15 +707,14 @@ internal unsafe class RendererSDL : Renderer
 		}
 	}
 
-	private void DestroyMeshBuffer(BufferResource* res)
+	private void DestroyMeshBuffer(ref MeshResource.Buffer res)
 	{
-		if (res->Buffer != nint.Zero)
-			SDL_ReleaseGPUBuffer(Device, res->Buffer);
-
-		*res = new();
+		if (res.Handle != nint.Zero)
+			SDL_ReleaseGPUBuffer(Device, res.Handle);
+		res = default;
 	}
 
-	public override nint CreateShader(in ShaderCreateInfo shaderInfo)
+	public override IHandle CreateShader(in ShaderCreateInfo shaderInfo)
 	{
 		if (Device == nint.Zero)
 			throw deviceNotCreated;
@@ -754,33 +767,48 @@ internal unsafe class RendererSDL : Renderer
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUShader), "Failed to create Fragment Shader");
 		}
 
-		ShaderResource* res = (ShaderResource*)Marshal.AllocHGlobal(sizeof(ShaderResource));
-		*res = new ShaderResource()
+		var res = new ShaderResource(this)
 		{
-			Device = Device,
 			VertexShader = vertexProgram,
 			FragmentShader = fragmentProgram,
 		};
 
-		lock (shaders)
-			shaders.Add(new nint(res));
+		lock (resources)
+			resources.Add(res);
 
-		return new nint(res);
+		return res;
 	}
 
-	public override void DestroyShader(nint shader)
+	public void DestroyShader(IHandle shader)
 	{
-		ShaderResource* res = (ShaderResource*)shader;
-		if (res->Device == Device)
+		var res = (ShaderResource)shader;
+		if (!res.Disposed)
 		{
-			lock (shaders)
-				shaders.Remove(shader);
+			lock (resources)
+			{
+				resources.Remove(shader);
+				res.Destroyed = true;
+			}
 			
 			ReleaseGraphicsPipelinesAssociatedWith(shader);
-			SDL_ReleaseGPUShader(Device, res->VertexShader);
-			SDL_ReleaseGPUShader(Device, res->FragmentShader);
+			SDL_ReleaseGPUShader(Device, res.VertexShader);
+			SDL_ReleaseGPUShader(Device, res.FragmentShader);
 		}
-		Marshal.FreeHGlobal(shader);
+	}
+
+	public override void DestroyResource(IHandle resource)
+	{
+		if (!resource.Disposed)
+		{
+			if (resource is TextureResource)
+				DestroyTexture(resource);
+			else if (resource is TargetResource)
+				DestroyTarget(resource);
+			else if (resource is MeshResource)
+				DestroyMesh(resource);
+			else if (resource is ShaderResource)
+				DestroyShader(resource);
+		}
 	}
 
 	public override void Draw(DrawCommand command)
@@ -799,7 +827,7 @@ internal unsafe class RendererSDL : Renderer
 		if (target != null && target.IsDisposed)
 			throw new Exception("Target is Invalid");
 
-		if (mesh == null || mesh.Resource == nint.Zero || mesh.IsDisposed)
+		if (mesh == null || mesh.Resource == null || mesh.IsDisposed)
 			throw new Exception("Mesh is Invalid");
 
 		// try to start a render pass
@@ -861,27 +889,27 @@ internal unsafe class RendererSDL : Renderer
 		}
 
 		// bind mesh buffers
-		var meshResource = (MeshResource*)mesh.Resource;
-		if (meshResource->Device != Device)
+		var meshResource = (MeshResource)mesh.Resource;
+		if (meshResource.Renderer != this)
 			throw deviceWasDestroyed;
 
 		if (renderPassMesh != mesh.Resource
-			|| meshResource->Vertex.Dirty
-			|| meshResource->Index.Dirty
-			|| meshResource->Instance.Dirty)
+			|| meshResource.Vertex.Dirty
+			|| meshResource.Index.Dirty
+			|| meshResource.Instance.Dirty)
 		{
 			renderPassMesh = mesh.Resource;
-			meshResource->Vertex.Dirty = false;
-			meshResource->Index.Dirty = false;
-			meshResource->Instance.Dirty = false;
+			meshResource.Vertex.Dirty = false;
+			meshResource.Index.Dirty = false;
+			meshResource.Instance.Dirty = false;
 
 			// bind index buffer
 			SDL_GPUBufferBinding indexBinding = new()
 			{
-				buffer = meshResource->Index.Buffer,
+				buffer = meshResource.Index.Handle,
 				offset = 0
 			};
-			SDL_BindGPUIndexBuffer(renderPass, indexBinding, meshResource->IndexFormat switch
+			SDL_BindGPUIndexBuffer(renderPass, indexBinding, meshResource.IndexFormat switch
 			{
 				IndexFormat.Sixteen => SDL_GPUIndexElementSize.SDL_GPU_INDEXELEMENTSIZE_16BIT,
 				IndexFormat.ThirtyTwo => SDL_GPUIndexElementSize.SDL_GPU_INDEXELEMENTSIZE_32BIT,
@@ -891,7 +919,7 @@ internal unsafe class RendererSDL : Renderer
 			// bind vertex buffer
 			SDL_GPUBufferBinding vertexBinding = new()
 			{
-				buffer = meshResource->Vertex.Buffer,
+				buffer = meshResource.Vertex.Handle,
 				offset = 0
 			};
 			SDL_BindGPUVertexBuffers(renderPass, 0, [vertexBinding], 1);
@@ -906,9 +934,9 @@ internal unsafe class RendererSDL : Renderer
 			for (int i = 0; i < shader.Fragment.SamplerCount; i++)
 			{
 				if (mat.FragmentSamplers[i].Texture is { } tex && !tex.IsDisposed)
-					samplers[i].texture = ((TextureResource*)tex.resource)->Texture;
+					samplers[i].texture = ((TextureResource)tex.Resource).Texture;
 				else
-					samplers[i].texture = ((TextureResource*)emptyDefaultTexture)->Texture;
+					samplers[i].texture = ((TextureResource)emptyDefaultTexture!).Texture;
 
 				samplers[i].sampler = GetSampler(mat.FragmentSamplers[i].Sampler);
 			}
@@ -925,9 +953,9 @@ internal unsafe class RendererSDL : Renderer
 			for (int i = 0; i < shader.Vertex.SamplerCount; i++)
 			{
 				if (mat.VertexSamplers[i].Texture is { } tex && !tex.IsDisposed)
-					samplers[i].texture = ((TextureResource*)tex.resource)->Texture;
+					samplers[i].texture = ((TextureResource)tex.Resource).Texture;
 				else
-					samplers[i].texture = ((TextureResource*)emptyDefaultTexture)->Texture;
+					samplers[i].texture = ((TextureResource)emptyDefaultTexture!).Texture;
 
 				samplers[i].sampler = GetSampler(mat.VertexSamplers[i].Sampler);
 			}
@@ -1068,7 +1096,7 @@ internal unsafe class RendererSDL : Renderer
 
 			foreach (var it in target.Attachments)
 			{
-				var res = ((TextureResource*)it.resource)->Texture;
+				var res = ((TextureResource)it.Resource).Texture;
 
 				// drawing to an invalid target
 				if (it.IsDisposed || !it.IsTargetAttachment || res == nint.Zero)
@@ -1089,13 +1117,9 @@ internal unsafe class RendererSDL : Renderer
 			{
 				if (SDL_AcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
 				{
-					swapchain = new()
-					{
-						Texture = scTex,
-						Format = SDL_GetGPUSwapchainTextureFormat(Device, window),
-						Width = (int)scW,
-						Height = (int)scH,
-					};
+					swapchain = scTex;
+					swapchainSize = new((int)scW, (int)scH);
+					swapchainFormat = SDL_GetGPUSwapchainTextureFormat(Device, window);
 				}
 				else
 				{
@@ -1106,11 +1130,11 @@ internal unsafe class RendererSDL : Renderer
 			}
 
 			// don't render anything if the swapchain is invalid
-			if (swapchain == null || swapchain.Value.Texture == nint.Zero)
+			if (swapchain == null || swapchain.Value == nint.Zero)
 				return false;
 
-			renderPassTargetSize = new (swapchain.Value.Width, swapchain.Value.Height);
-			colorTargets.Add(swapchain.Value.Texture);
+			renderPassTargetSize = swapchainSize;
+			colorTargets.Add(swapchain.Value);
 		}
 
 		Span<SDL_GPUColorTargetInfo> colorInfo = stackalloc SDL_GPUColorTargetInfo[colorTargets.Count];
@@ -1171,7 +1195,7 @@ internal unsafe class RendererSDL : Renderer
 		renderPass = nint.Zero;
 		renderPassTarget = null;
 		renderPassPipeline = nint.Zero;
-		renderPassMesh = nint.Zero;
+		renderPassMesh = null;
 		renderPassViewport = null;
 		renderPassScissor = null;
 	}
@@ -1182,10 +1206,10 @@ internal unsafe class RendererSDL : Renderer
 		var mesh = command.Mesh;
 		var material = command.Material;
 		var shader = material.Shader!;
-		var shaderRes = (ShaderResource*)shader.Resource;
+		var shaderRes = (ShaderResource)shader.Resource;
 		var vertexFormat = mesh.VertexFormat!.Value;
 
-		if (shaderRes->Device != Device)
+		if (shaderRes.Renderer != this)
 			throw deviceWasDestroyed;
 
 		// build a big hashcode of everything in use
@@ -1217,13 +1241,13 @@ internal unsafe class RendererSDL : Renderer
 				{
 					if (it.Format == TextureFormat.Depth24Stencil8)
 					{
-						depthStencilAttachment = ((TextureResource*)it.resource)->Format;
+						depthStencilAttachment = ((TextureResource)it.Resource).Format;
 					}
 					else
 					{
 						colorAttachments[colorAttachmentCount] = new()
 						{
-							format = ((TextureResource*)it.resource)->Format,
+							format = ((TextureResource)it.Resource).Format,
 							blend_state = colorBlendState
 						};
 						colorAttachmentCount++;
@@ -1234,7 +1258,7 @@ internal unsafe class RendererSDL : Renderer
 			{
 				colorAttachments[0] = new()
 				{
-					format = swapchain.Value.Format,
+					format = swapchainFormat,
 					blend_state = colorBlendState
 				};
 				colorAttachmentCount = 1;
@@ -1267,8 +1291,8 @@ internal unsafe class RendererSDL : Renderer
 
 			SDL_GPUGraphicsPipelineCreateInfo info = new()
 			{
-				vertex_shader = shaderRes->VertexShader,
-				fragment_shader = shaderRes->FragmentShader,
+				vertex_shader = shaderRes.VertexShader,
+				fragment_shader = shaderRes.FragmentShader,
 				vertex_input_state = new()
 				{
 					vertex_buffer_descriptions = vertexBindings,
@@ -1344,8 +1368,8 @@ internal unsafe class RendererSDL : Renderer
 				{
 					foreach (var it in target.Attachments)
 					{
-						if (!graphicsPipelinesByResource.TryGetValue(it.resource, out var list))
-							graphicsPipelinesByResource[it.resource] = list = [];
+						if (!graphicsPipelinesByResource.TryGetValue(it.Resource, out var list))
+							graphicsPipelinesByResource[it.Resource] = list = [];
 						list.Add(pipeline);
 					}
 				}
@@ -1358,7 +1382,7 @@ internal unsafe class RendererSDL : Renderer
 		return pipeline;
 	}
 
-	private void ReleaseGraphicsPipelinesAssociatedWith(nint resource)
+	private void ReleaseGraphicsPipelinesAssociatedWith(IHandle resource)
 	{
 		lock (graphicsPipelinesByHash)
 		{

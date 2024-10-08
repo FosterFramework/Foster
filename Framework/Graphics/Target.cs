@@ -17,7 +17,7 @@ public class Target : IResource
 	/// <summary>
 	/// Ii the Target has been disposed.
 	/// </summary>
-	public bool IsDisposed => disposed || App.Renderer.Device != device;
+	public bool IsDisposed => Resource.Disposed;
 
 	/// <summary>
 	/// The Width of the Target.
@@ -39,8 +39,7 @@ public class Target : IResource
 	/// </summary>
 	public readonly Texture[] Attachments;
 
-	private bool disposed = false;
-	private readonly nint device;
+	internal readonly Renderer.IHandle Resource;
 
 	public Target(int width, int height)
 		: this(width, height, defaultFormats) { }
@@ -53,13 +52,13 @@ public class Target : IResource
 		if (attachments == null || attachments.Length <= 0)
 			throw new ArgumentException("Target needs at least 1 color attachment");
 
-		device = App.Renderer.Device;
+		Resource = App.Renderer.CreateTarget(width, height);
 		Width = width;
 		Height = height;
 		Bounds = new RectInt(0, 0, Width, Height);
 		Attachments = new Texture[attachments.Length];
 		for (int i = 0; i < attachments.Length; i ++)
-			Attachments[i] = new Texture(width, height, attachments[i], isTargetAttachment: true);
+			Attachments[i] = new Texture(width, height, attachments[i], this);
 	}
 
 	~Target()
@@ -96,12 +95,7 @@ public class Target : IResource
 
 	private void Dispose(bool disposing)
 	{
-		if (!disposed)
-		{
-			foreach (var it in Attachments)
-				it.Dispose();
-			disposed = true;
-		}
+		App.Renderer.DestroyResource(Resource);
 	}
 
 	public static implicit operator Texture(Target target) => target.Attachments[0];

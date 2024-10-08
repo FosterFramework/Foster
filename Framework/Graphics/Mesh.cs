@@ -15,7 +15,7 @@ public class Mesh : IResource
 	/// <summary>
 	/// If the Mesh has been disposed
 	/// </summary>
-	public bool IsDisposed => disposed || (device != nint.Zero && device != App.Renderer.Device);
+	public bool IsDisposed => Resource != null && Resource.Disposed;
 
 	/// <summary>
 	/// Number of Vertices in the Mesh
@@ -37,9 +37,7 @@ public class Mesh : IResource
 	/// </summary>
 	public VertexFormat? VertexFormat { get; private set; }
 
-	internal nint Resource { get; private set; }
-	private bool disposed = false;
-	private nint device;
+	internal Renderer.IHandle? Resource { get; private set; }
 
 	/// <summary>
 	/// Disposes the Mesh resources
@@ -116,12 +114,7 @@ public class Mesh : IResource
 			throw new Exception("Resource is Disposed");
 
 		IndexCount = count;
-
-		if (Resource == nint.Zero)
-		{
-			Resource = App.Renderer.CreateMesh();
-			device = App.Renderer.Device;
-		}
+		Resource ??= App.Renderer.CreateMesh();
 
 		App.Renderer.SetMeshIndexData(
 			Resource,
@@ -166,11 +159,7 @@ public class Mesh : IResource
 
 		var size = GetIndexFormatSize(IndexFormat.Value);
 
-		if (Resource == nint.Zero)
-		{
-			Resource = App.Renderer.CreateMesh();
-			device = App.Renderer.Device;
-		}
+		Resource ??= App.Renderer.CreateMesh();
 
 		App.Renderer.SetMeshIndexData(
 			Resource,
@@ -211,12 +200,7 @@ public class Mesh : IResource
 			throw new Exception("Resource is Disposed");
 
 		VertexCount = count;
-
-		if (Resource == nint.Zero)
-		{
-			Resource = App.Renderer.CreateMesh();
-			device = App.Renderer.Device;
-		}
+		Resource ??= App.Renderer.CreateMesh();
 
 		App.Renderer.SetMeshVertexData(
 			Resource,
@@ -250,11 +234,7 @@ public class Mesh : IResource
 		if (offset + count > VertexCount)
 			throw new Exception("SetSubVertices is out of range of the existing Vertex Buffer");
 
-		if (Resource == nint.Zero)
-		{
-			Resource = App.Renderer.CreateMesh();
-			device = App.Renderer.Device;
-		}
+		Resource ??= App.Renderer.CreateMesh();
 
 		App.Renderer.SetMeshVertexData(
 			Resource,
@@ -277,12 +257,7 @@ public class Mesh : IResource
 
 	private void Dispose(bool disposing)
 	{
-		if (!disposed)
-		{
-			disposed = true;
-			if (Resource != nint.Zero)
-				App.Renderer.DestroyMesh(Resource);
-			Resource = nint.Zero;
-		}
+		if (Resource != null)
+			App.Renderer.DestroyResource(Resource);
 	}
 }
