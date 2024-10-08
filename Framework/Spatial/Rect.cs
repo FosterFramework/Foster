@@ -202,6 +202,12 @@ public struct Rect : IConvexShape, IEquatable<Rect>
 
 	}
 
+	public Rect(in Vector2 pos, float w, float h)
+		: this(pos.X, pos.Y, w, h)
+	{
+
+	}
+
 	public Rect(in Vector2 from, in Vector2 to)
 	{
 		X = Math.Min(from.X, to.X);
@@ -302,7 +308,7 @@ public struct Rect : IConvexShape, IEquatable<Rect>
 	}
 
 	/// <summary>
-	/// Return the sector that the point falls within (see diagram in comments below)
+	/// Return the sector that the point falls within (see diagram in comments below). A result of zero indicates a point inside the rectangle
 	/// </summary>
 	//  0101 | 0100 | 0110
 	// ------+------+------

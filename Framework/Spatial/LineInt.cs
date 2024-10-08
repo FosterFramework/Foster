@@ -51,6 +51,28 @@ public struct LineInt(Point2 from, Point2 to) : IConvexShape
 		max = Math.Max(dot, max);
 	}
 
+	public readonly bool Intersects(in LineInt other)
+	{
+		Vector2 b = To - From;
+		Vector2 d = other.To - other.From;
+		float bDotDPerp = b.X * d.Y - b.Y * d.X;
+
+		// if b dot d == 0, it means the lines are parallel so have infinite intersection points
+		if (bDotDPerp == 0)
+			return false;
+
+		Vector2 c = other.From - From;
+		float t = (c.X * d.Y - c.Y * d.X) / bDotDPerp;
+		if (t < 0 || t > 1)
+			return false;
+
+		float u = (c.X * b.Y - c.Y * b.X) / bDotDPerp;
+		if (u < 0 || u > 1)
+			return false;
+
+		return true;
+	}
+
 	static public LineInt operator +(LineInt a, Point2 b) => new(a.From + b, a.To + b);
 	static public LineInt operator -(LineInt a, Point2 b) => new(a.From - b, a.To - b);
 }
