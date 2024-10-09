@@ -40,37 +40,37 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="$(NativeLibsDir)win-x64\**">
+    <Content Include="$(NativeLibsDir)win-x64\**" Visible="false">
       <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Windows')) AND $(IsArm64) != 'true'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\win-x64\native</PackagePath>
       <Pack>True</Pack>
       <Link>%(Filename)%(Extension)</Link>
     </Content>
-    <Content Include="$(NativeLibsDir)win-arm64\**">
+    <Content Include="$(NativeLibsDir)win-arm64\**" Visible="false">
       <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Windows')) AND $(IsArm64) == 'true'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\win-arm64\native</PackagePath>
       <Pack>True</Pack>
       <Link>%(Filename)%(Extension)</Link>
     </Content>
-    <Content Include="$(NativeLibsDir)linux-x64\**">
+    <Content Include="$(NativeLibsDir)linux-x64\**" Visible="false">
       <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND $(IsX64) == 'true'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\linux-x64\native</PackagePath>
       <Pack>True</Pack>
       <Link>%(Filename)%(Extension)</Link>
     </Content>
-    <Content Include="$(NativeLibsDir)linux-arm64\**">
+    <Content Include="$(NativeLibsDir)linux-arm64\**" Visible="false">
       <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND $(IsArm64) == 'true'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\linux-arm64\native</PackagePath>
       <Pack>True</Pack>
       <Link>%(Filename)%(Extension)</Link>
     </Content>
-    <Content Include="$(NativeLibsDir)linux-arm32\**">
+    <Content Include="$(NativeLibsDir)linux-arm32\**" Visible="false">
       <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND $(IsArm32) == 'true'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\linux-arm\native</PackagePath>
       <Pack>True</Pack>
       <Link>%(Filename)%(Extension)</Link>
     </Content>
-    <Content Include="$(NativeLibsDir)osx\**">
+    <Content Include="$(NativeLibsDir)osx\**" Visible="false">
       <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('OSX'))">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\osx\native</PackagePath>
       <Pack>True</Pack>
@@ -85,7 +85,7 @@
 
   <!-- Default Shader Content -->
   <ItemGroup>
-    <EmbeddedResource Include="$(ProjectDir)Content/*.spv" Visible="false">
+    <EmbeddedResource Include="$(ProjectDir)Content/**" Visible="false">
       <LogicalName>%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
   </ItemGroup>

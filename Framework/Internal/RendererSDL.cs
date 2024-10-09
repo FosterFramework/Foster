@@ -811,24 +811,15 @@ internal unsafe class RendererSDL : Renderer
 		}
 	}
 
-	public override void Draw(DrawCommand command)
+	public override void PerformDraw(DrawCommand command)
 	{
 		if (Device == nint.Zero)
 			throw deviceNotCreated;
 
-		var mat = command.Material ?? throw new Exception("Material is Invalid");
-		var shader = mat.Shader;
+		var mat = command.Material;
+		var shader = mat.Shader!;
 		var target = command.Target;
 		var mesh = command.Mesh;
-
-		if (shader == null || shader.IsDisposed)
-			throw new Exception("Material Shader is Invalid");
-
-		if (target != null && target.IsDisposed)
-			throw new Exception("Target is Invalid");
-
-		if (mesh == null || mesh.Resource == null || mesh.IsDisposed)
-			throw new Exception("Mesh is Invalid");
 
 		// try to start a render pass
 		if (!BeginRenderPass(target, default))
@@ -889,7 +880,7 @@ internal unsafe class RendererSDL : Renderer
 		}
 
 		// bind mesh buffers
-		var meshResource = (MeshResource)mesh.Resource;
+		var meshResource = (MeshResource)mesh.Resource!;
 		if (meshResource.Renderer != this)
 			throw deviceWasDestroyed;
 

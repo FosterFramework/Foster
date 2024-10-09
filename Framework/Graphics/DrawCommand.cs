@@ -5,7 +5,7 @@ namespace Foster.Framework;
 /// Stores information required to submit a draw command.
 /// Call <seealso cref="Submit"/> to submit the command.
 /// </summary>
-public struct DrawCommand()
+public struct DrawCommand
 {
 	/// <summary>
 	/// Render Target. If not assigned, will target the Back Buffer

@@ -37,6 +37,25 @@ internal abstract class Renderer
 
 	public abstract void DestroyResource(IHandle resource);
 
-	public abstract void Draw(DrawCommand command);
+	public void Draw(DrawCommand command)
+	{
+		var mat = command.Material ?? throw new Exception("Material is Invalid");
+		var shader = mat.Shader;
+		var target = command.Target;
+		var mesh = command.Mesh;
+
+		if (shader == null || shader.IsDisposed)
+			throw new Exception("Material Shader is Invalid");
+
+		if (target != null && target.IsDisposed)
+			throw new Exception("Target is Invalid");
+
+		if (mesh == null || mesh.Resource == null || mesh.IsDisposed)
+			throw new Exception("Mesh is Invalid");
+
+		PerformDraw(command);
+	}
+
+	public abstract void PerformDraw(DrawCommand command);
 	public abstract void Clear(Target? target, Color color, float depth, int stencil, ClearMask mask);
 }

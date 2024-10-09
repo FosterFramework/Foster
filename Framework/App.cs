@@ -151,14 +151,22 @@ public static class App
 	public static bool FixedUpdateWaitEnabled { get; private set; }
 
 	/// <summary>
-	/// The current Renderer Driver API in use
+	/// Stores information about the current Graphics Driver
 	/// </summary>
-	public static GraphicsDriver Driver => renderer?.Driver ?? GraphicsDriver.None;
+	public readonly record struct GraphicDriverProperties(
+		GraphicsDriver Driver,
+		Version DriverVersion,
+		bool OriginBottomLeft
+	);
 
 	/// <summary>
-	/// The current Renderer Driver Version
+	/// Gets the current Graphics Driver Properties
 	/// </summary>
-	public static Version DriverVersion => renderer?.DriverVersion ?? throw notRunningException;
+	public static GraphicDriverProperties Graphics => new(
+		Driver: renderer?.Driver ?? GraphicsDriver.None,
+		DriverVersion: renderer?.DriverVersion ?? throw notRunningException,
+		OriginBottomLeft: (renderer?.Driver ?? GraphicsDriver.None) == GraphicsDriver.OpenGL
+	);
 
 	/// <summary>
 	/// The Window width, which isn't necessarily the size in Pixels depending on the Platform.
