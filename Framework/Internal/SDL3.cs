@@ -30,6 +30,7 @@
 // SDL_ShowSaveFileDialog: change delegate signature to work with fn ptr
 // SDL_ShowOpenFolderDialog: change delegate signature to work with fn ptr
 // SDL_SetLogOutputFunction: change delegate signature to work with fn ptr
+// String Marshallers return given ! to avoid nullable warnings
 
 // NOTE: This file is auto-generated.
 using System;
@@ -51,7 +52,7 @@ public static unsafe partial class SDL
 		/// </summary>
 		/// <returns>A managed string.</returns>
 		public static string ConvertToManaged(byte* unmanaged)
-			=> Marshal.PtrToStringUTF8((IntPtr) unmanaged);
+			=> Marshal.PtrToStringUTF8((IntPtr) unmanaged)!;
 	}
 
 	// Custom marshaller for caller-owned strings returned by SDL.
@@ -63,7 +64,7 @@ public static unsafe partial class SDL
 		/// </summary>
 		/// <returns>A managed string.</returns>
 		public static string ConvertToManaged(byte* unmanaged)
-			=> Marshal.PtrToStringUTF8((IntPtr) unmanaged);
+			=> Marshal.PtrToStringUTF8((IntPtr) unmanaged)!;
 
 		/// <summary>
 		/// Free the memory for a specified unmanaged string.

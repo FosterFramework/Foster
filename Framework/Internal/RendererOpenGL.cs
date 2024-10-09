@@ -63,12 +63,12 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		public uint VertexBuffer;
 		public int VertexBufferSize;
 		public VertexFormat VertexBufferFormat;
-		public bool VertexAttributesEnabled;
-		public uint[] VertexAttributes = new uint[32];
+		// public bool VertexAttributesEnabled;
+		// public uint[] VertexAttributes = new uint[32];
 
-		public uint InstanceBuffer;
-		public bool InstanceAttributesEnabled;
-		public uint[] InstanceAttributes = new uint[32];
+		// public uint InstanceBuffer;
+		// public bool InstanceAttributesEnabled;
+		// public uint[] InstanceAttributes = new uint[32];
 	}
 
 	private struct BoundState
