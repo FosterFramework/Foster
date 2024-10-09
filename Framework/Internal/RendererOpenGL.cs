@@ -1,4 +1,5 @@
 
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using static SDL3.SDL;
 
@@ -6,33 +7,33 @@ namespace Foster.Framework;
 
 internal sealed unsafe class RendererOpenGL : Renderer
 {
-	private class TextureResource(Renderer renderer) : IHandle
+	private class Resource(Renderer renderer) : IHandle
 	{
 		public readonly Renderer Renderer = renderer;
-		public uint id;
-		public int width;
-		public int height;
-		public TextureFormat format;
-		public GL glInternalFormat;
-		public GL glFormat;
-		public GL glType;
-		public GL glAttachment;
-		public TextureSampler sampler;
 		public bool Destroyed;
 		public bool Disposed => Destroyed || Renderer != App.Renderer;
 	}
 
-	private class TargetResource(Renderer renderer) : IHandle
+	private class TextureResource(Renderer renderer) : Resource(renderer)
 	{
-		public readonly Renderer Renderer = renderer;
+		public uint id;
+		public int width;
+		public int height;
+		public TextureFormat format;
+		public GL internalFormat;
+		public GL glFormat;
+		public GL glType;
+		public GL glAttachment;
+		public TextureSampler sampler;
+	}
+
+	private class TargetResource(Renderer renderer) : Resource(renderer)
+	{
 		public uint id;
 		public int width;
 		public int height;
 		public readonly List<TextureResource> colorAttachments = [];
 		public TextureResource? depthAttachment;
-		
-		public bool Destroyed;
-		public bool Disposed => Destroyed || Renderer != App.Renderer;
 	}
 
 	private struct Uniform
@@ -45,39 +46,34 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		int samplerIndex;
 	}
 
-	private class ShaderResource(Renderer renderer) : IHandle
+	private class ShaderResource(Renderer renderer) : Resource(renderer)
 	{
-		public readonly Renderer Renderer = renderer;
 		public uint id;
 		public int uniformCount;
 		public int samplerCount;
 		public readonly List<Uniform> uniforms = [];
 		public readonly TextureResource[] textures = new TextureResource[32];
 		public readonly TextureSampler[] samplers = new TextureSampler[32];
-		public bool Destroyed;
-		public bool Disposed => Destroyed || Renderer != App.Renderer;
 	}
 
-	private class MeshResource(Renderer renderer) : IHandle
+	private class MeshResource(Renderer renderer) : Resource(renderer)
 	{
-		public readonly Renderer Renderer = renderer;
 		public uint id;
 		public uint indexBuffer;
+		public int  indexBufferSize;
+		public IndexFormat indexBufferElementFormat;
+		public int  indexBufferElementSize;
 		public uint vertexBuffer;
+		public int  vertexBufferSize;
+		public VertexFormat vertexBufferFormat;
 		public uint instanceBuffer;
 		public int vertexAttributesEnabled;
 		public int instanceAttributesEnabled;
 		public uint[] vertexAttributes = new uint[32];
 		public uint[] instanceAttributes = new uint[32];
-		public GL indexFormat;
-		public int indexSize;
-		public int vertexBufferSize;
-		public int indexBufferSize;
-		public bool Destroyed;
-		public bool Disposed => Destroyed || Renderer != App.Renderer;
 	}
 
-	private struct State
+	private struct BoundState
 	{
 		public bool Initializing;
 		public int ActiveTextureSlot;
@@ -104,7 +100,9 @@ internal sealed unsafe class RendererOpenGL : Renderer
 	private nint window;
 	private nint context;
 	private bool vsync = false;
-	private State state;
+	private BoundState state;
+	private readonly HashSet<Resource> resources = [];
+	private readonly ConcurrentQueue<Resource> destroying = [];
 
 	public override nint Device { get; }
 	public override GraphicsDriver Driver => GraphicsDriver.OpenGL;
@@ -168,15 +166,15 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 		// default starting state
 		state.Initializing = true;
-		FosterBindProgram(0);
-		FosterBindFrameBuffer(null);
-		FosterBindArray(0);
-		FosterSetViewport(false, default);
-		FosterSetScissor(false, default);
-		FosterSetBlend(new());
-		FosterSetCull(CullMode.None);
-		FosterSetDepthCompare(false, DepthCompare.Always);
-		FosterSetDepthMask(false);
+		BindProgram(0);
+		BindFrameBuffer(null);
+		BindArray(0);
+		SetViewport(false, default);
+		SetScissor(false, default);
+		SetBlend(new());
+		SetCull(CullMode.None);
+		SetDepthCompare(false, DepthCompare.Always);
+		SetDepthMask(false);
 		state.Initializing = false;
 
 		// vsync is on by default
@@ -185,6 +183,14 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 	public override void Shutdown()
 	{
+		// destroy remaining resources
+		{
+			IHandle[] remaining = [.. resources];
+			foreach (var it in remaining)
+				DestroyResource(it);
+			DestroyQueuedResources();
+		}
+
 		SDL_GL_DestroyContext(context);
 		context = nint.Zero;
 	}
@@ -203,11 +209,14 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 	public override void Present()
 	{
+		// destroy any queued resources
+		DestroyQueuedResources();
+
 		gl.Flush();
 
 		// bind 0 to the frame buffer as per SDL's suggestion for macOS:
 		// https://wiki.libsdl.org/SDL3/SDL_GL_SwapWindow#remarks
-		FosterBindFrameBuffer(null);
+		BindFrameBuffer(null);
 
 		SDL_GL_SwapWindow(window);
 	}
@@ -220,7 +229,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 			width = width,
 			height = height,
 			format = format,
-			glInternalFormat = GL.RED,
+			internalFormat = GL.RED,
 			glFormat = GL.RED,
 			glType = GL.UNSIGNED_BYTE,
 			sampler = new()
@@ -229,17 +238,17 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		switch (format)
 		{
 			case TextureFormat.R8:
-				texture.glInternalFormat = GL.RED;
+				texture.internalFormat = GL.RED;
 				texture.glFormat = GL.RED;
 				texture.glType = GL.UNSIGNED_BYTE;
 				break;
 			case TextureFormat.R8G8B8A8:
-				texture.glInternalFormat = GL.RGBA;
+				texture.internalFormat = GL.RGBA;
 				texture.glFormat = GL.RGBA;
 				texture.glType = GL.UNSIGNED_BYTE;
 				break;
 			case TextureFormat.Depth24Stencil8:
-				texture.glInternalFormat = GL.DEPTH24_STENCIL8;
+				texture.internalFormat = GL.DEPTH24_STENCIL8;
 				texture.glFormat = GL.DEPTH_STENCIL;
 				texture.glType = GL.UNSIGNED_INT_24_8;
 				break;
@@ -256,16 +265,16 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 		// setup texture properties
 		{
-			FosterBindTexture(0, texture.id);
-			gl.TexImage2D(GL.TEXTURE_2D, 0, texture.glInternalFormat, width, height, 0, texture.glFormat, texture.glType, nint.Zero);
+			BindTexture(0, texture.id);
+			gl.TexImage2D(GL.TEXTURE_2D, 0, texture.internalFormat, width, height, 0, texture.glFormat, texture.glType, nint.Zero);
 		}
 
 		// potentially bind to a target
 		if (targetBinding is TargetResource target)
 		{
-			FosterBindFrameBuffer(target);
+			BindFrameBuffer(target);
 
-			if (texture.glInternalFormat == GL.DEPTH24_STENCIL8)
+			if (texture.internalFormat == GL.DEPTH24_STENCIL8)
 			{
 				texture.glAttachment = GL.DEPTH_STENCIL_ATTACHMENT;
 				target.depthAttachment = texture;
@@ -279,6 +288,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 			gl.FramebufferTexture2D(GL.FRAMEBUFFER, texture.glAttachment, GL.TEXTURE_2D, texture.id, 0);
 		}
 
+		TrackResource(texture);
 		return texture;
 	}
 
@@ -286,19 +296,32 @@ internal sealed unsafe class RendererOpenGL : Renderer
 	{
 		if (texture is TextureResource res && !res.Disposed)
 		{
-			FosterBindTexture(0, res.id);
-			gl.TexImage2D(GL.TEXTURE_2D, 0, res.glInternalFormat, res.width, res.height, 0, res.glFormat, res.glType, data);
+			BindTexture(0, res.id);
+			gl.TexImage2D(GL.TEXTURE_2D, 0, res.internalFormat, res.width, res.height, 0, res.glFormat, res.glType, data);
 		}
 	}
 
 	public override void GetTextureData(IHandle texture, nint data, int length)
 	{
-
+		if (texture is TextureResource res && !res.Disposed)
+		{
+			BindTexture(0, res.id);
+			gl.GetTexImage(GL.TEXTURE_2D, 0, res.internalFormat, res.glType, data);
+		}
 	}
 
-	public void DestroyTexture(IHandle texture)
+	private void DestroyTexture(TextureResource texture)
 	{
+		texture.Destroyed = true;
 
+		// make sure it's not bound anymore
+		for (int i = 0; i < 32; i ++)
+			if (state.TextureSlots[i] == texture.id)
+				BindTexture(i, 0);
+
+		// delete it
+		var ids = stackalloc uint[1] { texture.id };
+		gl.DeleteTextures(1, new nint(ids));
 	}
 
 	public override IHandle CreateTarget(int width, int height)
@@ -316,28 +339,129 @@ internal sealed unsafe class RendererOpenGL : Renderer
 			width = width,
 			height = height
 		};
-		FosterBindFrameBuffer(target);
+		BindFrameBuffer(target);
+		TrackResource(target);
 		return target;
+	}
+
+	private void DestroyTarget(TargetResource target)
+	{
+		foreach (var attachment in target.colorAttachments)
+			DestroyResource(attachment);
+		if (target.depthAttachment != null)
+			DestroyResource(target.depthAttachment);
+
+		target.Destroyed = true;
 	}
 
 	public override IHandle CreateMesh()
 	{
-		return new MeshResource(this);
+		var ids = stackalloc uint[1];
+		gl.GenVertexArrays(1, new nint(ids));
+		if (ids[0] == 0)
+			throw new Exception("Failed to create Mesh");
+
+		var mesh = new MeshResource(this) { id = ids[0] };
+		TrackResource(mesh);
+		return mesh;
 	}
 
 	public override void SetMeshVertexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, in VertexFormat format)
 	{
+		if (mesh is not MeshResource it)
+			return;
 
+		BindArray(it.id);
+
+		// create buffer if needed
+		if (it.vertexBuffer == 0)
+		{
+			var ids = stackalloc uint[1];
+			gl.GenBuffers(1, new nint(ids));
+			it.vertexBuffer = ids[0];
+		}
+
+		// bind buffer
+		BindArrayBuffer(it.vertexBuffer);
+
+		// verify format
+		if (it.vertexBufferFormat != format)
+		{
+			it.vertexBufferFormat = format;
+			BindAttributes(format, 0);
+		}
+
+		// expand buffer if needed
+		int totalSize = dataDestOffset + dataSize;
+		if (totalSize > it.vertexBufferSize)
+		{
+			it.vertexBufferSize = totalSize;
+			gl.BufferData(GL.ARRAY_BUFFER, totalSize, nint.Zero, GL.DYNAMIC_DRAW);
+		}
+
+		// copy data to dst
+		gl.BufferSubData(GL.ARRAY_BUFFER, dataDestOffset, dataSize, data);
 	}
 
 	public override void SetMeshIndexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, IndexFormat format)
 	{
+		if (mesh is not MeshResource it)
+			return;
 
+		BindArray(it.id);
+
+		// create buffer if needed
+		if (it.indexBuffer == 0)
+		{
+			var ids = stackalloc uint[1];
+			gl.GenBuffers(1, new nint(ids));
+			it.indexBuffer = ids[0];
+		}
+
+		// bind buffer
+		BindElementArrayBuffer(it.indexBuffer);
+
+		// verify format
+		if (it.indexBufferElementFormat != format)
+		{
+			it.indexBufferElementFormat = format;
+			it.indexBufferElementSize = format == IndexFormat.ThirtyTwo ? 4 : 2;
+		}
+
+		// expand buffer if needed
+		int totalSize = dataDestOffset + dataSize;
+		if (totalSize > it.indexBufferSize)
+		{
+			it.indexBufferSize = totalSize;
+			gl.BufferData(GL.ELEMENT_ARRAY_BUFFER, totalSize, nint.Zero, GL.DYNAMIC_DRAW);
+		}
+
+		// copy data to dst
+		gl.BufferSubData(GL.ELEMENT_ARRAY_BUFFER, dataDestOffset, dataSize, data);
 	}
 
-	public void DestroyMesh(IHandle mesh)
+	private void DestroyMesh(MeshResource mesh)
 	{
+		if (mesh.vertexBuffer != 0)
+		{
+			var ids = stackalloc uint[1] { mesh.vertexBuffer };
+			gl.DeleteBuffers(1, new nint(ids));
+		}
+		if (mesh.indexBuffer != 0)
+		{
+			var ids = stackalloc uint[1] { mesh.indexBuffer };
+			gl.DeleteBuffers(1, new nint(ids));
+		}
+		if (mesh.id != 0)
+		{
+			var ids = stackalloc uint[1] { mesh.id };
+			gl.DeleteVertexArrays(1, new nint(ids));
+		}
 
+		mesh.id = 0;
+		mesh.vertexBuffer = 0;
+		mesh.indexBuffer = 0;
+		mesh.Destroyed = true;
 	}
 
 	public override IHandle CreateShader(in ShaderCreateInfo shaderInfo)
@@ -345,14 +469,41 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		return new ShaderResource(this);
 	}
 
-	public void DestroyShader(IHandle shader)
+	private void DestroyShader(ShaderResource shader)
 	{
-
+		shader.Destroyed = true;
 	}
 
-	public override void DestroyResource(IHandle texture)
+	private void TrackResource(Resource resource)
 	{
+		lock (resources)
+			resources.Add(resource);
+	}
 
+	public override void DestroyResource(IHandle resource)
+	{
+		if (!resource.Disposed && resource is Resource res)
+		{
+			lock (resources)
+				resources.Remove(res);
+			res.Destroyed = true;
+			destroying.Enqueue(res);
+		}
+	}
+
+	private void DestroyQueuedResources()
+	{
+		while (destroying.TryDequeue(out var it))
+		{
+			if (it is TextureResource texture)
+				DestroyTexture(texture);
+			else if (it is TargetResource target)
+				DestroyTarget(target);
+			else if (it is MeshResource mesh)
+				DestroyMesh(mesh);
+			else if (it is ShaderResource shader)
+				DestroyShader(shader);
+		}
 	}
 
 	public override void Draw(DrawCommand command)
@@ -362,9 +513,9 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 	public override void Clear(Target? target, Color color, float depth, int stencil, ClearMask mask)
 	{
-		FosterBindFrameBuffer(target?.Resource as TargetResource);
-		FosterSetViewport(false, default);
-		FosterSetScissor(false, default);
+		BindFrameBuffer(target?.Resource as TargetResource);
+		SetViewport(false, default);
+		SetScissor(false, default);
 
 		GL clear = 0;
 
@@ -377,7 +528,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 		if (mask.Has(ClearMask.Depth))
 		{
-			FosterSetDepthMask(true);
+			SetDepthMask(true);
 
 			clear |= GL.DEPTH_BUFFER_BIT;
 			gl.ClearDepth?.Invoke(depth);
@@ -392,7 +543,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		gl.Clear(clear);
 	}
 
-	private void FosterBindFrameBuffer(TargetResource? target)
+	private void BindFrameBuffer(TargetResource? target)
 	{
 		uint framebuffer = 0;
 
@@ -431,21 +582,35 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		state.FrameBuffer = framebuffer;
 	}
 
-	private void FosterBindProgram(uint id)
+	private void BindProgram(uint id)
 	{
 		if (state.Initializing || state.Program != id)
 			gl.UseProgram(id);
 		state.Program = id;
 	}
 
-	private void FosterBindArray(uint id)
+	private void BindArray(uint id)
 	{
 		if (state.Initializing || state.VertexArray != id)
 			gl.BindVertexArray(id);
 		state.VertexArray = id;
 	}
 
-	private void FosterBindTexture(int slot, uint id)
+	private void BindArrayBuffer(uint id)
+	{
+		if (state.Initializing || state.VertexArray != id)
+			gl.BindBuffer(GL.ARRAY_BUFFER, id);
+		state.VertexArray = id;
+	}
+
+	private void BindElementArrayBuffer(uint id)
+	{
+		if (state.Initializing || state.ElementBuffer != id)
+			gl.BindBuffer(GL.ELEMENT_ARRAY_BUFFER, id);
+		state.ElementBuffer = id;
+	}
+
+	private void BindTexture(int slot, uint id)
 	{
 		if (state.ActiveTextureSlot != slot)
 		{
@@ -460,10 +625,9 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		}
 	}
 
-
 	// Same as FosterBindTexture, except it the resulting global state doesn't
 	// necessarily have the slot active or texture bound, if no changes were required.
-	private void FosterEnsureTextureSlotIs(int slot, uint id)
+	private void EnsureTextureSlotIs(int slot, uint id)
 	{
 		if (state.TextureSlots[slot] != id)
 		{
@@ -478,11 +642,11 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		}
 	}
 
-	private void FosterSetTextureSampler(TextureResource tex, TextureSampler sampler)
+	private void SetTextureSampler(TextureResource tex, TextureSampler sampler)
 	{
 		if (!tex.Disposed && tex.sampler != sampler)
 		{
-			FosterBindTexture(0, tex.id);
+			BindTexture(0, tex.id);
 
 			if (tex.sampler.Filter != sampler.Filter)
 			{
@@ -500,7 +664,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		}
 	}
 
-	private void FosterSetViewport(bool enabled, RectInt rect)
+	private void SetViewport(bool enabled, RectInt rect)
 	{
 		RectInt viewport;
 
@@ -525,7 +689,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		}
 	}
 
-	private void FosterSetScissor(bool enabled, in RectInt rect)
+	private void SetScissor(bool enabled, in RectInt rect)
 	{
 		// get input scissor first
 		var scissor = rect;
@@ -554,7 +718,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		}
 	}
 
-	private void FosterSetBlend(BlendMode blend)
+	private void SetBlend(BlendMode blend)
 	{
 		if (state.Initializing || state.Blend != blend)
 		{
@@ -590,7 +754,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		state.Blend = blend;
 	}
 
-	private void FosterSetDepthCompare(bool enabled, DepthCompare compare)
+	private void SetDepthCompare(bool enabled, DepthCompare compare)
 	{
 		if (state.Initializing || enabled != state.DepthCompareEnabled || compare != state.DepthCompare)
 		{
@@ -620,14 +784,14 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		state.DepthCompareEnabled = enabled;
 	}
 
-	private void FosterSetDepthMask(bool depthMask)
+	private void SetDepthMask(bool depthMask)
 	{
 		if (state.Initializing || depthMask != state.DepthMaskEnabled)
 			gl.DepthMask(depthMask);
 		state.DepthMaskEnabled = depthMask;
 	}
 
-	private void FosterSetCull(CullMode cull)
+	private void SetCull(CullMode cull)
 	{
 		if (state.Initializing || cull != state.Cull)
 		{
@@ -651,19 +815,54 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		state.Cull = cull;
 	}
 
+	// NOTE: buffer must be bound
+	private int BindAttributes(in VertexFormat format, int divisor)
+	{
+		// TODO: disable existing enabled attributes?
+		// ...
+
+		// enable attributes
+		int ptr = 0;
+		foreach (var element in format.Elements)
+		{
+			(GL type, int size, int count) = element.Type switch
+			{
+				VertexType.Float   => (GL.FLOAT, 4, 1),
+				VertexType.Float2  => (GL.FLOAT, 4, 2),
+				VertexType.Float3  => (GL.FLOAT, 4, 3),
+				VertexType.Float4  => (GL.FLOAT, 4, 4),
+				VertexType.Byte4   => (GL.BYTE,  1, 4),
+				VertexType.UByte4  => (GL.UNSIGNED_BYTE, 1, 4),
+				VertexType.Short2  => (GL.SHORT, 2, 2),
+				VertexType.UShort2 => (GL.UNSIGNED_SHORT, 2, 2),
+				VertexType.Short4  => (GL.SHORT, 2, 4),
+				VertexType.UShort4 => (GL.UNSIGNED_SHORT, 2, 4),
+				_ => throw new NotImplementedException()
+			};
+
+			uint location = (uint)element.Index;
+			gl.EnableVertexAttribArray(location);
+			gl.VertexAttribPointer(location, count, type, element.Normalized, format.Stride, new nint(ptr));
+			gl.VertexAttribDivisor(location, (uint)divisor);
+			ptr += count * size;
+		}
+
+		return format.Stride;
+	}
+
 	private static GL FosterWrapToGL(TextureWrap wrap) => wrap switch
 	{
 		TextureWrap.Repeat => GL.REPEAT,
 		TextureWrap.MirroredRepeat => GL.MIRRORED_REPEAT,
 		TextureWrap.Clamp => GL.CLAMP_TO_EDGE,
-		_ => GL.REPEAT,
+		_ => throw new NotImplementedException(),
 	};
 
 	private static GL FosterFilterToGL(TextureFilter filter) => filter switch
 	{
 		TextureFilter.Nearest => GL.NEAREST,
 		TextureFilter.Linear => GL.LINEAR,
-		_ => GL.NEAREST,
+		_ => throw new NotImplementedException(),
 	};
 
 	private static GL FosterBlendOpToGL(BlendOp operation) => operation switch
@@ -673,7 +872,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		BlendOp.ReverseSubtract => GL.FUNC_REVERSE_SUBTRACT,
 		BlendOp.Min => GL.MIN,
 		BlendOp.Max => GL.MAX,
-		_ => GL.FUNC_ADD,
+		_ => throw new NotImplementedException(),
 	};
 
 	private static GL FosterBlendFactorToGL(BlendFactor factor) => factor switch
