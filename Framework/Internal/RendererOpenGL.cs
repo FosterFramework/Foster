@@ -23,12 +23,11 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		public GL InternalFormatGL;
 		public GL FormatGL;
 		public GL TypeGL;
-		public GL AttachmentGL;
 	}
 
 	private class TargetResource(Renderer renderer) : Resource(renderer)
 	{
-		public uint ID;
+		public readonly Dictionary<nint, uint> ContextID = [];
 		public int Width;
 		public int Height;
 		public readonly List<TextureResource> ColorAttachments = [];
@@ -52,7 +51,8 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 	private class MeshResource(Renderer renderer) : Resource(renderer)
 	{
-		public uint ID;
+		public readonly Dictionary<nint, uint> ContextID = [];
+		public readonly Dictionary<nint, VertexFormat> BoundVertexFormat = [];
 
 		public uint IndexBuffer;
 		public int IndexBufferSize;
@@ -60,7 +60,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 		public uint VertexBuffer;
 		public int VertexBufferSize;
-		public VertexFormat VertexBufferFormat;
+		public VertexFormat VertexFormat;
 		// public bool VertexAttributesEnabled;
 		// public uint[] VertexAttributes = new uint[32];
 
@@ -69,14 +69,15 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		// public uint[] InstanceAttributes = new uint[32];
 	}
 
-	private struct BoundState
+	private class ContextState
 	{
 		public bool Initializing;
+		public nint Context;
 		public int ActiveTextureSlot;
-		public fixed uint TextureSlots[32];
+		public uint[] TextureSlots = new uint[32];
 		public uint Program;
 		public uint FrameBuffer;
-		public uint Array;
+		public uint VAO;
 		public uint VertexBuffer;
 		public uint IndexBuffer;
 		public int FrameBufferWidth;
@@ -94,11 +95,12 @@ internal sealed unsafe class RendererOpenGL : Renderer
 	private GLFuncs gl = null!;
 	private Version version = new();
 	private nint window;
-	private nint context;
 	private bool vsync = false;
-	private BoundState state;
+	private readonly ContextState mainState = new();
+	private readonly ContextState offMainState = new();
 	private readonly HashSet<Resource> resources = [];
 	private readonly ConcurrentQueue<Resource> destroying = [];
+	private readonly Mutex offMainMutex = new();
 
 	public override nint Device { get; }
 	public override GraphicsDriver Driver => GraphicsDriver.OpenGL;
@@ -134,44 +136,27 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		SDL_GL_SetAttribute(SDL_GLattr.SDL_GL_CONTEXT_FLAGS, (int)SDL_GLcontextFlag.SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
 		SDL_GL_SetAttribute(SDL_GLattr.SDL_GL_DOUBLEBUFFER, 1);
 
-		// create context
-		context = SDL_GL_CreateContext(window);
-		if (context == nint.Zero)
-			throw Platform.CreateExceptionFromSDL(nameof(SDL_GL_CreateContext));
-		if (!SDL_GL_MakeCurrent(window, context))
-			throw Platform.CreateExceptionFromSDL(nameof(SDL_GL_MakeCurrent));
-
 		// load bindings
 		gl = new();
-		gl.Enable(GL.DEBUG_OUTPUT);
-		gl.Enable(GL.DEBUG_OUTPUT_SYNCHRONOUS);
-		gl.DebugMessageCallback(&OnDebugMessageCallback, nint.Zero);
+
+		// create an off-thread context
+		offMainState.Context = SDL_GL_CreateContext(window);
+		if (offMainState.Context == nint.Zero)
+			throw Platform.CreateExceptionFromSDL(nameof(SDL_GL_CreateContext));
+		InitializeContext(offMainState);
+
+		// create main context
+		SDL_GL_SetAttribute(SDL_GLattr.SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
+		mainState.Context = SDL_GL_CreateContext(window);
+		if (mainState.Context == nint.Zero)
+			throw Platform.CreateExceptionFromSDL(nameof(SDL_GL_CreateContext));
+		InitializeContext(mainState);
 
 		// get version / renderer device
 		gl.GetIntegerv((GL)0x821B, out int major);
 		gl.GetIntegerv((GL)0x821C, out int minor);
 		version = new(major, minor);
 		Log.Info($"Graphics Driver: OpenGL {major}.{minor} [{Platform.ParseUTF8(gl.GetString(GL.RENDERER))}]");
-
-		// don't include row padding
-		gl.PixelStorei(GL.PACK_ALIGNMENT, 1);
-		gl.PixelStorei(GL.UNPACK_ALIGNMENT, 1);
-
-		// blend is always enabled
-		gl.Enable(GL.BLEND);
-
-		// default starting state
-		state.Initializing = true;
-		BindProgram(0);
-		BindFrameBuffer(null);
-		BindArray(0);
-		SetViewport(false, default);
-		SetScissor(false, default);
-		SetBlend(new());
-		SetCull(CullMode.None);
-		SetDepthCompare(false, DepthCompare.Always);
-		SetDepthMask(false);
-		state.Initializing = false;
 
 		// vsync is on by default
 		SetVSync(true);
@@ -187,8 +172,11 @@ internal sealed unsafe class RendererOpenGL : Renderer
 			DestroyQueuedResources();
 		}
 
-		SDL_GL_DestroyContext(context);
-		context = nint.Zero;
+		SDL_GL_DestroyContext(offMainState.Context);
+		offMainState.Context = nint.Zero;
+
+		SDL_GL_DestroyContext(mainState.Context);
+		mainState.Context = nint.Zero;
 	}
 	
 	public override bool GetVSync() => vsync;
@@ -210,13 +198,15 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 		// bind 0 to the frame buffer as per SDL's suggestion for macOS:
 		// https://wiki.libsdl.org/SDL3/SDL_GL_SwapWindow#remarks
-		BindFrameBuffer(null);
+		BindFrameBuffer(mainState, null);
 
 		SDL_GL_SwapWindow(window);
 	}
 
 	public override IHandle CreateTexture(int width, int height, TextureFormat format, IHandle? targetBinding)
 	{
+		BeginThreadSafeCalls(out var state);
+
 		TextureResource texture = new(this)
 		{
 			ID = 0,
@@ -244,34 +234,25 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 		// setup texture properties
 		{
-			BindTexture(0, texture.ID);
+			BindTexture(state, 0, texture.ID);
 			gl.TexImage2D(GL.TEXTURE_2D, 0, texture.InternalFormatGL, width, height, 0, texture.FormatGL, texture.TypeGL, nint.Zero);
 		}
 
 		// Set default filter
-		SetTextureSampler(texture, new TextureSampler(
+		SetTextureSampler(state, texture, new TextureSampler(
 			TextureFilter.Linear, TextureWrap.Repeat, TextureWrap.Repeat
 		));
 
 		// potentially bind to a target
 		if (targetBinding is TargetResource target)
 		{
-			BindFrameBuffer(target);
-
 			if (texture.InternalFormatGL == GL.DEPTH24_STENCIL8)
-			{
-				texture.AttachmentGL = GL.DEPTH_STENCIL_ATTACHMENT;
 				target.DepthAttachment = texture;
-			}
 			else
-			{
-				texture.AttachmentGL = GL.COLOR_ATTACHMENT0 + target.ColorAttachments.Count;
 				target.ColorAttachments.Add(texture);
-			}
-
-			gl.FramebufferTexture2D(GL.FRAMEBUFFER, texture.AttachmentGL, GL.TEXTURE_2D, texture.ID, 0);
 		}
 
+		EndThreadSafeCalls();
 		TrackResource(texture);
 		return texture;
 	}
@@ -280,8 +261,10 @@ internal sealed unsafe class RendererOpenGL : Renderer
 	{
 		if (texture is TextureResource res && !res.Disposed)
 		{
-			BindTexture(0, res.ID);
+			BeginThreadSafeCalls(out var state);
+			BindTexture(state, 0, res.ID);
 			gl.TexImage2D(GL.TEXTURE_2D, 0, res.InternalFormatGL, res.Width, res.Height, 0, res.FormatGL, res.TypeGL, data);
+			EndThreadSafeCalls();
 		}
 	}
 
@@ -289,45 +272,39 @@ internal sealed unsafe class RendererOpenGL : Renderer
 	{
 		if (texture is TextureResource res && !res.Disposed)
 		{
-			BindTexture(0, res.ID);
+			BeginThreadSafeCalls(out var state);
+			BindTexture(state, 0, res.ID);
 			gl.GetTexImage(GL.TEXTURE_2D, 0, res.InternalFormatGL, res.TypeGL, data);
+			EndThreadSafeCalls();
 		}
 	}
 
 	private void DestroyTexture(TextureResource texture)
 	{
-		// make sure it's not bound anymore
-		for (int i = 0; i < 32; i ++)
-			if (state.TextureSlots[i] == texture.ID)
-				BindTexture(i, 0);
-
-		// delete it
 		var ids = stackalloc uint[1] { texture.ID };
 		gl.DeleteTextures(1, new nint(ids));
 	}
 
 	public override IHandle CreateTarget(int width, int height)
 	{
-		// create ID
-		var ids = stackalloc uint[1];
-		gl.GenFramebuffers(1, new nint(ids));
-		if (ids[0] == 0)
-			throw new Exception("Failed to create Target's FrameBuffer");
-
-		// create target
 		var target = new TargetResource(this)
 		{
-			ID = ids[0],
 			Width = width,
 			Height = height
 		};
-		BindFrameBuffer(target);
+
 		TrackResource(target);
 		return target;
 	}
 
 	private void DestroyTarget(TargetResource target)
 	{
+		var ids = stackalloc uint[1];
+		foreach (var id in target.ContextID.Values)
+		{
+			ids[0] = id;
+			gl.DeleteFramebuffers(1, new nint(ids));
+		}
 		foreach (var attachment in target.ColorAttachments)
 			DestroyResource(attachment);
 		if (target.DepthAttachment != null)
@@ -336,12 +313,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 	public override IHandle CreateMesh()
 	{
-		var ids = stackalloc uint[1];
-		gl.GenVertexArrays(1, new nint(ids));
-		if (ids[0] == 0)
-			throw new Exception("Failed to create Mesh");
-
-		var mesh = new MeshResource(this) { ID = ids[0] };
+		var mesh = new MeshResource(this);
 		TrackResource(mesh);
 		return mesh;
 	}
@@ -350,9 +322,10 @@ internal sealed unsafe class RendererOpenGL : Renderer
 	{
 		if (mesh is not MeshResource it)
 			return;
+		it.VertexFormat = format;
 
-		BindArray(it.ID);
-
+		BeginThreadSafeCalls(out var state);
+		
 		// create buffer if needed
 		if (it.VertexBuffer == 0)
 		{
@@ -361,15 +334,8 @@ internal sealed unsafe class RendererOpenGL : Renderer
 			it.VertexBuffer = ids[0];
 		}
 
-		// bind buffer
-		BindVertexBuffer(it.VertexBuffer);
-
-		// verify format
-		if (it.VertexBufferFormat != format)
-		{
-			it.VertexBufferFormat = format;
-			BindAttributes(format, 0);
-		}
+		BindArray(state, it);
+		BindVertexBuffer(state, it.VertexBuffer);
 
 		// expand buffer if needed
 		int totalSize = dataDestOffset + dataSize;
@@ -381,6 +347,9 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 		// copy data to dst
 		gl.BufferSubData(GL.ARRAY_BUFFER, dataDestOffset, dataSize, data);
+
+		BindArray(state, null);
+		EndThreadSafeCalls();
 	}
 
 	public override void SetMeshIndexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, IndexFormat format)
@@ -388,7 +357,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		if (mesh is not MeshResource it)
 			return;
 
-		BindArray(it.ID);
+		BeginThreadSafeCalls(out var state);
 
 		// create buffer if needed
 		if (it.IndexBuffer == 0)
@@ -398,8 +367,8 @@ internal sealed unsafe class RendererOpenGL : Renderer
 			it.IndexBuffer = ids[0];
 		}
 
-		// bind buffer
-		BindIndexBuffer(it.IndexBuffer);
+		BindArray(state, it);
+		BindIndexBuffer(state, it.IndexBuffer);
 
 		// verify format
 		it.IndexBufferElementFormat = format;
@@ -414,33 +383,41 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 		// copy data to dst
 		gl.BufferSubData(GL.ELEMENT_ARRAY_BUFFER, dataDestOffset, dataSize, data);
+
+		BindArray(state, null);
+		EndThreadSafeCalls();
 	}
 
 	private void DestroyMesh(MeshResource mesh)
 	{
+		var ids = stackalloc uint[1];
+
 		if (mesh.VertexBuffer != 0)
 		{
-			var ids = stackalloc uint[1] { mesh.VertexBuffer };
+			ids[0] = mesh.VertexBuffer;
 			gl.DeleteBuffers(1, new nint(ids));
 		}
 		if (mesh.IndexBuffer != 0)
 		{
-			var ids = stackalloc uint[1] { mesh.IndexBuffer };
+			ids[0] = mesh.IndexBuffer;
 			gl.DeleteBuffers(1, new nint(ids));
 		}
-		if (mesh.ID != 0)
+		
+		foreach (var id in mesh.ContextID.Values)
 		{
-			var ids = stackalloc uint[1] { mesh.ID };
+			ids[0] = id;
 			gl.DeleteVertexArrays(1, new nint(ids));
 		}
 
-		mesh.ID = 0;
+		mesh.ContextID.Clear();
 		mesh.VertexBuffer = 0;
 		mesh.IndexBuffer = 0;
 	}
 
 	public override IHandle CreateShader(in ShaderCreateInfo shaderInfo)
 	{
+		BeginThreadSafeCalls(out var state);
+
 		// log info
 		const int MaxStringBufferLength = 1024; 
 		var strBuf = stackalloc byte[MaxStringBufferLength];
@@ -542,6 +519,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 			shader.Uniforms.Add(uniform);
 		}
 
+		EndThreadSafeCalls();
 		return shader;
 	}
 
@@ -586,26 +564,29 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 	public override void PerformDraw(DrawCommand command)
 	{
+		BeginThreadSafeCalls(out var state);
+
 		var target = command.Target?.Resource as TargetResource;
 		var mat = command.Material;
 		var shader = (mat.Shader!.Resource as ShaderResource)!;
 		var mesh = (command.Mesh.Resource as MeshResource)!;
 
 		// set state
-		BindFrameBuffer(target);
-		BindProgram(shader.ID);
-		BindArray(mesh.ID);
-		SetBlend(command.BlendMode);
-		SetDepthCompare(command.DepthTestEnabled, command.DepthCompare);
-		SetCull(command.CullMode);
-		SetViewport(command.Viewport.HasValue, command.Viewport ?? default);
-		SetScissor(command.Scissor.HasValue, command.Scissor ?? default);
+		BindFrameBuffer(state, target);
+		BindProgram(state, shader.ID);
+		BindArray(state, mesh);
+		BindVertexAttributes(state, mesh);
+		SetBlend(state, command.BlendMode);
+		SetDepthCompare(state, command.DepthTestEnabled, command.DepthCompare);
+		SetCull(state, command.CullMode);
+		SetViewport(state, command.Viewport.HasValue, command.Viewport ?? default);
+		SetScissor(state, command.Scissor.HasValue, command.Scissor ?? default);
 
 		// update texture samplers
 		foreach (var it in mat.VertexSamplers)
-			SetTextureSampler(it.Texture?.Resource as TextureResource, it.Sampler);
+			SetTextureSampler(state, it.Texture?.Resource as TextureResource, it.Sampler);
 		foreach (var it in mat.FragmentSamplers)
-			SetTextureSampler(it.Texture?.Resource as TextureResource, it.Sampler);
+			SetTextureSampler(state, it.Texture?.Resource as TextureResource, it.Sampler);
 
 		// Update Uniforms
 		// TODO: only do this if values have changed!
@@ -665,7 +646,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 					if (it.Texture != null && !it.Texture.IsDisposed && it.Texture.Resource is TextureResource tex)
 					{
-						BindTextureConditionally(slot, tex.ID);
+						BindTextureConditionally(state, slot, tex.ID);
 						slots[n] = (uint)slot;
 						slot++;
 					}
@@ -686,6 +667,8 @@ internal sealed unsafe class RendererOpenGL : Renderer
 			type: mesh.IndexBufferElementFormat == IndexFormat.ThirtyTwo ? GL.UNSIGNED_INT : GL.UNSIGNED_SHORT,
 			indices: new nint(mesh.IndexBufferElementFormat.SizeInBytes() * command.MeshIndexStart)
 		);
+		
+		EndThreadSafeCalls();
 
 		static bool TryGetUniformDataBuffer(string name, Material material, out Span<byte> data)
 		{
@@ -719,9 +702,11 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 	public override void Clear(Target? target, Color color, float depth, int stencil, ClearMask mask)
 	{
-		BindFrameBuffer(target?.Resource as TargetResource);
-		SetViewport(false, default);
-		SetScissor(false, default);
+		BeginThreadSafeCalls(out var state);
+
+		BindFrameBuffer(state, target?.Resource as TargetResource);
+		SetViewport(state, false, default);
+		SetScissor(state, false, default);
 
 		GL clear = 0;
 
@@ -734,7 +719,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 		if (mask.Has(ClearMask.Depth))
 		{
-			SetDepthMask(true);
+			SetDepthMask(state, true);
 
 			clear |= GL.DEPTH_BUFFER_BIT;
 			gl.ClearDepth?.Invoke(depth);
@@ -747,9 +732,62 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		}
 
 		gl.Clear(clear);
+
+		EndThreadSafeCalls();
 	}
 
-	private void BindFrameBuffer(TargetResource? target)
+	private void BeginThreadSafeCalls(out ContextState state)
+	{
+		if (!App.IsMainThread())
+		{
+			offMainMutex.WaitOne();
+			SDL_GL_MakeCurrent(window, offMainState.Context);
+			state = offMainState;
+		}
+		else
+		{
+			state = mainState;
+		}
+	}
+
+	private void EndThreadSafeCalls()
+	{
+		if (!App.IsMainThread())
+		{
+			gl.Flush();
+			SDL_GL_MakeCurrent(window, nint.Zero);
+			offMainMutex.ReleaseMutex();
+		}
+	}
+
+	private void InitializeContext(ContextState state)
+	{
+		// setup debug callback
+		gl.Enable(GL.DEBUG_OUTPUT);
+		gl.Enable(GL.DEBUG_OUTPUT_SYNCHRONOUS);
+		gl.DebugMessageCallback(&OnDebugMessageCallback, nint.Zero);
+
+		// don't include row padding
+		gl.PixelStorei(GL.PACK_ALIGNMENT, 1);
+		gl.PixelStorei(GL.UNPACK_ALIGNMENT, 1);
+
+		// blend is always enabled
+		gl.Enable(GL.BLEND);
+
+		state.Initializing = true;
+		BindProgram(state, 0);
+		BindFrameBuffer(state, null);
+		BindArray(state, null);
+		SetViewport(state, false, default);
+		SetScissor(state, false, default);
+		SetBlend(state, new());
+		SetCull(state, CullMode.None);
+		SetDepthCompare(state, false, DepthCompare.Always);
+		SetDepthMask(state, false);
+		state.Initializing = false;
+	}
+
+	private void BindFrameBuffer(ContextState state, TargetResource? target)
 	{
 		uint framebuffer = 0;
 
@@ -761,17 +799,36 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		}
 		else
 		{
-			framebuffer = target.ID;
+			// validate this framebuffer for the given context
+			if (!target.ContextID.TryGetValue(state.Context, out var id))
+			{
+				// gen framebuffer
+				var ids = stackalloc uint[1];
+				gl.GenFramebuffers(1, new nint(ids));
+				target.ContextID[state.Context] = id = ids[0];
+
+				// force bind
+				gl.BindFramebuffer(GL.FRAMEBUFFER, id);
+				state.FrameBuffer = 0;
+
+				// bind attachments
+				for (int i = 0; i < target.ColorAttachments.Count; i ++)
+					gl.FramebufferTexture2D(GL.FRAMEBUFFER, GL.COLOR_ATTACHMENT0 + i, GL.TEXTURE_2D, target.ColorAttachments[i].ID, 0);
+				if (target.DepthAttachment != null)
+					gl.FramebufferTexture2D(GL.FRAMEBUFFER, GL.DEPTH_STENCIL_ATTACHMENT, GL.TEXTURE_2D, target.DepthAttachment.ID, 0);
+			}
+
+			framebuffer = id;
 			state.FrameBufferWidth = target.Width;
 			state.FrameBufferHeight = target.Height;
 		}
 
+		// bind buffer if not already bound
 		if (state.Initializing || state.FrameBuffer != framebuffer)
 		{
 			var attachments = stackalloc GL[4];
 			gl.BindFramebuffer(GL.FRAMEBUFFER, framebuffer);
 
-			// figure out draw buffers
 			if (target == null)
 			{
 				attachments[0] = GL.BACK_LEFT;
@@ -788,35 +845,60 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		state.FrameBuffer = framebuffer;
 	}
 
-	private void BindProgram(uint id)
+	private void BindProgram(ContextState state, uint id)
 	{
 		if (state.Initializing || state.Program != id)
 			gl.UseProgram(id);
 		state.Program = id;
 	}
 
-	private void BindArray(uint id)
+	private void BindArray(ContextState state, MeshResource? mesh)
 	{
-		if (state.Initializing || state.Array != id)
+		uint id;
+		
+		// binding null
+		if (mesh == null)
+		{
+			id = 0;
+		}
+		// validate that the mesh array exists
+		else if (!mesh.ContextID.TryGetValue(state.Context, out id))
+		{
+			// create vertex array object for this context
+			var ids = stackalloc uint[1];
+			gl.GenVertexArrays(1, new nint(ids));
+			mesh.ContextID[state.Context] = id = ids[0];
+
+			// force bind array
 			gl.BindVertexArray(id);
-		state.Array = id;
+			state.VAO = 0;
+
+			// make sure any buffers that were already created are also bound on this context
+			BindVertexBuffer(state, mesh.VertexBuffer);
+			BindIndexBuffer(state, mesh.IndexBuffer);
+		}
+
+		// bind current vertex array object
+		if (state.Initializing || state.VAO != id)
+			gl.BindVertexArray(id);
+		state.VAO = id;
 	}
 
-	private void BindVertexBuffer(uint id)
+	private void BindVertexBuffer(ContextState state, uint id)
 	{
 		if (state.Initializing || state.VertexBuffer != id)
 			gl.BindBuffer(GL.ARRAY_BUFFER, id);
 		state.VertexBuffer = id;
 	}
 
-	private void BindIndexBuffer(uint id)
+	private void BindIndexBuffer(ContextState state, uint id)
 	{
 		if (state.Initializing || state.IndexBuffer != id)
 			gl.BindBuffer(GL.ELEMENT_ARRAY_BUFFER, id);
 		state.IndexBuffer = id;
 	}
 
-	private void BindTexture(int slot, uint id)
+	private void BindTexture(ContextState state, int slot, uint id)
 	{
 		if (state.ActiveTextureSlot != slot)
 		{
@@ -833,7 +915,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 	// Same as BindTexture, except the resulting global state doesn't
 	// necessarily change if no changes were required.
-	private void BindTextureConditionally(int slot, uint id)
+	private void BindTextureConditionally(ContextState state, int slot, uint id)
 	{
 		if (state.TextureSlots[slot] != id)
 		{
@@ -848,11 +930,11 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		}
 	}
 
-	private void SetTextureSampler(TextureResource? tex, TextureSampler sampler)
+	private void SetTextureSampler(ContextState state, TextureResource? tex, TextureSampler sampler)
 	{
 		if (tex != null && !tex.Disposed && tex.Sampler != sampler)
 		{
-			BindTexture(0, tex.ID);
+			BindTexture(state, 0, tex.ID);
 
 			if (tex.Sampler.Filter != sampler.Filter)
 			{
@@ -870,7 +952,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		}
 	}
 
-	private void SetViewport(bool enabled, RectInt rect)
+	private void SetViewport(ContextState state, bool enabled, RectInt rect)
 	{
 		RectInt viewport;
 
@@ -895,7 +977,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		}
 	}
 
-	private void SetScissor(bool enabled, in RectInt rect)
+	private void SetScissor(ContextState state, bool enabled, in RectInt rect)
 	{
 		// get input scissor first
 		var scissor = rect;
@@ -924,7 +1006,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		}
 	}
 
-	private void SetBlend(BlendMode blend)
+	private void SetBlend(ContextState state, BlendMode blend)
 	{
 		if (state.Initializing || state.Blend != blend)
 		{
@@ -960,7 +1042,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		state.Blend = blend;
 	}
 
-	private void SetDepthCompare(bool enabled, DepthCompare compare)
+	private void SetDepthCompare(ContextState state, bool enabled, DepthCompare compare)
 	{
 		if (state.Initializing || enabled != state.DepthCompareEnabled || compare != state.DepthCompare)
 		{
@@ -990,14 +1072,14 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		state.DepthCompareEnabled = enabled;
 	}
 
-	private void SetDepthMask(bool depthMask)
+	private void SetDepthMask(ContextState state, bool depthMask)
 	{
 		if (state.Initializing || depthMask != state.DepthMaskEnabled)
 			gl.DepthMask(depthMask);
 		state.DepthMaskEnabled = depthMask;
 	}
 
-	private void SetCull(CullMode cull)
+	private void SetCull(ContextState state, CullMode cull)
 	{
 		if (state.Initializing || cull != state.Cull)
 		{
@@ -1022,14 +1104,22 @@ internal sealed unsafe class RendererOpenGL : Renderer
 	}
 
 	// NOTE: buffer must be bound
-	private void BindAttributes(in VertexFormat format, int divisor)
+	private void BindVertexAttributes(ContextState state, MeshResource mesh)
 	{
+		// already bound
+		if (mesh.BoundVertexFormat.TryGetValue(state.Context, out var existingFormat) &&
+			existingFormat == mesh.VertexFormat)
+			return;
+
+		// mark as bound
+		mesh.BoundVertexFormat[state.Context] = mesh.VertexFormat;
+
 		// TODO: disable existing enabled attributes?
 		// ...
 
 		// enable attributes
 		int ptr = 0;
-		foreach (var element in format.Elements)
+		foreach (var element in mesh.VertexFormat.Elements)
 		{
 			(GL type, int size, int count) = element.Type switch
 			{
@@ -1048,8 +1138,8 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 			uint location = (uint)element.Index;
 			gl.EnableVertexAttribArray(location);
-			gl.VertexAttribPointer(location, count, type, element.Normalized, format.Stride, new nint(ptr));
-			gl.VertexAttribDivisor(location, (uint)divisor);
+			gl.VertexAttribPointer(location, count, type, element.Normalized, mesh.VertexFormat.Stride, new nint(ptr));
+			gl.VertexAttribDivisor(location, 0);
 			ptr += count * size;
 		}
 	}
