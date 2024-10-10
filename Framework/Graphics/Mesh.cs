@@ -68,6 +68,7 @@ public class Mesh : IResource
 	public unsafe void SetIndices(int count, IndexFormat format)
 		=> SetIndices(nint.Zero, count, format);
 
+	[Obsolete("Use non-generic SetIndices methods")]
 	public void SetIndices<T>(ReadOnlySpan<T> indices) where T : unmanaged
 	{
 		SetIndicesSpan(indices, true switch

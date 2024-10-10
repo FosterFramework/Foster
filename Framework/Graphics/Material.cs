@@ -23,7 +23,6 @@ public class Material
 
 	/// <summary>
 	/// The current Shader the Material is using.
-	/// If null, the Material will not have any Uniforms.
 	/// </summary>
 	public Shader? Shader
 	{
@@ -46,6 +45,9 @@ public class Material
 	internal byte[] VertexUniformBuffer = [];
 	internal byte[] FragmentUniformBuffer = [];
 
+	/// <summary>
+	/// Sets the current Shader this Material is using
+	/// </summary>
 	public void SetShader(Shader? shader)
 	{
 		if (this.shader == shader)
@@ -60,6 +62,9 @@ public class Material
 			Array.Resize(ref FragmentUniformBuffer, shader.Fragment.UniformSizeInBytes);
 	}
 
+	/// <summary>
+	/// Clears the State of this Material
+	/// </summary>
 	public void Clear()
 	{
 		SetShader(null);
@@ -67,6 +72,9 @@ public class Material
 		Array.Fill(FragmentSamplers, default);
 	}
 
+	/// <summary>
+	/// Copies the State of this Material to another one
+	/// </summary>
 	public void CopyTo(Material other)
 	{
 		other.SetShader(shader);
@@ -76,9 +84,19 @@ public class Material
 		Array.Copy(FragmentUniformBuffer, other.FragmentUniformBuffer, Math.Min(FragmentUniformBuffer.Length, other.FragmentUniformBuffer.Length));
 	}
 
+	/// <summary>
+	/// Checks if the Material has a given Uniform
+	/// </summary>
 	public bool Has(string uniform)
 		=> Has(uniform, out _, out _);
 
+	/// <summary>
+	/// Checks if the Material has a given Uniform
+	/// </summary>
+	/// <param name="uniform">The name of the Uniform</param>
+	/// <param name="type">The resulting Uniform Type, if it exists</param>
+	/// <param name="arrayElements">The resulting Uniform Array Elements, if it exists</param>
+	/// <returns>True if a uniform with the given name exists</returns>
 	public bool Has(string uniform, out UniformType type, out int arrayElements)
 	{
 		type = UniformType.None;
@@ -107,27 +125,27 @@ public class Material
 	}
 
 	public void Set(string uniform, float value)
-		=> Set(uniform, stackalloc float[1] { value });
+		=> Set(uniform, [value]);
 
 	public void Set(string uniform, Vector2 value)
-		=> Set(uniform, stackalloc float[2] { value.X, value.Y });
+		=> Set(uniform, [value.X, value.Y]);
 
 	public void Set(string uniform, Vector3 value)
-		=> Set(uniform, stackalloc float[3] { value.X, value.Y, value.Z });
+		=> Set(uniform, [value.X, value.Y, value.Z]);
 
 	public void Set(string uniform, Vector4 value)
-		=> Set(uniform, stackalloc float[4] { value.X, value.Y, value.Z, value.W });
+		=> Set(uniform, [value.X, value.Y, value.Z, value.W]);
 
 	public void Set(string uniform, Matrix3x2 value)
-		=> Set(uniform, stackalloc float[6] { value.M11, value.M12, value.M21, value.M22, value.M31, value.M32 });
+		=> Set(uniform, [value.M11, value.M12, value.M21, value.M22, value.M31, value.M32]);
 
 	public void Set(string uniform, Matrix4x4 value)
-		=> Set(uniform, stackalloc float[16] { 
+		=> Set(uniform, [ 
 			value.M11, value.M12, value.M13, value.M14, 
 			value.M21, value.M22, value.M23, value.M24,
 			value.M31, value.M32, value.M33, value.M34,
 			value.M41, value.M42, value.M43, value.M44,
-		});
+		]);
 
 	public void Set(string uniform, Color value)
 		=> Set(uniform, value.ToVector4());
