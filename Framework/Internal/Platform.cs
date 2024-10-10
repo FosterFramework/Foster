@@ -244,7 +244,7 @@ internal static partial class Platform
 		SDL_Scancode.SDL_SCANCODE_0 => Keys.D0,
 		SDL_Scancode.SDL_SCANCODE_RETURN => Keys.Enter,
 		SDL_Scancode.SDL_SCANCODE_ESCAPE => Keys.Escape,
-		SDL_Scancode.SDL_SCANCODE_BACKSPACE => Keys.Backslash,
+		SDL_Scancode.SDL_SCANCODE_BACKSPACE => Keys.Backspace,
 		SDL_Scancode.SDL_SCANCODE_TAB => Keys.Tab,
 		SDL_Scancode.SDL_SCANCODE_SPACE => Keys.Space,
 		SDL_Scancode.SDL_SCANCODE_MINUS => Keys.Minus,
