@@ -58,7 +58,6 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		public uint IndexBuffer;
 		public int IndexBufferSize;
 		public IndexFormat IndexBufferElementFormat;
-		public int IndexBufferElementSize;
 
 		public uint VertexBuffer;
 		public int VertexBufferSize;
@@ -412,11 +411,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		BindIndexBuffer(it.IndexBuffer);
 
 		// verify format
-		if (it.IndexBufferElementFormat != format)
-		{
-			it.IndexBufferElementFormat = format;
-			it.IndexBufferElementSize = format == IndexFormat.ThirtyTwo ? 4 : 2;
-		}
+		it.IndexBufferElementFormat = format;
 
 		// expand buffer if needed
 		int totalSize = dataDestOffset + dataSize;
@@ -699,7 +694,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 			mode: GL.TRIANGLES,
 			count: command.MeshIndexCount,
 			type: mesh.IndexBufferElementFormat == IndexFormat.ThirtyTwo ? GL.UNSIGNED_INT : GL.UNSIGNED_SHORT,
-			indices: new nint(mesh.IndexBufferElementSize * command.MeshIndexStart)
+			indices: new nint(mesh.IndexBufferElementFormat.SizeInBytes() * command.MeshIndexStart)
 		);
 
 		static bool TryGetUniformDataBuffer(string name, Material material, out Span<byte> data)

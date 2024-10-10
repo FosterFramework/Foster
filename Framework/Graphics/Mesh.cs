@@ -47,33 +47,15 @@ public class Mesh : IResource
 		Dispose(false);
 	}
 
-	private static IndexFormat GetIndexFormat<T>()
-		=> true switch
-		{
-			true when typeof(T) == typeof(short) => Framework.IndexFormat.Sixteen,
-			true when typeof(T) == typeof(ushort) => Framework.IndexFormat.Sixteen,
-			true when typeof(T) == typeof(int) => Framework.IndexFormat.ThirtyTwo,
-			true when typeof(T) == typeof(uint) => Framework.IndexFormat.ThirtyTwo,
-			_ => throw new NotImplementedException(),
-		};
-
-	private static int GetIndexFormatSize(Framework.IndexFormat format)
-		=> format switch
-		{
-			Framework.IndexFormat.Sixteen => 2,
-			Framework.IndexFormat.ThirtyTwo => 4,
-			_ => throw new NotImplementedException(),
-		};
-
-	private unsafe void SetIndicesSpan<T>(ReadOnlySpan<T> indices) where T : unmanaged
+	private unsafe void SetIndicesSpan<T>(ReadOnlySpan<T> indices, IndexFormat format) where T : unmanaged
 	{
 		fixed (void* ptr = indices)
-			SetIndices(new nint(ptr), indices.Length, GetIndexFormat<T>());
+			SetIndices(new nint(ptr), indices.Length, format);
 	}
 
-	private unsafe void SetSubIndicesSpan<T>(int offset, ReadOnlySpan<T> indices) where T : unmanaged
+	private unsafe void SetSubIndicesSpan<T>(int offset, ReadOnlySpan<T> indices, IndexFormat format) where T : unmanaged
 	{
-		if (!IndexFormat.HasValue || IndexFormat.Value != GetIndexFormat<T>())
+		if (!IndexFormat.HasValue || IndexFormat.Value != format)
 			throw new Exception("Index Format mismatch; SetSubIndices must use the existing Format set in SetIndices");
 
 		fixed (void* ptr = indices)
@@ -86,23 +68,35 @@ public class Mesh : IResource
 	public unsafe void SetIndices(int count, IndexFormat format)
 		=> SetIndices(nint.Zero, count, format);
 
+	public void SetIndices<T>(ReadOnlySpan<T> indices) where T : unmanaged
+	{
+		SetIndicesSpan(indices, true switch
+		{
+			true when typeof(T) == typeof(short) => Framework.IndexFormat.Sixteen,
+			true when typeof(T) == typeof(ushort) => Framework.IndexFormat.Sixteen,
+			true when typeof(T) == typeof(int) => Framework.IndexFormat.ThirtyTwo,
+			true when typeof(T) == typeof(uint) => Framework.IndexFormat.ThirtyTwo,
+			_ => throw new NotImplementedException(),
+		});
+	}
+
 	/// <summary>
 	/// Recreates the Mesh's Index Buffer to a given index data.
 	/// </summary>
-	public unsafe void SetIndices(ReadOnlySpan<ushort> indices)
-		=> SetIndicesSpan(indices);
+	public void SetIndices(ReadOnlySpan<ushort> indices)
+		=> SetIndicesSpan(indices, Framework.IndexFormat.Sixteen);
 
 	/// <inheritdoc cref="SetIndices(ReadOnlySpan{ushort})"/>
-	public unsafe void SetIndices(ReadOnlySpan<short> indices)
-		=> SetIndicesSpan(indices);
+	public void SetIndices(ReadOnlySpan<short> indices)
+		=> SetIndicesSpan(indices, Framework.IndexFormat.Sixteen);
 
 	/// <inheritdoc cref="SetIndices(ReadOnlySpan{ushort})"/>
-	public unsafe void SetIndices(ReadOnlySpan<uint> indices)
-		=> SetIndicesSpan(indices);
+	public void SetIndices(ReadOnlySpan<uint> indices)
+		=> SetIndicesSpan(indices, Framework.IndexFormat.ThirtyTwo);
 
 	/// <inheritdoc cref="SetIndices(ReadOnlySpan{ushort})"/>
-	public unsafe void SetIndices(ReadOnlySpan<int> indices)
-		=> SetIndicesSpan(indices);
+	public void SetIndices(ReadOnlySpan<int> indices)
+		=> SetIndicesSpan(indices, Framework.IndexFormat.ThirtyTwo);
 
 	/// <inheritdoc cref="SetIndices(ReadOnlySpan{ushort})"/>
 	/// <param name="data">The Index Data to apply</param>
@@ -119,7 +113,7 @@ public class Mesh : IResource
 		App.Renderer.SetMeshIndexData(
 			Resource,
 			data,
-			GetIndexFormatSize(format) * count,
+			format.SizeInBytes() * count,
 			0,
 			(IndexFormat = format).Value
 		);
@@ -131,19 +125,19 @@ public class Mesh : IResource
 	/// This cannot modify the existing Index Format.
 	/// </summary>
 	public void SetSubIndices(int offset, ReadOnlySpan<ushort> indices)
-		=> SetSubIndicesSpan(offset, indices);
+		=> SetSubIndicesSpan(offset, indices, Framework.IndexFormat.Sixteen);
 
 	/// <inheritdoc cref="SetSubIndices(int, ReadOnlySpan{ushort})"/>
 	public void SetSubIndices(int offset, ReadOnlySpan<short> indices)
-		=> SetSubIndicesSpan(offset, indices);
+		=> SetSubIndicesSpan(offset, indices, Framework.IndexFormat.Sixteen);
 
 	/// <inheritdoc cref="SetSubIndices(int, ReadOnlySpan{ushort})"/>
 	public void SetSubIndices(int offset, ReadOnlySpan<uint> indices)
-		=> SetSubIndicesSpan(offset, indices);
+		=> SetSubIndicesSpan(offset, indices, Framework.IndexFormat.ThirtyTwo);
 
 	/// <inheritdoc cref="SetSubIndices(int, ReadOnlySpan{ushort})"/>
 	public void SetSubIndices(int offset, ReadOnlySpan<int> indices)
-		=> SetSubIndicesSpan(offset, indices);
+		=> SetSubIndicesSpan(offset, indices, Framework.IndexFormat.ThirtyTwo);
 
 	/// <inheritdoc cref="SetSubIndices(int, ReadOnlySpan{ushort})"/>
 	public void SetSubIndices(int offset, nint data, int count)
@@ -157,15 +151,13 @@ public class Mesh : IResource
 		if (offset + count > IndexCount)
 			throw new Exception("SetSubIndices is out of range of the existing Index Buffer");
 
-		var size = GetIndexFormatSize(IndexFormat.Value);
-
 		Resource ??= App.Renderer.CreateMesh();
 
 		App.Renderer.SetMeshIndexData(
 			Resource,
 			data,
-			size * count,
-			size * offset,
+			IndexFormat.Value.SizeInBytes() * count,
+			IndexFormat.Value.SizeInBytes() * offset,
 			IndexFormat.Value
 		);
 	}
