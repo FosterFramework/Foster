@@ -1,4 +1,3 @@
-
 namespace Foster.Framework;
 
 /// <summary>

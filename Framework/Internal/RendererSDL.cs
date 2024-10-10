@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using static SDL3.SDL;
 
 namespace Foster.Framework;
@@ -359,7 +358,7 @@ internal unsafe class RendererSDL : Renderer
 				TextureFormat.Depth24Stencil8 => supportsD24S8
 					? SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT
 					: SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT,
-				_ => throw new InvalidEnumArgumentException()
+				_ => throw new System.ComponentModel.InvalidEnumArgumentException(nameof(format), (int)format, typeof(TextureFormat))
 			},
 			usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER,
 			width = (uint)width,

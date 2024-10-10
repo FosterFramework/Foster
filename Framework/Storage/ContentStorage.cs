@@ -1,5 +1,3 @@
-
-
 namespace Foster.Framework.Storage;
 
 /// <summary>

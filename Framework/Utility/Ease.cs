@@ -1,5 +1,4 @@
-﻿
-namespace Foster.Framework;
+﻿namespace Foster.Framework;
 
 /// <summary>
 /// Ease Delegates

@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Numerics;
 
 namespace Foster.Framework;
@@ -9,6 +8,9 @@ namespace Foster.Framework;
 /// </summary>
 public class Material
 {
+	/// <summary>
+	/// Combination of Texture and Sampler bound to a Slot in the Material
+	/// </summary>
 	public readonly record struct BoundSampler(Texture? Texture, TextureSampler Sampler);
 
 	/// <summary>
@@ -40,10 +42,20 @@ public class Material
 	/// </summary>
 	public Material(Shader? shader) => SetShader(shader);
 
-	private Shader? shader;
-
+	/// <summary>
+	/// Stores the Vertex Uniform Block Data
+	/// </summary>
 	internal byte[] VertexUniformBuffer = [];
+
+	/// <summary>
+	/// Stores the Fragment Uniform Block Data
+	/// </summary>
 	internal byte[] FragmentUniformBuffer = [];
+
+	/// <summary>
+	/// Active Shader
+	/// </summary>
+	private Shader? shader;
 
 	/// <summary>
 	/// Sets the current Shader this Material is using

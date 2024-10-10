@@ -1,4 +1,3 @@
-
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using static SDL3.SDL;

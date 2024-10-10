@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -295,7 +294,8 @@ public class Image : IDisposable
 	/// <param name="blend">Optional blend method</param>
 	public unsafe void CopyPixels(ReadOnlySpan<Color> sourcePixels, int sourceWidth, int sourceHeight, in RectInt sourceRect, in Point2 destination, Func<Color, Color, Color>? blend = null)
 	{
-		Debug.Assert(sourcePixels.Length >= sourceWidth * sourceHeight);
+		if (sourcePixels.Length < sourceWidth * sourceHeight)
+			throw new Exception("Trying to write more pixels than the provided data length");
 
 		var target = new RectInt(destination.X, destination.Y, sourceRect.Width, sourceRect.Height);
 
@@ -317,8 +317,9 @@ public class Image : IDisposable
 				var srcPtr = sourcePtr + ((p.Y + y) * sourceWidth + p.X);
 				var dstPtr = destinationPtr + ((dst.Y + y) * Width + dst.X);
 
-				Debug.Assert(srcPtr + len <= sourceEnd);
-				Debug.Assert(dstPtr + len <= destinationEnd);
+				if (srcPtr + len > sourceEnd ||
+					dstPtr + len > destinationEnd)
+					throw new Exception("Out of range");
 
 				if (blend == null)
 				{
