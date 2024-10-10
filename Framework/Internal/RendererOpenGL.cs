@@ -223,11 +223,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 			ID = 0,
 			Width = width,
 			Height = height,
-			Format = format,
-			InternalFormatGL = GL.RED,
-			FormatGL = GL.RED,
-			TypeGL = GL.UNSIGNED_BYTE,
-			Sampler = new()
+			Format = format
 		};
 
 		(texture.InternalFormatGL, texture.FormatGL, texture.TypeGL) = format switch
@@ -301,8 +297,6 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 	private void DestroyTexture(TextureResource texture)
 	{
-		texture.Destroyed = true;
-
 		// make sure it's not bound anymore
 		for (int i = 0; i < 32; i ++)
 			if (state.TextureSlots[i] == texture.ID)
@@ -339,8 +333,6 @@ internal sealed unsafe class RendererOpenGL : Renderer
 			DestroyResource(attachment);
 		if (target.DepthAttachment != null)
 			DestroyResource(target.DepthAttachment);
-
-		target.Destroyed = true;
 	}
 
 	public override IHandle CreateMesh()
@@ -446,7 +438,6 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		mesh.ID = 0;
 		mesh.VertexBuffer = 0;
 		mesh.IndexBuffer = 0;
-		mesh.Destroyed = true;
 	}
 
 	public override IHandle CreateShader(in ShaderCreateInfo shaderInfo)
