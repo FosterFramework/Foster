@@ -3,8 +3,8 @@ namespace Foster.Framework;
 [Obsolete("Use App Methods instead")]
 public static class Graphics
 {
-	[Obsolete("Origin is never Bottom Left")]
-	public const bool OriginBottomLeft = false;
+	[Obsolete("Use App.Graphics.OriginBottomLeft")]
+	public static bool OriginBottomLeft => App.Graphics.OriginBottomLeft;
 
 	[Obsolete("No Longer a max texture size")]
 	public const int MaxTextureSize = 8192;
