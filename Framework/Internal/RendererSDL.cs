@@ -1115,7 +1115,7 @@ internal unsafe class RendererSDL : Renderer
 				{
 					// TODO: is this a valid result? should this throw?
 					swapchain = new();
-					Log.Warning($"{nameof(SDL_AcquireGPUSwapchainTexture)} failed: {Platform.GetErrorFromSDL()}");
+					Log.Warning($"{nameof(SDL_AcquireGPUSwapchainTexture)} failed: {SDL_GetError()}");
 				}
 			}
 

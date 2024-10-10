@@ -50,9 +50,10 @@ internal static partial class Platform
 	}
 
 	/// <summary>
-	/// Converts and allocates a null-terminating utf8 string from a C# string
+	/// Converts and allocates a null-terminating utf8 string from a C# string.
+	/// Call <seealso cref="FreeUTF8"/> after you're done with the UTF8 string.
 	/// </summary>
-	public static unsafe nint ToUTF8(in string str)
+	public static unsafe nint AllocateUTF8(in string str)
 	{
 		var count = Encoding.UTF8.GetByteCount(str) + 1;
 		var ptr = Marshal.AllocHGlobal(count);
@@ -63,20 +64,15 @@ internal static partial class Platform
 	}
 
 	/// <summary>
-	/// Frees a UTF8 string that was allocated from <seealso cref="ToUTF8"/>
+	/// Frees a UTF8 string that was allocated from <seealso cref="AllocateUTF8"/>
 	/// </summary>
 	public static void FreeUTF8(nint ptr) => Marshal.FreeHGlobal(ptr);
-
-	/// <summary>
-	/// Wrapper around SDL_GetError() to return a C# string
-	/// </summary>
-	public static string GetErrorFromSDL() => SDL_GetError();
 
 	/// <summary>
 	/// Creates an Exception with information from SDL_GetError()
 	/// </summary>
 	public static Exception CreateExceptionFromSDL(string sdlMethod, string? fosterInfo = null)
-		=> new($"{(fosterInfo != null ? $"{fosterInfo}. " : "")}{sdlMethod} failed: {GetErrorFromSDL()}");
+		=> new($"{(fosterInfo != null ? $"{fosterInfo}. " : "")}{sdlMethod} failed: {SDL_GetError()}");
 
 	/// <summary>
 	/// Returns a byte array for an embedded File

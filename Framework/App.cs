@@ -259,7 +259,7 @@ public static class App
 			var scale = SDL_GetWindowDisplayScale(Window);
 			if (scale <= 0)
 			{
-				Log.Warning($"SDL_GetWindowDisplayScale failed: {Platform.GetErrorFromSDL()}");
+				Log.Warning($"SDL_GetWindowDisplayScale failed: {SDL_GetError()}");
 				return new(WidthInPixels / Width, HeightInPixels / Height);
 			}
 			return Vector2.One * scale;

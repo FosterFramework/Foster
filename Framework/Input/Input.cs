@@ -86,7 +86,7 @@ public static class Input
 		else
 			result = SDL_HideCursor();
 		if (!result)
-			Log.Warning($"Failed to set Mouse visibility: {Platform.GetErrorFromSDL()}");
+			Log.Warning($"Failed to set Mouse visibility: {SDL_GetError()}");
 	}
 
 	/// <summary>
@@ -97,7 +97,7 @@ public static class Input
 	public static void SetMouseRelativeMode(bool enabled)
 	{
 		if (!SDL_SetWindowRelativeMouseMode(App.Window, enabled))
-			Log.Warning($"Failed to set Mouse Relative Mode: {Platform.GetErrorFromSDL()}");
+			Log.Warning($"Failed to set Mouse Relative Mode: {SDL_GetError()}");
 
 		if (enabled)
 			SDL_WarpMouseInWindow(App.Window, App.Width / 2, App.Height / 2);
@@ -119,7 +119,7 @@ public static class Input
 			throw new Exception("Using an invalid cursor!");
 
 		if (!SDL_SetCursor(cursor.Handle))
-			Log.Warning($"Failed to set Mouse Cursor: {Platform.GetErrorFromSDL()}");
+			Log.Warning($"Failed to set Mouse Cursor: {SDL_GetError()}");
 		else
 			currentCursor = cursor;
 	}

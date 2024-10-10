@@ -117,7 +117,7 @@ public static class FileDialog
 			// null means there was a system error
 			if (ptr == null)
 			{
-				Log.Error(Platform.GetErrorFromSDL());
+				Log.Error(SDL_GetError());
 				paths = [];
 				result = Result.Failed;
 			}
@@ -153,8 +153,8 @@ public static class FileDialog
 			Span<SDL_DialogFileFilter> filtersUtf8 = stackalloc SDL_DialogFileFilter[properties.Filters.Length];
 			for (int i = 0; i < properties.Filters.Length; i ++)
 			{
-				filtersUtf8[i].name = (byte*)Platform.ToUTF8(properties.Filters[i].Name);
-				filtersUtf8[i].pattern = (byte*)Platform.ToUTF8(properties.Filters[i].Pattern);
+				filtersUtf8[i].name = (byte*)Platform.AllocateUTF8(properties.Filters[i].Name);
+				filtersUtf8[i].pattern = (byte*)Platform.AllocateUTF8(properties.Filters[i].Pattern);
 			}
 
 			// create a pointer to our user callback so that SDL can pass it around
