@@ -271,6 +271,8 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 	private void DestroyTexture(TextureResource texture)
 	{
+		if (!App.IsMainThread())
+			throw new Exception("Must destroy resources from the Main Thread");
 		var ids = stackalloc uint[1] { texture.ID };
 		mainState.GL.DeleteTextures(1, new nint(ids));
 	}
@@ -289,6 +291,8 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 	private void DestroyTarget(TargetResource target)
 	{
+		if (!App.IsMainThread())
+			throw new Exception("Must destroy resources from the Main Thread");
 		var ids = stackalloc uint[1];
 		foreach (var id in target.ContextFBO.Values)
 		{
@@ -380,6 +384,8 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 	private void DestroyMesh(MeshResource mesh)
 	{
+		if (!App.IsMainThread())
+			throw new Exception("Must destroy resources from the Main Thread");
 		var ids = stackalloc uint[1];
 
 		if (mesh.VertexBuffer != 0)
@@ -515,6 +521,8 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 	private void DestroyShader(ShaderResource shader)
 	{
+		if (!App.IsMainThread())
+			throw new Exception("Must destroy resources from the Main Thread");
 		mainState.GL.DeleteProgram(shader.ID);
 	}
 
@@ -539,6 +547,9 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 	private void DestroyQueuedResources()
 	{
+		if (!App.IsMainThread())
+			throw new Exception("Must destroy resources from the Main Thread");
+
 		while (destroying.TryDequeue(out var it))
 		{
 			if (it is TextureResource texture)
