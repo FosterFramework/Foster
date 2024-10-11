@@ -73,7 +73,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 	{
 		public bool Initializing;
 		public nint Context;
-		public GLFuncs Gl = null!;
+		public GLFuncs GL = null!;
 		public int ActiveTextureSlot;
 		public uint[] TextureSlots = new uint[32];
 		public uint Program;
@@ -143,10 +143,10 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		InitializeContext(mainState, true);
 
 		// get version / renderer device
-		mainState.Gl.GetIntegerv((GL)0x821B, out int major);
-		mainState.Gl.GetIntegerv((GL)0x821C, out int minor);
+		mainState.GL.GetIntegerv((GL)0x821B, out int major);
+		mainState.GL.GetIntegerv((GL)0x821C, out int minor);
 		version = new(major, minor);
-		Log.Info($"Graphics Driver: OpenGL {major}.{minor} [{Platform.ParseUTF8(mainState.Gl.GetString(GL.RENDERER))}]");
+		Log.Info($"Graphics Driver: OpenGL {major}.{minor} [{Platform.ParseUTF8(mainState.GL.GetString(GL.RENDERER))}]");
 
 		// vsync is on by default
 		SetVSync(true);
@@ -216,7 +216,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		// generate ID
 		{
 			var ids = stackalloc uint[1];
-			state.Gl.GenTextures(1, new nint(ids));
+			state.GL.GenTextures(1, new nint(ids));
 			if (ids[0] == 0)
 				throw new Exception("Failed to create Texture");
 			texture.ID = ids[0];
@@ -225,7 +225,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		// setup texture properties
 		{
 			BindTexture(state, 0, texture.ID);
-			state.Gl.TexImage2D(GL.TEXTURE_2D, 0, texture.InternalFormatGL, width, height, 0, texture.FormatGL, texture.TypeGL, nint.Zero);
+			state.GL.TexImage2D(GL.TEXTURE_2D, 0, texture.InternalFormatGL, width, height, 0, texture.FormatGL, texture.TypeGL, nint.Zero);
 		}
 
 		// Set default filter
@@ -253,7 +253,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		{
 			BeginThreadSafeCalls(out var state);
 			BindTexture(state, 0, res.ID);
-			state.Gl.TexImage2D(GL.TEXTURE_2D, 0, res.InternalFormatGL, res.Width, res.Height, 0, res.FormatGL, res.TypeGL, data);
+			state.GL.TexImage2D(GL.TEXTURE_2D, 0, res.InternalFormatGL, res.Width, res.Height, 0, res.FormatGL, res.TypeGL, data);
 			EndThreadSafeCalls(state);
 		}
 	}
@@ -264,7 +264,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		{
 			BeginThreadSafeCalls(out var state);
 			BindTexture(state, 0, res.ID);
-			state.Gl.GetTexImage(GL.TEXTURE_2D, 0, res.InternalFormatGL, res.TypeGL, data);
+			state.GL.GetTexImage(GL.TEXTURE_2D, 0, res.InternalFormatGL, res.TypeGL, data);
 			EndThreadSafeCalls(state);
 		}
 	}
@@ -272,7 +272,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 	private void DestroyTexture(TextureResource texture)
 	{
 		var ids = stackalloc uint[1] { texture.ID };
-		mainState.Gl.DeleteTextures(1, new nint(ids));
+		mainState.GL.DeleteTextures(1, new nint(ids));
 	}
 
 	public override IHandle CreateTarget(int width, int height)
@@ -293,7 +293,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		foreach (var id in target.ContextFBO.Values)
 		{
 			ids[0] = id;
-			mainState.Gl.DeleteFramebuffers(1, new nint(ids));
+			mainState.GL.DeleteFramebuffers(1, new nint(ids));
 		}
 		foreach (var attachment in target.ColorAttachments)
 			DestroyResource(attachment);
@@ -320,7 +320,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		if (it.VertexBuffer == 0)
 		{
 			var ids = stackalloc uint[1];
-			state.Gl.GenBuffers(1, new nint(ids));
+			state.GL.GenBuffers(1, new nint(ids));
 			it.VertexBuffer = ids[0];
 		}
 
@@ -332,11 +332,11 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		if (totalSize > it.VertexBufferSize)
 		{
 			it.VertexBufferSize = totalSize;
-			state.Gl.BufferData(GL.ARRAY_BUFFER, totalSize, nint.Zero, GL.DYNAMIC_DRAW);
+			state.GL.BufferData(GL.ARRAY_BUFFER, totalSize, nint.Zero, GL.DYNAMIC_DRAW);
 		}
 
 		// copy data to dst
-		state.Gl.BufferSubData(GL.ARRAY_BUFFER, dataDestOffset, dataSize, data);
+		state.GL.BufferSubData(GL.ARRAY_BUFFER, dataDestOffset, dataSize, data);
 
 		BindArray(state, null);
 		EndThreadSafeCalls(state);
@@ -353,7 +353,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		if (it.IndexBuffer == 0)
 		{
 			var ids = stackalloc uint[1];
-			state.Gl.GenBuffers(1, new nint(ids));
+			state.GL.GenBuffers(1, new nint(ids));
 			it.IndexBuffer = ids[0];
 		}
 
@@ -368,11 +368,11 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		if (totalSize > it.IndexBufferSize)
 		{
 			it.IndexBufferSize = totalSize;
-			state.Gl.BufferData(GL.ELEMENT_ARRAY_BUFFER, totalSize, nint.Zero, GL.DYNAMIC_DRAW);
+			state.GL.BufferData(GL.ELEMENT_ARRAY_BUFFER, totalSize, nint.Zero, GL.DYNAMIC_DRAW);
 		}
 
 		// copy data to dst
-		state.Gl.BufferSubData(GL.ELEMENT_ARRAY_BUFFER, dataDestOffset, dataSize, data);
+		state.GL.BufferSubData(GL.ELEMENT_ARRAY_BUFFER, dataDestOffset, dataSize, data);
 
 		BindArray(state, null);
 		EndThreadSafeCalls(state);
@@ -385,18 +385,18 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		if (mesh.VertexBuffer != 0)
 		{
 			ids[0] = mesh.VertexBuffer;
-			mainState.Gl.DeleteBuffers(1, new nint(ids));
+			mainState.GL.DeleteBuffers(1, new nint(ids));
 		}
 		if (mesh.IndexBuffer != 0)
 		{
 			ids[0] = mesh.IndexBuffer;
-			mainState.Gl.DeleteBuffers(1, new nint(ids));
+			mainState.GL.DeleteBuffers(1, new nint(ids));
 		}
 		
 		foreach (var id in mesh.ContextVAO.Values)
 		{
 			ids[0] = id;
-			mainState.Gl.DeleteVertexArrays(1, new nint(ids));
+			mainState.GL.DeleteVertexArrays(1, new nint(ids));
 		}
 
 		mesh.ContextVAO.Clear();
@@ -413,21 +413,21 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		var strBuf = stackalloc byte[MaxStringBufferLength];
 
 		// create vertex shader
-		var vertexShader = state.Gl.CreateShader(GL.VERTEX_SHADER);
+		var vertexShader = state.GL.CreateShader(GL.VERTEX_SHADER);
 		{
 			fixed (byte* src = shaderInfo.Vertex.Code)
 			{
 				var sources = stackalloc nint[1] { new nint(src) };
 				var lengths = stackalloc int[1] { shaderInfo.Vertex.Code.Length };
-				state.Gl.ShaderSource(vertexShader, 1, sources, lengths);
+				state.GL.ShaderSource(vertexShader, 1, sources, lengths);
 			}
-			state.Gl.CompileShader(vertexShader);
-			state.Gl.GetShaderInfoLog(vertexShader, MaxStringBufferLength, out int logLength, new nint(strBuf));
-			state.Gl.GetShaderiv(vertexShader, GL.COMPILE_STATUS, out int result);
+			state.GL.CompileShader(vertexShader);
+			state.GL.GetShaderInfoLog(vertexShader, MaxStringBufferLength, out int logLength, new nint(strBuf));
+			state.GL.GetShaderiv(vertexShader, GL.COMPILE_STATUS, out int result);
 
 			if (result == 0)
 			{
-				state.Gl.DeleteShader(vertexShader);
+				state.GL.DeleteShader(vertexShader);
 				throw new Exception($"Failed to create Vertex Shader: {Platform.ParseUTF8(new nint(strBuf))}");
 			}
 			else if (logLength > 0)
@@ -437,22 +437,22 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		}
 
 		// create fragment shader
-		var fragmentShader = state.Gl.CreateShader(GL.FRAGMENT_SHADER);
+		var fragmentShader = state.GL.CreateShader(GL.FRAGMENT_SHADER);
 		{
 			fixed (byte* src = shaderInfo.Fragment.Code)
 			{
 				var sources = stackalloc nint[1] { new nint(src) };
 				var lengths = stackalloc int[1] { shaderInfo.Fragment.Code.Length };
-				state.Gl.ShaderSource(fragmentShader, 1, sources, lengths);
+				state.GL.ShaderSource(fragmentShader, 1, sources, lengths);
 			}
-			state.Gl.CompileShader(fragmentShader);
-			state.Gl.GetShaderInfoLog(fragmentShader, MaxStringBufferLength, out int logLength, new nint(strBuf));
-			state.Gl.GetShaderiv(fragmentShader, GL.COMPILE_STATUS, out int result);
+			state.GL.CompileShader(fragmentShader);
+			state.GL.GetShaderInfoLog(fragmentShader, MaxStringBufferLength, out int logLength, new nint(strBuf));
+			state.GL.GetShaderiv(fragmentShader, GL.COMPILE_STATUS, out int result);
 
 			if (result == 0)
 			{
-				state.Gl.DeleteShader(vertexShader);
-				state.Gl.DeleteShader(fragmentShader);
+				state.GL.DeleteShader(vertexShader);
+				state.GL.DeleteShader(fragmentShader);
 				throw new Exception($"Failed to create Fragment Shader: {Platform.ParseUTF8(new nint(strBuf))}");
 			}
 			else if (logLength > 0)
@@ -462,19 +462,19 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		}
 
 		// create actual shader program
-		var id = state.Gl.CreateProgram();
+		var id = state.GL.CreateProgram();
 		{
-			state.Gl.AttachShader(id, vertexShader);
-			state.Gl.AttachShader(id, fragmentShader);
-			state.Gl.LinkProgram(id);
-			state.Gl.GetProgramInfoLog(id, MaxStringBufferLength, out var logLength, new nint(strBuf));
-			state.Gl.DetachShader(id, vertexShader);
-			state.Gl.DetachShader(id, fragmentShader);
-			state.Gl.DeleteShader(vertexShader);
-			state.Gl.DeleteShader(fragmentShader);
+			state.GL.AttachShader(id, vertexShader);
+			state.GL.AttachShader(id, fragmentShader);
+			state.GL.LinkProgram(id);
+			state.GL.GetProgramInfoLog(id, MaxStringBufferLength, out var logLength, new nint(strBuf));
+			state.GL.DetachShader(id, vertexShader);
+			state.GL.DetachShader(id, fragmentShader);
+			state.GL.DeleteShader(vertexShader);
+			state.GL.DeleteShader(fragmentShader);
 
 			// validate link status
-			state.Gl.GetProgramiv(id, GL.LINK_STATUS, out var linkResult);
+			state.GL.GetProgramiv(id, GL.LINK_STATUS, out var linkResult);
 			if (linkResult == 0)
 				throw new Exception($"Failed to create Shader: {Platform.ParseUTF8(new nint(strBuf))}");
 			else if (logLength > 0)
@@ -485,14 +485,14 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		TrackResource(shader);
 
 		// query uniforms
-		state.Gl.GetProgramiv(id, GL.ACTIVE_UNIFORMS, out int uniformCount);
+		state.GL.GetProgramiv(id, GL.ACTIVE_UNIFORMS, out int uniformCount);
 
 		for (int i = 0; i < uniformCount; i ++)
 		{
 			var uniform = new Uniform();
 
 			// get name and properties
-			state.Gl.GetActiveUniform(id, (uint)i, MaxStringBufferLength, out int nameLength, out uniform.SizeGL, out uniform.TypeGL, new nint(strBuf));
+			state.GL.GetActiveUniform(id, (uint)i, MaxStringBufferLength, out int nameLength, out uniform.SizeGL, out uniform.TypeGL, new nint(strBuf));
 			uniform.Name = Platform.ParseUTF8(new nint(strBuf));
 
 			// remove the array [0] from the end of the name
@@ -500,7 +500,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 				uniform.Name = uniform.Name[..^3];
 				
 			// get uniform location
-			uniform.LocationGL = state.Gl.GetUniformLocation(id, uniform.Name);
+			uniform.LocationGL = state.GL.GetUniformLocation(id, uniform.Name);
 
 			// strip uniform block name
 			if (uniform.Name.IndexOf('.') is int it && it >= 0)
@@ -515,7 +515,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 	private void DestroyShader(ShaderResource shader)
 	{
-		mainState.Gl.DeleteProgram(shader.ID);
+		mainState.GL.DeleteProgram(shader.ID);
 	}
 
 	private void TrackResource(Resource resource)
@@ -593,22 +593,22 @@ internal sealed unsafe class RendererOpenGL : Renderer
 				switch (uniform.TypeGL)
 				{
 				case GL.FLOAT:
-					state.Gl.Uniform1fv(uniform.LocationGL, uniform.SizeGL, new nint(ptr));
+					state.GL.Uniform1fv(uniform.LocationGL, uniform.SizeGL, new nint(ptr));
 					break;
 				case GL.FLOAT_VEC2:
-					state.Gl.Uniform2fv(uniform.LocationGL, uniform.SizeGL, new nint(ptr));
+					state.GL.Uniform2fv(uniform.LocationGL, uniform.SizeGL, new nint(ptr));
 					break;
 				case GL.FLOAT_VEC3:
-					state.Gl.Uniform3fv(uniform.LocationGL, uniform.SizeGL, new nint(ptr));
+					state.GL.Uniform3fv(uniform.LocationGL, uniform.SizeGL, new nint(ptr));
 					break;
 				case GL.FLOAT_VEC4:
-					state.Gl.Uniform4fv(uniform.LocationGL, uniform.SizeGL, new nint(ptr));
+					state.GL.Uniform4fv(uniform.LocationGL, uniform.SizeGL, new nint(ptr));
 					break;
 				case GL.FLOAT_MAT3x2:
-					state.Gl.UniformMatrix3x2fv(uniform.LocationGL, uniform.SizeGL, false, new nint(ptr));
+					state.GL.UniformMatrix3x2fv(uniform.LocationGL, uniform.SizeGL, false, new nint(ptr));
 					break;
 				case GL.FLOAT_MAT4:
-					state.Gl.UniformMatrix4fv(uniform.LocationGL, uniform.SizeGL, false, new nint(ptr));
+					state.GL.UniformMatrix4fv(uniform.LocationGL, uniform.SizeGL, false, new nint(ptr));
 					break;
 				}
 			}
@@ -646,12 +646,12 @@ internal sealed unsafe class RendererOpenGL : Renderer
 					samplerIndex++;
 				}
 
-				state.Gl.Uniform1iv(uniform.LocationGL, uniform.SizeGL, new nint(slots));
+				state.GL.Uniform1iv(uniform.LocationGL, uniform.SizeGL, new nint(slots));
 			}
 		}
 
 		// draw the mesh
-		state.Gl.DrawElements(
+		state.GL.DrawElements(
 			mode: GL.TRIANGLES,
 			count: command.MeshIndexCount,
 			type: mesh.IndexBufferElementFormat == IndexFormat.ThirtyTwo ? GL.UNSIGNED_INT : GL.UNSIGNED_SHORT,
@@ -703,8 +703,8 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		if (mask.Has(ClearMask.Color))
 		{
 			clear |= GL.COLOR_BUFFER_BIT;
-			state.Gl.ColorMask(true, true, true, true);
-			state.Gl.ClearColor(color.R / 255.0f, color.G / 255.0f, color.B / 255.0f, color.A / 255.0f);
+			state.GL.ColorMask(true, true, true, true);
+			state.GL.ClearColor(color.R / 255.0f, color.G / 255.0f, color.B / 255.0f, color.A / 255.0f);
 		}
 
 		if (mask.Has(ClearMask.Depth))
@@ -712,16 +712,16 @@ internal sealed unsafe class RendererOpenGL : Renderer
 			SetDepthMask(state, true);
 
 			clear |= GL.DEPTH_BUFFER_BIT;
-			state.Gl.ClearDepth?.Invoke(depth);
+			state.GL.ClearDepth?.Invoke(depth);
 		}
 
 		if (mask.Has(ClearMask.Stencil))
 		{
 			clear |= GL.STENCIL_BUFFER_BIT;
-			state.Gl.ClearStencil?.Invoke(stencil);
+			state.GL.ClearStencil?.Invoke(stencil);
 		}
 
-		state.Gl.Clear(clear);
+		state.GL.Clear(clear);
 
 		EndThreadSafeCalls(state);
 	}
@@ -744,7 +744,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 	{
 		if (!App.IsMainThread())
 		{
-			state.Gl.Flush();
+			state.GL.Flush();
 			SDL_GL_MakeCurrent(window, nint.Zero);
 			offMainMutex.ReleaseMutex();
 		}
@@ -764,19 +764,19 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 		// load gl bindings
 		// on Windows this must be done per context
-		state.Gl = new();
+		state.GL = new();
 
 		// setup debug callback
-		state.Gl.Enable(GL.DEBUG_OUTPUT);
-		state.Gl.Enable(GL.DEBUG_OUTPUT_SYNCHRONOUS);
-		state.Gl.DebugMessageCallback(&OnDebugMessageCallback, nint.Zero);
+		state.GL.Enable(GL.DEBUG_OUTPUT);
+		state.GL.Enable(GL.DEBUG_OUTPUT_SYNCHRONOUS);
+		state.GL.DebugMessageCallback(&OnDebugMessageCallback, nint.Zero);
 
 		// don't include row padding
-		state.Gl.PixelStorei(GL.PACK_ALIGNMENT, 1);
-		state.Gl.PixelStorei(GL.UNPACK_ALIGNMENT, 1);
+		state.GL.PixelStorei(GL.PACK_ALIGNMENT, 1);
+		state.GL.PixelStorei(GL.UNPACK_ALIGNMENT, 1);
 
 		// blend is always enabled
-		state.Gl.Enable(GL.BLEND);
+		state.GL.Enable(GL.BLEND);
 
 		state.Initializing = true;
 		BindProgram(state, 0);
@@ -808,18 +808,18 @@ internal sealed unsafe class RendererOpenGL : Renderer
 			{
 				// gen framebuffer
 				var ids = stackalloc uint[1];
-				state.Gl.GenFramebuffers(1, new nint(ids));
+				state.GL.GenFramebuffers(1, new nint(ids));
 				target.ContextFBO[state.Context] = id = ids[0];
 
 				// force bind
-				state.Gl.BindFramebuffer(GL.FRAMEBUFFER, id);
+				state.GL.BindFramebuffer(GL.FRAMEBUFFER, id);
 				state.FrameBuffer = 0;
 
 				// bind attachments
 				for (int i = 0; i < target.ColorAttachments.Count; i ++)
-					state.Gl.FramebufferTexture2D(GL.FRAMEBUFFER, GL.COLOR_ATTACHMENT0 + i, GL.TEXTURE_2D, target.ColorAttachments[i].ID, 0);
+					state.GL.FramebufferTexture2D(GL.FRAMEBUFFER, GL.COLOR_ATTACHMENT0 + i, GL.TEXTURE_2D, target.ColorAttachments[i].ID, 0);
 				if (target.DepthAttachment != null)
-					state.Gl.FramebufferTexture2D(GL.FRAMEBUFFER, GL.DEPTH_STENCIL_ATTACHMENT, GL.TEXTURE_2D, target.DepthAttachment.ID, 0);
+					state.GL.FramebufferTexture2D(GL.FRAMEBUFFER, GL.DEPTH_STENCIL_ATTACHMENT, GL.TEXTURE_2D, target.DepthAttachment.ID, 0);
 			}
 
 			framebuffer = id;
@@ -831,18 +831,18 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		if (state.Initializing || state.FrameBuffer != framebuffer)
 		{
 			var attachments = stackalloc GL[4];
-			state.Gl.BindFramebuffer(GL.FRAMEBUFFER, framebuffer);
+			state.GL.BindFramebuffer(GL.FRAMEBUFFER, framebuffer);
 
 			if (target == null)
 			{
 				attachments[0] = GL.BACK_LEFT;
-				state.Gl.DrawBuffers(1, attachments);
+				state.GL.DrawBuffers(1, attachments);
 			}
 			else
 			{
 				for (int i = 0; i < target.ColorAttachments.Count; i ++)
 					attachments[i] = GL.COLOR_ATTACHMENT0 + i;
-				state.Gl.DrawBuffers(target.ColorAttachments.Count, attachments);
+				state.GL.DrawBuffers(target.ColorAttachments.Count, attachments);
 			}
 
 		}
@@ -852,7 +852,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 	private void BindProgram(ContextState state, uint id)
 	{
 		if (state.Initializing || state.Program != id)
-			state.Gl.UseProgram(id);
+			state.GL.UseProgram(id);
 		state.Program = id;
 	}
 
@@ -870,11 +870,11 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		{
 			// create vertex array object for this context
 			var ids = stackalloc uint[1];
-			state.Gl.GenVertexArrays(1, new nint(ids));
+			state.GL.GenVertexArrays(1, new nint(ids));
 			mesh.ContextVAO[state.Context] = id = ids[0];
 
 			// force bind array
-			state.Gl.BindVertexArray(id);
+			state.GL.BindVertexArray(id);
 			state.VAO = 0;
 
 			// make sure any buffers that were already created are also bound on this context
@@ -884,21 +884,21 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 		// bind current vertex array object
 		if (state.Initializing || state.VAO != id)
-			state.Gl.BindVertexArray(id);
+			state.GL.BindVertexArray(id);
 		state.VAO = id;
 	}
 
 	private void BindVertexBuffer(ContextState state, uint id)
 	{
 		if (state.Initializing || state.VertexBuffer != id)
-			state.Gl.BindBuffer(GL.ARRAY_BUFFER, id);
+			state.GL.BindBuffer(GL.ARRAY_BUFFER, id);
 		state.VertexBuffer = id;
 	}
 
 	private void BindIndexBuffer(ContextState state, uint id)
 	{
 		if (state.Initializing || state.IndexBuffer != id)
-			state.Gl.BindBuffer(GL.ELEMENT_ARRAY_BUFFER, id);
+			state.GL.BindBuffer(GL.ELEMENT_ARRAY_BUFFER, id);
 		state.IndexBuffer = id;
 	}
 
@@ -906,13 +906,13 @@ internal sealed unsafe class RendererOpenGL : Renderer
 	{
 		if (state.ActiveTextureSlot != slot)
 		{
-			state.Gl.ActiveTexture(GL.TEXTURE0);
+			state.GL.ActiveTexture(GL.TEXTURE0);
 			state.ActiveTextureSlot = slot;
 		}
 
 		if (state.TextureSlots[slot] != id)
 		{
-			state.Gl.BindTexture(GL.TEXTURE_2D, id);
+			state.GL.BindTexture(GL.TEXTURE_2D, id);
 			state.TextureSlots[slot] = id;
 		}
 	}
@@ -925,11 +925,11 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		{
 			if (state.ActiveTextureSlot != slot)
 			{
-				state.Gl.ActiveTexture(GL.TEXTURE0 + slot);
+				state.GL.ActiveTexture(GL.TEXTURE0 + slot);
 				state.ActiveTextureSlot = slot;
 			}
 
-			state.Gl.BindTexture(GL.TEXTURE_2D, id);
+			state.GL.BindTexture(GL.TEXTURE_2D, id);
 			state.TextureSlots[slot] = id;
 		}
 	}
@@ -942,15 +942,15 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 			if (tex.Sampler.Filter != sampler.Filter)
 			{
-				state.Gl.TexParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, (int)FosterFilterToGL(sampler.Filter));
-				state.Gl.TexParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, (int)FosterFilterToGL(sampler.Filter));
+				state.GL.TexParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, (int)FosterFilterToGL(sampler.Filter));
+				state.GL.TexParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, (int)FosterFilterToGL(sampler.Filter));
 			}
 
 			if (tex.Sampler.WrapX != sampler.WrapX)
-				state.Gl.TexParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, (int)FosterWrapToGL(sampler.WrapX));
+				state.GL.TexParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, (int)FosterWrapToGL(sampler.WrapX));
 
 			if (tex.Sampler.WrapY != sampler.WrapY)
-				state.Gl.TexParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, (int)FosterWrapToGL(sampler.WrapY));
+				state.GL.TexParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, (int)FosterWrapToGL(sampler.WrapY));
 
 			tex.Sampler = sampler;
 		}
@@ -976,7 +976,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 		if (state.Initializing || viewport != state.Viewport)
 		{
-			state.Gl.Viewport(viewport.X, viewport.Y, viewport.Width, viewport.Height);
+			state.GL.Viewport(viewport.X, viewport.Y, viewport.Width, viewport.Height);
 			state.Viewport = viewport;
 		}
 	}
@@ -997,13 +997,13 @@ internal sealed unsafe class RendererOpenGL : Renderer
 			if (enabled)
 			{
 				if (!state.ScissorEnabled)
-					state.Gl.Enable(GL.SCISSOR_TEST);
-				state.Gl.Scissor(scissor.X, scissor.Y, scissor.Width, scissor.Height);
+					state.GL.Enable(GL.SCISSOR_TEST);
+				state.GL.Scissor(scissor.X, scissor.Y, scissor.Width, scissor.Height);
 				state.Scissor = scissor;
 			}
 			else
 			{
-				state.Gl.Disable(GL.SCISSOR_TEST);
+				state.GL.Disable(GL.SCISSOR_TEST);
 			}
 
 			state.ScissorEnabled = enabled;
@@ -1016,18 +1016,18 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		{
 			GL colorOp = FosterBlendOpToGL(blend.ColorOperation);
 			GL alphaOp = FosterBlendOpToGL(blend.AlphaOperation);
-			state.Gl.BlendEquationSeparate(colorOp, alphaOp);
+			state.GL.BlendEquationSeparate(colorOp, alphaOp);
 
 			GL colorSrc = FosterBlendFactorToGL(blend.ColorSource);
 			GL colorDst = FosterBlendFactorToGL(blend.ColorDestination);
 			GL alphaSrc = FosterBlendFactorToGL(blend.AlphaSource);
 			GL alphaDst = FosterBlendFactorToGL(blend.AlphaDestination);
-			state.Gl.BlendFuncSeparate(colorSrc, colorDst, alphaSrc, alphaDst);
+			state.GL.BlendFuncSeparate(colorSrc, colorDst, alphaSrc, alphaDst);
 		}
 
 		if (state.Initializing || state.Blend.Mask != blend.Mask)
 		{
-			state.Gl.ColorMask(
+			state.GL.ColorMask(
 				blend.Mask.Has(BlendMask.Red),
 				blend.Mask.Has(BlendMask.Green),
 				blend.Mask.Has(BlendMask.Blue),
@@ -1036,7 +1036,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 		if (state.Initializing || state.Blend.Color != blend.Color)
 		{
-			state.Gl.BlendColor(
+			state.GL.BlendColor(
 				blend.Color.R / 255.0f,
 				blend.Color.G / 255.0f,
 				blend.Color.B / 255.0f,
@@ -1052,22 +1052,22 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		{
 			if (!enabled)
 			{
-				state.Gl.Disable(GL.DEPTH_TEST);
+				state.GL.Disable(GL.DEPTH_TEST);
 			}
 			else
 			{
-				state.Gl.Enable(GL.DEPTH_TEST);
+				state.GL.Enable(GL.DEPTH_TEST);
 
 				switch (compare)
 				{
-					case DepthCompare.Always: state.Gl.DepthFunc(GL.ALWAYS); break;
-					case DepthCompare.Equal: state.Gl.DepthFunc(GL.EQUAL); break;
-					case DepthCompare.Greater: state.Gl.DepthFunc(GL.GREATER); break;
-					case DepthCompare.GreatorOrEqual: state.Gl.DepthFunc(GL.GEQUAL); break;
-					case DepthCompare.Less: state.Gl.DepthFunc(GL.LESS); break;
-					case DepthCompare.LessOrEqual: state.Gl.DepthFunc(GL.LEQUAL); break;
-					case DepthCompare.Never: state.Gl.DepthFunc(GL.NEVER); break;
-					case DepthCompare.NotEqual: state.Gl.DepthFunc(GL.NOTEQUAL); break;
+					case DepthCompare.Always: state.GL.DepthFunc(GL.ALWAYS); break;
+					case DepthCompare.Equal: state.GL.DepthFunc(GL.EQUAL); break;
+					case DepthCompare.Greater: state.GL.DepthFunc(GL.GREATER); break;
+					case DepthCompare.GreatorOrEqual: state.GL.DepthFunc(GL.GEQUAL); break;
+					case DepthCompare.Less: state.GL.DepthFunc(GL.LESS); break;
+					case DepthCompare.LessOrEqual: state.GL.DepthFunc(GL.LEQUAL); break;
+					case DepthCompare.Never: state.GL.DepthFunc(GL.NEVER); break;
+					case DepthCompare.NotEqual: state.GL.DepthFunc(GL.NOTEQUAL); break;
 				}
 			}
 		}
@@ -1079,7 +1079,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 	private void SetDepthMask(ContextState state, bool depthMask)
 	{
 		if (state.Initializing || depthMask != state.DepthMaskEnabled)
-			state.Gl.DepthMask(depthMask);
+			state.GL.DepthMask(depthMask);
 		state.DepthMaskEnabled = depthMask;
 	}
 
@@ -1089,17 +1089,17 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		{
 			if (cull == CullMode.None)
 			{
-				state.Gl.Disable(GL.CULL_FACE);
+				state.GL.Disable(GL.CULL_FACE);
 			}
 			else
 			{
 				if (state.Cull == CullMode.None)
-					state.Gl.Enable(GL.CULL_FACE);
+					state.GL.Enable(GL.CULL_FACE);
 
 				switch (cull)
 				{
-					case CullMode.Back: state.Gl.CullFace(GL.BACK); break;
-					case CullMode.Front: state.Gl.CullFace(GL.FRONT); break;
+					case CullMode.Back: state.GL.CullFace(GL.BACK); break;
+					case CullMode.Front: state.GL.CullFace(GL.FRONT); break;
 				}
 			}
 		}
@@ -1141,9 +1141,9 @@ internal sealed unsafe class RendererOpenGL : Renderer
 			};
 
 			uint location = (uint)element.Index;
-			state.Gl.EnableVertexAttribArray(location);
-			state.Gl.VertexAttribPointer(location, count, type, element.Normalized, mesh.VertexFormat.Stride, new nint(ptr));
-			state.Gl.VertexAttribDivisor(location, 0);
+			state.GL.EnableVertexAttribArray(location);
+			state.GL.VertexAttribPointer(location, count, type, element.Normalized, mesh.VertexFormat.Stride, new nint(ptr));
+			state.GL.VertexAttribDivisor(location, 0);
 			ptr += count * size;
 		}
 	}
