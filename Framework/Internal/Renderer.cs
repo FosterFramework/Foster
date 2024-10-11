@@ -7,9 +7,7 @@ internal abstract class Renderer
 		public bool Disposed { get; }
 	}
 
-	public abstract nint Device { get; }
-	public abstract GraphicsDriver Driver { get; }
-	public abstract Version DriverVersion { get; }
+	public abstract App.GraphicDriverProperties Properties { get; }
 
 	public abstract void CreateDevice();
 	public abstract void DestroyDevice();

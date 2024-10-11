@@ -33,16 +33,6 @@ public readonly record struct AppRunInfo
 /// </summary>
 public static class App
 {
-	/// <summary>
-	/// SDL Window Pointer
-	/// </summary>
-	internal static nint Window { get; private set; }
-
-	/// <summary>
-	/// Application Renderer
-	/// </summary>
-	internal static Renderer Renderer => renderer ?? throw notRunningException;
-
 	private static readonly List<Module> modules = [];
 	private static readonly List<Func<Module>> registrations = [];
 	private static readonly Stopwatch timer = new();
@@ -72,6 +62,25 @@ public static class App
 		/// </summary>
 		Unlocked,
 	}
+
+	/// <summary>
+	/// Stores information about the current Graphics Driver
+	/// </summary>
+	public readonly record struct GraphicDriverProperties(
+		GraphicsDriver Driver,
+		Version DriverVersion,
+		bool OriginBottomLeft
+	);
+
+	/// <summary>
+	/// SDL Window Pointer
+	/// </summary>
+	internal static nint Window { get; private set; }
+
+	/// <summary>
+	/// Application Renderer
+	/// </summary>
+	internal static Renderer Renderer => renderer ?? throw notRunningException;
 	
 	/// <summary>
 	/// Foster Version Number
@@ -150,22 +159,9 @@ public static class App
 	public static bool FixedUpdateWaitEnabled { get; private set; }
 
 	/// <summary>
-	/// Stores information about the current Graphics Driver
-	/// </summary>
-	public readonly record struct GraphicDriverProperties(
-		GraphicsDriver Driver,
-		Version DriverVersion,
-		bool OriginBottomLeft
-	);
-
-	/// <summary>
 	/// Gets the current Graphics Driver Properties
 	/// </summary>
-	public static GraphicDriverProperties Graphics => new(
-		Driver: renderer?.Driver ?? GraphicsDriver.None,
-		DriverVersion: renderer?.DriverVersion ?? throw notRunningException,
-		OriginBottomLeft: (renderer?.Driver ?? GraphicsDriver.None) == GraphicsDriver.OpenGL
-	);
+	public static GraphicDriverProperties Graphics => Renderer.Properties;
 
 	/// <summary>
 	/// The Window width, which isn't necessarily the size in Pixels depending on the Platform.
@@ -467,7 +463,7 @@ public static class App
 			if (info.Fullscreen)
 				windowFlags |= SDL_WindowFlags.SDL_WINDOW_FULLSCREEN;
 
-			if (renderer.Driver == GraphicsDriver.OpenGL)
+			if (renderer.Properties.Driver == GraphicsDriver.OpenGL)
 				windowFlags |= SDL_WindowFlags.SDL_WINDOW_OPENGL;
 
 			Window = SDL_CreateWindow(info.WindowTitle, info.Width, info.Height, windowFlags);

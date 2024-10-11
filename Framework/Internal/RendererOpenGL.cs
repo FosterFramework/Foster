@@ -102,9 +102,11 @@ internal sealed unsafe class RendererOpenGL : Renderer
 	private readonly ConcurrentQueue<Resource> destroying = [];
 	private readonly Mutex offMainMutex = new();
 
-	public override nint Device { get; }
-	public override GraphicsDriver Driver => GraphicsDriver.OpenGL;
-	public override Version DriverVersion => version;
+	public override App.GraphicDriverProperties Properties => new(
+		Driver: GraphicsDriver.OpenGL,
+		DriverVersion: version,
+		OriginBottomLeft: true
+	);
 
 	public override void CreateDevice()
 	{
