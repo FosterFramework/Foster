@@ -20,27 +20,23 @@ jobs:
           - os: windows-latest
             arch: x64
             target: win-x64
-            lib: FosterPlatform.dll
-          - os: windows-latest
-            arch: arm64
-            target: win-arm64
-            lib: FosterPlatform.dll
+            ext: .dll
           - os: macos-latest
             arch: x64-arm64
             target: osx
-            lib: libFosterPlatform.dylib
+            ext: .dylib
           - os: ubuntu-latest
             arch: x64
             target: linux-x64
-            lib: libFosterPlatform.so
+            ext: .so
           - os: ubuntu-latest
             arch: arm64
             target: linux-arm64
-            lib: libFosterPlatform.so
+            ext: .so
           - os: ubuntu-latest
             arch: arm32
             target: linux-arm32
-            lib: libFosterPlatform.so
+            ext: .so
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
@@ -89,7 +85,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{matrix.os}}-${{matrix.arch}}-build
-          path: Platform/libs/${{matrix.target}}/${{matrix.lib}}
+          path: Platform/libs/${{matrix.target}}/*${{matrix.ext}}*
   UpdateLibs:
     if: github.ref == 'refs/heads/main'
     needs: [Build]
@@ -97,32 +93,27 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Download windows x64 lib
+      - name: Download windows x64 libs
         uses: actions/download-artifact@v4
         with:
           name: windows-latest-x64-build
           path: Platform/libs/win-x64
-      - name: Download windows arm lib
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-latest-arm64-build
-          path: Platform/libs/win-arm64
-      - name: Download macos lib
+      - name: Download macos libs
         uses: actions/download-artifact@v4
         with:
           name: macos-latest-x64-arm64-build
           path: Platform/libs/osx
-      - name: Download ubuntu lib
+      - name: Download ubuntu libs
         uses: actions/download-artifact@v4
         with:
           name: ubuntu-latest-x64-build
           path: Platform/libs/linux-x64
-      - name: Download ubuntu lib (arm64)
+      - name: Download ubuntu libs (arm64)
         uses: actions/download-artifact@v4
         with:
           name: ubuntu-latest-arm64-build
           path: Platform/libs/linux-arm64
-      - name: Download ubuntu lib (arm32)
+      - name: Download ubuntu libs (arm32)
         uses: actions/download-artifact@v4
         with:
           name: ubuntu-latest-arm32-build
