@@ -41,14 +41,8 @@
 
   <ItemGroup>
     <Content Include="$(NativeLibsDir)win-x64\**" Visible="false">
-      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Windows')) AND $(IsArm64) != 'true'">PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Windows'))">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\win-x64\native</PackagePath>
-      <Pack>True</Pack>
-      <Link>%(Filename)%(Extension)</Link>
-    </Content>
-    <Content Include="$(NativeLibsDir)win-arm64\**" Visible="false">
-      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Windows')) AND $(IsArm64) == 'true'">PreserveNewest</CopyToOutputDirectory>
-      <PackagePath>runtimes\win-arm64\native</PackagePath>
       <Pack>True</Pack>
       <Link>%(Filename)%(Extension)</Link>
     </Content>
@@ -79,8 +73,8 @@
   </ItemGroup>
   
   <ItemGroup>
-    <None Include="$(ProjectDir)..\LICENSE" Pack="true" PackagePath="/"/>
-    <None Include="$(ProjectDir)..\README.md" Pack="true" PackagePath="/"/>
+    <None Include="$(ProjectDir)..\LICENSE" Pack="true" PackagePath="/" />
+    <None Include="$(ProjectDir)..\README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 
   <!-- Default Shader Content -->

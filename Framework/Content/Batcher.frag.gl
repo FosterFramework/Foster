@@ -4,14 +4,14 @@ precision highp int;
 
 uniform highp sampler2D Sampler;
 
-layout(location = 0) in highp vec2 TexCoord;
-layout(location = 1) in highp vec4 Color;
-layout(location = 2) in highp vec4 Type;
+in highp vec2 vTexCoord;
+in highp vec4 vColor;
+in highp vec4 vType;
 
-layout(location = 0) out highp vec4 FragColor;
+out highp vec4 FragColor;
 
 void main()
 {
-    highp vec4 color = texture(Sampler, TexCoord);
-    FragColor = (((color * Type.x) * Color) + (Color * (Type.y * color.w))) + (Color * Type.z);
+    highp vec4 color = texture(Sampler, vTexCoord);
+    FragColor = (((color * vType.x) * vColor) + (vColor * (vType.y * color.w))) + (vColor * vType.z);
 }
