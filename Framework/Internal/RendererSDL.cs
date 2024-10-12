@@ -315,6 +315,8 @@ internal unsafe class RendererSDL : Renderer
 
 	public override void Present()
 	{
+		frameCounter = (frameCounter + 1) % MaxFramesInFlight;
+		
 		// Wait for the least-recent fence
 		if (fenceGroups[frameCounter][0] != nint.Zero)
 		{
@@ -337,7 +339,6 @@ internal unsafe class RendererSDL : Renderer
 			out fenceGroups[frameCounter][0],
 			out fenceGroups[frameCounter][1]
 		);
-		frameCounter = (frameCounter + 1) % MaxFramesInFlight;
 	}
 
 	public override IHandle CreateTexture(int width, int height, TextureFormat format, IHandle? targetBinding)
