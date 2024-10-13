@@ -43,7 +43,9 @@ internal unsafe class RendererSDL : Renderer
 
 	private record struct ClearInfo(Color? Color, float? Depth, int? Stencil);
 
-	private const int MaxFramesInFlight = 3;
+	// TODO: this is set to 1 since SDL currently improperly awaits fences
+	// change back to 3 once fixed
+	private const int MaxFramesInFlight = 1;
 	private const uint TransferBufferSize = 16 * 1024 * 1024; // 16MB
 	private const uint MaxUploadCycleCount = 4;
 
@@ -62,9 +64,6 @@ internal unsafe class RendererSDL : Renderer
 	private IHandle? renderPassMesh;
 	private RectInt? renderPassScissor;
 	private RectInt? renderPassViewport;
-	private nint? swapchain;
-	private Point2 swapchainSize;
-	private SDL_GPUTextureFormat swapchainFormat;
 
 	// supported feature set
 	private bool supportsD24S8;
@@ -100,6 +99,9 @@ internal unsafe class RendererSDL : Renderer
 		Enumerable.Range(0, MaxFramesInFlight)
 		.Select(_ => new nint[2])
 		.ToArray();
+
+	// framebuffer
+	private Target? frameBuffer;
 
 	private readonly GraphicsDriver preferred;
 	private readonly Version version;
@@ -217,6 +219,10 @@ internal unsafe class RendererSDL : Renderer
 			SetTextureData(emptyDefaultTexture, new nint(data), 4);
 		}
 
+		// create framebuffer
+		SDL_GetWindowSize(window, out int w, out int h);
+		frameBuffer = new Target(w, h, [TextureFormat.R8G8B8A8]);
+
 		// default to vsync on
 		SetVSync(true);
 	}
@@ -224,8 +230,14 @@ internal unsafe class RendererSDL : Renderer
 	public override void Shutdown()
 	{
 		// submit remaining commands
-		SDL_SubmitGPUCommandBuffer(cmdRender);
+		FlushCommands();
 		SDL_SubmitGPUCommandBuffer(cmdUpload);
+		SDL_SubmitGPUCommandBuffer(cmdRender);
+		SDL_WaitForGPUIdle(device);
+
+		// destroy framebuffer
+		frameBuffer?.Dispose();
+		frameBuffer = null;
 
 		// destroy default texture
 		{
@@ -284,7 +296,6 @@ internal unsafe class RendererSDL : Renderer
 		cmdRender = nint.Zero;
 		renderPass = nint.Zero;
 		copyPass = nint.Zero;
-		swapchain = default;
 		renderPassTarget = null;
 		driver = GraphicsDriver.None;
 	}
@@ -296,10 +307,6 @@ internal unsafe class RendererSDL : Renderer
 		if (device == nint.Zero)
 			throw deviceNotCreated;
 
-		// TODO: Mailbox and immediate cause a lot of issues
-		// Not all frames have a non null swapchain, which means render passes cannot begin but copy work is still completed
-		// Perhaps we should be stalling in some way?
-		// At the very least SDL_GPU_PRESENTMODE_MAILBOX should not be used instead of SDL_GPU_PRESENTMODE_VSYNC
 		SDL_SetGPUSwapchainParameters(device, window,
 			swapchain_composition: SDL_GPUSwapchainComposition.SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
 			present_mode: (enabled, supportsMailbox) switch
@@ -315,8 +322,9 @@ internal unsafe class RendererSDL : Renderer
 
 	public override void Present()
 	{
-		frameCounter = (frameCounter + 1) % MaxFramesInFlight;
-		
+		EndCopyPass();
+		EndRenderPass();
+
 		// Wait for the least-recent fence
 		if (fenceGroups[frameCounter][0] != nint.Zero)
 		{
@@ -334,11 +342,68 @@ internal unsafe class RendererSDL : Renderer
 			}
 		}
 
-		// flush commands from this frame, get next swapchain
+		// if swapchain can be acquired, blit framebuffer to it
+		if (SDL_AcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
+		{
+			// SDL_AcquireGPUSwapchainTexture can return true, but no texture for a variety of reasons
+			// - window is minimized
+			// - awaiting previous frame to render
+			if (scTex != nint.Zero)
+			{
+				var resource = (TextureResource)frameBuffer?.Attachments[0].Resource!;
+				var blitInfo = new SDL_GPUBlitInfo();
+
+				blitInfo.source.texture = resource.Texture;
+				blitInfo.source.mip_level = 0;
+				blitInfo.source.layer_or_depth_plane = 0;
+				blitInfo.source.x = 0;
+				blitInfo.source.y = 0;
+				blitInfo.source.w = (uint)resource.Width;
+				blitInfo.source.h = (uint)resource.Height;
+
+				blitInfo.destination.texture = scTex;
+				blitInfo.destination.mip_level = 0;
+				blitInfo.destination.layer_or_depth_plane = 0;
+				blitInfo.destination.x = 0;
+				blitInfo.destination.y = 0;
+				blitInfo.destination.w = scW;
+				blitInfo.destination.h = scH;
+
+				blitInfo.load_op = SDL_GPULoadOp.SDL_GPU_LOADOP_DONT_CARE;
+				blitInfo.clear_color.r = 0;
+				blitInfo.clear_color.g = 0;
+				blitInfo.clear_color.b = 0;
+				blitInfo.clear_color.a = 0;
+				blitInfo.flip_mode = SDL_FlipMode.SDL_FLIP_NONE;
+				blitInfo.filter = SDL_GPUFilter.SDL_GPU_FILTER_LINEAR;
+				blitInfo.cycle = false;
+
+				SDL_BlitGPUTexture(
+					cmdRender,
+					blitInfo
+				);
+
+				// resize framebuffer if needed
+				// TODO: is this correct?
+				if (scW != (uint)resource.Width || scH != (uint)resource.Height)
+				{
+					frameBuffer?.Dispose();
+					frameBuffer = new Target((int)scW, (int)scH);
+				}
+			}
+		}
+		else
+		{
+			Log.Warning($"{nameof(SDL_AcquireGPUSwapchainTexture)} failed: {SDL_GetError()}");
+		}
+
+		// flush commands from this frame
 		FlushCommandsAndAcquireFence(
 			out fenceGroups[frameCounter][0],
 			out fenceGroups[frameCounter][1]
 		);
+
+		frameCounter = (frameCounter + 1) % MaxFramesInFlight;
 	}
 
 	public override IHandle CreateTexture(int width, int height, TextureFormat format, IHandle? targetBinding)
@@ -474,7 +539,7 @@ internal unsafe class RendererSDL : Renderer
 				z = 0,
 				w = (uint)res.Width,
 				h = (uint)res.Height,
-				d = 0
+				d = 1
 			};
 
 			SDL_UploadToGPUTexture(copyPass, info, region, cycle: false); // TODO: FNA uses false, we were using true
@@ -612,9 +677,17 @@ internal unsafe class RendererSDL : Renderer
 			}
 
 			// TODO: Upon first creation we should probably just create a perfectly sized buffer, and afterward next Po2
-			var size = Math.Max(res.Capacity, 8);
-			while (size < required)
-				size *= 2;
+			int size;
+			if(res.Capacity == 0)
+			{
+				size = required;
+			}
+			else
+			{
+				size = 8;
+				while (size < required)
+					size *= 2;
+			}
 
 			SDL_GPUBufferCreateInfo info = new()
 			{
@@ -660,7 +733,7 @@ internal unsafe class RendererSDL : Renderer
 			else
 			{
 				FlushCommandsAndStall();
-				BeginCopyPass(); // TODO: FNA3D does not have this, but maybe it should? It had it for texture data.
+				//BeginCopyPass(); // TODO: FNA3D does not have this, but maybe it should? It had it for texture data.
 				transferCycle = true;
 				transferOffset = 0;
 			}
@@ -1002,7 +1075,6 @@ internal unsafe class RendererSDL : Renderer
 		SDL_SubmitGPUCommandBuffer(cmdRender);
 		cmdUpload = nint.Zero;
 		cmdRender = nint.Zero;
-		swapchain = null;
 		ResetCommandBufferState();
 	}
 
@@ -1014,7 +1086,6 @@ internal unsafe class RendererSDL : Renderer
 		renderFence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmdRender);
 		cmdUpload = nint.Zero;
 		cmdRender = nint.Zero;
-		swapchain = null;
 		ResetCommandBufferState();
 	}
 
@@ -1037,7 +1108,6 @@ internal unsafe class RendererSDL : Renderer
 
 		// TODO: Ensure _all_ state is reset
 
-		swapchain = null;
 		textureUploadBufferOffset = 0;
 		textureUploadCycleCount = 0;
 		bufferUploadBufferOffset = 0;
@@ -1060,6 +1130,8 @@ internal unsafe class RendererSDL : Renderer
 
 	private bool BeginRenderPass(Target? target, ClearInfo clear)
 	{
+		target ??= frameBuffer;
+
 		// only begin if we're not already in a render pass that is matching
 		if (renderPass != nint.Zero &&
 			renderPassTarget == target &&
@@ -1099,30 +1171,7 @@ internal unsafe class RendererSDL : Renderer
 		// drawing to the backbuffer/swapchain
 		else
 		{
-			// try to acquire the swapchain if we don't have it yet
-			// TODO: should this be acquired here? or should it be acquired immediately when the cmdRender is created?
-			if (swapchain == null)
-			{
-				if (SDL_AcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
-				{
-					swapchain = scTex;
-					swapchainSize = new((int)scW, (int)scH);
-					swapchainFormat = SDL_GetGPUSwapchainTextureFormat(device, window);
-				}
-				else
-				{
-					// TODO: is this a valid result? should this throw?
-					swapchain = new();
-					Log.Warning($"{nameof(SDL_AcquireGPUSwapchainTexture)} failed: {SDL_GetError()}");
-				}
-			}
-
-			// don't render anything if the swapchain is invalid
-			if (swapchain == null || swapchain.Value == nint.Zero)
-				return false;
-
-			renderPassTargetSize = swapchainSize;
-			colorTargets.Add(swapchain.Value);
+			throw new Exception("No Target");
 		}
 
 		Span<SDL_GPUColorTargetInfo> colorInfo = stackalloc SDL_GPUColorTargetInfo[colorTargets.Count];
@@ -1190,7 +1239,7 @@ internal unsafe class RendererSDL : Renderer
 
 	private nint GetGraphicsPipeline(in DrawCommand command)
 	{
-		var target = command.Target;
+		var target = command.Target ?? frameBuffer;
 		var mesh = command.Mesh;
 		var material = command.Material;
 		var shader = material.Shader!;
@@ -1241,15 +1290,6 @@ internal unsafe class RendererSDL : Renderer
 						colorAttachmentCount++;
 					}
 				}
-			}
-			else if (swapchain.HasValue)
-			{
-				colorAttachments[0] = new()
-				{
-					format = swapchainFormat,
-					blend_state = colorBlendState
-				};
-				colorAttachmentCount = 1;
 			}
 			else
 			{
