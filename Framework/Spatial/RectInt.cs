@@ -349,6 +349,8 @@ public struct RectInt : IEquatable<RectInt>
 	public readonly RectInt RotateRight() => RotateRight(Point2.Zero);
 	public readonly RectInt RotateRight(int count) => RotateRight(Point2.Zero, count);
 
+	public readonly RectInt Rotate(Cardinal direction) => RotateRight(direction.Value);
+
 	public readonly RectInt GetSweep(Cardinal direction, int distance)
 	{
 		if (distance < 0)
