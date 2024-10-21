@@ -456,6 +456,12 @@ public struct RectInt(int x, int y, int w, int h) : IEquatable<RectInt>
 	public readonly RectInt Inflate(in Point2 by) => Inflate(by.X, by.Y);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly RectInt InflateX(int byX) => new(X - byX, Y, Width + byX * 2, Height);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly RectInt InflateY(int byY) => new(X, Y - byY, Width, Height + byY * 2);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly Rect Inflate(float by) => new(X - by, Y - by, Width + by * 2, Height + by * 2);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -463,6 +469,32 @@ public struct RectInt(int x, int y, int w, int h) : IEquatable<RectInt>
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly Rect Inflate(in Vector2 by) => Inflate(by.X, by.Y);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect InflateX(float byX) => new(X - byX, Y, Width + byX * 2, Height);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect InflateY(float byY) => new(X, Y - byY, Width, Height + byY * 2);
+
+	public readonly RectInt Inflate(int left, int top, int right, int bottom)
+	{
+		var rect = new RectInt(X, Y, Width, Height);
+		rect.Left -= left;
+		rect.Top -= top;
+		rect.Width += left + right;
+		rect.Height += top + bottom;
+		return rect;
+	}
+
+	public readonly Rect Inflate(float left, float top, float right, float bottom)
+	{
+		var rect = new Rect(X, Y, Width, Height);
+		rect.Left -= left;
+		rect.Top -= top;
+		rect.Width += left + right;
+		rect.Height += top + bottom;
+		return rect;
+	}
 
 	public readonly RectInt RotateLeft(in Point2 origin)
 	{

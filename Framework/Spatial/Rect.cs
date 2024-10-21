@@ -362,6 +362,12 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly Rect Inflate(float byX, float byY) => new(X - byX, Y - byY, Width + byX * 2, Height + byY * 2);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect InflateX(float byX) => new(X - byX, Y, Width + byX * 2, Height);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect InflateY(float byY) => new(X, Y - byY, Width, Height + byY * 2);
+
 	public readonly Rect Inflate(float left, float top, float right, float bottom)
 	{
 		var rect = new Rect(X, Y, Width, Height);
