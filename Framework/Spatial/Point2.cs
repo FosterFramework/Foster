@@ -97,6 +97,11 @@ public struct Point2(int x, int y) : IEquatable<Point2>
 	public readonly Point2 Clamp(in RectInt bounds) =>
 		Clamp(bounds.TopLeft, bounds.BottomRight);
 
+	/// <summary>
+	/// Convert the point into a tuple of integers
+	/// </summary>
+	public readonly (int X, int Y) Deconstruct() => (X, Y);
+
 	public readonly override bool Equals(object? obj) => (obj is Point2 other) && (other == this);
 
 	public readonly bool Equals(Point2 other) => (X == other.X && Y == other.Y);
