@@ -362,44 +362,32 @@ public struct RectInt(int x, int y, int w, int h) : IEquatable<RectInt>
 	#region Transform
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public readonly RectInt At(in Point2 pos)
-		=> new(pos.X, pos.Y, Width, Height);
+	public readonly RectInt At(in Point2 pos) => new(pos.X, pos.Y, Width, Height);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public readonly RectInt Inflate(int by)
-		=> new(X - by, Y - by, Width + by * 2, Height + by * 2);
+	public readonly RectInt AtX(int x) => new(x, Y, Width, Height);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public readonly RectInt Inflate(int byX, int byY)
-		=> new(X - byX, Y - byY, Width + byX * 2, Height + byY * 2);
+	public readonly RectInt AtY(int y) => new(X, y, Width, Height);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public readonly RectInt Inflate(in Point2 by)
-		=> Inflate(by.X, by.Y);
+	public readonly RectInt Translate(int byX, int byY) => new(X + byX, Y + byY, Width, Height);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public readonly Rect Inflate(float by)
-		=> new(X - by, Y - by, Width + by * 2, Height + by * 2);
+	public readonly RectInt Translate(in Point2 by) => new(X + by.X, Y + by.Y, Width, Height);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public readonly Rect Inflate(float byX, float byY)
-		=> new(X - byX, Y - byY, Width + byX * 2, Height + byY * 2);
+	public readonly RectInt Scale(int by) => new RectInt(X * by, Y * by, Width * by, Height * by).ValidateSize();
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public readonly Rect Inflate(in Vector2 by)
-		=> Inflate(by.X, by.Y);
+	public readonly RectInt Scale(int byX, int byY) => new RectInt(X * byX, Y * byY, Width * byX, Height * byY).ValidateSize();
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public readonly RectInt Translate(int byX, int byY)
-		=> new(X + byX, Y + byY, Width, Height);
+	public readonly RectInt Scale(in Point2 by) => new RectInt(X * by.X, Y * by.Y, Width * by.X, Height * by.Y).ValidateSize();
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public readonly RectInt Translate(in Point2 by)
-		=> new(X + by.X, Y + by.Y, Width, Height);
-
-	public readonly RectInt ScaleX(int scale)
+	public readonly RectInt ScaleX(int byX)
 	{
-		var r = new RectInt(X * scale, Y, Width * scale, Height);
+		var r = new RectInt(X * byX, Y, Width * byX, Height);
 
 		if (r.Width < 0)
 		{
@@ -410,9 +398,9 @@ public struct RectInt(int x, int y, int w, int h) : IEquatable<RectInt>
 		return r;
 	}
 
-	public readonly RectInt ScaleY(int scale)
+	public readonly RectInt ScaleY(int byY)
 	{
-		var r = new RectInt(X, Y * scale, Width, Height * scale);
+		var r = new RectInt(X, Y * byY, Width, Height * byY);
 
 		if (r.Height < 0)
 		{
@@ -422,6 +410,59 @@ public struct RectInt(int x, int y, int w, int h) : IEquatable<RectInt>
 
 		return r;
 	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect Scale(float by) => new Rect(X * by, Y * by, Width * by, Height * by).ValidateSize();
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect Scale(float byX, int byY) => new Rect(X * byX, Y * byY, Width * byX, Height * byY).ValidateSize();
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect Scale(in Vector2 by) => new Rect(X * by.X, Y * by.Y, Width * by.X, Height * by.Y).ValidateSize();
+
+	public readonly Rect ScaleX(float byX)
+	{
+		var r = new Rect(X * byX, Y, Width * byX, Height);
+
+		if (r.Width < 0)
+		{
+			r.X += r.Width;
+			r.Width *= -1;
+		}
+
+		return r;
+	}
+
+	public readonly Rect ScaleY(float byY)
+	{
+		var r = new Rect(X, Y * byY, Width, Height * byY);
+
+		if (r.Height < 0)
+		{
+			r.Y += r.Height;
+			r.Height *= -1;
+		}
+
+		return r;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly RectInt Inflate(int by) => new(X - by, Y - by, Width + by * 2, Height + by * 2);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly RectInt Inflate(int byX, int byY) => new(X - byX, Y - byY, Width + byX * 2, Height + byY * 2);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly RectInt Inflate(in Point2 by) => Inflate(by.X, by.Y);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect Inflate(float by) => new(X - by, Y - by, Width + by * 2, Height + by * 2);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect Inflate(float byX, float byY) => new(X - byX, Y - byY, Width + byX * 2, Height + byY * 2);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect Inflate(in Vector2 by) => Inflate(by.X, by.Y);
 
 	public readonly RectInt RotateLeft(in Point2 origin)
 	{
@@ -561,20 +602,16 @@ public struct RectInt(int x, int y, int w, int h) : IEquatable<RectInt>
 	public static bool operator !=(RectInt a, RectInt b) => !(a == b);
 	public static RectInt operator +(in RectInt a, in Point2 b) => new(a.X + b.X, a.Y + b.Y, a.Width, a.Height);
 	public static RectInt operator -(in RectInt a, in Point2 b) => new(a.X - b.X, a.Y - b.Y, a.Width, a.Height);
-	public static RectInt operator *(in RectInt rect, int scaler)
-		=> new RectInt(rect.X * scaler, rect.Y * scaler, rect.Width * scaler, rect.Height * scaler).ValidateSize();
+	public static RectInt operator *(in RectInt rect, int scaler) => rect.Scale(scaler);
 	public static RectInt operator /(in RectInt rect, int scaler)
 		=> new RectInt(rect.X / scaler, rect.Y / scaler, rect.Width / scaler, rect.Height / scaler).ValidateSize();
-	public static RectInt operator *(in RectInt rect, in Point2 scaler)
-		=> new RectInt(rect.X * scaler.X, rect.Y * scaler.Y, rect.Width * scaler.X, rect.Height * scaler.Y).ValidateSize();
+	public static RectInt operator *(in RectInt rect, in Point2 scaler) => rect.Scale(scaler);
 	public static RectInt operator /(in RectInt rect, in Point2 scaler)
 		=> new RectInt(rect.X / scaler.X, rect.Y / scaler.Y, rect.Width / scaler.X, rect.Height / scaler.Y).ValidateSize();
-	public static Rect operator *(in RectInt rect, float scaler)
-		=> new Rect(rect.X * scaler, rect.Y * scaler, rect.Width * scaler, rect.Height * scaler).ValidateSize();
+	public static Rect operator *(in RectInt rect, float scaler) => rect.Scale(scaler);
 	public static Rect operator /(in RectInt rect, float scaler)
 		=> new Rect(rect.X / scaler, rect.Y / scaler, rect.Width / scaler, rect.Height / scaler).ValidateSize();
-	public static Rect operator *(in RectInt rect, in Vector2 scaler)
-		=> new Rect(rect.X * scaler.X, rect.Y * scaler.Y, rect.Width * scaler.X, rect.Height * scaler.Y).ValidateSize();
+	public static Rect operator *(in RectInt rect, in Vector2 scaler) => rect.Scale(scaler);
 	public static Rect operator /(in RectInt rect, in Vector2 scaler)
 		=> new Rect(rect.X / scaler.X, rect.Y / scaler.Y, rect.Width / scaler.X, rect.Height / scaler.Y).ValidateSize();
 	public static RectInt operator *(in RectInt rect, Facing flipX) => flipX == Facing.Right ? rect : rect.ScaleX(-1);
