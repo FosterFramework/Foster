@@ -8,12 +8,12 @@ namespace Foster.Framework;
 /// A 2D Rectangle
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
-public struct Rect : IConvexShape, IEquatable<Rect>
+public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatable<Rect>
 {
-	public float X;
-	public float Y;
-	public float Width;
-	public float Height;
+	public float X = x;
+	public float Y = y;
+	public float Width = w;
+	public float Height = h;
 
 	public Vector2 Position
 	{
@@ -188,14 +188,6 @@ public struct Rect : IConvexShape, IEquatable<Rect>
 
 	#endregion
 
-	public Rect(float x, float y, float w, float h)
-	{
-		X = x;
-		Y = y;
-		Width = w;
-		Height = h;
-	}
-
 	public Rect(float w, float h)
 		: this(0, 0, w, h)
 	{
@@ -208,13 +200,13 @@ public struct Rect : IConvexShape, IEquatable<Rect>
 
 	}
 
-	public Rect(in Vector2 from, in Vector2 to)
+	public Rect(in Vector2 pos, in Vector2 size)
+		: this(pos.X, pos.Y, size.X, size.Y)
 	{
-		X = Math.Min(from.X, to.X);
-		Y = Math.Min(from.Y, to.Y);
-		Width = Math.Max(from.X, to.X) - X;
-		Height = Math.Max(from.Y, to.Y) - Y;
+		
 	}
+
+	#region Collision
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly bool Contains(in Vector2 point)
@@ -232,8 +224,8 @@ public struct Rect : IConvexShape, IEquatable<Rect>
 	public readonly bool Overlaps(in Triangle tri)
 		=> tri.Contains(TopLeft) || Overlaps(tri.AB) || Overlaps(tri.BC) || Overlaps(tri.CA);
 
-	public readonly bool Overlaps(in Line line)
-		=> this.Overlaps(line, out _);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly bool Overlaps(in Line line) => this.Overlaps(line, out _);
 
 	public readonly Rect OverlapRect(in Rect against)
 	{
@@ -255,56 +247,6 @@ public struct Rect : IConvexShape, IEquatable<Rect>
 		}
 
 		return r;
-	}
-
-	public readonly RectInt Int()
-		=> new((int)X, (int)Y, (int)Width, (int)Height);
-
-	public readonly Rect Inflate(float by)
-		=> new(X - by, Y - by, Width + by * 2, Height + by * 2);
-
-	public readonly Rect Inflate(float x, float y)
-		=> new(X - x, Y - y, Width + x * 2, Height + y * 2);
-
-	public readonly Rect Inflate(float left, float top, float right, float bottom)
-	{
-		var rect = new Rect(X, Y, Width, Height);
-		rect.Left -= left;
-		rect.Top -= top;
-		rect.Width += left + right;
-		rect.Height += top + bottom;
-		return rect;
-	}
-
-	public readonly Rect Scale(float by)
-		=> new(X * by, Y * by, Width * by, Height * by);
-
-	public readonly Rect Scale(in Vector2 by)
-		=> new(X * by.X, Y * by.Y, Width * by.X, Height * by.Y);
-
-	public readonly Rect Translate(float byX, float byY)
-		=> new(X + byX, Y + byY, Width, Height);
-
-	public readonly Rect Translate(in Vector2 by)
-		=> new(X + by.X, Y + by.Y, Width, Height);
-
-	public readonly void Project(in Vector2 axis, out float min, out float max)
-	{
-		min = float.MaxValue;
-		max = float.MinValue;
-
-		var dot = Vector2.Dot(new(X, Y), axis);
-		min = Math.Min(dot, min);
-		max = Math.Max(dot, max);
-		dot = Vector2.Dot(new(X + Width, Y), axis);
-		min = Math.Min(dot, min);
-		max = Math.Max(dot, max);
-		dot = Vector2.Dot(new(X + Width, Y + Height), axis);
-		min = Math.Min(dot, min);
-		max = Math.Max(dot, max);
-		dot = Vector2.Dot(new(X, Y + Height), axis);
-		min = Math.Min(dot, min);
-		max = Math.Max(dot, max);
 	}
 
 	/// <summary>
@@ -351,6 +293,25 @@ public struct Rect : IConvexShape, IEquatable<Rect>
 			_ => pt,
 		};
 
+	public readonly void Project(in Vector2 axis, out float min, out float max)
+	{
+		min = float.MaxValue;
+		max = float.MinValue;
+
+		var dot = Vector2.Dot(new(X, Y), axis);
+		min = Math.Min(dot, min);
+		max = Math.Max(dot, max);
+		dot = Vector2.Dot(new(X + Width, Y), axis);
+		min = Math.Min(dot, min);
+		max = Math.Max(dot, max);
+		dot = Vector2.Dot(new(X + Width, Y + Height), axis);
+		min = Math.Min(dot, min);
+		max = Math.Max(dot, max);
+		dot = Vector2.Dot(new(X, Y + Height), axis);
+		min = Math.Min(dot, min);
+		max = Math.Max(dot, max);
+	}
+
 	public readonly int Points => 4;
 
 	public readonly Vector2 GetPoint(int index)
@@ -373,78 +334,72 @@ public struct Rect : IConvexShape, IEquatable<Rect>
 			_ => throw new IndexOutOfRangeException(),
 		};
 
-	public readonly bool Equals(Rect other)
-		=> this == other;
+	#endregion
 
-	public readonly override bool Equals(object? obj)
-		=> (obj is Rect other) && (this == other);
+	#region Transform
 
-	public readonly override int GetHashCode()
-		=> HashCode.Combine(X, Y, Width, Height);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly RectInt Int() => new((int)X, (int)Y, (int)Width, (int)Height);
 
-	public readonly override string ToString()
-		=> $"[{X}, {Y}, {Width}, {Height}]";
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect Inflate(float by) => new(X - by, Y - by, Width + by * 2, Height + by * 2);
 
-	public static Rect Between(in Vector2 a, in Vector2 b)
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect Inflate(float x, float y) => new(X - x, Y - y, Width + x * 2, Height + y * 2);
+
+	public readonly Rect Inflate(float left, float top, float right, float bottom)
 	{
-		Rect rect;
-
-		rect.X = a.X < b.X ? a.X : b.X;
-		rect.Y = a.Y < b.Y ? a.Y : b.Y;
-		rect.Width = (a.X > b.X ? a.X : b.X) - rect.X;
-		rect.Height = (a.Y > b.Y ? a.Y : b.Y) - rect.Y;
-
+		var rect = new Rect(X, Y, Width, Height);
+		rect.Left -= left;
+		rect.Top -= top;
+		rect.Width += left + right;
+		rect.Height += top + bottom;
 		return rect;
 	}
 
-	public static Rect Centered(in Vector2 center, float width, float height)
-		=> new(center.X - width / 2, center.Y - height / 2, width, height);
-	
-	public static Rect Transform(in Rect rect, in Matrix3x2 matrix)
-	{
-		var a = Vector2.Transform(rect.TopLeft, matrix);
-		var b = Vector2.Transform(rect.TopRight, matrix);
-		var c = Vector2.Transform(rect.BottomRight, matrix);
-		var d = Vector2.Transform(rect.BottomLeft, matrix);
-		var min = new Vector2(Calc.Min(a.X, b.X, c.X, d.X), Calc.Min(a.Y, b.Y, c.Y, d.Y));
-		var max = new Vector2(Calc.Max(a.X, b.X, c.X, d.X), Calc.Max(a.Y, b.Y, c.Y, d.Y));
-		return new(min.X, min.Y, max.X - min.X, max.Y - min.Y);
-	}
-
-	public static implicit operator Rect((float X, float Y, float Width, float Height) tuple) => new(tuple.X, tuple.Y, tuple.Width, tuple.Height);
-
-	public static implicit operator Rect(in RectInt rect)
-		=> new(rect.X, rect.Y, rect.Width, rect.Height);
-
-	public static implicit operator Rect(in Vector4 vec)
-		=> new(vec.X, vec.Y, vec.Z, vec.W);
-
-	public static implicit operator Vector4(in Rect rect)
-		=> new(rect.X, rect.Y, rect.Width, rect.Height);
-
-	public static bool operator ==(in Rect a, in Rect b)
-		=> a.X == b.X && a.Y == b.Y && a.Width == b.Width && a.Height == b.Height;
-
-	public static bool operator !=(in Rect a, in Rect b)
-		=> !(a == b);
-
-	public static Rect operator *(in Rect a, in Vector2 scaler)
-		=> new(a.X * scaler.X, a.Y * scaler.Y, a.Width * scaler.X, a.Height * scaler.Y);
-
-	public static Rect operator +(in Rect a, in Vector2 b)
-		=> new(a.X + b.X, a.Y + b.Y, a.Width, a.Height);
-
-	public static Rect operator -(in Rect a, in Vector2 b)
-		=> new(a.X - b.X, a.Y - b.Y, a.Width, a.Height);
-
-	public static Rect operator *(in Rect a, float scaler)
-		=> new(a.X * scaler, a.Y * scaler, a.Width * scaler, a.Height * scaler);
-
-	public static Rect operator /(in Rect a, float scaler)
-		=> new(a.X / scaler, a.Y / scaler, a.Width / scaler, a.Height / scaler);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect Scale(float by) => new(X * by, Y * by, Width * by, Height * by);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public readonly Rect Validate()
+	public readonly Rect Scale(in Vector2 by) => new(X * by.X, Y * by.Y, Width * by.X, Height * by.Y);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect Translate(float byX, float byY) => new(X + byX, Y + byY, Width, Height);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect Translate(in Vector2 by) => new(X + by.X, Y + by.Y, Width, Height);
+
+	public readonly Rect ScaleX(float scale)
+	{
+		var r = new Rect(X * scale, Y, Width * scale, Height);
+
+		if (r.Width < 0)
+		{
+			r.X += r.Width;
+			r.Width *= -1;
+		}
+
+		return r;
+	}
+
+	public readonly Rect ScaleY(float scale)
+	{
+		var r = new Rect(X, Y * scale, Width, Height * scale);
+
+		if (r.Height < 0)
+		{
+			r.Y += r.Height;
+			r.Height *= -1;
+		}
+
+		return r;
+	}
+
+	/// <summary>
+	/// Resolve negative width or height to an equivalent rectangle with positive width and height. Ex: (0, 0, -2, -3) validates to (-2, -3, 2, 3)
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect ValidateSize()
 	{
 		var rect = this;
 
@@ -462,4 +417,57 @@ public struct Rect : IConvexShape, IEquatable<Rect>
 
 		return rect;
 	}
+
+	public static Rect Transform(in Rect rect, in Matrix3x2 matrix)
+	{
+		var a = Vector2.Transform(rect.TopLeft, matrix);
+		var b = Vector2.Transform(rect.TopRight, matrix);
+		var c = Vector2.Transform(rect.BottomRight, matrix);
+		var d = Vector2.Transform(rect.BottomLeft, matrix);
+		var min = new Vector2(Calc.Min(a.X, b.X, c.X, d.X), Calc.Min(a.Y, b.Y, c.Y, d.Y));
+		var max = new Vector2(Calc.Max(a.X, b.X, c.X, d.X), Calc.Max(a.Y, b.Y, c.Y, d.Y));
+		return new(min.X, min.Y, max.X - min.X, max.Y - min.Y);
+	}
+
+	#endregion
+
+	/// <summary>
+	/// Get the rect as a tuple of floats
+	/// </summary>
+	public readonly (float X, float Y, float Width, float Height) Deconstruct() => (X, Y, Width, Height);
+
+	public static Rect Between(in Vector2 a, in Vector2 b)
+	{
+		Rect rect;
+
+		rect.X = a.X < b.X ? a.X : b.X;
+		rect.Y = a.Y < b.Y ? a.Y : b.Y;
+		rect.Width = (a.X > b.X ? a.X : b.X) - rect.X;
+		rect.Height = (a.Y > b.Y ? a.Y : b.Y) - rect.Y;
+
+		return rect;
+	}
+
+	public static Rect Centered(in Vector2 center, float width, float height)
+		=> new(center.X - width / 2, center.Y - height / 2, width, height);
+
+	public readonly bool Equals(Rect other) => this == other;
+	public readonly override bool Equals(object? obj) => (obj is Rect other) && (this == other);
+	public readonly override int GetHashCode() => HashCode.Combine(X, Y, Width, Height);
+	public readonly override string ToString() => $"[{X}, {Y}, {Width}, {Height}]";
+
+	public static implicit operator Rect((float X, float Y, float Width, float Height) tuple) => new(tuple.X, tuple.Y, tuple.Width, tuple.Height);
+	public static implicit operator Rect(in Vector4 vec) => new(vec.X, vec.Y, vec.Z, vec.W);
+	public static implicit operator Vector4(in Rect rect) => new(rect.X, rect.Y, rect.Width, rect.Height);
+	public static explicit operator RectInt(in Rect rect) => rect.Int();
+
+	public static bool operator ==(in Rect a, in Rect b) => a.X == b.X && a.Y == b.Y && a.Width == b.Width && a.Height == b.Height;
+	public static bool operator !=(in Rect a, in Rect b) => !(a == b);
+	public static Rect operator +(in Rect a, in Vector2 b) => new(a.X + b.X, a.Y + b.Y, a.Width, a.Height);
+	public static Rect operator -(in Rect a, in Vector2 b) => new(a.X - b.X, a.Y - b.Y, a.Width, a.Height);
+	public static Rect operator *(in Rect a, float scaler) => new(a.X * scaler, a.Y * scaler, a.Width * scaler, a.Height * scaler);
+	public static Rect operator /(in Rect a, float scaler) => new(a.X / scaler, a.Y / scaler, a.Width / scaler, a.Height / scaler);
+	public static Rect operator *(in Rect a, in Vector2 scaler) => new(a.X * scaler.X, a.Y * scaler.Y, a.Width * scaler.X, a.Height * scaler.Y);
+	public static Rect operator /(in Rect a, in Vector2 scaler) => new(a.X / scaler.X, a.Y / scaler.Y, a.Width / scaler.X, a.Height / scaler.Y);
+	public static Rect operator *(in Rect rect, Facing flipX) => flipX == Facing.Right ? rect : rect.ScaleX(-1);
 }

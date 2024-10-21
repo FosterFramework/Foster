@@ -8,12 +8,12 @@ namespace Foster.Framework;
 /// A 2D Integer Rectangle
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
-public struct RectInt : IEquatable<RectInt>
+public struct RectInt(int x, int y, int w, int h) : IEquatable<RectInt>
 {
-	public int X;
-	public int Y;
-	public int Width;
-	public int Height;
+	public int X = x;
+	public int Y = y;
+	public int Width = w;
+	public int Height = h;
 
 	public Point2 Position
 	{
@@ -80,7 +80,6 @@ public struct RectInt : IEquatable<RectInt>
 	#region Points
 
 	public readonly Point2 Min => new(Math.Min(X, Right), Math.Min(Y, Bottom));
-
 	public readonly Point2 Max => new(Math.Max(X, Right), Math.Max(Y, Bottom));
 
 	public Point2 TopLeft
@@ -187,23 +186,25 @@ public struct RectInt : IEquatable<RectInt>
 
 	#endregion
 
-	public RectInt(int x, int y, int w, int h)
+	public RectInt(int w, int h)
+		: this(0, 0, w, h)
 	{
-		X = x;
-		Y = y;
-		Width = w;
-		Height = h;
+
 	}
 
-	public RectInt(int w, int h) : this(0, 0, w, h) { }
-
-	public RectInt(in Point2 position, in Point2 size)
+	public RectInt(in Point2 pos, int w, int h)
+		: this(pos.X, pos.Y, w, h)
 	{
-		X = position.X;
-		Y = position.Y;
-		Width = size.X;
-		Height = size.Y;
+
 	}
+
+	public RectInt(in Point2 pos, in Point2 size)
+		: this(pos.X, pos.Y, size.X, size.Y)
+	{
+		
+	}
+
+	#region Collision
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly bool Contains(in Point2 point)
@@ -226,10 +227,6 @@ public struct RectInt : IEquatable<RectInt>
 		=> X + Width > against.X && Y + Height > against.Y && X < against.X + against.Width && Y < against.Y + against.Height;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public readonly RectInt At(in Point2 pos)
-		=> new(pos.X, pos.Y, Width, Height);
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly RectInt Conflate(in RectInt other)
 	{
 		var min = Point2.Min(Min, other.Min);
@@ -237,57 +234,10 @@ public struct RectInt : IEquatable<RectInt>
 		return new(min.X, min.Y, max.X - min.X, max.Y - min.Y);
 	}
 
-	public readonly RectInt Inflate(int by)
-		=> new(X - by, Y - by, Width + by * 2, Height + by * 2);
-
-	public readonly RectInt Inflate(int byX, int byY)
-		=> new(X - byX, Y - byY, Width + byX * 2, Height + byY * 2);
-
-	public readonly RectInt Inflate(in Point2 by)
-		=> Inflate(by.X, by.Y);
-
-	public readonly Rect Inflate(float by)
-		=> new(X - by, Y - by, Width + by * 2, Height + by * 2);
-
-	public readonly Rect Inflate(float byX, float byY)
-		=> new(X - byX, Y - byY, Width + byX * 2, Height + byY * 2);
-
-	public readonly Rect Inflate(in Vector2 by)
-		=> Inflate(by.X, by.Y);
-
-	public readonly RectInt Translate(int byX, int byY)
-		=> new(X + byX, Y + byY, Width, Height);
-
-	public readonly RectInt Translate(in Point2 by)
-		=> new(X + by.X, Y + by.Y, Width, Height);
-
-	public readonly RectInt MultiplyX(int scale)
-	{
-		var r = new RectInt(X * scale, Y, Width * scale, Height);
-
-		if (r.Width < 0)
-		{
-			r.X += r.Width;
-			r.Width *= -1;
-		}
-
-		return r;
-	}
-
-	public readonly RectInt MultiplyY(int scale)
-	{
-		var r = new RectInt(X, Y * scale, Width, Height * scale);
-
-		if (r.Height < 0)
-		{
-			r.Y += r.Height;
-			r.Height *= -1;
-		}
-
-		return r;
-	}
-
-	public readonly RectInt OverlapRect(in RectInt against)
+	/// <summary>
+	/// Get the rectangle intersection of two rectangles
+	/// </summary>
+	public readonly RectInt GetIntersection(in RectInt against)
 	{
 		bool overlapX = X + Width > against.X && X < against.X + against.Width;
 		bool overlapY = Y + Height > against.Y && Y < against.Y + against.Height;
@@ -307,66 +257,6 @@ public struct RectInt : IEquatable<RectInt>
 		}
 
 		return r;
-	}
-
-	public readonly RectInt RotateLeft(Point2 origin)
-	{
-		Point2 a = (TopLeft - origin).TurnLeft();
-		Point2 b = (TopRight - origin).TurnLeft();
-		Point2 c = (BottomRight - origin).TurnLeft();
-		Point2 d = (BottomLeft - origin).TurnLeft();
-		Point2 min = Point2.Min(a, b, c, d);
-		Point2 max = Point2.Max(a, b, c, d);
-		return new(min.X, min.Y, max.X - min.X, max.Y - min.Y);
-	}
-	public readonly RectInt RotateLeft(Point2 origin, int count)
-	{
-		RectInt r = this;
-		while (count-- > 0)
-			r = r.RotateLeft(origin);
-		return r;
-	}
-	public readonly RectInt RotateLeft() => RotateLeft(Point2.Zero);
-	public readonly RectInt RotateLeft(int count) => RotateLeft(Point2.Zero, count);
-
-	public readonly RectInt RotateRight(Point2 origin)
-	{
-		Point2 a = (TopLeft - origin).TurnRight();
-		Point2 b = (TopRight - origin).TurnRight();
-		Point2 c = (BottomRight - origin).TurnRight();
-		Point2 d = (BottomLeft - origin).TurnRight();
-		Point2 min = Point2.Min(a, b, c, d);
-		Point2 max = Point2.Max(a, b, c, d);
-		return new(min.X, min.Y, max.X - min.X, max.Y - min.Y);
-	}
-	public readonly RectInt RotateRight(Point2 origin, int count)
-	{
-		RectInt r = this;
-		while (count-- > 0)
-			r = r.RotateRight(origin);
-		return r;
-	}
-	public readonly RectInt RotateRight() => RotateRight(Point2.Zero);
-	public readonly RectInt RotateRight(int count) => RotateRight(Point2.Zero, count);
-
-	public readonly RectInt Rotate(Cardinal direction) => RotateRight(direction.Value);
-
-	public readonly RectInt GetSweep(Cardinal direction, int distance)
-	{
-		if (distance < 0)
-		{
-			distance *= -1;
-			direction = direction.Reverse;
-		}
-
-		if (direction == Cardinal.Right)
-			return new(X + Width, Y, distance, Height);
-		else if (direction == Cardinal.Left)
-			return new(X - distance, Y, distance, Height);
-		else if (direction == Cardinal.Down)
-			return new(X, Y + Height, Width, distance);
-		else
-			return new(X, Y - distance, Width, distance);
 	}
 
 	/// <summary>
@@ -407,7 +297,7 @@ public struct RectInt : IEquatable<RectInt>
 
 			// top check
 			if ((both & 0b0100) != 0
-			&& line.Intersects(new Line(TopLeft, TopRight)))	
+			&& line.Intersects(new Line(TopLeft, TopRight)))
 				return true;
 
 			// bottom check
@@ -467,90 +357,127 @@ public struct RectInt : IEquatable<RectInt>
 		}
 	}
 
-	public override readonly bool Equals(object? obj) => (obj is RectInt other) && (this == other);
-	public readonly bool Equals(RectInt other) => this == other;
+	#endregion
 
-	public override readonly int GetHashCode()
-	{
-		int hash = 17;
-		hash = hash * 23 + X;
-		hash = hash * 23 + Y;
-		hash = hash * 23 + Width;
-		hash = hash * 23 + Height;
-		return hash;
-	}
-
-	public override readonly string ToString()
-		=> $"[{X}, {Y}, {Width}, {Height}]";
-
-	public static RectInt Box(Point2 center, Point2 size)
-		=> new(center.X - size.X / 2, center.Y - size.Y / 2, size.X, size.Y);
-
-	public static RectInt Between(Point2 a, Point2 b)
-	{
-		RectInt rect;
-
-		rect.X = a.X < b.X ? a.X : b.X;
-		rect.Y = a.Y < b.Y ? a.Y : b.Y;
-		rect.Width = (a.X > b.X ? a.X : b.X) - rect.X;
-		rect.Height = (a.Y > b.Y ? a.Y : b.Y) - rect.Y;
-
-		return rect;
-	}
-
-	public static implicit operator RectInt((int X, int Y, int Width, int Height) tuple)
-		=> new(tuple.X, tuple.Y, tuple.Width, tuple.Height);
-
-	public static bool operator ==(RectInt a, RectInt b)
-		=> a.X == b.X && a.Y == b.Y && a.Width == b.Width && a.Height == b.Height;
-
-	public static bool operator !=(RectInt a, RectInt b)
-		=> !(a == b);
-
-	public static RectInt operator *(RectInt rect, Facing flipX)
-	{
-		if (flipX == Facing.Right)
-			return rect;
-		else
-			return rect.MultiplyX(-1);
-	}
-
-	public static RectInt operator *(in RectInt rect, int scaler)
-		=> new RectInt(rect.X * scaler, rect.Y * scaler, rect.Width * scaler, rect.Height * scaler).Validate();
-
-	public static RectInt operator *(in RectInt rect, in Point2 scaler)
-		=> new RectInt(rect.X * scaler.X, rect.Y * scaler.Y, rect.Width * scaler.X, rect.Height * scaler.Y).Validate();
-
-	public static RectInt operator /(in RectInt rect, int scaler)
-		=> new RectInt(rect.X / scaler, rect.Y / scaler, rect.Width / scaler, rect.Height / scaler).Validate();
-
-	public static RectInt operator /(in RectInt rect, in Point2 scaler)
-		=> new RectInt(rect.X / scaler.X, rect.Y / scaler.Y, rect.Width / scaler.X, rect.Height / scaler.Y).Validate();
-
-	public static RectInt operator +(in RectInt a, in Point2 b)
-		=> new(a.X + b.X, a.Y + b.Y, a.Width, a.Height);
-
-	public static RectInt operator -(in RectInt a, in Point2 b)
-		=> new(a.X - b.X, a.Y - b.Y, a.Width, a.Height);
-
-	public static explicit operator RectInt(in Rect rect)
-		=> new((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
-
-	public static Rect operator *(in RectInt rect, float scaler)
-		=> new Rect(rect.X * scaler, rect.Y * scaler, rect.Width * scaler, rect.Height * scaler).Validate();
-
-	public static Rect operator *(in RectInt rect, in Vector2 scaler)
-		=> new Rect(rect.X * scaler.X, rect.Y * scaler.Y, rect.Width * scaler.X, rect.Height * scaler.Y).Validate();
-
-	public static Rect operator /(in RectInt rect, float scaler)
-		=> new Rect(rect.X / scaler, rect.Y / scaler, rect.Width / scaler, rect.Height / scaler).Validate();
-
-	public static Rect operator /(in RectInt rect, in Vector2 scaler)
-		=> new Rect(rect.X / scaler.X, rect.Y / scaler.Y, rect.Width / scaler.X, rect.Height / scaler.Y).Validate();
-
+	#region Transform
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private readonly RectInt Validate()
+	public readonly RectInt At(in Point2 pos)
+		=> new(pos.X, pos.Y, Width, Height);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly RectInt Inflate(int by)
+		=> new(X - by, Y - by, Width + by * 2, Height + by * 2);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly RectInt Inflate(int byX, int byY)
+		=> new(X - byX, Y - byY, Width + byX * 2, Height + byY * 2);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly RectInt Inflate(in Point2 by)
+		=> Inflate(by.X, by.Y);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect Inflate(float by)
+		=> new(X - by, Y - by, Width + by * 2, Height + by * 2);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect Inflate(float byX, float byY)
+		=> new(X - byX, Y - byY, Width + byX * 2, Height + byY * 2);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect Inflate(in Vector2 by)
+		=> Inflate(by.X, by.Y);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly RectInt Translate(int byX, int byY)
+		=> new(X + byX, Y + byY, Width, Height);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly RectInt Translate(in Point2 by)
+		=> new(X + by.X, Y + by.Y, Width, Height);
+
+	public readonly RectInt ScaleX(int scale)
+	{
+		var r = new RectInt(X * scale, Y, Width * scale, Height);
+
+		if (r.Width < 0)
+		{
+			r.X += r.Width;
+			r.Width *= -1;
+		}
+
+		return r;
+	}
+
+	public readonly RectInt ScaleY(int scale)
+	{
+		var r = new RectInt(X, Y * scale, Width, Height * scale);
+
+		if (r.Height < 0)
+		{
+			r.Y += r.Height;
+			r.Height *= -1;
+		}
+
+		return r;
+	}
+
+	public readonly RectInt RotateLeft(in Point2 origin)
+	{
+		Point2 a = (TopLeft - origin).TurnLeft();
+		Point2 b = (TopRight - origin).TurnLeft();
+		Point2 c = (BottomRight - origin).TurnLeft();
+		Point2 d = (BottomLeft - origin).TurnLeft();
+		Point2 min = Point2.Min(a, b, c, d);
+		Point2 max = Point2.Max(a, b, c, d);
+		return new(min.X, min.Y, max.X - min.X, max.Y - min.Y);
+	}
+
+	public readonly RectInt RotateLeft(in Point2 origin, int count)
+	{
+		RectInt r = this;
+		while (count-- > 0)
+			r = r.RotateLeft(origin);
+		return r;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly RectInt RotateLeft() => RotateLeft(Point2.Zero);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly RectInt RotateLeft(int count) => RotateLeft(Point2.Zero, count);
+
+	public readonly RectInt RotateRight(in Point2 origin)
+	{
+		Point2 a = (TopLeft - origin).TurnRight();
+		Point2 b = (TopRight - origin).TurnRight();
+		Point2 c = (BottomRight - origin).TurnRight();
+		Point2 d = (BottomLeft - origin).TurnRight();
+		Point2 min = Point2.Min(a, b, c, d);
+		Point2 max = Point2.Max(a, b, c, d);
+		return new(min.X, min.Y, max.X - min.X, max.Y - min.Y);
+	}
+	public readonly RectInt RotateRight(in Point2 origin, int count)
+	{
+		RectInt r = this;
+		while (count-- > 0)
+			r = r.RotateRight(origin);
+		return r;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly RectInt RotateRight() => RotateRight(Point2.Zero);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly RectInt RotateRight(int count) => RotateRight(Point2.Zero, count);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly RectInt Rotate(Cardinal direction) => RotateRight(direction.Value);
+
+	/// <summary>
+	/// Resolve negative width or height to an equivalent rectangle with positive width and height. Ex: (0, 0, -2, -3) validates to (-2, -3, 2, 3)
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly RectInt ValidateSize()
 	{
 		RectInt rect = this;
 
@@ -569,6 +496,49 @@ public struct RectInt : IEquatable<RectInt>
 		return rect;
 	}
 
+	public readonly RectInt GetSweep(Cardinal direction, int distance)
+	{
+		if (distance < 0)
+		{
+			distance *= -1;
+			direction = direction.Reverse;
+		}
+
+		if (direction == Cardinal.Right)
+			return new(X + Width, Y, distance, Height);
+		else if (direction == Cardinal.Left)
+			return new(X - distance, Y, distance, Height);
+		else if (direction == Cardinal.Down)
+			return new(X, Y + Height, Width, distance);
+		else
+			return new(X, Y - distance, Width, distance);
+	}
+
+	#endregion
+
+	/// <summary>
+	/// Get the rect as a tuple of integers
+	/// </summary>
+	public readonly (int X, int Y, int Width, int Height) Deconstruct() => (X, Y, Width, Height);
+
+	public static RectInt Centered(Point2 center, Point2 size)
+		=> new(center.X - size.X / 2, center.Y - size.Y / 2, size.X, size.Y);
+
+	public static RectInt Between(Point2 a, Point2 b)
+	{
+		RectInt rect;
+
+		rect.X = a.X < b.X ? a.X : b.X;
+		rect.Y = a.Y < b.Y ? a.Y : b.Y;
+		rect.Width = (a.X > b.X ? a.X : b.X) - rect.X;
+		rect.Height = (a.Y > b.Y ? a.Y : b.Y) - rect.Y;
+
+		return rect;
+	}
+
+	/// <summary>
+	/// Enumerate all integer positions within this rectangle
+	/// </summary>
 	public readonly IEnumerable<Point2> AllPoints
 	{
 		get
@@ -578,4 +548,35 @@ public struct RectInt : IEquatable<RectInt>
 					yield return new(x, y);
 		}
 	}
+
+	public readonly bool Equals(RectInt other) => this == other;
+	public override readonly bool Equals(object? obj) => (obj is RectInt other) && (this == other);	
+	public override readonly int GetHashCode() => HashCode.Combine(X, Y, Width, Height);
+	public override readonly string ToString() => $"[{X}, {Y}, {Width}, {Height}]";
+
+	public static implicit operator RectInt((int X, int Y, int Width, int Height) tuple) => new(tuple.X, tuple.Y, tuple.Width, tuple.Height);
+	public static implicit operator Rect(in RectInt rect) => new(rect.X, rect.Y, rect.Width, rect.Height);
+
+	public static bool operator ==(RectInt a, RectInt b) => a.X == b.X && a.Y == b.Y && a.Width == b.Width && a.Height == b.Height;
+	public static bool operator !=(RectInt a, RectInt b) => !(a == b);
+	public static RectInt operator +(in RectInt a, in Point2 b) => new(a.X + b.X, a.Y + b.Y, a.Width, a.Height);
+	public static RectInt operator -(in RectInt a, in Point2 b) => new(a.X - b.X, a.Y - b.Y, a.Width, a.Height);
+	public static RectInt operator *(in RectInt rect, int scaler)
+		=> new RectInt(rect.X * scaler, rect.Y * scaler, rect.Width * scaler, rect.Height * scaler).ValidateSize();
+	public static RectInt operator /(in RectInt rect, int scaler)
+		=> new RectInt(rect.X / scaler, rect.Y / scaler, rect.Width / scaler, rect.Height / scaler).ValidateSize();
+	public static RectInt operator *(in RectInt rect, in Point2 scaler)
+		=> new RectInt(rect.X * scaler.X, rect.Y * scaler.Y, rect.Width * scaler.X, rect.Height * scaler.Y).ValidateSize();
+	public static RectInt operator /(in RectInt rect, in Point2 scaler)
+		=> new RectInt(rect.X / scaler.X, rect.Y / scaler.Y, rect.Width / scaler.X, rect.Height / scaler.Y).ValidateSize();
+	public static Rect operator *(in RectInt rect, float scaler)
+		=> new Rect(rect.X * scaler, rect.Y * scaler, rect.Width * scaler, rect.Height * scaler).ValidateSize();
+	public static Rect operator /(in RectInt rect, float scaler)
+		=> new Rect(rect.X / scaler, rect.Y / scaler, rect.Width / scaler, rect.Height / scaler).ValidateSize();
+	public static Rect operator *(in RectInt rect, in Vector2 scaler)
+		=> new Rect(rect.X * scaler.X, rect.Y * scaler.Y, rect.Width * scaler.X, rect.Height * scaler.Y).ValidateSize();
+	public static Rect operator /(in RectInt rect, in Vector2 scaler)
+		=> new Rect(rect.X / scaler.X, rect.Y / scaler.Y, rect.Width / scaler.X, rect.Height / scaler.Y).ValidateSize();
+	public static RectInt operator *(in RectInt rect, Facing flipX) => flipX == Facing.Right ? rect : rect.ScaleX(-1);
+	public static RectInt operator *(in RectInt rect, Cardinal rotation) => rect.Rotate(rotation);
 }

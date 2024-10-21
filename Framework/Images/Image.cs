@@ -299,7 +299,7 @@ public class Image : IDisposable
 
 		var target = new RectInt(destination.X, destination.Y, sourceRect.Width, sourceRect.Height);
 
-		var dst = Bounds.OverlapRect(in target);
+		var dst = Bounds.GetIntersection(in target);
 		if (dst.Width <= 0 || dst.Height <= 0)
 			return;
 

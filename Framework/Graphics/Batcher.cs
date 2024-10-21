@@ -222,7 +222,7 @@ public class Batcher : IDisposable
 	{
 		var trimmed = scissor;
 		if (batch.Scissor.HasValue && trimmed.HasValue)
-			trimmed = batch.Scissor.Value.OverlapRect(trimmed.Value);
+			trimmed = batch.Scissor.Value.GetIntersection(trimmed.Value);
 		else if (batch.Scissor.HasValue)
 			trimmed = batch.Scissor;
 
