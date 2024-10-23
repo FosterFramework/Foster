@@ -124,4 +124,6 @@ public struct Rng
 			5 => f,
 			_ => a,
 		};
+
+	public Point2 Shake() => new(Choose(-1, 0, 1), Choose(-1, 0, 1));
 }
