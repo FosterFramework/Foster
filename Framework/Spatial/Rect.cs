@@ -227,7 +227,10 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly bool Overlaps(in Line line) => this.Overlaps(line, out _);
 
-	public readonly Rect OverlapRect(in Rect against)
+	/// <summary>
+	/// Get the rectangle intersection of two rectangles
+	/// </summary>
+	public readonly Rect GetIntersection(in Rect against)
 	{
 		var overlapX = X + Width > against.X && X < against.X + against.Width;
 		var overlapY = Y + Height > against.Y && Y < against.Y + against.Height;
