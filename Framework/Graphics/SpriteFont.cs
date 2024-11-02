@@ -489,7 +489,7 @@ public class SpriteFont
 
 			advance = metrics.Advance;
 			offset = metrics.Offset;
-			subtex = new Subtexture(null, default, new Rect(0, 0, metrics.Width, metrics.Height));
+			subtex = new Subtexture(null, default, new(0, 0, metrics.Width, metrics.Height));
 			exists = glyph != 0;
 
 			// request that the character be rendered and added to our texture
@@ -687,7 +687,7 @@ public class SpriteFont
 			{
 				var node = nodes[index];
 				image.CopyPixels(buffer, width, height, new Point2(node.Bounds.X + 1, node.Bounds.Y + 1));
-				result = new Subtexture(texture, node.Bounds, new Rect(1, 1, width, height));
+				result = new Subtexture(texture, node.Bounds, new(1, 1, width, height));
 
 				if (uploadToTexture)
 				{

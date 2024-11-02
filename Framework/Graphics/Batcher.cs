@@ -1499,7 +1499,7 @@ public class Batcher : IDisposable
 		Matrix = was;
 	}
 
-	public void Image(in Subtexture subtex, in Rect clip, in Vector2 position, in Vector2 origin, in Vector2 scale, float rotation, Color color)
+	public void Image(in Subtexture subtex, in RectInt clip, in Vector2 position, in Vector2 origin, in Vector2 scale, float rotation, Color color)
 	{
 		var (source, frame) = subtex.GetClip(clip);
 		var tex = subtex.Texture;
