@@ -43,21 +43,21 @@ public class Batcher : IDisposable
 
 	private readonly MaterialState defaultMaterialState = new();
 	private readonly Material defaultMaterial = new();
-	private readonly Stack<Matrix3x2> matrixStack = new();
-	private readonly Stack<RectInt?> scissorStack = new();
-	private readonly Stack<BlendMode> blendStack = new();
-	private readonly Stack<TextureSampler> samplerStack = new();
-	private readonly Stack<MaterialState> materialStack = new();
-	private readonly Stack<int> layerStack = new();
-	private readonly Stack<Color> modeStack = new();
-	private readonly List<Batch> batches = new();
+	private readonly Stack<Matrix3x2> matrixStack = [];
+	private readonly Stack<RectInt?> scissorStack = [];
+	private readonly Stack<BlendMode> blendStack = [];
+	private readonly Stack<TextureSampler> samplerStack = [];
+	private readonly Stack<MaterialState> materialStack = [];
+	private readonly Stack<int> layerStack = [];
+	private readonly Stack<Color> modeStack = [];
+	private readonly List<Batch> batches = [];
 	private readonly Mesh mesh = new();
 	private Batch currentBatch;
 	private int currentBatchInsert;
 	private Color mode = new(255, 0, 0, 0);
 	private bool meshDirty;
 
-	private readonly List<Material> materialPool = new();
+	private readonly List<Material> materialPool = [];
 	private int materialPoolIndex;
 
 	private IntPtr vertexPtr = IntPtr.Zero;
@@ -1499,7 +1499,7 @@ public class Batcher : IDisposable
 		Matrix = was;
 	}
 
-	public void Image(in Subtexture subtex, in RectInt clip, in Vector2 position, in Vector2 origin, in Vector2 scale, float rotation, Color color)
+	public void Image(in Subtexture subtex, in Rect clip, in Vector2 position, in Vector2 origin, in Vector2 scale, float rotation, Color color)
 	{
 		var (source, frame) = subtex.GetClip(clip);
 		var tex = subtex.Texture;
