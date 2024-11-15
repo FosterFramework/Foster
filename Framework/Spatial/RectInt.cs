@@ -594,10 +594,22 @@ public struct RectInt(int x, int y, int w, int h) : IEquatable<RectInt>
 	/// </summary>
 	public readonly (int X, int Y, int Width, int Height) Deconstruct() => (X, Y, Width, Height);
 
-	public static RectInt Centered(Point2 center, Point2 size)
+	/// <summary>
+	/// Get a rect centered around a position
+	/// </summary>
+	public static RectInt Centered(in Point2 center, int width, int height)
+		=> new(center.X - width / 2, center.Y - height / 2, width, height);
+
+	/// <summary>
+	/// Get a rect centered around a position
+	/// </summary>
+	public static RectInt Centered(in Point2 center, in Point2 size)
 		=> new(center.X - size.X / 2, center.Y - size.Y / 2, size.X, size.Y);
 
-	public static RectInt Between(Point2 a, Point2 b)
+	/// <summary>
+	/// Get the rect with positive width and height that stretches from point a to point b
+	/// </summary>
+	public static RectInt Between(in Point2 a, in Point2 b)
 	{
 		RectInt rect;
 

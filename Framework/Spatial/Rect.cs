@@ -454,6 +454,21 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 	/// </summary>
 	public readonly (float X, float Y, float Width, float Height) Deconstruct() => (X, Y, Width, Height);
 
+	/// <summary>
+	/// Get a rect centered around a position
+	/// </summary>
+	public static Rect Centered(in Vector2 center, float width, float height)
+		=> new(center.X - width / 2, center.Y - height / 2, width, height);
+
+	/// <summary>
+	/// Get a rect centered around a position
+	/// </summary>
+	public static Rect Centered(in Vector2 center, in Vector2 size)
+		=> new(center.X - size.X / 2, center.Y - size.Y / 2, size.X, size.Y);
+
+	/// <summary>
+	/// Get the rect with positive width and height that stretches from point a to point b
+	/// </summary>
 	public static Rect Between(in Vector2 a, in Vector2 b)
 	{
 		Rect rect;
@@ -465,9 +480,6 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 
 		return rect;
 	}
-
-	public static Rect Centered(in Vector2 center, float width, float height)
-		=> new(center.X - width / 2, center.Y - height / 2, width, height);
 
 	public readonly bool Equals(Rect other) => this == other;
 	public readonly override bool Equals(object? obj) => (obj is Rect other) && (this == other);
