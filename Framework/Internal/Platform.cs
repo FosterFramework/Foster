@@ -84,7 +84,7 @@ internal static partial class Platform
 		if (stream != null)
 		{
 			var result = new byte[stream.Length];
-			stream.Read(result, 0, result.Length);
+			stream.ReadExactly(result);
 			return result;
 		}
 

@@ -45,7 +45,7 @@ public static unsafe partial class SDL
 {
 	// Custom marshaller for SDL-owned strings returned by SDL.
 	[CustomMarshaller(typeof(string), MarshalMode.ManagedToUnmanagedOut, typeof(SDLOwnedStringMarshaller))]
-	private static unsafe class SDLOwnedStringMarshaller
+	public static unsafe class SDLOwnedStringMarshaller
 	{
 		/// <summary>
 		/// Converts an unmanaged string to a managed version.
@@ -57,7 +57,7 @@ public static unsafe partial class SDL
 
 	// Custom marshaller for caller-owned strings returned by SDL.
 	[CustomMarshaller(typeof(string), MarshalMode.ManagedToUnmanagedOut, typeof(CallerOwnedStringMarshaller))]
-	private static unsafe class CallerOwnedStringMarshaller
+	public static unsafe class CallerOwnedStringMarshaller
 	{
 		/// <summary>
 		/// Converts an unmanaged string to a managed version.

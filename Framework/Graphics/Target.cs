@@ -47,7 +47,7 @@ public class Target : IResource
 		if (width <= 0 || height <= 0)
 			throw new ArgumentException("Target width and height must be larger than 0");
 
-		if (attachments == null || attachments.Length <= 0)
+		if (attachments.Length <= 0)
 			throw new ArgumentException("Target needs at least 1 color attachment");
 
 		Resource = App.Renderer.CreateTarget(width, height);

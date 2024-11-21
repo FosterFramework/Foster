@@ -49,7 +49,7 @@ public class Font : IDisposable
 	{
 		// allocate enough room for the buffer
 		byte[] buffer = new byte[stream.Length];
-		stream.Read(buffer, 0, buffer.Length);
+		stream.ReadExactly(buffer);
 
 		// pin the buffer
 		dataHandle =  GCHandle.Alloc(buffer, GCHandleType.Pinned);

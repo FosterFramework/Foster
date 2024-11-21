@@ -43,7 +43,7 @@ public abstract class Content
 	{
 		using var stream = OpenRead(path);
 		byte[] buffer = new byte[stream.Length];
-		stream.Read(buffer);
+		stream.ReadExactly(buffer);
 		return buffer;
 	}
 
