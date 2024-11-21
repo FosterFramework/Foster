@@ -124,10 +124,6 @@ internal unsafe class RendererSDL : Renderer
 		if (device != nint.Zero)
 			throw new Exception("GPU Device is already created");
 
-		// initialize shader cross
-		if (Platform.ShaderCrossInit() != 1)
-			throw Platform.CreateExceptionFromSDL("SDL_ShaderCross_Init");
-
 		string? driverName = preferred switch
 		{
 			GraphicsDriver.None => null,
@@ -141,7 +137,7 @@ internal unsafe class RendererSDL : Renderer
 		};
 
 		device = SDL_CreateGPUDevice(
-			format_flags: Platform.ShaderCrossGetFormats(),
+			format_flags: SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
 			debug_mode: true, // TODO: flag?
 			name: driverName!);
 
@@ -153,7 +149,6 @@ internal unsafe class RendererSDL : Renderer
 	{
 		SDL_DestroyGPUDevice(device);
 		device = nint.Zero;
-		Platform.ShaderCrossQuit();
 	}
 
 	public override void Startup(nint window)
@@ -810,7 +805,7 @@ internal unsafe class RendererSDL : Renderer
 				num_uniform_buffers = (uint)(shaderInfo.Vertex.Uniforms.Length > 0 ? 1 : 0)
 			};
 
-			vertexProgram = Platform.ShaderCrossCreateShader(device, new nint(&info));
+			vertexProgram = SDL_CreateGPUShader(device, info);
 			if (vertexProgram == nint.Zero)
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUShader), "Failed to create Vertex Shader");
 		}
@@ -832,7 +827,7 @@ internal unsafe class RendererSDL : Renderer
 				num_uniform_buffers = (uint)(shaderInfo.Fragment.Uniforms.Length > 0 ? 1 : 0)
 			};
 
-			fragmentProgram = Platform.ShaderCrossCreateShader(device, new nint(&info));
+			fragmentProgram = SDL_CreateGPUShader(device, info);
 			if (fragmentProgram == nint.Zero)
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUShader), "Failed to create Fragment Shader");
 		}

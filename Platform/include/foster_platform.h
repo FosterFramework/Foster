@@ -51,14 +51,6 @@ FOSTER_API void FosterFontGetPixels(FosterFont* font, unsigned char* dest, int g
 
 FOSTER_API void FosterFontFree(FosterFont* font);
 
-FOSTER_API FosterBool FosterShaderCrossInit();
-
-FOSTER_API void FosterShaderCrossQuit();
-
-FOSTER_API Uint32 FosterShaderCrossGetFormats();
-
-FOSTER_API void* FosterShaderCrossCreateShader(void* device, void* createInfo);
-
 #if __cplusplus
 }
 #endif

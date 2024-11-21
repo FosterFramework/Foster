@@ -126,18 +126,6 @@ internal static partial class Platform
 	[LibraryImport(DLL, EntryPoint = "FosterFontFree")]
 	public static partial void FontFree(nint font);
 
-	[LibraryImport(DLL, EntryPoint = "FosterShaderCrossInit")]
-	public static partial byte ShaderCrossInit();
-
-	[LibraryImport(DLL, EntryPoint = "FosterShaderCrossQuit")]
-	public static partial void ShaderCrossQuit();
-
-	[LibraryImport(DLL, EntryPoint = "FosterShaderCrossGetFormats")]
-	public static partial SDL_GPUShaderFormat ShaderCrossGetFormats();
-
-	[LibraryImport(DLL, EntryPoint = "FosterShaderCrossCreateShader")]
-	public static partial nint ShaderCrossCreateShader(nint device, nint createInfo);
-
 	[UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
 	public static unsafe void HandleLogFromSDL(IntPtr userdata, int category, SDL_LogPriority priority, byte* message)
 	{
