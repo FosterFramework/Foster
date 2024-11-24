@@ -51,6 +51,11 @@ public struct Subtexture
 	/// </summary>
 	public readonly float Height => Frame.Height;
 
+	/// <summary>
+	/// 
+	/// </summary>
+	public readonly Vector2 Size => new(Width, Height);
+
 	public Subtexture() {}
 
 	public Subtexture(Texture? texture)
