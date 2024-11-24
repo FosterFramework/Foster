@@ -91,6 +91,16 @@ internal static partial class Platform
 		return [];
 	}
 
+	public static string GetGraphicsShaderExtension() => App.Graphics.Driver switch
+	{
+		GraphicsDriver.OpenGL => "glsl",
+		GraphicsDriver.Vulkan => "spv",
+		GraphicsDriver.D3D12 => "dxil",
+		GraphicsDriver.Metal => "msl",
+		GraphicsDriver.Private => "spv",
+		_ => throw new NotImplementedException(),
+	};
+
 	public enum ImageWriteFormat { Png, Qoi }
 
 	[LibraryImport(DLL, EntryPoint = "FosterImageLoad")]

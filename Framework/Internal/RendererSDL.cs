@@ -1,3 +1,4 @@
+using System.Text;
 using static SDL3.SDL;
 
 namespace Foster.Framework;
@@ -129,7 +130,6 @@ internal unsafe class RendererSDL : Renderer
 			GraphicsDriver.None => null,
 			GraphicsDriver.Private => "private",
 			GraphicsDriver.Vulkan => "vulkan",
-			GraphicsDriver.D3D11 => "direct3d11",
 			GraphicsDriver.D3D12 => "direct3d12",
 			GraphicsDriver.Metal => "metal",
 			GraphicsDriver.OpenGL => throw new NotImplementedException(),
@@ -137,7 +137,10 @@ internal unsafe class RendererSDL : Renderer
 		};
 
 		device = SDL_CreateGPUDevice(
-			format_flags: SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
+			format_flags: 
+				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV |
+				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL |
+				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_MSL,
 			debug_mode: true, // TODO: flag?
 			name: driverName!);
 
@@ -161,7 +164,6 @@ internal unsafe class RendererSDL : Renderer
 		{
 			"private" => GraphicsDriver.Private,
 			"vulkan" => GraphicsDriver.Vulkan,
-			"direct3d11" => GraphicsDriver.D3D11,
 			"direct3d12" => GraphicsDriver.D3D12,
 			"metal" => GraphicsDriver.Metal,
 			_ => GraphicsDriver.None
@@ -784,12 +786,13 @@ internal unsafe class RendererSDL : Renderer
 		if (device == nint.Zero)
 			throw deviceNotCreated;
 
-		var entryPoint = "main"u8;
+		var vertexEntryPoint = Encoding.UTF8.GetBytes(shaderInfo.Vertex.EntryPoint);
+		var fragmentEntryPoint = Encoding.UTF8.GetBytes(shaderInfo.Fragment.EntryPoint);
 		nint vertexProgram;
 		nint fragmentProgram;
 
 		// create vertex shader
-		fixed (byte* entryPointPtr = entryPoint)
+		fixed (byte* entryPointPtr = vertexEntryPoint)
 		fixed (byte* vertexCode = shaderInfo.Vertex.Code)
 		{
 			SDL_GPUShaderCreateInfo info = new()
@@ -811,7 +814,7 @@ internal unsafe class RendererSDL : Renderer
 		}
 
 		// create fragment program
-		fixed (byte* entryPointPtr = entryPoint)
+		fixed (byte* entryPointPtr = fragmentEntryPoint)
 		fixed (byte* fragmentCode = shaderInfo.Fragment.Code)
 		{
 			SDL_GPUShaderCreateInfo info = new()

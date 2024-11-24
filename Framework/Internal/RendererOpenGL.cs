@@ -618,10 +618,10 @@ internal sealed unsafe class RendererOpenGL : Renderer
 					state.GL.Uniform4fv(uniform.LocationGL, uniform.SizeGL, new nint(ptr));
 					break;
 				case GL.FLOAT_MAT3x2:
-					state.GL.UniformMatrix3x2fv(uniform.LocationGL, uniform.SizeGL, false, new nint(ptr));
+					state.GL.UniformMatrix3x2fv(uniform.LocationGL, uniform.SizeGL, true, new nint(ptr));
 					break;
 				case GL.FLOAT_MAT4:
-					state.GL.UniformMatrix4fv(uniform.LocationGL, uniform.SizeGL, false, new nint(ptr));
+					state.GL.UniformMatrix4fv(uniform.LocationGL, uniform.SizeGL, true, new nint(ptr));
 					break;
 				}
 			}

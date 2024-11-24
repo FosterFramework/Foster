@@ -6,24 +6,20 @@ namespace Foster.Framework;
 /// </summary>
 public class BatcherShader() : Shader(CreateInfo())
 {
-	private static ShaderCreateInfo CreateInfo() => CreateInfo(App.Graphics.Driver switch
-	{
-		GraphicsDriver.OpenGL => "gl",
-		_ => "spv",
-	});
-
-	private static ShaderCreateInfo CreateInfo(string extension) => new(
+	private static ShaderCreateInfo CreateInfo() => new(
 		Vertex: new(
-			Code: Platform.ReadEmbeddedBytes($"Batcher.vert.{extension}"),
+			Code: Platform.ReadEmbeddedBytes($"Batcher.vertex.{Platform.GetGraphicsShaderExtension()}"),
 			SamplerCount: 0,
 			Uniforms: [
 				new("Matrix", UniformType.Mat4x4)
-			]
+			],
+			EntryPoint: "vertex_main"
 		),
 		Fragment: new(
-			Code: Platform.ReadEmbeddedBytes($"Batcher.frag.{extension}"),
+			Code: Platform.ReadEmbeddedBytes($"Batcher.fragment.{Platform.GetGraphicsShaderExtension()}"),
 			SamplerCount: 1,
-			Uniforms: []
+			Uniforms: [],
+			EntryPoint: "fragment_main"
 		)
 	);
 }

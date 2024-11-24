@@ -79,7 +79,7 @@
 
   <!-- Default Shader Content -->
   <ItemGroup>
-    <EmbeddedResource Include="$(ProjectDir)Content/**" Visible="false">
+    <EmbeddedResource Include="$(ProjectDir)Content/Compiled/**" Visible="false">
       <LogicalName>%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
   </ItemGroup>

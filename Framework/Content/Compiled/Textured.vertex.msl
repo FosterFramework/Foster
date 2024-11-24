@@ -1,0 +1,33 @@
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+struct type_UniformBlock
+{
+    float4x4 Matrix;
+};
+
+struct vertex_main_out
+{
+    float2 out_var_TEXCOORD0 [[user(locn0)]];
+    float4 out_var_TEXCOORD1 [[user(locn1)]];
+    float4 gl_Position [[position]];
+};
+
+struct vertex_main_in
+{
+    float2 in_var_TEXCOORD0 [[attribute(0)]];
+    float2 in_var_TEXCOORD1 [[attribute(1)]];
+    float4 in_var_TEXCOORD2 [[attribute(2)]];
+};
+
+vertex vertex_main_out vertex_main(vertex_main_in in [[stage_in]], constant type_UniformBlock& UniformBlock [[buffer(0)]])
+{
+    vertex_main_out out = {};
+    out.out_var_TEXCOORD0 = in.in_var_TEXCOORD1;
+    out.out_var_TEXCOORD1 = in.in_var_TEXCOORD2;
+    out.gl_Position = UniformBlock.Matrix * float4(in.in_var_TEXCOORD0, 0.0, 1.0);
+    return out;
+}
+

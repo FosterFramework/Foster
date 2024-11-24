@@ -15,7 +15,8 @@ public readonly record struct ShaderUniform(
 public readonly record struct ShaderProgramInfo(
 	byte[] Code,
 	int SamplerCount,
-	ShaderUniform[] Uniforms
+	ShaderUniform[] Uniforms,
+	string EntryPoint = "main"
 );
 
 /// <summary>
