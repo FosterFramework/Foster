@@ -190,6 +190,46 @@ public class Controller(int index)
 		}
 	}
 
+	/// <summary>
+	/// Rumbles the Controller for a give duration.
+	/// This will cancel any previous rumble effects.
+	/// </summary>
+	/// <param name="intensity">From 0.0 to 1.0 intensity of the Rumble</param>
+	/// <param name="duration">How long, in seconds, for the Rumble to last</param>
+	public void Rumble(float intensity, float duration)
+		=> Rumble(intensity, intensity, duration);
+
+	/// <summary>
+	/// Rumbles the Controller for a give duration.
+	/// This will cancel any previous rumble effects.
+	/// </summary>
+	/// <param name="leftIntensity">From 0.0 to 1.0 intensity of the Left-Side Rumble</param>
+	/// <param name="rightIntensity">From 0.0 to 1.0 intensity of the Right-Side Rumble</param>
+	/// <param name="duration">How long, in seconds, for the Rumble to last</param>
+	public void Rumble(float leftIntensity, float rightIntensity, float duration)
+	{
+		if (!Connected)
+			return;
+
+		var leftFrequency = (ushort)(Calc.Clamp(leftIntensity, 0, 1) * 0xFFFF);
+		var rightFrequency = (ushort)(Calc.Clamp(rightIntensity, 0, 1) * 0xFFFF);
+		var durationms = (uint)TimeSpan.FromSeconds(duration).TotalMilliseconds;
+
+		if (IsGamepad)
+		{
+			var ptr = SDL3.SDL.SDL_GetGamepadFromID(ID.Value);
+			if (ptr != nint.Zero)
+				SDL3.SDL.SDL_RumbleGamepad(ptr, leftFrequency, rightFrequency, durationms);
+
+		}
+		else
+		{
+			var ptr = SDL3.SDL.SDL_GetJoystickFromID(ID.Value);
+			if (ptr != nint.Zero)
+				SDL3.SDL.SDL_RumbleJoystick(ptr, leftFrequency, rightFrequency, durationms);
+		}
+	}
+
 	public bool Pressed(int buttonIndex) => buttonIndex >= 0 && buttonIndex < MaxButtons && pressed[buttonIndex];
 	public bool Pressed(Buttons button) => Pressed((int)button);
 
