@@ -186,6 +186,12 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 	public readonly Vector2 On(in Vector2 vec)
 	   => new(X + Width * vec.X, Y + Height * vec.Y);
 
+	/// <summary>
+	/// Get a random point that lies inside the rectangle
+	/// </summary>
+	public readonly Vector2 RandomPoint(in Rng rng)
+		=> On(rng.Float(), rng.Float());
+
 	#endregion
 
 	public Rect(float w, float h)
