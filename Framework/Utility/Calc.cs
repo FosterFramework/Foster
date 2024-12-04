@@ -43,7 +43,7 @@ public static class Calc
 	public const float Left = PI;
 	public const float Up = PI + HalfPI;
 	public const float Down = HalfPI;
-	public const float UpRigh = TAU - PI * 0.25f;
+	public const float UpRight = TAU - PI * 0.25f;
 	public const float DownRight = PI * 0.25f;
 	public const float UpLeft = TAU - PI * 0.75f;
 	public const float DownLeft = PI * 0.75f;
