@@ -415,6 +415,8 @@ public static class App
 			throw new Exception("Width or height is <= 0");
 		if (string.IsNullOrEmpty(info.ApplicationName) || string.IsNullOrWhiteSpace(info.ApplicationName))
 			throw new Exception("Invalid Application Name");
+			
+		Name = info.ApplicationName;
 
 		// log info
 		{
@@ -436,6 +438,7 @@ public static class App
 		// by default allow controller presses while unfocused, 
 		// let game decide if it should handle them
 		SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+
 
 		// initialize SDL3
 		{
