@@ -64,6 +64,23 @@ public static class App
 	}
 
 	/// <summary>
+	/// Stores information about the current Update Mode
+	/// </summary>
+	/// <param name="Mode">The type of Update to perform</param>
+	/// <param name="FixedTargetTime">The target time per frame for a Fixed Update.</param>
+	/// <param name="FixedMaxTime">The maximum amount of time a Fixed Update is allowed to take before the Application starts dropping frames.</param>
+	/// <param name="FixedWaitEnabled">
+	/// 	This will force the main thread to wait until another Fixed update is ready.
+	/// 	This uses less CPU but means that your render loop can not run any faster than your fixed update rate.
+	/// </param>
+	public readonly record struct UpdateProperties(
+		UpdateModes Mode,
+		TimeSpan FixedTargetTime,
+		TimeSpan FixedMaxTime,
+		bool FixedWaitEnabled
+	);
+
+	/// <summary>
 	/// Stores information about the current Graphics Driver
 	/// </summary>
 	public readonly record struct GraphicDriverProperties(
@@ -124,9 +141,17 @@ public static class App
 	/// <summary>
 	/// Gets the path to the User Directory, which is the location where you should
 	/// store application data like settings or save data.
+	/// 
 	/// The location of this directory is platform and application dependent.
 	/// For example on Windows this is usually in C:/User/{user}/AppData/Roaming/{App.Name}, 
-	/// where as on Linux it's usually in ~/.local/share/{App.Name}
+	/// where as on Linux it's usually in ~/.local/share/{App.Name}.
+	/// 
+	/// Note that while using <see cref="System.IO"/> operators on the UserPath is generally
+	/// supported across desktop environments, certain platforms require more explicit operations
+	/// to mount and read/write data.
+	/// 
+	/// If you intend to target non-desktop platforms, you should implement user data
+	/// through the <see cref="Storage.OpenUserStorage(Action{Storage})"/> API.
 	/// </summary>
 	public static string UserPath { get; private set; } = string.Empty;
 
@@ -135,28 +160,11 @@ public static class App
 	/// This is polled immediately when requested.
 	/// </summary>
 	public static TimeSpan Timer => timer.Elapsed;
-	
-	/// <summary>
-	/// The current Update Mode used by the Application.
-	/// This can be changed with <seealso cref="SetFixedUpdate(int, bool)"/> and <seealso cref="SetUnlockedUpdate"/>
-	/// </summary>
-	public static UpdateModes UpdateMode { get; private set; } = UpdateModes.Fixed;
 
 	/// <summary>
-	/// The target time per frame for a Fixed Update
+	/// Gets the current Update Properties
 	/// </summary>
-	public static TimeSpan FixedUpdateTargetTime { get; private set; }
-
-	/// <summary>
-	/// The maximum amount of time a Fixed Update is allowed to take before the Application starts dropping frames.
-	/// </summary>
-	public static TimeSpan FixedUpdateMaxTime { get; private set; }
-
-	/// <summary>
-	/// This will force the main thread to wait until another Fixed update is ready.
-	/// This uses less CPU but means that your render loop can not happen any faster than your fixed update rate.
-	/// </summary>
-	public static bool FixedUpdateWaitEnabled { get; private set; }
+	public static UpdateProperties Update { get; private set; }
 
 	/// <summary>
 	/// Gets the current Graphics Driver Properties
@@ -439,7 +447,6 @@ public static class App
 		// let game decide if it should handle them
 		SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 
-
 		// initialize SDL3
 		{
 			var initFlags = 
@@ -606,39 +613,46 @@ public static class App
 	/// The Update loop will run at a fixed rate.
 	/// </summary>
 	/// <param name="targetTimePerFrame">The target time per frame</param>
-	/// <param name="maxTimePerFrame">The maximum time allowed per frame before the Application intentially starts lagging.</param>
-	/// <param name="waitForNextUpdate">The thread will sleep while waiting for a fixed update. This essentially will also lock your render to the Fixed Update rate, but will use less CPU.</param>
+	/// <param name="maxTimePerFrame">The maximum time allowed per frame before the Application starts dropping updates to avoid a spiral of death.</param>
+	/// <param name="waitForNextUpdate">The thread will wait for the next fixed update. This will also lock your render to the update rate, but will use less CPU.</param>
 	public static void SetFixedUpdate(
 		TimeSpan targetTimePerFrame,
 		TimeSpan? maxTimePerFrame = null,
 		bool waitForNextUpdate = true)
 	{
-		UpdateMode = UpdateModes.Fixed;
-		FixedUpdateTargetTime = targetTimePerFrame;
-		FixedUpdateMaxTime = maxTimePerFrame ?? (targetTimePerFrame * 5);
-		FixedUpdateWaitEnabled = waitForNextUpdate;
+		Update = new(
+			UpdateModes.Fixed,
+			targetTimePerFrame,
+			maxTimePerFrame ?? (targetTimePerFrame * 5),
+			waitForNextUpdate
+		);
 	}
 
 	/// <summary>
 	/// The Update loop will run at a fixed rate.
 	/// </summary>
 	/// <param name="fps">The target frames per second</param>
-	/// <param name="waitForNextUpdate">The thread will sleep while waiting for a fixed update. This essentially will also lock your render to the Fixed Update rate, but will use less CPU.</param>
+	/// <param name="waitForNextUpdate">The thread will wait for the next fixed update. This will also lock your render to the update rate, but will use less CPU.</param>
 	public static void SetFixedUpdate(int fps, bool waitForNextUpdate = true)
 		=> SetFixedUpdate(TimeSpan.FromSeconds(1.0f / fps), null, waitForNextUpdate);
 
 	/// <summary>
 	/// The Update loop will run as fast as it can.
-	/// This means there will be one update per Render.
+	/// This means there will always be one Update per Render.
 	/// </summary>
 	public static void SetUnlockedUpdate()
 	{
-		UpdateMode = UpdateModes.Unlocked;
+		Update = new(
+			UpdateModes.Unlocked,
+			TimeSpan.Zero,
+			TimeSpan.Zero,
+			false
+		);
 	}
 
 	private static void Tick()
 	{
-		static void Update(TimeSpan delta)
+		static void Step(TimeSpan delta)
 		{
 			Time.Frame++;
 			Time.Advance(delta);
@@ -659,16 +673,17 @@ public static class App
 		lastUpdateTime = currentTime;
 
 		// update in Fixed Mode
-		if (UpdateMode == UpdateModes.Fixed)
+		if (Update.Mode == UpdateModes.Fixed)
 		{
+			var state = Update;
 			fixedAccumulator += deltaTime;
 
 			// Do not let us run too fast
-			if (FixedUpdateWaitEnabled)
+			if (state.FixedWaitEnabled)
 			{
-				while (fixedAccumulator < FixedUpdateTargetTime)
+				while (fixedAccumulator < state.FixedTargetTime)
 				{
-					int milliseconds = (int)(FixedUpdateTargetTime - fixedAccumulator).TotalMilliseconds;
+					int milliseconds = (int)(state.FixedTargetTime - fixedAccumulator).TotalMilliseconds;
 					Thread.Sleep(milliseconds);
 
 					currentTime = timer.Elapsed;
@@ -679,17 +694,17 @@ public static class App
 			}
 
 			// Do not allow any update to take longer than our maximum.
-			if (fixedAccumulator > FixedUpdateMaxTime)
+			if (fixedAccumulator > state.FixedMaxTime)
 			{
-				Time.Advance(fixedAccumulator - FixedUpdateMaxTime);
-				fixedAccumulator = FixedUpdateMaxTime;
+				Time.Advance(fixedAccumulator - state.FixedMaxTime);
+				fixedAccumulator = state.FixedMaxTime;
 			}
 
 			// Do as many fixed updates as we can
-			while (fixedAccumulator >= FixedUpdateTargetTime)
+			while (fixedAccumulator >= state.FixedTargetTime)
 			{
-				fixedAccumulator -= FixedUpdateTargetTime;
-				Update(FixedUpdateTargetTime);
+				fixedAccumulator -= state.FixedTargetTime;
+				Step(state.FixedTargetTime);
 				if (Exiting)
 					break;
 			}
@@ -697,7 +712,7 @@ public static class App
 		// update in Unlocked Mode
 		else
 		{
-			Update(deltaTime);
+			Step(deltaTime);
 		}
 
 		// render
