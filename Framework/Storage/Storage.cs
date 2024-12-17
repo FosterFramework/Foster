@@ -87,7 +87,10 @@ public sealed class Storage : StorageContainer
 		}
 		else
 		{
-			var task = Task.Run(() =>
+			// we wait off the main thread for StorageReady.
+			// the SDL docs say not to spinwait on this so that the event loop still receives messages:
+			// https://wiki.libsdl.org/SDL3/SDL_StorageReady#remarks
+			Task.Run(() =>
 			{
 				while (!SDL_StorageReady(storage.handle))
 					Thread.Sleep(100);
@@ -107,6 +110,9 @@ public sealed class Storage : StorageContainer
 		}
 		else
 		{
+			// we wait off the main thread for StorageReady.
+			// the SDL docs say not to spinwait on this so that the event loop still receives messages:
+			// https://wiki.libsdl.org/SDL3/SDL_StorageReady#remarks
 			await Task.Run(() =>
 			{
 				while (!SDL_StorageReady(storage.handle))
