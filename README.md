@@ -16,7 +16,7 @@ There is a [Samples](https://github.com/FosterFramework/Samples) repo which cont
 Check out [Discussons](https://github.com/FosterFramework/Foster/discussions) or [Discord](https://discord.gg/K7tdFuP3Bg) to get involved.
 
 ### Dependencies
- - [dotnet 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) and [C# 12](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-12)
+ - [dotnet 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) and [C# 13](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13)
  - [SDL3](https://github.com/libsdl-org/sdl) is the only external dependency, which is built and dynamically included by the Platform library.
 
 ### Platform Library
