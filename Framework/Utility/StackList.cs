@@ -24,6 +24,9 @@ public struct StackList4<T> : IEnumerable<T>, IList<T>
 	public readonly int Capacity => TypeCapacity;
 	public readonly bool IsReadOnly => false;
 
+	public Span<T> Span
+		=> MemoryMarshal.CreateSpan(ref elements[0], Count);
+
 	public void Add(T value)
 	{
 		if (count >= Capacity)

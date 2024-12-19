@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using static SDL3.SDL;
 
@@ -96,10 +97,7 @@ internal unsafe class RendererSDL : Renderer
 	
 	// fence/frame counter
 	private int frameCounter;
-	private readonly nint[][] fenceGroups =
-		Enumerable.Range(0, MaxFramesInFlight)
-		.Select(_ => new nint[2])
-		.ToArray();
+	private readonly StackList4<nint>[] fenceGroups = new StackList4<nint>[MaxFramesInFlight];
 
 	// framebuffer
 	private Target? frameBuffer;
@@ -258,13 +256,11 @@ internal unsafe class RendererSDL : Renderer
 		}
 
 		// release fences
-		foreach (var fenceGroup in fenceGroups)
+		for (int i = 0; i < fenceGroups.Length; i ++)
 		{
-			for (int i = 0; i < fenceGroup.Length; i++)
-			{
-				SDL_ReleaseGPUFence(device, fenceGroup[i]);
-				fenceGroup[i] = nint.Zero;
-			}
+			for (int j = 0; j < fenceGroups[i].Count; j++)
+				SDL_ReleaseGPUFence(device, fenceGroups[i][j]);
+			fenceGroups[i].Clear();
 		}
 
 		// release pipelines
@@ -323,20 +319,12 @@ internal unsafe class RendererSDL : Renderer
 		EndRenderPass();
 
 		// Wait for the least-recent fence
-		if (fenceGroups[frameCounter][0] != nint.Zero)
+		if (fenceGroups[frameCounter].Count > 0)
 		{
-			SDL_WaitForGPUFences(
-				device,
-				true,
-				fenceGroups[frameCounter].AsSpan(),
-				2
-			);
-
-			for (int i = 0; i < 2; i ++)
-			{
+			SDL_WaitForGPUFences(device, true, fenceGroups[frameCounter].Span, (uint)fenceGroups[frameCounter].Count);
+			for (int i = 0; i < fenceGroups[frameCounter].Count; i ++)
 				SDL_ReleaseGPUFence(device, fenceGroups[frameCounter][i]);
-				fenceGroups[frameCounter][i] = nint.Zero;
-			}
+			fenceGroups[frameCounter].Clear();
 		}
 
 		// if swapchain can be acquired, blit framebuffer to it
@@ -395,11 +383,8 @@ internal unsafe class RendererSDL : Renderer
 		}
 
 		// flush commands from this frame
-		FlushCommandsAndAcquireFence(
-			out fenceGroups[frameCounter][0],
-			out fenceGroups[frameCounter][1]
-		);
-
+		FlushCommandsAndAcquireFence(out var nextFences);
+		fenceGroups[frameCounter] = nextFences;
 		frameCounter = (frameCounter + 1) % MaxFramesInFlight;
 	}
 
@@ -1076,12 +1061,25 @@ internal unsafe class RendererSDL : Renderer
 		ResetCommandBufferState();
 	}
 
-	private void FlushCommandsAndAcquireFence(out nint uploadFence, out nint renderFence)
+	private void FlushCommandsAndAcquireFence(out StackList4<nint> fences)
 	{
 		EndCopyPass();
 		EndRenderPass();
-		uploadFence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmdUpload);
-		renderFence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmdRender);
+
+		fences = new();
+
+		var uploadFence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmdUpload);
+		if (uploadFence == nint.Zero)
+			Log.Warning($"Failed to acquire upload fence: {SDL_GetError()}");
+		else
+			fences.Add(uploadFence);
+
+		var renderFence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmdRender);
+		if (renderFence == nint.Zero)
+			Log.Warning($"Failed to acquire render fence: {SDL_GetError()}");
+		else
+			fences.Add(renderFence);
+
 		cmdUpload = nint.Zero;
 		cmdRender = nint.Zero;
 		ResetCommandBufferState();
@@ -1089,11 +1087,13 @@ internal unsafe class RendererSDL : Renderer
 
 	private void FlushCommandsAndStall()
 	{
-		Span<nint> fences = stackalloc nint[2];
-		FlushCommandsAndAcquireFence(out fences[0], out fences[1]);
-		SDL_WaitForGPUFences(device, true, fences, 2);
-		SDL_ReleaseGPUFence(device, fences[0]);
-		SDL_ReleaseGPUFence(device, fences[1]);
+		FlushCommandsAndAcquireFence(out var fences);
+
+		if (fences.Count > 0)
+			SDL_WaitForGPUFences(device, true, fences.Span, (uint)fences.Count);
+
+		for (int i = 0; i < fences.Count; i ++)
+			SDL_ReleaseGPUFence(device, fences[i]);
 	}
 
 	private void ResetCommandBufferState()
