@@ -423,15 +423,17 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		// create vertex shader
 		var vertexShader = state.GL.CreateShader(GL.VERTEX_SHADER);
 		{
+			int result, logLength;
+
 			fixed (byte* src = shaderInfo.Vertex.Code)
 			{
 				var sources = stackalloc nint[1] { new nint(src) };
 				var lengths = stackalloc int[1] { shaderInfo.Vertex.Code.Length };
 				state.GL.ShaderSource(vertexShader, 1, sources, lengths);
+				state.GL.CompileShader(vertexShader);
+				state.GL.GetShaderInfoLog(vertexShader, MaxStringBufferLength, out logLength, new nint(strBuf));
+				state.GL.GetShaderiv(vertexShader, GL.COMPILE_STATUS, out result);
 			}
-			state.GL.CompileShader(vertexShader);
-			state.GL.GetShaderInfoLog(vertexShader, MaxStringBufferLength, out int logLength, new nint(strBuf));
-			state.GL.GetShaderiv(vertexShader, GL.COMPILE_STATUS, out int result);
 
 			if (result == 0)
 			{
@@ -447,15 +449,17 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		// create fragment shader
 		var fragmentShader = state.GL.CreateShader(GL.FRAGMENT_SHADER);
 		{
+			int result, logLength;
+
 			fixed (byte* src = shaderInfo.Fragment.Code)
 			{
 				var sources = stackalloc nint[1] { new nint(src) };
 				var lengths = stackalloc int[1] { shaderInfo.Fragment.Code.Length };
 				state.GL.ShaderSource(fragmentShader, 1, sources, lengths);
+				state.GL.CompileShader(fragmentShader);
+				state.GL.GetShaderInfoLog(fragmentShader, MaxStringBufferLength, out logLength, new nint(strBuf));
+				state.GL.GetShaderiv(fragmentShader, GL.COMPILE_STATUS, out result);
 			}
-			state.GL.CompileShader(fragmentShader);
-			state.GL.GetShaderInfoLog(fragmentShader, MaxStringBufferLength, out int logLength, new nint(strBuf));
-			state.GL.GetShaderiv(fragmentShader, GL.COMPILE_STATUS, out int result);
 
 			if (result == 0)
 			{
@@ -1229,7 +1233,10 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 		var output = new string(message, 0, (int)length);
 		if (type == GL.DEBUG_TYPE_ERROR)
-			throw new Exception(output);
+		{
+			Log.Error($"OpenGL Error: {output}");
+			return;
+		}
 
 		var typeName = type switch
 		{
