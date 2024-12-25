@@ -771,6 +771,14 @@ internal unsafe class RendererSDL : Renderer
 		if (device == nint.Zero)
 			throw deviceNotCreated;
 
+		var format = driver switch 
+		{
+			GraphicsDriver.Vulkan => SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
+			GraphicsDriver.D3D12 => SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL,
+			GraphicsDriver.Metal => SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_MSL,
+			_ => SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
+		};
+
 		var vertexEntryPoint = Encoding.UTF8.GetBytes(shaderInfo.Vertex.EntryPoint);
 		var fragmentEntryPoint = Encoding.UTF8.GetBytes(shaderInfo.Fragment.EntryPoint);
 		nint vertexProgram;
@@ -785,7 +793,7 @@ internal unsafe class RendererSDL : Renderer
 				code_size = (nuint)shaderInfo.Vertex.Code.Length,
 				code = vertexCode,
 				entrypoint = entryPointPtr,
-				format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
+				format = format,
 				stage = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX,
 				num_samplers = (uint)shaderInfo.Vertex.SamplerCount,
 				num_storage_textures = 0,
@@ -807,7 +815,7 @@ internal unsafe class RendererSDL : Renderer
 				code_size = (nuint)shaderInfo.Fragment.Code.Length,
 				code = fragmentCode,
 				entrypoint = entryPointPtr,
-				format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
+				format = format,
 				stage = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT,
 				num_samplers = (uint)shaderInfo.Fragment.SamplerCount,
 				num_storage_textures = 0,
