@@ -14,18 +14,7 @@ internal static partial class Platform
 	/// </summary>
 	public static Renderer CreateRenderer(GraphicsDriver preferred)
 	{
-		// no driver preferred, let foster/sdl decide
-		if (preferred == GraphicsDriver.None)
-		{
-			// TODO: Emscripten needs to default to opengl
-			// TODO: Once shader cross stuff is working every platform can default to SDL renderer
-
-			// Windows/Linux should default to SDL renderer, everything else can use OpenGL for now
-			if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) &&
-				!RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
-				!RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
-				preferred = GraphicsDriver.OpenGL;
-		}
+		// TODO: Emscripten needs to default to opengl
 
 		// explicit driver preferred
 		return preferred switch
