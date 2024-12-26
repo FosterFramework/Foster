@@ -47,7 +47,7 @@ jobs:
         if: ${{ runner.os == 'Linux' && matrix.arch != 'arm64' }}
         run: |
           sudo apt-get update
-          sudo apt-get install libsdl2-dev
+          sudo apt-get install libsdl3-dev
       - name: Setup Linux dependencies (arm64)
         if: ${{ runner.os == 'Linux' && matrix.arch == 'arm64' }}
         run: |
@@ -58,7 +58,7 @@ jobs:
           echo "deb [arch=arm64,armhf] http://ports.ubuntu.com/ $(lsb_release -s -c)-updates main universe multiverse restricted" | sudo tee -a /etc/apt/sources.list
           sudo dpkg --add-architecture arm64
           sudo apt-get update
-          sudo apt-get install -y libsdl2-dev:arm64 libwayland-dev:arm64 libegl-dev:arm64 libdrm-dev:arm64 libxkbcommon-dev:arm64 libpulse-dev:arm64
+          sudo apt-get install -y libsdl3-dev:arm64 libwayland-dev:arm64 libegl-dev:arm64 libdrm-dev:arm64 libxkbcommon-dev:arm64 libpulse-dev:arm64
       - name: Setup Linux dependencies (arm32)
         if: ${{ runner.os == 'Linux' && matrix.arch == 'arm32' }}
         run: |
@@ -69,7 +69,7 @@ jobs:
           echo "deb [arch=arm64,armhf] http://ports.ubuntu.com/ $(lsb_release -s -c)-updates main universe multiverse restricted" | sudo tee -a /etc/apt/sources.list
           sudo dpkg --add-architecture armhf
           sudo apt-get update
-          sudo apt-get install -y libsdl2-dev:armhf libwayland-dev:armhf libegl-dev:armhf libdrm-dev:armhf libxkbcommon-dev:armhf libpulse-dev:armhf
+          sudo apt-get install -y libsdl3-dev:armhf libwayland-dev:armhf libegl-dev:armhf libdrm-dev:armhf libxkbcommon-dev:armhf libpulse-dev:armhf
       - name: CMake Configure
         if: ${{ !(runner.os == 'Linux' && matrix.arch == 'arm64') && !(runner.os == 'Linux' && matrix.arch == 'arm32') }}
         run: cmake -B build -S Platform -DFOSTER_OVERRIDE_TARGET=${{matrix.target}}
