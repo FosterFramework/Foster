@@ -1,9 +1,10 @@
 #include "foster_platform.h"
-#include <SDL3/SDL.h>
 
+#define STBI_NO_STDIO
 #define STB_IMAGE_IMPLEMENTATION
 #include "third_party/stb_image.h"
 
+#define STBI_WRITE_NO_STDIO
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "third_party/stb_image_write.h"
 
@@ -57,17 +58,14 @@ FosterBool FosterImageWrite(FosterWriteFn* func, void* context, FosterImageWrite
 FosterFont* FosterFontInit(unsigned char* data, int length)
 {
 	if (stbtt_GetNumberOfFonts(data) <= 0)
-	{
-		SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Unable to parse Font File");
 		return NULL;
-	}
 
-	stbtt_fontinfo* info = (stbtt_fontinfo*)SDL_malloc(sizeof(stbtt_fontinfo));
+	void* userdata;
+	stbtt_fontinfo* info = (stbtt_fontinfo*)STBTT_malloc(sizeof(stbtt_fontinfo),userdata);
 
 	if (stbtt_InitFont(info, data, 0) == 0)
 	{
-		SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Unable to parse Font File");
-		SDL_free(info);
+		STBI_FREE(info);
 		return NULL;
 	}
 
@@ -136,7 +134,8 @@ void FosterFontGetPixels(FosterFont* font, unsigned char* dest, int glyph, int w
 void FosterFontFree(FosterFont* font)
 {
 	stbtt_fontinfo* info = (stbtt_fontinfo*)font;
-	SDL_free(info);
+	void* userdata;
+	STBTT_free(info, userdata);
 }
 
 // Internal Methods:

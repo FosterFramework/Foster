@@ -473,6 +473,18 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 		=> new(center.X - size.X / 2, center.Y - size.Y / 2, size.X, size.Y);
 
 	/// <summary>
+	/// Get a rect justified around the origin point
+	/// </summary>
+	public static Rect Justified(in Vector2 origin, float width, float height, float justifyX, float justifyY)
+		=> new(origin.X - (justifyX * width), origin.Y - (justifyY * height), width, height);
+
+	/// <summary>
+	/// Get a rect justified around the origin point
+	/// </summary>
+	public static Rect Justified(in Vector2 origin, in Vector2 size, in Vector2 justify)
+		=> new(origin.X - (justify.X * size.X), origin.Y - (justify.Y * size.Y), size.X, size.Y);
+
+	/// <summary>
 	/// Get the rect with positive width and height that stretches from point a to point b
 	/// </summary>
 	public static Rect Between(in Vector2 a, in Vector2 b)

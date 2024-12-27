@@ -1,8 +1,6 @@
 #ifndef FOSTER_H
 #define FOSTER_H
 
-#include <SDL3/SDL_stdinc.h>
-
 // Export API
 #if defined _WIN32 || defined __CYGWIN__
 	#define FOSTER_API __declspec(dllexport)

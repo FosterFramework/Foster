@@ -72,10 +72,6 @@ if (NOT DEFINED FOSTER_SDL3_LIBS)
 	set(FOSTER_SDL3_INCLUDE ${SDL3_SOURCE_DIRS}/include)
 endif()
 
-# link SDL3
-target_include_directories(${FOSTER_LIB_NAME} PRIVATE ${FOSTER_SDL3_INCLUDE})
-target_link_libraries(${FOSTER_LIB_NAME} PRIVATE ${FOSTER_SDL3_LIBS})
-
 # Output main lib to the libs folder
 set_target_properties(${FOSTER_LIB_NAME}
 	PROPERTIES
