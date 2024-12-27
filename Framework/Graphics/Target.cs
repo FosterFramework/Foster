@@ -3,9 +3,14 @@ namespace Foster.Framework;
 /// <summary>
 /// A 2D Render Target used to draw content off-frame.
 /// </summary>
-public class Target : IResource
+public class Target : IResource, IDrawableTarget
 {
 	private static readonly TextureFormat[] defaultFormats = [ TextureFormat.Color ];
+
+	/// <summary>
+	/// The Renderer this Texture was created in
+	/// </summary>
+	public Renderer Renderer { get; private set; }
 
 	/// <summary>
 	/// Optional Target Name
@@ -37,12 +42,15 @@ public class Target : IResource
 	/// </summary>
 	public readonly Texture[] Attachments;
 
+	public int WidthInPixels => Width;
+	public int HeightInPixels => Height;
+
 	internal readonly Renderer.IHandle Resource;
 
-	public Target(int width, int height)
-		: this(width, height, defaultFormats) { }
+	public Target(Renderer renderer, int width, int height)
+		: this(renderer, width, height, defaultFormats) { }
 
-	public Target(int width, int height, in ReadOnlySpan<TextureFormat> attachments)
+	public Target(Renderer renderer, int width, int height, in ReadOnlySpan<TextureFormat> attachments)
 	{
 		if (width <= 0 || height <= 0)
 			throw new ArgumentException("Target width and height must be larger than 0");
@@ -50,26 +58,19 @@ public class Target : IResource
 		if (attachments.Length <= 0)
 			throw new ArgumentException("Target needs at least 1 color attachment");
 
-		Resource = App.Renderer.CreateTarget(width, height);
+		Renderer = renderer;
+		Resource = Renderer.CreateTarget(width, height);
 		Width = width;
 		Height = height;
 		Bounds = new RectInt(0, 0, Width, Height);
 		Attachments = new Texture[attachments.Length];
 		for (int i = 0; i < attachments.Length; i ++)
-			Attachments[i] = new Texture(width, height, attachments[i], this);
+			Attachments[i] = new Texture(renderer, width, height, attachments[i], this);
 	}
 
 	~Target()
 	{
 		Dispose(false);
-	}
-
-	/// <summary>
-	/// Clears the Target to the given color
-	/// </summary>
-	public void Clear(Color color)
-	{
-		Clear(color, 0, 0, ClearMask.Color);
 	}
 
 	/// <summary>
@@ -79,7 +80,7 @@ public class Target : IResource
 	{
 		if (IsDisposed)
 			throw new Exception("Resource is Disposed");
-		App.Renderer.Clear(this, color, depth, stencil, mask);
+		Renderer.Clear(this, color, depth, stencil, mask);
 	}
 
 	/// <summary>
@@ -93,7 +94,7 @@ public class Target : IResource
 
 	private void Dispose(bool disposing)
 	{
-		App.Renderer.DestroyResource(Resource);
+		Renderer.DestroyResource(Resource);
 	}
 
 	public static implicit operator Texture(Target target) => target.Attachments[0];

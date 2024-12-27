@@ -9,6 +9,11 @@ namespace Foster.Framework;
 public class Material
 {
 	/// <summary>
+	/// The Renderer this Material was created in
+	/// </summary>
+	public readonly Renderer Renderer;
+
+	/// <summary>
 	/// Combination of Texture and Sampler bound to a Slot in the Material
 	/// </summary>
 	public readonly record struct BoundSampler(Texture? Texture, TextureSampler Sampler);
@@ -35,12 +40,12 @@ public class Material
 	/// <summary>
 	/// Constructs an Empty Material
 	/// </summary>
-	public Material() { }
+	public Material(Renderer renderer) => Renderer = renderer;
 
 	/// <summary>
 	/// Constructs a Material using the given Shader
 	/// </summary>
-	public Material(Shader? shader) => SetShader(shader);
+	public Material(Renderer renderer, Shader? shader) : this(renderer) => SetShader(shader);
 
 	/// <summary>
 	/// Stores the Vertex Uniform Block Data

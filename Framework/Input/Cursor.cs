@@ -4,7 +4,7 @@ namespace Foster.Framework;
 
 /// <summary>
 /// Structure representing an OS Mouse Cursor.
-/// Use <seealso cref="Input.SetMouseCursor(Foster.Framework.Cursor?)"/> to bind the Cursor.
+/// Use <seealso cref="Window.SetMouseCursor(Foster.Framework.Cursor?)"/> to bind the Cursor.
 /// </summary>
 public sealed class Cursor : IDisposable
 {
@@ -112,7 +112,7 @@ public sealed class Cursor : IDisposable
 
 	/// <summary>
 	/// Disposes the Cursor's resources.
-	/// If the Cursor is currently bound through <seealso cref="Input.SetMouseCursor(Cursor?)"/>, the Mouse
+	/// If the Cursor is currently bound through <seealso cref="Window.SetMouseCursor(Cursor?)"/>, the Mouse
 	/// will change back to the default OS cursor.
 	/// </summary>
 	public void Dispose()

@@ -5,27 +5,27 @@ namespace Foster.Framework;
 /// <summary>
 /// A Virtual Input Stick that can be mapped to different keyboards and gamepads
 /// </summary>
-public class VirtualStick
+public class VirtualStick(Input input, string name, VirtualAxis.Overlaps overlapBehaviour, float circularDeadzone)
 {
 	/// <summary>
 	/// Optional Virtual Stick name
 	/// </summary>
-	public readonly string Name = string.Empty;
+	public readonly string Name = name;
 
 	/// <summary>
 	/// The Horizontal Axis
 	/// </summary>
-	public readonly VirtualAxis Horizontal;
+	public readonly VirtualAxis Horizontal = new(input, $"{name}/Horizontal", overlapBehaviour);
 
 	/// <summary>
 	/// The Vertical Axis
 	/// </summary>
-	public readonly VirtualAxis Vertical;
+	public readonly VirtualAxis Vertical = new(input, $"{name}/Vertical", overlapBehaviour);
 
 	/// <summary>
 	/// This Deadzone is applied to the Length of the combined Horizontal and Vertical axis values
 	/// </summary>
-	public float CircularDeadzone = 0f;
+	public float CircularDeadzone = circularDeadzone;
 
 	/// <summary>
 	/// Gets the current Virtual Stick value
@@ -63,22 +63,14 @@ public class VirtualStick
 	/// </summary>
 	public Point2 IntValueNoDeadzone => new Point2(Horizontal.IntValueNoDeadzone, Vertical.IntValueNoDeadzone);
 
-	public VirtualStick(string name, VirtualAxis.Overlaps overlapBehaviour, float circularDeadzone)
-	{
-		Name = name;
-		Horizontal = new($"{name}/Horizontal", overlapBehaviour);
-		Vertical = new($"{name}/Vertical", overlapBehaviour);
-		CircularDeadzone = circularDeadzone;
-	}
-
-	public VirtualStick(VirtualAxis.Overlaps overlapBehaviour, float circularDeadzone = 0)
-		: this("VirtualStick", overlapBehaviour, circularDeadzone)
+	public VirtualStick(Input input, VirtualAxis.Overlaps overlapBehaviour, float circularDeadzone = 0)
+		: this(input, "VirtualStick", overlapBehaviour, circularDeadzone)
 	{
 
 	}
 
-	public VirtualStick(VirtualAxis.Overlaps overlapBehaviour = VirtualAxis.Overlaps.TakeNewer)
-		: this("VirtualStick", overlapBehaviour, 0.0f)
+	public VirtualStick(Input input, VirtualAxis.Overlaps overlapBehaviour = VirtualAxis.Overlaps.TakeNewer)
+		: this(input, "VirtualStick", overlapBehaviour, 0.0f)
 	{
 		
 	}

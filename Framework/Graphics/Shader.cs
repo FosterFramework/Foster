@@ -43,6 +43,11 @@ public class Shader : IResource
 	}
 
 	/// <summary>
+	/// The Renderer this Shader was created in
+	/// </summary>
+	public readonly Renderer Renderer;
+
+	/// <summary>
 	/// Optional Shader Name
 	/// </summary>
 	public string Name { get; set; } = string.Empty;
@@ -64,8 +69,10 @@ public class Shader : IResource
 
 	internal readonly Renderer.IHandle Resource;
 
-	public Shader(ShaderCreateInfo createInfo)
+	public Shader(Renderer renderer, ShaderCreateInfo createInfo)
 	{
+		Renderer = renderer;
+
 		// validate that uniforms are unique, or matching.
 		// we treat vertex/fragment shaders as a combined singular shader, and thus
 		// the uniforms between them must be unique (or at least matching in type)
@@ -76,7 +83,7 @@ public class Shader : IResource
 					throw new Exception($"Uniform names must be unique between Vertex and Fragment shaders, or they must be matching types. (Uniform '{uni0.Name}' types aren't equal)");
 			}
 
-		Resource = App.Renderer.CreateShader(createInfo);
+		Resource = Renderer.CreateShader(createInfo);
 		Vertex = new(createInfo.Vertex.SamplerCount, createInfo.Vertex.Uniforms);
 		Fragment = new(createInfo.Fragment.SamplerCount, createInfo.Fragment.Uniforms);
 	}
@@ -94,6 +101,6 @@ public class Shader : IResource
 
 	private void Dispose(bool disposing)
 	{
-		App.Renderer.DestroyResource(Resource);
+		Renderer.DestroyResource(Resource);
 	}
 }

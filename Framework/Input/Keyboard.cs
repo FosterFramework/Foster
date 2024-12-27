@@ -5,7 +5,7 @@ namespace Foster.Framework;
 /// <summary>
 /// Stores a Keyboard State
 /// </summary>
-public class Keyboard
+public sealed class Keyboard
 {
 	public const int MaxKeys = 512;
 
@@ -13,6 +13,7 @@ public class Keyboard
 	private readonly bool[] down = new bool[MaxKeys];
 	private readonly bool[] released = new bool[MaxKeys];
 	private readonly TimeSpan[] timestamp = new TimeSpan[MaxKeys];
+	private Time time;
 
 	/// <summary>
 	/// Any Text that was typed over the last frame
@@ -116,8 +117,8 @@ public class Keyboard
 		if (Pressed(key))
 			return true;
 
-		var time = timestamp[(int)key];
-		return Down(key) && (Time.Duration - time).TotalSeconds > delay && Time.OnInterval(interval, time.TotalSeconds);
+		var stamp = timestamp[(int)key];
+		return Down(key) && (time.Elapsed - stamp).TotalSeconds > delay && Time.OnInterval(time, interval, stamp.TotalSeconds);
 	}
 
 	/// <summary>
@@ -272,17 +273,19 @@ public class Keyboard
 
 		Text.Clear();
 		Text.Append(other.Text);
+
+		time = other.time;
 	}
 
-	internal void Step()
+	internal void Step(in Time time)
 	{
 		Array.Fill(pressed, false);
 		Array.Fill(released, false);
-
 		Text.Clear();
+		this.time = time;
 	}
 
-	internal void OnKey(int keyIndex, bool keyPressed)
+	internal void OnKey(int keyIndex, bool keyPressed, in TimeSpan time)
 	{
 		if (keyIndex >= 0 && keyIndex < MaxKeys)
 		{
@@ -290,7 +293,7 @@ public class Keyboard
 			{
 				down[keyIndex] = true;
 				pressed[keyIndex] = true;
-				timestamp[keyIndex] = Time.Duration;
+				timestamp[keyIndex] = time;
 			}
 			else
 			{

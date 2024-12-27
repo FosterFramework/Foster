@@ -1,43 +1,46 @@
-﻿using System.Collections.ObjectModel;
-using System.Numerics;
-using static SDL3.SDL;
+﻿
+using System.Collections.ObjectModel;
 
 namespace Foster.Framework;
 
 /// <summary>
 /// The Input Manager that stores the current Input State
 /// </summary>
-public static class Input
+public sealed class Input
 {
+	public delegate void TextInputHandlerFn(char value);
+	public delegate void ControllerConnectedFn(ControllerID id);
+	public delegate void ControllerDisconnectedFn(ControllerID id);
+
 	/// <summary>
 	/// The Current Input State
 	/// </summary>
-	public static readonly InputState State = new();
+	public readonly InputState State;
 
 	/// <summary>
 	/// The Input State of the previous frame
 	/// </summary>
-	public static readonly InputState LastState = new();
+	public readonly InputState LastState;
 
 	/// <summary>
 	/// The Input State of the next frame
 	/// </summary>
-	private static readonly InputState nextState = new();
+	internal readonly InputState NextState;
 
 	/// <summary>
 	/// The Keyboard of the current State
 	/// </summary>
-	public static Keyboard Keyboard => State.Keyboard;
+	public Keyboard Keyboard => State.Keyboard;
 
 	/// <summary>
 	/// The Mouse of the Current State
 	/// </summary>
-	public static Mouse Mouse => State.Mouse;
+	public Mouse Mouse => State.Mouse;
 
 	/// <summary>
 	/// The Controllers of the Current State
 	/// </summary>
-	public static ReadOnlyCollection<Controller> Controllers => State.Controllers;
+	public ReadOnlyCollection<Controller> Controllers => State.Controllers;
 
 	/// <summary>
 	/// Default delay before a key or button starts repeating, in seconds
@@ -50,200 +53,82 @@ public static class Input
 	public static float RepeatInterval = 0.03f;
 
 	/// <summary>
-	/// 
-	/// </summary>
-	public delegate void TextInputHandler(char value);
-
-	/// <summary>
 	/// Called whenever keyboard text is typed
 	/// </summary>
-	public static event TextInputHandler? OnTextEvent;
+	public event TextInputHandlerFn? OnTextEvent;
+
+	/// <summary>
+	/// Called when a Controller is connected
+	/// </summary>
+	public event ControllerConnectedFn? OnControllerConnected;
+
+	/// <summary>
+	/// Called when a Controller is disconnected
+	/// </summary>
+	public event ControllerDisconnectedFn? OnControllerDisconnected;
 
 	/// <summary>
 	/// Holds references to all Virtual Buttons so they can be updated.
 	/// </summary>
-	internal static readonly List<WeakReference<VirtualButton>> VirtualButtons = [];
+	internal readonly List<WeakReference<VirtualButton>> VirtualButtons = [];
+
+	private readonly InputProvider provider;
 
 	/// <summary>
-	/// Holds a reference to the current cursor in use, to avoid it getting collected.
+	/// 
 	/// </summary>
-	private static Cursor? currentCursor;
+	internal Input(InputProvider provider)
+	{
+		this.provider = provider;
+		State = new(provider);
+		LastState = new(provider);
+		NextState = new(provider);
+	}
 
 	/// <summary>
 	/// Finds a Connected Controller by the given ID.
 	/// If it is not found, or no longer connected, null is returned.
 	/// </summary>
-	public static Controller? GetController(ControllerID id) => State.GetController(id);
-
-	/// <summary>
-	/// Sets whether the Mouse Cursor should be visible while over the Application Window
-	/// </summary>
-	public static void SetMouseVisible(bool enabled)
-	{
-		bool result;
-		if (enabled)
-			result = SDL_ShowCursor();
-		else
-			result = SDL_HideCursor();
-		if (!result)
-			Log.Warning($"Failed to set Mouse visibility: {SDL_GetError()}");
-	}
-
-	/// <summary>
-	/// Sets whether the Mouse is in Relative Mode.
-	/// While in Relative Mode, the Mouse Cursor is not visible, and the mouse
-	/// is constrained to the Window while still updating Mouse delta.
-	/// </summary>
-	public static void SetMouseRelativeMode(bool enabled)
-	{
-		if (!SDL_SetWindowRelativeMouseMode(App.Window, enabled))
-			Log.Warning($"Failed to set Mouse Relative Mode: {SDL_GetError()}");
-
-		if (enabled)
-			SDL_WarpMouseInWindow(App.Window, App.Width / 2, App.Height / 2);
-	}
-
-	/// <summary>
-	/// Sets the Mouse Cursor. If null, resets the Cursor to the default OS cursor.
-	/// </summary>
-	public static void SetMouseCursor(Cursor? cursor)
-	{
-		if (cursor == null)
-		{
-			currentCursor = null;
-			SDL_SetCursor(SDL_GetDefaultCursor());
-			return;
-		}
-
-		if (cursor.Disposed)
-			throw new Exception("Using an invalid cursor!");
-
-		if (!SDL_SetCursor(cursor.Handle))
-			Log.Warning($"Failed to set Mouse Cursor: {SDL_GetError()}");
-		else
-			currentCursor = cursor;
-	}
-
-	/// <summary>
-	/// Loads 'gamecontrollerdb.txt' from a local file or falls back to the 
-	/// default embedded SDL gamepad mappings
-	/// </summary>
-	internal static void AddDefaultSDLGamepadMappings(string relativePath)
-	{
-		var path = Path.Combine(relativePath, "gamecontrollerdb.txt");
-		if (File.Exists(path))
-			AddSDLGamepadMappings(File.ReadAllLines(path));
-	}
-
-	[Obsolete("use AddSDLGamepadMappings")]
-	public static void AddSdlGamepadMappings(string[] mappings)
-		=> AddSDLGamepadMappings(mappings);
-
-	/// <summary>
-	/// Loads a list of SDL Gamepad Mappings.
-	/// You can find more information here: https://github.com/mdqinc/SDL_GameControllerDB
-	/// By default, any 'gamecontrollerdb.txt' found adjacent to the application at runtime
-	/// will be loaded automatically.
-	/// </summary>
-	public static void AddSDLGamepadMappings(string[] mappings)
-	{
-		foreach (var mapping in mappings)
-			SDL_AddGamepadMapping(mapping);
-	}
+	public Controller? GetController(ControllerID id) => State.GetController(id);
 
 	/// <summary>
 	/// Sets the Clipboard to the given String
 	/// </summary>
-	public static void SetClipboardString(string value)
-	{
-		SDL_SetClipboardText(value);
-	}
+	public void SetClipboardString(string value)
+		=> provider.SetClipboard(value);
 
 	/// <summary>
 	/// Gets the Clipboard String
 	/// </summary>
-	public static string GetClipboardString()
+	public string GetClipboardString()
+		=> provider.GetClipboard();
+
+	internal void OnText(ReadOnlySpan<char> text)
 	{
-		return SDL_GetClipboardText();
+		foreach (var it in text)
+        {
+            NextState.Keyboard.Text.Append(it);
+            OnTextEvent?.Invoke(it);
+        }
 	}
 
-	/// <summary>
-	/// Run at the beginning of a frame to step the input state.
-	/// After this, the Application will poll the platform for more inputs, which call back
-	/// to the various Input internal methods.
-	/// </summary>
-	internal static void Step()
-	{
-		// warp mouse to center of the window if Relative Mode is enabled
-		if (SDL_GetWindowRelativeMouseMode(App.Window) && App.Focused)
-			SDL_WarpMouseInWindow(App.Window, App.Width / 2, App.Height / 2);
-
-		// step state
-		LastState.Copy(State);
-		State.Copy(nextState);
-		nextState.Step();
-
-		// update virtual buttons, remove unreferenced ones
-		for (int i = VirtualButtons.Count - 1; i >= 0; i--)
-		{
-			var button = VirtualButtons[i];
-			if (button.TryGetTarget(out var target))
-				target.Update();
-			else
-				VirtualButtons.RemoveAt(i);
-		}
-	}
-
-	internal static unsafe void OnText(nint cstr)
-	{
-		byte* ptr = (byte*)cstr;
-		if (ptr == null || ptr[0] == 0)
-			return;
-
-		// get cstr length
-		int len = 0;
-		while (ptr[len] != 0)
-			len++;
-
-		// convert to chars
-		char* chars = stackalloc char[64];
-		int written = System.Text.Encoding.UTF8.GetChars(ptr, len, chars, 64);
-
-		// append chars
-		for (int i = 0; i < written; i ++)
-		{
-			OnTextEvent?.Invoke(chars[i]);
-			nextState.Keyboard.Text.Append(chars[i]);
-		}
-	}
-
-	internal static void OnKey(int key, bool pressed)
-		=> nextState.Keyboard.OnKey(key, pressed);
-
-	internal static void OnMouseButton(int button, bool pressed)
-		=> nextState.Mouse.OnButton(button, pressed);
-
-	internal static void OnMouseMove(Vector2 position, Vector2 delta)
-	{
-		var size = new Point2(App.Width, App.Height);
-		var pixels = new Point2(App.WidthInPixels, App.HeightInPixels);
-		nextState.Mouse.Position.X = (position.X / size.X) * pixels.X;
-		nextState.Mouse.Position.Y = (position.Y / size.Y) * pixels.Y;
-		nextState.Mouse.Delta.X = delta.X;
-		nextState.Mouse.Delta.Y = delta.Y;
-	}
-
-	internal static void OnMouseWheel(Vector2 wheel)
-		=> nextState.Mouse.OnWheel(wheel);
-
-	internal static void OnControllerConnect(ControllerID id, string name, int buttonCount, int axisCount, bool isGamepad, GamepadTypes type, ushort vendor, ushort product, ushort version)
+	internal void ConnectController(
+		ControllerID id,
+		string name,
+		int buttonCount,
+		int axisCount,
+		bool isGamepad,
+		GamepadTypes type,
+		ushort vendor,
+		ushort product,
+		ushort version)
 	{
 		for (int i = 0; i < InputState.MaxControllers; i++)
 		{
-			if (nextState.Controllers[i].Connected)
+			if (NextState.Controllers[i].Connected)
 				continue;
 
-			nextState.Controllers[i].Connect(
+			NextState.Controllers[i].Connect(
 				id,
 				name,
 				buttonCount,
@@ -254,20 +139,60 @@ public static class Input
 				product,
 				version
 			);
+
+			OnControllerConnected?.Invoke(id);
 			break;
 		}
 	}
 
-	internal static void OnControllerDisconnect(ControllerID id)
+	internal void DisconnectController(ControllerID id)
 	{
-		foreach (var it in nextState.Controllers)
+		foreach (var it in NextState.Controllers)
 			if (it.ID == id)
+			{
 				it.Disconnect();
+				OnControllerDisconnected?.Invoke(id);
+			}
 	}
 
-	internal static void OnControllerButton(ControllerID id, int button, bool pressed)
-		=> nextState.GetController(id)?.OnButton(button, pressed);
+	internal void Step(in Time time)
+	{
+		// step state
+		LastState.Copy(State);
+		State.Copy(NextState);
+		NextState.Step(time);
 
-	internal static void OnControllerAxis(ControllerID id, int axis, float value)
-		=> nextState.GetController(id)?.OnAxis(axis, value);
+		// update virtual buttons, remove unreferenced ones
+		for (int i = VirtualButtons.Count - 1; i >= 0; i--)
+		{
+			var button = VirtualButtons[i];
+			if (button.TryGetTarget(out var target))
+				target.Update(time);
+			else
+				VirtualButtons.RemoveAt(i);
+		}
+	}
+
+	/// <summary>
+	/// Loads 'gamecontrollerdb.txt' from a local file or falls back to the 
+	/// default embedded SDL gamepad mappings
+	/// </summary>
+	static internal void AddDefaultSDLGamepadMappings(string relativePath)
+	{
+		var path = Path.Combine(relativePath, "gamecontrollerdb.txt");
+		if (File.Exists(path))
+			AddSDLGamepadMappings(File.ReadAllLines(path));
+	}
+
+	/// <summary>
+	/// Loads a list of SDL Gamepad Mappings.
+	/// You can find more information here: https://github.com/mdqinc/SDL_GameControllerDB
+	/// By default, any 'gamecontrollerdb.txt' found adjacent to the application at runtime
+	/// will be loaded automatically.
+	/// </summary>
+	public static void AddSDLGamepadMappings(string[] mappings)
+	{
+		foreach (var mapping in mappings)
+			SDL3.SDL.SDL_AddGamepadMapping(mapping);
+	}
 }

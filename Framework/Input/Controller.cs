@@ -5,10 +5,15 @@ namespace Foster.Framework;
 /// <summary>
 /// Represents a Gamepad or Joystick
 /// </summary>
-public class Controller(int index)
+public class Controller(InputProvider provider, int index)
 {
 	public const int MaxButtons = 64;
 	public const int MaxAxis = 64;
+
+	/// <summary>
+	/// The Input Provider we belong to
+	/// </summary>
+	private readonly InputProvider provider = provider;
 
 	/// <summary>
 	/// The current Controller Slot Index.
@@ -100,6 +105,7 @@ public class Controller(int index)
 	private readonly TimeSpan[] timestamp = new TimeSpan[MaxButtons];
 	private readonly float[] axis = new float[MaxAxis];
 	private readonly TimeSpan[] axisTimestamp = new TimeSpan[MaxAxis];
+	private Time time;
 
 	internal void Connect(ControllerID id, string name, int buttonCount, int axisCount, bool isGamepad, GamepadTypes type, ushort vendor, ushort product, ushort version)
 	{
@@ -136,10 +142,11 @@ public class Controller(int index)
 		Array.Fill(axisTimestamp, TimeSpan.Zero);
 	}
 
-	internal void Step()
+	internal void Step(in Time time)
 	{
 		Array.Fill(pressed, false);
 		Array.Fill(released, false);
+		this.time = time;
 	}
 
 	internal void Copy(Controller other)
@@ -154,6 +161,7 @@ public class Controller(int index)
 		Product = other.Product;
 		Vendor = other.Vendor;
 		Version = other.Version;
+		time = other.time;
 
 		Array.Copy(other.pressed, 0, pressed, 0, pressed.Length);
 		Array.Copy(other.down, 0, down, 0, pressed.Length);
@@ -163,7 +171,7 @@ public class Controller(int index)
 		Array.Copy(other.axisTimestamp, 0, axisTimestamp, 0, axis.Length);
 	}
 
-	internal void OnButton(int buttonIndex, bool buttonPressed)
+	internal void OnButton(int buttonIndex, bool buttonPressed, in TimeSpan time)
 	{
 		if (buttonIndex >= 0 && buttonIndex < MaxButtons)
 		{
@@ -171,7 +179,7 @@ public class Controller(int index)
 			{
 				down[buttonIndex] = true;
 				pressed[buttonIndex] = true;
-				timestamp[buttonIndex] = Time.Duration;
+				timestamp[buttonIndex] = time;
 			}
 			else
 			{
@@ -181,12 +189,12 @@ public class Controller(int index)
 		}
 	}
 
-	internal void OnAxis(int axisIndex, float axisValue)
+	internal void OnAxis(int axisIndex, float axisValue, in TimeSpan time)
 	{
 		if (axisIndex >= 0 && axisIndex < MaxAxis)
 		{
 			axis[axisIndex] = axisValue;
-			axisTimestamp[axisIndex] = Time.Duration;
+			axisTimestamp[axisIndex] = time;
 		}
 	}
 
@@ -211,23 +219,7 @@ public class Controller(int index)
 		if (!Connected)
 			return;
 
-		var highFrequency = (ushort)(Calc.Clamp(highIntensity, 0, 1) * 0xFFFF);
-		var lowFrequency = (ushort)(Calc.Clamp(lowIntensity, 0, 1) * 0xFFFF);
-		var durationms = (uint)TimeSpan.FromSeconds(duration).TotalMilliseconds;
-
-		if (IsGamepad)
-		{
-			var ptr = SDL3.SDL.SDL_GetGamepadFromID(ID.Value);
-			if (ptr != nint.Zero)
-				SDL3.SDL.SDL_RumbleGamepad(ptr, lowFrequency, highFrequency, durationms);
-
-		}
-		else
-		{
-			var ptr = SDL3.SDL.SDL_GetJoystickFromID(ID.Value);
-			if (ptr != nint.Zero)
-				SDL3.SDL.SDL_RumbleJoystick(ptr, lowFrequency, highFrequency, durationms);
-		}
+		provider.Rumble(ID, lowIntensity, highIntensity, duration);
 	}
 
 	public bool Pressed(int buttonIndex) => buttonIndex >= 0 && buttonIndex < MaxButtons && pressed[buttonIndex];
@@ -264,8 +256,8 @@ public class Controller(int index)
 
 		if (Down(button))
 		{
-			var time = Timestamp(button) / 1000.0;
-			return (Time.Duration - time).TotalSeconds > delay && Time.OnInterval(interval, time.TotalSeconds);
+			var stamp = Timestamp(button) / 1000.0;
+			return (time.Elapsed - stamp).TotalSeconds > delay && Time.OnInterval(time, interval, stamp.TotalSeconds);
 		}
 
 		return false;

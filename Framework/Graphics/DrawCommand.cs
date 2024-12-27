@@ -9,7 +9,7 @@ public struct DrawCommand
 	/// <summary>
 	/// Render Target. If not assigned, will target the Back Buffer
 	/// </summary>
-	public Target? Target;
+	public IDrawableTarget Target;
 
 	/// <summary>
 	/// Material to use
@@ -74,7 +74,7 @@ public struct DrawCommand
 	/// <summary>
 	/// Creates a Draw Command based on the given mesh and material
 	/// </summary>
-	public DrawCommand(Target? target, Mesh mesh, Material material)
+	public DrawCommand(IDrawableTarget target, Mesh mesh, Material material)
 		: this()
 	{
 		Target = target;
@@ -84,6 +84,6 @@ public struct DrawCommand
 		MeshIndexCount = mesh.IndexCount;
 	}
 
-	public readonly void Submit()
-		=> App.Renderer.Draw(this);
+	public readonly void Submit(Renderer renderer)
+		=> renderer.Draw(this);
 }

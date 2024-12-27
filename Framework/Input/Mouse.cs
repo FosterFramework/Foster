@@ -5,7 +5,7 @@ namespace Foster.Framework;
 /// <summary>
 /// Stores the state of the Mouse
 /// </summary>
-public class Mouse
+public sealed class Mouse
 {
 	public const int MaxButtons = 5;
 
@@ -14,6 +14,7 @@ public class Mouse
 	private readonly bool[] released = new bool[MaxButtons];
 	private readonly TimeSpan[] timestamp = new TimeSpan[MaxButtons];
 	private Vector2 wheelValue;
+	private Time time;
 
 	/// <summary>
 	/// Mouse position, relative to the window, in Pixel Coordinates.
@@ -48,8 +49,11 @@ public class Mouse
 		if (Pressed(button))
 			return true;
 
-		var time = timestamp[(int)button];
-		return Down(button) && (Time.Duration - time).TotalSeconds > delay && Time.OnInterval(interval, time.TotalSeconds);
+		var stamp = timestamp[(int)button];
+		return
+			Down(button) &&
+			(time.Elapsed - stamp).TotalSeconds > delay &&
+			Time.OnInterval(time, interval, stamp.TotalSeconds);
 	}
 
 	public bool LeftPressed => pressed[(int)MouseButtons.Left];
@@ -76,16 +80,18 @@ public class Mouse
 		Position = other.Position;
 		Delta = other.Delta;
 		wheelValue = other.wheelValue;
+		time = other.time;
 	}
 
-	internal void Step()
+	internal void Step(in Time time)
 	{
 		Array.Fill(pressed, false);
 		Array.Fill(released, false);
 		wheelValue = Vector2.Zero;
+		this.time = time;
 	}
 
-	internal void OnButton(int buttonIndex, bool buttonPressed)
+	internal void OnButton(int buttonIndex, bool buttonPressed, in TimeSpan time)
 	{
 		if (buttonIndex >= 0 && buttonIndex < MaxButtons)
 		{
@@ -93,7 +99,7 @@ public class Mouse
 			{
 				down[buttonIndex] = true;
 				pressed[buttonIndex] = true;
-				timestamp[buttonIndex] = Time.Duration;
+				timestamp[buttonIndex] = time;
 			}
 			else
 			{

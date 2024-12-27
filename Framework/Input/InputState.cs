@@ -16,7 +16,6 @@ public class InputState
 	/// The Keyboard State
 	/// </summary>
 	public readonly Keyboard Keyboard;
-
 	/// <summary>
 	/// The Mouse State
 	/// </summary>
@@ -33,11 +32,11 @@ public class InputState
 	/// </summary>
 	public readonly ReadOnlyCollection<Controller> Controllers;
 	
-	public InputState()
+	internal InputState(InputProvider provider)
 	{
 		controllers = new Controller[MaxControllers];
 		for (int i = 0; i < controllers.Length; i++)
-			controllers[i] = new Controller(i);
+			controllers[i] = new Controller(provider, i);
 
 		Controllers = new ReadOnlyCollection<Controller>(controllers);
 		Keyboard = new Keyboard();
@@ -56,15 +55,15 @@ public class InputState
 		return null;
 	}
 
-	internal void Step()
+	internal void Step(in Time time)
 	{
 		for (int i = 0; i < Controllers.Count; i++)
 		{
 			if (Controllers[i].Connected)
-				Controllers[i].Step();
+				Controllers[i].Step(time);
 		}
-		Keyboard.Step();
-		Mouse.Step();
+		Keyboard.Step(time);
+		Mouse.Step(time);
 	}
 
 	internal void Copy(InputState other)

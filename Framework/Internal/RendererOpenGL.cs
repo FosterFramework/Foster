@@ -4,13 +4,24 @@ using static SDL3.SDL;
 
 namespace Foster.Framework;
 
-internal sealed unsafe class RendererOpenGL : Renderer
+// TODO:
+// The threaded stuff is wrong! D:
+//
+// The way SDL_GL_MakeCurrent it used is incorrect. You're not allowed to have
+// other contexts active in other threads at the same time... which defeats how
+// I implemented this (where I thought a background context could be active).
+// Relevant discussion: https://github.com/libsdl-org/SDL/issues/9072
+//
+// I think to solve it I'd need to make some kind of big command buffer that gets flushed.
+// Questioning how much work I want to do to make threaded GL rendering work...
+
+internal sealed unsafe class RendererOpenGL(App app) : Renderer(app)
 {
 	private class Resource(Renderer renderer) : IHandle
 	{
 		public readonly Renderer Renderer = renderer;
 		public bool Destroyed;
-		public bool Disposed => Destroyed || Renderer != App.Renderer;
+		public bool Disposed => Destroyed || Renderer.Disposed;
 	}
 
 	private class TextureResource(Renderer renderer) : Resource(renderer)
@@ -96,30 +107,46 @@ internal sealed unsafe class RendererOpenGL : Renderer
 	private Version version = new();
 	private nint window;
 	private bool vsync = false;
+	private bool disposed = false;
+
 	private readonly ContextState mainState = new();
 	private readonly ContextState offMainState = new();
 	private readonly HashSet<Resource> resources = [];
 	private readonly ConcurrentQueue<Resource> destroying = [];
 	private readonly Mutex offMainMutex = new();
 
-	public override App.GraphicDriverProperties Properties => new(
-		Driver: GraphicsDriver.OpenGL,
-		DriverVersion: version,
-		OriginBottomLeft: true
-	);
+	public override GraphicsDriver Driver => GraphicsDriver.OpenGL;
 
-	public override void CreateDevice()
+	public override bool OriginBottomLeft => true;
+
+	public override bool VSync
+	{
+		get => vsync;
+		set
+		{
+			if (vsync != value)
+			{
+				vsync = value;
+				if (!SDL_GL_SetSwapInterval(vsync ? 1 : 0))
+					Log.Warning($"Setting V-Sync faled: {SDL_GetError()}");
+			}
+		}
+	}
+
+	public override bool Disposed => disposed;
+
+	internal override void CreateDevice()
 	{
 		if (!SDL_GL_LoadLibrary(null!))
 			throw Platform.CreateExceptionFromSDL(nameof(SDL_GL_LoadLibrary));
 	}
 
-	public override void DestroyDevice()
+	internal override void DestroyDevice()
 	{
 		SDL_GL_UnloadLibrary();
 	}
 
-	public override void Startup(nint window)
+	internal override void Startup(nint window)
 	{
 		this.window = window;
 
@@ -151,10 +178,10 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		Log.Info($"Graphics Driver: OpenGL {major}.{minor} [{Platform.ParseUTF8(mainState.GL.GetString(GL.RENDERER))}]");
 
 		// vsync is on by default
-		SetVSync(true);
+		VSync = true;
 	}
 
-	public override void Shutdown()
+	internal override void Shutdown()
 	{
 		// destroy remaining resources
 		{
@@ -169,21 +196,11 @@ internal sealed unsafe class RendererOpenGL : Renderer
 
 		SDL_GL_DestroyContext(mainState.Context);
 		mainState.Context = nint.Zero;
-	}
-	
-	public override bool GetVSync() => vsync;
 
-	public override void SetVSync(bool enabled)
-	{
-		if (vsync != enabled)
-		{
-			vsync = enabled;
-			if (!SDL_GL_SetSwapInterval(enabled ? 1 : 0))
-				Log.Warning($"Setting V-Sync faled: {SDL_GetError()}");
-		}
+		disposed = true;
 	}
 
-	public override void Present()
+	internal override void Present()
 	{
 		// destroy any queued resources
 		DestroyQueuedResources();
@@ -195,7 +212,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		SDL_GL_SwapWindow(window);
 	}
 
-	public override IHandle CreateTexture(int width, int height, TextureFormat format, IHandle? targetBinding)
+	internal override IHandle CreateTexture(int width, int height, TextureFormat format, IHandle? targetBinding)
 	{
 		BeginThreadSafeCalls(out var state);
 
@@ -249,7 +266,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		return texture;
 	}
 
-	public override void SetTextureData(IHandle texture, nint data, int length)
+	internal override void SetTextureData(IHandle texture, nint data, int length)
 	{
 		if (texture is TextureResource res && !res.Disposed)
 		{
@@ -260,7 +277,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		}
 	}
 
-	public override void GetTextureData(IHandle texture, nint data, int length)
+	internal override void GetTextureData(IHandle texture, nint data, int length)
 	{
 		if (texture is TextureResource res && !res.Disposed)
 		{
@@ -279,7 +296,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		mainState.GL.DeleteTextures(1, new nint(ids));
 	}
 
-	public override IHandle CreateTarget(int width, int height)
+	internal override IHandle CreateTarget(int width, int height)
 	{
 		var target = new TargetResource(this)
 		{
@@ -307,14 +324,14 @@ internal sealed unsafe class RendererOpenGL : Renderer
 			DestroyResource(target.DepthAttachment);
 	}
 
-	public override IHandle CreateMesh()
+	internal override IHandle CreateMesh()
 	{
 		var mesh = new MeshResource(this);
 		TrackResource(mesh);
 		return mesh;
 	}
 
-	public override void SetMeshVertexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, in VertexFormat format)
+	internal override void SetMeshVertexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, in VertexFormat format)
 	{
 		if (mesh is not MeshResource it)
 			return;
@@ -348,7 +365,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		EndThreadSafeCalls(state);
 	}
 
-	public override void SetMeshIndexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, IndexFormat format)
+	internal override void SetMeshIndexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, IndexFormat format)
 	{
 		if (mesh is not MeshResource it)
 			return;
@@ -412,7 +429,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		mesh.IndexBuffer = 0;
 	}
 
-	public override IHandle CreateShader(in ShaderCreateInfo shaderInfo)
+	internal override IHandle CreateShader(in ShaderCreateInfo shaderInfo)
 	{
 		BeginThreadSafeCalls(out var state);
 
@@ -538,7 +555,7 @@ internal sealed unsafe class RendererOpenGL : Renderer
 			resources.Add(resource);
 	}
 
-	public override void DestroyResource(IHandle resource)
+	internal override void DestroyResource(IHandle resource)
 	{
 		if (!resource.Disposed && resource is Resource res)
 		{
@@ -569,18 +586,17 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		}
 	}
 
-	public override void PerformDraw(DrawCommand command)
+	internal override void PerformDraw(DrawCommand command)
 	{
 		BeginThreadSafeCalls(out var state);
 
-		var target = command.Target?.Resource as TargetResource;
 		var mat = command.Material;
 		var shader = (mat.Shader!.Resource as ShaderResource)!;
 		var mesh = (command.Mesh.Resource as MeshResource)!;
 
 		// set state
-		BindFrameBuffer(state, target);
 		BindProgram(state, shader.ID);
+		BindDrawableTarget(state, command.Target);
 		BindArray(state, mesh);
 		BindVertexAttributes(state, mesh);
 		SetBlend(state, command.BlendMode);
@@ -707,11 +723,11 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		}
 	}
 
-	public override void Clear(Target? target, Color color, float depth, int stencil, ClearMask mask)
+	internal override void Clear(IDrawableTarget target, Color color, float depth, int stencil, ClearMask mask)
 	{
 		BeginThreadSafeCalls(out var state);
 
-		BindFrameBuffer(state, target?.Resource as TargetResource);
+		BindDrawableTarget(state, target);
 		SetViewport(state, false, default);
 		SetScissor(state, false, default);
 
@@ -808,6 +824,14 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		state.Initializing = false;
 	}
 
+	private void BindDrawableTarget(ContextState state, IDrawableTarget target)
+	{
+		if (target is Target renderTarget)
+			BindFrameBuffer(state, renderTarget.Resource as TargetResource);
+		else
+			BindFrameBuffer(state, null);
+	}
+
 	private void BindFrameBuffer(ContextState state, TargetResource? target)
 	{
 		uint framebuffer = 0;
@@ -815,8 +839,8 @@ internal sealed unsafe class RendererOpenGL : Renderer
 		if (target == null)
 		{
 			framebuffer = 0;
-			state.FrameBufferWidth = App.Running ? App.WidthInPixels : 1;
-			state.FrameBufferHeight = App.Running ? App.HeightInPixels : 1;
+			state.FrameBufferWidth = App.Running ? App.Window.WidthInPixels : 1;
+			state.FrameBufferHeight = App.Running ? App.Window.HeightInPixels : 1;
 		}
 		else
 		{

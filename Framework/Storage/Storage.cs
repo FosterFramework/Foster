@@ -4,7 +4,6 @@ namespace Foster.Framework;
 
 /// <summary>
 /// Default Storage implementation, for Title and User Storage.
-/// Call <see cref="OpenUserStorage"/> or <see cref="OpenTitleStorage"/> to begin using the Storage.
 /// </summary>
 public sealed class Storage : StorageContainer
 {
@@ -12,6 +11,8 @@ public sealed class Storage : StorageContainer
 	private readonly bool writable;
 
 	public override bool Writable => writable;
+
+	internal bool Ready => SDL_StorageReady(handle);
 
 	private Storage(nint handle, bool writable)
 	{
@@ -24,103 +25,16 @@ public sealed class Storage : StorageContainer
 		Dispose();
 	}
 
-	/// <summary>
-	/// Opens a user storage, and invokes a callback with the storage object when ready.
-	/// Note that User Storage should be disposed as soon as you're done using it.
-	/// It should not be left open for an extended amount of time.
-	/// User Storage is intended for dynamic save files and application settings.
-	/// </summary>
-	public static void OpenUserStorage(Action<Storage> onReady)
+	internal static Storage OpenUserStorage(string name)
 	{
-		if (!App.Running)
-			throw new Exception("Application must be running to use Storage");
-		
-		var handle = SDL_OpenUserStorage(string.Empty, App.Name, 0);
-		HandleOpenCallback(new Storage(handle, true), onReady);
+		var handle = SDL_OpenUserStorage(string.Empty, name, 0);
+		return new Storage(handle, true);
 	}
 
-	/// <summary>
-	/// Opens a user storage and awaits until it is ready.
-	/// This should not be awaited on from the Main thread.
-	/// Note that this User Storage should be disposed as soon as you're done using it.
-	/// It should not be left open for an extended amount of time.
-	/// User Storage is intended for dynamic save files and application settings.
-	/// </summary>
-	public static async Task<Storage> OpenUserStorageAsync()
-	{
-		if (!App.Running)
-			throw new Exception("Application must be running to use Storage");
-
-		var handle = SDL_OpenUserStorage(string.Empty, App.Name, 0);
-		return await HandleOpenAsync(new Storage(handle, true));
-	}
-
-	/// <summary>
-	/// Opens a application title storage, and invokes a callback with the storage object when ready.
-	/// Title Storage is intended for static Game Data and Assets.
-	/// </summary>
-	public static void OpenTitleStorage(Action<Storage> onReady)
+	internal static Storage OpenTitleStorage()
 	{
 		var handle = SDL_OpenTitleStorage(null!, 0);
-		HandleOpenCallback(new Storage(handle, false), onReady);
-	}
-
-	/// <summary>
-	/// Opens a application title storage and awaits until it is ready.
-	/// This should not be awaited on from the Main thread.
-	/// Title Storage is intended for static Game Data and Assets.
-	/// </summary>
-	public static async Task<Storage> OpenTitleStorageAsync()
-	{
-		if (App.IsMainThread())
-			throw new Exception("Do not Open Storage and await on it from the Main thread");
-
-		var handle = SDL_OpenTitleStorage(null!, 0);
-		return await HandleOpenAsync(new Storage(handle, false));
-	}
-
-	private static void HandleOpenCallback(Storage storage, Action<Storage> onReady)
-	{
-		if (SDL_StorageReady(storage.handle))
-		{
-			onReady(storage);
-		}
-		else
-		{
-			// we wait off the main thread for StorageReady.
-			// the SDL docs say not to spinwait on this so that the event loop still receives messages:
-			// https://wiki.libsdl.org/SDL3/SDL_StorageReady#remarks
-			Task.Run(() =>
-			{
-				while (!SDL_StorageReady(storage.handle))
-					Thread.Sleep(100);
-				App.RunOnMainThread(() => onReady(storage));
-			});
-		}
-	}
-
-	private static async Task<Storage> HandleOpenAsync(Storage storage)
-	{
-		if (App.IsMainThread())
-			throw new Exception("Do not Open Storage and await on it from the Main thread");
-
-		if (SDL_StorageReady(storage.handle))
-		{
-			return storage;
-		}
-		else
-		{
-			// we wait off the main thread for StorageReady.
-			// the SDL docs say not to spinwait on this so that the event loop still receives messages:
-			// https://wiki.libsdl.org/SDL3/SDL_StorageReady#remarks
-			await Task.Run(() =>
-			{
-				while (!SDL_StorageReady(storage.handle))
-					Thread.Sleep(100);
-			});
-
-			return storage;
-		}
+		return new Storage(handle, false);
 	}
 
 	public override bool DirectoryExists(string path)

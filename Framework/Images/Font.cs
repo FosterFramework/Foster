@@ -24,13 +24,15 @@ public class Font : IDisposable
 	private IntPtr dataPtr;
 	private GCHandle dataHandle;
 	private int dataLength;
-	private readonly Dictionary<int, int> codepointToGlyphLookup = new();
+	private readonly Dictionary<int, int> codepointToGlyphLookup = [];
 
 	public int Ascent { get; private set; }
 	public int Descent { get; private set; }
 	public int LineGap { get; private set; }
 	public int Height => Ascent - Descent;
 	public int LineHeight => Ascent - Descent + LineGap;
+
+	public bool Disposed { get; private set; } = false;
 
 	public Font(Stream stream)
 	{
@@ -216,6 +218,9 @@ public class Font : IDisposable
 
 	public void Dispose()
 	{
+		Disposed = true;
+		GC.SuppressFinalize(this);
+
 		if (dataPtr != IntPtr.Zero)
 		{
 			dataHandle.Free();

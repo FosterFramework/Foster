@@ -10,7 +10,7 @@ internal unsafe class RendererSDL : Renderer
 	{
 		public readonly Renderer Renderer = renderer;
 		public bool Destroyed;
-		public bool Disposed => Destroyed || Renderer != App.Renderer;
+		public bool Disposed => Destroyed || Renderer.Disposed;
 	}
 
 	private class TextureResource(Renderer renderer) : Resource(renderer)
@@ -105,20 +105,42 @@ internal unsafe class RendererSDL : Renderer
 	private readonly GraphicsDriver preferred;
 	private readonly Version version;
 
-	public override App.GraphicDriverProperties Properties => new(
-		Driver: driver,
-		DriverVersion: version,
-		OriginBottomLeft: false
-	);
+	public override GraphicsDriver Driver => driver;
 
-	public RendererSDL(GraphicsDriver preferred)
+	public override bool OriginBottomLeft => false;
+
+	public override bool VSync
+	{
+		get => vsyncEnabled;
+		set
+		{
+			if (device == nint.Zero)
+				throw deviceNotCreated;
+
+			SDL_SetGPUSwapchainParameters(device, window,
+				swapchain_composition: SDL_GPUSwapchainComposition.SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
+				present_mode: (value, supportsMailbox) switch
+				{
+					(true, true) => SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX,
+					(true, false) => SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC,
+					(false, _) => SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE
+				}
+			);
+
+			vsyncEnabled = value;
+		}
+	}
+
+	public override bool Disposed => device == nint.Zero;
+
+	public RendererSDL(App app, GraphicsDriver preferred) : base(app)
 	{
 		this.preferred = preferred;
 		var sdlv = SDL_GetVersion();
 		version = new(sdlv / 1000000, (sdlv / 1000) % 1000, sdlv % 1000);
 	}
 
-	public override void CreateDevice()
+	internal override void CreateDevice()
 	{
 		if (device != nint.Zero)
 			throw new Exception("GPU Device is already created");
@@ -146,13 +168,13 @@ internal unsafe class RendererSDL : Renderer
 			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUDevice));
 	}
 
-	public override void DestroyDevice()
+	internal override void DestroyDevice()
 	{
 		SDL_DestroyGPUDevice(device);
 		device = nint.Zero;
 	}
 
-	public override void Startup(nint window)
+	internal override void Startup(nint window)
 	{
 		this.window = window;
 
@@ -215,14 +237,14 @@ internal unsafe class RendererSDL : Renderer
 		}
 
 		// create framebuffer
-		SDL_GetWindowSize(window, out int w, out int h);
-		frameBuffer = new Target(w, h, [TextureFormat.R8G8B8A8]);
+		SDL_GetWindowSizeInPixels(window, out int w, out int h);
+		frameBuffer = new Target(this, w, h, [TextureFormat.R8G8B8A8]);
 
 		// default to vsync on
-		SetVSync(true);
+		VSync = true;
 	}
 
-	public override void Shutdown()
+	internal override void Shutdown()
 	{
 		// submit remaining commands
 		FlushCommands();
@@ -293,27 +315,7 @@ internal unsafe class RendererSDL : Renderer
 		driver = GraphicsDriver.None;
 	}
 
-	public override bool GetVSync() => vsyncEnabled;
-
-	public override void SetVSync(bool enabled)
-	{
-		if (device == nint.Zero)
-			throw deviceNotCreated;
-
-		SDL_SetGPUSwapchainParameters(device, window,
-			swapchain_composition: SDL_GPUSwapchainComposition.SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
-			present_mode: (enabled, supportsMailbox) switch
-			{
-				(true, true) => SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX,
-				(true, false) => SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC,
-				(false, _) => SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE
-			}
-		);
-
-		vsyncEnabled = enabled;
-	}
-
-	public override void Present()
+	internal override void Present()
 	{
 		EndCopyPass();
 		EndRenderPass();
@@ -373,7 +375,7 @@ internal unsafe class RendererSDL : Renderer
 				if (scW != (uint)resource.Width || scH != (uint)resource.Height)
 				{
 					frameBuffer?.Dispose();
-					frameBuffer = new Target((int)scW, (int)scH);
+					frameBuffer = new Target(this, (int)scW, (int)scH);
 				}
 			}
 		}
@@ -388,7 +390,7 @@ internal unsafe class RendererSDL : Renderer
 		frameCounter = (frameCounter + 1) % MaxFramesInFlight;
 	}
 
-	public override IHandle CreateTexture(int width, int height, TextureFormat format, IHandle? targetBinding)
+	internal override IHandle CreateTexture(int width, int height, TextureFormat format, IHandle? targetBinding)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
@@ -439,7 +441,7 @@ internal unsafe class RendererSDL : Renderer
 		return res;
 	}
 
-	public override void SetTextureData(IHandle texture, nint data, int length)
+	internal override void SetTextureData(IHandle texture, nint data, int length)
 	{
 		static uint RoundToAlignment(uint value, uint alignment)
 			=> alignment * ((value + alignment - 1) / alignment);
@@ -538,7 +540,7 @@ internal unsafe class RendererSDL : Renderer
 		}
 	}
 
-	public override void GetTextureData(IHandle texture, nint data, int length)
+	internal override void GetTextureData(IHandle texture, nint data, int length)
 	{
 		throw new NotImplementedException();
 	}
@@ -560,7 +562,7 @@ internal unsafe class RendererSDL : Renderer
 		}
 	}
 
-	public override IHandle CreateTarget(int width, int height)
+	internal override IHandle CreateTarget(int width, int height)
 	{
 		var res = new TargetResource(this);
 		lock (resources)
@@ -585,7 +587,7 @@ internal unsafe class RendererSDL : Renderer
 		}
 	}
 
-	public override IHandle CreateMesh()
+	internal override IHandle CreateMesh()
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
@@ -598,7 +600,7 @@ internal unsafe class RendererSDL : Renderer
 		return res;
 	}
 
-	public override void SetMeshVertexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, in VertexFormat format)
+	internal override void SetMeshVertexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, in VertexFormat format)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
@@ -612,7 +614,7 @@ internal unsafe class RendererSDL : Renderer
 		UploadMeshBuffer(ref res.Vertex, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_VERTEX);
 	}
 
-	public override void SetMeshIndexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, IndexFormat format)
+	internal override void SetMeshIndexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, IndexFormat format)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
@@ -766,7 +768,7 @@ internal unsafe class RendererSDL : Renderer
 		res = default;
 	}
 
-	public override IHandle CreateShader(in ShaderCreateInfo shaderInfo)
+	internal override IHandle CreateShader(in ShaderCreateInfo shaderInfo)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
@@ -849,7 +851,7 @@ internal unsafe class RendererSDL : Renderer
 		}
 	}
 
-	public override void DestroyResource(IHandle resource)
+	internal override void DestroyResource(IHandle resource)
 	{
 		if (!resource.Disposed)
 		{
@@ -864,7 +866,7 @@ internal unsafe class RendererSDL : Renderer
 		}
 	}
 
-	public override void PerformDraw(DrawCommand command)
+	internal override void PerformDraw(DrawCommand command)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
@@ -875,7 +877,7 @@ internal unsafe class RendererSDL : Renderer
 		var mesh = command.Mesh;
 
 		// try to start a render pass
-		if (!BeginRenderPass(target, default))
+		if (!BeginRenderPassOnDrawableTarget(target, default))
 			return;
 
 		// set scissor
@@ -1034,14 +1036,14 @@ internal unsafe class RendererSDL : Renderer
 		);
 	}
 
-	public override void Clear(Target? target, Color color, float depth, int stencil, ClearMask mask)
+	internal override void Clear(IDrawableTarget target, Color color, float depth, int stencil, ClearMask mask)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
 
 		if (mask != ClearMask.None)
 		{
-			BeginRenderPass(target, new()
+			BeginRenderPassOnDrawableTarget(target, new()
 			{
 				Color = mask.Has(ClearMask.Color) ? color : null,
 				Depth = mask.Has(ClearMask.Depth) ? depth : null,
@@ -1124,6 +1126,14 @@ internal unsafe class RendererSDL : Renderer
 		if (copyPass != nint.Zero)
 			SDL_EndGPUCopyPass(copyPass);
 		copyPass = nint.Zero;
+	}
+
+	private bool BeginRenderPassOnDrawableTarget(IDrawableTarget target, ClearInfo clear)
+	{
+		if (target is Target renderTarget)
+			return BeginRenderPass(renderTarget, clear);
+		else
+			return BeginRenderPass(null, clear);
 	}
 
 	private bool BeginRenderPass(Target? target, ClearInfo clear)
@@ -1237,7 +1247,7 @@ internal unsafe class RendererSDL : Renderer
 
 	private nint GetGraphicsPipeline(in DrawCommand command)
 	{
-		var target = command.Target ?? frameBuffer;
+		var target = command.Target as Target ?? frameBuffer;
 		var mesh = command.Mesh;
 		var material = command.Material;
 		var shader = material.Shader!;

@@ -12,7 +12,7 @@ internal static partial class Platform
 	/// <summary>
 	/// Creates a new Renderer based on the current Platform and preferred Driver
 	/// </summary>
-	public static Renderer CreateRenderer(GraphicsDriver preferred)
+	public static Renderer CreateRenderer(App app, GraphicsDriver preferred)
 	{
 		// no driver preferred, let foster/sdl decide
 		if (preferred == GraphicsDriver.None)
@@ -30,8 +30,8 @@ internal static partial class Platform
 		// explicit driver preferred
 		return preferred switch
 		{
-			GraphicsDriver.OpenGL => new RendererOpenGL(),
-			_ => new RendererSDL(preferred)
+			GraphicsDriver.OpenGL => new RendererOpenGL(app),
+			_ => new RendererSDL(app, preferred)
 		};
 	}
 
@@ -90,16 +90,6 @@ internal static partial class Platform
 
 		return [];
 	}
-
-	public static string GetGraphicsShaderExtension() => App.Graphics.Driver switch
-	{
-		GraphicsDriver.OpenGL => "glsl",
-		GraphicsDriver.Vulkan => "spv",
-		GraphicsDriver.D3D12 => "dxil",
-		GraphicsDriver.Metal => "msl",
-		GraphicsDriver.Private => "spv",
-		_ => throw new NotImplementedException(),
-	};
 
 	public enum ImageWriteFormat { Png, Qoi }
 

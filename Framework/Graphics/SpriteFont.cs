@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
 
@@ -8,10 +9,10 @@ namespace Foster.Framework;
 /// By default the SpriteFont will prepare characters as they are requested,
 /// which means there can occasionally be a delay between requesting to draw 
 /// some text and it actually appearing on-screen. To remove this delay, you
-/// can call SpriteFont.PrepareCharacters to pre-render all characters that
-/// you would like to use.
+/// can call <see cref="PrepareCharacters(ReadOnlySpan{char}, bool)"/> to 
+/// to pre-render all characters that you would like to use.
 /// </summary>
-public class SpriteFont
+public class SpriteFont : IDisposable
 {
 	public readonly record struct Character(
 		int Codepoint,
@@ -27,6 +28,11 @@ public class SpriteFont
 	/// Set of ASCII character unicode values
 	/// </summary>
 	public static readonly int[] Ascii = Enumerable.Range(32, 128 - 32).ToArray();
+
+	/// <summary>
+	/// The Renderer the Sprite Font belongs to
+	/// </summary>
+	public readonly Renderer Renderer;
 
 	/// <summary>
 	/// The Font being used by the SpriteFont.
@@ -71,17 +77,19 @@ public class SpriteFont
 	public float LineHeight => Ascent - Descent + LineGap;
 
 	/// <summary>
-	/// How the SpriteFont should blit characters upon request.
-	/// </summary>
-	public SpriteFontBlitModes BlitMode = SpriteFontBlitModes.Immediate;
-
-	/// <summary>
 	/// If the generated character images should premultiply their alpha.
 	/// This should be true if you render the SpriteFont with the default
 	/// Premultiply BlendMode.
 	/// Note that this property does not modify already-created characters.
 	/// </summary>
 	public bool PremultiplyAlpha = true;
+
+	/// <summary>
+	/// If True, the SpriteFont will always wait for all characters to be ready before
+	/// drawing anything to the screen. This will potentially cause your game to halt
+	/// as characters prepare themselves.
+	/// </summary>
+	public bool WaitForPendingCharacters = false;
 
 	/// <summary>
 	/// Newline characters to use during various text measuring and rendering methods.
@@ -96,11 +104,15 @@ public class SpriteFont
 	private readonly float fontScale = 1.0f;
 	private readonly Dictionary<int, Character> characters = [];
 	private readonly Dictionary<KerningPair, float> kerning = [];
-	private readonly List<Page> texturePages = [];
-	private Color[] buffer = [];
+	private readonly List<Page> pages = [];
+	private readonly BlockingCollection<(int Codepoint, Font.Character Metrics)> blittingQueue = [];
+	private readonly BlockingCollection<(int Codepoint, int Page, Rect Source, Rect Frame)> blittingResults = [];
+	private Task? blittingTask;
+	private Color[] blitBuffer = [];
 
-	public SpriteFont(Font font, float size, ReadOnlySpan<int> prebakedCodepoints = default, bool premultiplyAlpha = true)
+	public SpriteFont(Renderer renderer, Font font, float size, ReadOnlySpan<int> prebakedCodepoints = default, bool premultiplyAlpha = true)
 	{
+		Renderer = renderer;
 		Font = font;
 		Size = size;
 		fontScale = font.GetScale(size);
@@ -113,22 +125,40 @@ public class SpriteFont
 			PrepareCharacters(prebakedCodepoints, true);
 	}
 
-	public SpriteFont(string path, float size, ReadOnlySpan<int> prebakedCodepoints = default, bool premultiplyAlpha = true)
-		: this(new Font(path), size, prebakedCodepoints, premultiplyAlpha)
+	public SpriteFont(Renderer renderer, string path, float size, ReadOnlySpan<int> prebakedCodepoints = default, bool premultiplyAlpha = true)
+		: this(renderer, new Font(path), size, prebakedCodepoints, premultiplyAlpha)
 	{
 
 	}
 
-	public SpriteFont(Stream stream, float size, ReadOnlySpan<int> prebakedCodepoints = default, bool premultiplyAlpha = true)
-		: this(new Font(stream), size, prebakedCodepoints, premultiplyAlpha)
+	public SpriteFont(Renderer renderer, Stream stream, float size, ReadOnlySpan<int> prebakedCodepoints = default, bool premultiplyAlpha = true)
+		: this(renderer, new Font(stream), size, prebakedCodepoints, premultiplyAlpha)
 	{
 		
 	}
 
-	public SpriteFont(float size = 16)
+	public SpriteFont(Renderer renderer, float size = 16)
 	{
+		Renderer = renderer;
 		Font = null;
 		Size = size;
+	}
+
+	~SpriteFont()
+	{
+		Dispose();
+	}
+
+	public void Dispose()
+	{
+		GC.SuppressFinalize(this);
+		
+		if (blittingTask != null)
+		{
+			blittingQueue.CompleteAdding();
+			blittingTask?.Wait();
+			blittingTask = null;
+		}
 	}
 
 	public Character this[int codepoint] => GetCharacter(codepoint);
@@ -307,20 +337,51 @@ public class SpriteFont
 	}
 
 	/// <summary>
-	/// Prepares the given characters for rendering.
-	/// If immediate is true, it will render and update every character immediately.
-	/// Otherwise, it queues them off-thread.
+	/// Prepares the given characters for rendering
 	/// </summary>
-	public void PrepareCharacters(ReadOnlySpan<int> codepoints, bool immediate)
+	/// <param name="codepoints">A list of characters to prepare</param>
+	/// <param name="waitForResults">If the function should wait for all characters to be ready</param>
+	public void PrepareCharacters(ReadOnlySpan<int> codepoints, bool waitForResults)
 	{
-		foreach (var it in codepoints)
-			PrepareCharacter(it, immediate, false);
+		var added = false;
+		foreach (var codepoint in codepoints)
+			if (BlitEnqueue(codepoint, waitForResults, out _))
+				added = true;
 
-		if (immediate && codepoints.Length > 0)
+		if (waitForResults && added)
+			FlushPendingCharacters(true);
+	}
+
+	/// <summary>
+	/// Prepares the given characters for rendering
+	/// </summary>
+	/// <param name="text">A list of characters to prepare</param>
+	/// <param name="waitForResults">If the function should wait for all characters to be ready</param>
+	public void PrepareCharacters(ReadOnlySpan<char> text, bool waitForResults)
+	{
+		var added = false;
+
+		int index = 0;
+		while (index < text.Length)
 		{
-			foreach (var page in texturePages)
-				page.Upload();
+			int codepoint;
+			if (index + 1 < text.Length && char.IsSurrogatePair(text[index], text[index + 1]))
+			{
+				codepoint = char.ConvertToUtf32(text[index], text[index + 1]);
+				index += 2;
+			}
+			else
+			{
+				codepoint = text[index];
+				index += 1;
+			}
+
+			if (BlitEnqueue(codepoint, waitForResults, out _))
+				added = true;
 		}
+
+		if (waitForResults && added)
+			FlushPendingCharacters(true);
 	}
 
 	/// <summary>
@@ -340,26 +401,14 @@ public class SpriteFont
 	}
 
 	/// <summary>
-	/// Gets a Character from the SpriteFont.
-	/// Note that the Character may not yet be ready if BlitMode is set
-	/// to SpriteFontBlitModes.Streaming.
+	/// Gets an existing Character from the SpriteFont.
+	/// Note that unless you have called <see cref="PrepareCharacters(ReadOnlySpan{char}, bool)"/> and
+	/// wait for them to be rendered, they may not have textures yet.
 	/// </summary>
 	public Character GetCharacter(int codepoint)
 	{
 		if (!characters.TryGetValue(codepoint, out var value))
-		{
-			// we are not allowed to dynamically create new characters
-			if (BlitMode == SpriteFontBlitModes.Manual)
-				return new();
-
-			// try to create the character
-			value = PrepareCharacter(
-				codepoint: codepoint,
-				immediate: BlitMode == SpriteFontBlitModes.Immediate,
-				immediateUploadToTexture: BlitMode == SpriteFontBlitModes.Immediate
-			);
-		}
-
+			BlitEnqueue(codepoint, false, out value);
 		return value;
 	}
 
@@ -428,6 +477,12 @@ public class SpriteFont
 		at.X = Calc.Round(at.X);
 		at.Y = Calc.Round(at.Y);
 
+		// apply changes that we have so far that may have been generated off-thread
+		if (WaitForPendingCharacters)
+			PrepareCharacters(text, true);
+		else
+			BlitApplyChanges();
+
 		for (int i = 0; i < text.Length; i++)
 		{
 			if (text[i] == '\n')
@@ -474,212 +529,181 @@ public class SpriteFont
 		Pool.Return(lines);
 	}
 
-	private Character PrepareCharacter(int codepoint, bool immediate, bool immediateUploadToTexture)
+	public void FlushPendingCharacters(bool waitForResults)
 	{
-		var advance = 0.0f;
-		var offset = Vector2.Zero;
-		var subtex = new Subtexture();
-		var exists = false;
+		if (waitForResults)
+			BlitQueued(ref blitBuffer);
+		BlitApplyChanges();
+	}
+
+	/// <summary>
+	/// Enqueus a character to be blitted.
+	/// </summary>
+	private bool BlitEnqueue(int codepoint, bool isWaitingForResults, out Character ch)
+	{
+		if (characters.TryGetValue(codepoint, out ch))
+			return false;
+
+		var blitting = false;
 
 		if (Font != null)
 		{
 			var scale = Font.GetScale(Size);
 			var glyph = Font.GetGlyphIndex(codepoint);
 			var metrics = Font.GetCharacterOfGlyph(glyph, scale);
+			
+			characters[codepoint] = ch = new(
+				codepoint,
+				new Subtexture(null, default, new(0, 0, metrics.Width, metrics.Height)),
+				metrics.Advance,
+				metrics.Offset,
+				glyph != 0
+			);
 
-			advance = metrics.Advance;
-			offset = metrics.Offset;
-			subtex = new Subtexture(null, default, new(0, 0, metrics.Width, metrics.Height));
-			exists = glyph != 0;
-
-			// request that the character be rendered and added to our texture
 			if (metrics.Visible)
 			{
-				if (immediate)
-				{
-					if (TryBlitCharacter(Font, metrics, ref buffer, PremultiplyAlpha) &&
-						TryPackCharacter(buffer, metrics.Width, metrics.Height, immediateUploadToTexture, out var tex))
-						subtex = tex;
-				}
-				else
-				{
-					if (BlitModule.Instance == null)
-						App.Register<BlitModule>();
-					BlitModule.Instance?.Queue(this, codepoint, metrics);
-				}
+				blittingQueue.Add((codepoint, metrics));
+				blitting = true;
 			}
 		}
+		else
+		{
+			characters[codepoint] = ch = new(
+				codepoint,
+				default,
+				0.0f,
+				Vector2.Zero,
+				false
+			);
+		}
 
-		return characters[codepoint] = new(
-			codepoint,
-			subtex,
-			advance,
-			offset,
-			exists
-		);
+		// make sure we have a blitting task if we want to do it offthread
+		if (!isWaitingForResults && blitting && blittingTask == null)
+		{
+			void BlittingTask()
+			{
+				var blitBuffer = new Color[64];
+				while (!blittingQueue.IsAddingCompleted)
+				{
+					int codepoint = 0;
+					Font.Character metrics = default;
+
+					// in case it's emptied between the while loop and reaching this point
+					try { (codepoint, metrics) = blittingQueue.Take(); }
+					catch {}
+
+					if (codepoint != 0)
+						BlitCharacter(ref blitBuffer, codepoint, metrics);
+				}
+			}
+
+			blittingTask = Task.Run(BlittingTask);
+		}
+
+		return blitting;
 	}
 
-	private static bool TryBlitCharacter(Font font, in Font.Character ch, ref Color[] buffer, bool premultiply)
+	/// <summary>
+	/// Blits the characters queued in <see cref="blittingQueue"/> and waits for them to finish, populating <see cref="blittingResults"/> 
+	/// </summary>
+	private void BlitQueued(ref Color[] blitBuffer)
+	{
+		while (blittingQueue.TryTake(out var entry))
+			BlitCharacter(ref blitBuffer, entry.Codepoint, entry.Metrics);
+	}
+
+	/// <summary>
+	/// Blits a single character and waits for it to finish, populating <see cref="blittingResults"/> 
+	/// </summary>
+	private void BlitCharacter(ref Color[] blitBuffer, int codepoint, in Font.Character ch)
 	{
 		var length = ch.Width * ch.Height;
-		if (buffer.Length <= length)
-			Array.Resize(ref buffer, length);
+		if (blitBuffer.Length <= length)
+			Array.Resize(ref blitBuffer, length);
 
-		if (font.GetPixels(ch, buffer))
+		// render the actual character to a buffer
+		if (Font == null || !Font.GetPixels(ch, blitBuffer))
+			return;
+
+		// premultiply if needed
+		if (PremultiplyAlpha)
 		{
-			if (premultiply)
-			{
-				for (int i = 0; i < length; i ++)
-					buffer[i] = buffer[i].Premultiply();
-			}
-
-			return true;
+			for (int i = 0; i < length; i ++)
+				blitBuffer[i] = blitBuffer[i].Premultiply();
 		}
 
-		return false;
-	}
-
-	private bool TryPackCharacter(Color[] buffer, int width, int height, bool uploadToTexture, out Subtexture subtexture)
-	{
 		// TODO:
-		// Ideally the pages could expand (up to a maximum size) if needed.
-		// The reason this can't be done at the moment is because every Character
-		// in the sprite font would need their Subtexture re-assigned, so the
-		// texture pages would need to keep track of that somehow and update them
-		// if it decides to grow its textures.
-		// Alternatively Textures could have a Resize method.
+		// Ideally the pages could expand if needed.
+		// When expanding, all character subtextures would need to be updated.
 		var pageSize = (int)Math.Min(4096, Size * 16);
 
 		// unusual case where somehow the character is gigantic and can't fit into a
 		// texture page .... in this scenario, throw a warning and don't render it
-		if (width > pageSize || height > pageSize)
+		if (ch.Width > pageSize || ch.Height > pageSize)
 		{
 			Log.Warning($"SpriteFont Character was too large to render to a Texture!");
-			subtexture = default;
-			return false;
+			return;
 		}
 
-		var pageIndex = 0;
-		while (true)
+		// pack into a page
+		lock (pages)
 		{
-			if (pageIndex >= texturePages.Count)
-				texturePages.Add(new(pageSize));
-			
-			if (texturePages[pageIndex].TryPack(buffer, width, height, uploadToTexture, out subtexture))
-				return true;
-
-			pageIndex++;
+			var page = 0;
+			while (true)
+			{
+				if (page >= pages.Count)
+					pages.Add(new(Renderer, pageSize));
+				if (pages[page].TryPack(blitBuffer, ch.Width, ch.Height, out var source, out var frame))
+				{
+					blittingResults.Add((codepoint, page, source, frame));
+					break;
+				}
+				page++;
+			}
 		}
 	}
 
 	/// <summary>
-	/// This is an internal module that blits Font characters, and then uploads
-	/// them to textures for the Sprite Font to use. This way the program does
-	/// not halt and wait for individual characters to be rendered.
+	/// Copies results from <see cref="blittingResults"/> and applies them to the characters.
+	/// This also makes sure Texture Pages are updated.
 	/// </summary>
-	private class BlitModule : Module
+	private void BlitApplyChanges()
 	{
-		private class BlitTask
+		// update character subtextures
+		while (blittingResults.TryTake(out var result))
 		{
-			public SpriteFont? SpriteFont;
-			public int CodePoint;
-			public Color[] Buffer = [];
-			public Font.Character Metrics;
-			public bool BufferContainsValidData;
-		}
-
-		public static BlitModule? Instance = null;
-
-		private readonly Queue<Task<BlitTask>> runningTasks = [];
-		private readonly HashSet<SpriteFont> fontsToUpload = [];
-		private readonly HashSet<SpriteFont> fontsUploaded = [];
-		private readonly Stopwatch uploadTimer = new();
-
-		private const int MaximumMillisecondsPerFrame = 3;
-
-		public override void Startup() => Instance = this;
-		public override void Shutdown() => Instance = null;
-
-		public override void Update()
-		{
-			uploadTimer.Restart();
-
-			// find all finished tasks
-			while (runningTasks.TryDequeue(out var task))
-			{
-				if (uploadTimer.ElapsedMilliseconds >= MaximumMillisecondsPerFrame)
-				{
-					runningTasks.Enqueue(task);
-					break;
-				}
-				else if (!task.IsCompleted)
-				{
-					runningTasks.Enqueue(task);
-					continue;
-				}
-				else
-				{
-					var it = task.Result;
-					var width = it.Metrics.Width;
-					var height = it.Metrics.Height;
-
-					// pack the character into the page, and reassign its subtexture
-					// TODO: should packing the character into the page be part of the thread?
-					if (it.SpriteFont != null &&
-						it.SpriteFont.TryPackCharacter(it.Buffer, width, height, false, out var subtex))
-					{
-						it.SpriteFont.AddCharacter(it.SpriteFont.GetCharacter(it.CodePoint) with { Subtexture = subtex });
-						fontsToUpload.Add(it.SpriteFont);
-					}
-
-					it.SpriteFont = null;
-					Pool.Return(it);
-				}
-			}
-
-			// upload page data to gpu textures
-			{
-				foreach (var it in fontsToUpload)
-				{
-					foreach (var page in it.texturePages)
-						page.Upload();
-					fontsUploaded.Add(it);
-					if (uploadTimer.ElapsedMilliseconds >= MaximumMillisecondsPerFrame)
-						break;
-				}
-				
-				foreach (var it in fontsUploaded)
-					fontsToUpload.Remove(it);
-				fontsUploaded.Clear();
-			}
-		}
-
-		public void Queue(SpriteFont spriteFont, int codepoint, in Font.Character metrics)
-		{
-			var task = Pool.Get<BlitTask>();
-			task.SpriteFont = spriteFont;
-			task.CodePoint = codepoint;
-			task.Metrics = metrics;
-			runningTasks.Enqueue(Task.Factory.StartNew(static (object? state) =>
-			{
-				var result = (BlitTask)state!;
-				result.BufferContainsValidData =
-					result.SpriteFont?.Font != null &&
-					TryBlitCharacter(result.SpriteFont.Font, result.Metrics, ref result.Buffer, result.SpriteFont.PremultiplyAlpha);
-				return result;
-			}, task));
+			var page = pages[result.Page];
+			characters[result.Codepoint] = characters[result.Codepoint] with
+			{ 
+				Subtexture = page.GetSubtexture(result.Source, result.Frame)
+			};
 		}
 	}
 
-	private class Page(int size)
+	private class Page(Renderer renderer, int size)
 	{
 		private record struct Node(int Left, int Right, RectInt Bounds);
+		private readonly int size = size;
 		private readonly Image image = new(size, size);
-		private readonly Texture texture = new(size, size, TextureFormat.Color);
 		private readonly List<Node> nodes = [ new() { Bounds = new(0, 0, size, size) } ];
-		private bool textureDirty;
+		private Texture? atlas;
+		private bool atlasDirty;
 
-		public bool TryPack(Color[] buffer, int width, int height, bool uploadToTexture, out Subtexture result)
+		public Subtexture GetSubtexture(in Rect source, in Rect frame)
+		{
+			// make sure we have the latest data before returning a subtexture
+			if (atlasDirty)
+			{
+				atlasDirty = false;
+				atlas ??= new(renderer, size, size, TextureFormat.Color);
+				atlas.SetData<Color>(image.Data);
+			}
+
+			// get the results
+			return new(atlas, source, frame);
+		}
+
+		public bool TryPack(Color[] buffer, int width, int height, out Rect source, out Rect frame)
 		{
 			int index = TryPackNode(0, width + 2, height + 2);
 
@@ -687,32 +711,14 @@ public class SpriteFont
 			{
 				var node = nodes[index];
 				image.CopyPixels(buffer, width, height, new Point2(node.Bounds.X + 1, node.Bounds.Y + 1));
-				result = new Subtexture(texture, node.Bounds, new(1, 1, width, height));
-
-				if (uploadToTexture)
-				{
-					// TODO: partial rectangle upload
-					texture.SetData<Color>(image.Data);
-				}
-				else
-				{
-					textureDirty = true;
-				}
-
+				source = node.Bounds;
+				frame = new Rect(1, 1, width, height);
+				atlasDirty = true;
 				return true;
 			}
 
-			result = default;
+			source = frame = default;
 			return false;
-		}
-
-		public void Upload()
-		{
-			if (textureDirty)
-			{
-				texture.SetData<Color>(image.Data);
-				textureDirty = false;
-			}
 		}
 
 		private int TryPackNode(int node, int width, int height)

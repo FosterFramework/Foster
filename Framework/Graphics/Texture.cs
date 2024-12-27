@@ -9,6 +9,11 @@ namespace Foster.Framework;
 public class Texture : IResource
 {
 	/// <summary>
+	/// The Renderer this Texture was created in
+	/// </summary>
+	public readonly Renderer Renderer;
+
+	/// <summary>
 	/// Optional Texture Name
 	/// </summary>
 	public string Name { get; set; } = string.Empty;
@@ -50,24 +55,26 @@ public class Texture : IResource
 
 	internal readonly Renderer.IHandle Resource;
 
-	public Texture(int width, int height, TextureFormat format = TextureFormat.Color)
-		: this(width, height, format, targetBinding: null) {}
+	public Texture(Renderer renderer, int width, int height, TextureFormat format = TextureFormat.Color)
+		: this(renderer, width, height, format, targetBinding: null) {}
 
-	public Texture(int width, int height, ReadOnlySpan<Color> pixels)
-		: this(width, height, TextureFormat.Color) => SetData<Color>(pixels);
+	public Texture(Renderer renderer, int width, int height, ReadOnlySpan<Color> pixels)
+		: this(renderer, width, height, TextureFormat.Color) => SetData<Color>(pixels);
 
-	public Texture(int width, int height, ReadOnlySpan<byte> pixels)
-		: this(width, height, TextureFormat.Color) => SetData<byte>(pixels);
+	public Texture(Renderer renderer, int width, int height, ReadOnlySpan<byte> pixels)
+		: this(renderer, width, height, TextureFormat.Color) => SetData<byte>(pixels);
 
-	public Texture(Image image) 
-		: this(image.Width, image.Height, TextureFormat.Color) => SetData<Color>(image.Data);
+	public Texture(Renderer renderer, Image image) 
+		: this(renderer, image.Width, image.Height, TextureFormat.Color) => SetData<Color>(image.Data);
 
-	internal Texture(int width, int height, TextureFormat format, Target? targetBinding)
+	internal Texture(Renderer renderer, int width, int height, TextureFormat format, Target? targetBinding)
 	{
+		Renderer = renderer;
+
 		if (width <= 0 || height <= 0)
 			throw new Exception("Texture must have a size larger than 0");
 
-		Resource = App.Renderer.CreateTexture(width, height, format, targetBinding?.Resource);
+		Resource = renderer.CreateTexture(width, height, format, targetBinding?.Resource);
 		Width = width;
 		Height = height;
 		Format = format;
@@ -94,7 +101,7 @@ public class Texture : IResource
 		fixed (byte* ptr = MemoryMarshal.AsBytes(data))
 		{
 			int length = Unsafe.SizeOf<T>()  * data.Length;
-			App.Renderer.SetTextureData(Resource, new nint(ptr), length);
+			Renderer.SetTextureData(Resource, new nint(ptr), length);
 		}
 	}
 
@@ -112,7 +119,7 @@ public class Texture : IResource
 		fixed (byte* ptr = MemoryMarshal.AsBytes(data))
 		{
 			int length = Unsafe.SizeOf<T>() * data.Length;
-			App.Renderer.GetTextureData(Resource, new nint(ptr), length);
+			Renderer.GetTextureData(Resource, new nint(ptr), length);
 		}
 	}
 
@@ -126,6 +133,6 @@ public class Texture : IResource
 	{
 		// Targets should dispose their Texture Attachments
 		if (!IsTargetAttachment)
-			App.Renderer.DestroyResource(Resource);
+			Renderer.DestroyResource(Resource);
 	}
 }

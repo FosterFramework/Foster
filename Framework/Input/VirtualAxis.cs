@@ -5,7 +5,7 @@ namespace Foster.Framework;
 /// <summary>
 /// A Virtual Input Axis that can be mapped to different keyboards and gamepads
 /// </summary>
-public class VirtualAxis
+public class VirtualAxis(Input input, string name, VirtualAxis.Overlaps overlapBehavior = VirtualAxis.Overlaps.TakeNewer)
 {
 	public enum Overlaps
 	{
@@ -28,7 +28,7 @@ public class VirtualAxis
 	/// <summary>
 	/// Optional Virtual Axis name
 	/// </summary>
-	public readonly string Name;
+	public readonly string Name = name;
 
 	public float Value => GetValue(true);
 	public float ValueNoDeadzone => GetValue(false);
@@ -36,21 +36,13 @@ public class VirtualAxis
 	public int IntValue => Math.Sign(Value);
 	public int IntValueNoDeadzone => Math.Sign(ValueNoDeadzone);
 
-	public readonly VirtualButton Negative;
-	public readonly VirtualButton Positive;
+	public readonly VirtualButton Negative = new(input, $"{name}/Negative");
+	public readonly VirtualButton Positive = new(input, $"{name}/Positive");
 
-	public Overlaps OverlapBehaviour = Overlaps.TakeNewer;
+	public Overlaps OverlapBehaviour = overlapBehavior;
 
-	public VirtualAxis(string name, Overlaps overlapBehavior = Overlaps.TakeNewer)
-	{
-		Name = name;
-		Negative = new VirtualButton($"{name}/Negative");
-		Positive = new VirtualButton($"{name}/Positive");
-		OverlapBehaviour = overlapBehavior;
-	}
-
-	public VirtualAxis(Overlaps overlapBehaviour = Overlaps.TakeNewer)
-		: this("VirtualAxis", overlapBehaviour) {}
+	public VirtualAxis(Input input, Overlaps overlapBehaviour = Overlaps.TakeNewer)
+		: this(input, "VirtualAxis", overlapBehaviour) {}
 
 	private float GetValue(bool deadzone)
 	{

@@ -4,8 +4,13 @@ namespace Foster.Framework;
 /// The Mesh contains a Vertex and Index Buffer used for drawing.
 /// Used in a <seealso cref="DrawCommand"/>.
 /// </summary>
-public class Mesh : IResource
+public class Mesh(Renderer renderer) : IResource
 {
+	/// <summary>
+	/// The Renderer this Mesh was created in
+	/// </summary>
+	public readonly Renderer Renderer = renderer;
+
 	/// <summary>
 	/// Optional Mesh Name
 	/// </summary>
@@ -108,9 +113,9 @@ public class Mesh : IResource
 			throw new Exception("Resource is Disposed");
 
 		IndexCount = count;
-		Resource ??= App.Renderer.CreateMesh();
+		Resource ??= Renderer.CreateMesh();
 
-		App.Renderer.SetMeshIndexData(
+		Renderer.SetMeshIndexData(
 			Resource,
 			data,
 			format.SizeInBytes() * count,
@@ -151,9 +156,9 @@ public class Mesh : IResource
 		if (offset + count > IndexCount)
 			throw new Exception("SetSubIndices is out of range of the existing Index Buffer");
 
-		Resource ??= App.Renderer.CreateMesh();
+		Resource ??= Renderer.CreateMesh();
 
-		App.Renderer.SetMeshIndexData(
+		Renderer.SetMeshIndexData(
 			Resource,
 			data,
 			IndexFormat.Value.SizeInBytes() * count,
@@ -192,9 +197,9 @@ public class Mesh : IResource
 			throw new Exception("Resource is Disposed");
 
 		VertexCount = count;
-		Resource ??= App.Renderer.CreateMesh();
+		Resource ??= Renderer.CreateMesh();
 
-		App.Renderer.SetMeshVertexData(
+		Renderer.SetMeshVertexData(
 			Resource,
 			data,
 			format.Stride * count,
@@ -226,9 +231,9 @@ public class Mesh : IResource
 		if (offset + count > VertexCount)
 			throw new Exception("SetSubVertices is out of range of the existing Vertex Buffer");
 
-		Resource ??= App.Renderer.CreateMesh();
+		Resource ??= Renderer.CreateMesh();
 
-		App.Renderer.SetMeshVertexData(
+		Renderer.SetMeshVertexData(
 			Resource,
 			data,
 			VertexFormat.Value.Stride * count,
@@ -250,6 +255,6 @@ public class Mesh : IResource
 	private void Dispose(bool disposing)
 	{
 		if (Resource != null)
-			App.Renderer.DestroyResource(Resource);
+			Renderer.DestroyResource(Resource);
 	}
 }

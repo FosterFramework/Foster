@@ -19,7 +19,7 @@ public class VirtualButton
 		public ConditionFn? Enabled { get; set; }
 	}
 
-	public record KeyBinding(Keys Key) : IBinding
+	public record KeyBinding(Input Input, Keys Key) : IBinding
 	{
 		public bool IsPressed => Input.Keyboard.Pressed(Key);
 		public bool IsDown => Input.Keyboard.Down(Key);
@@ -29,7 +29,7 @@ public class VirtualButton
 		public ConditionFn? Enabled { get; set; }
 	}
 
-	public record MouseBinding(MouseButtons Button) : IBinding
+	public record MouseBinding(Input Input, MouseButtons Button) : IBinding
 	{
 		public bool IsPressed => Input.Mouse.Pressed(Button);
 		public bool IsDown => Input.Mouse.Down(Button);
@@ -39,7 +39,7 @@ public class VirtualButton
 		public ConditionFn? Enabled { get; set; }
 	}
 
-	public record ButtonBinding(int Controller, Buttons Button) : IBinding
+	public record ButtonBinding(Input Input, int Controller, Buttons Button) : IBinding
 	{
 		public bool IsPressed => Input.Controllers[Controller].Pressed(Button);
 		public bool IsDown => Input.Controllers[Controller].Down(Button);
@@ -49,7 +49,7 @@ public class VirtualButton
 		public ConditionFn? Enabled { get; set; }
 	}
 
-	public record AxisBinding(int Controller, Axes Axis, int Sign, float Deadzone) : IBinding
+	public record AxisBinding(Input Input, int Controller, Axes Axis, int Sign, float Deadzone) : IBinding
 	{
 		public bool IsPressed => GetValue(Input.State, Deadzone) > 0 && GetValue(Input.LastState, Deadzone) <= 0;
 		public bool IsDown => GetValue(Input.State, Deadzone) > 0;
@@ -65,7 +65,7 @@ public class VirtualButton
 		}
 	}
 
-	public record MouseMotionBinding(Vector2 Axis, int Sign, float MinimumValue, float MaximumValue) : IBinding
+	public record MouseMotionBinding(Input Input, Vector2 Axis, int Sign, float MinimumValue, float MaximumValue) : IBinding
 	{
 		public bool IsPressed => GetValue(Input.State) > 0 && GetValue(Input.LastState) <= 0;
 		public bool IsDown => GetValue(Input.State) > 0;
@@ -80,6 +80,11 @@ public class VirtualButton
 			return Calc.ClampedMap(value, Sign * MinimumValue, Sign * MaximumValue, 0, 1);
 		}
 	}
+
+	/// <summary>
+	/// The Input Module we belong to
+	/// </summary>
+	public readonly Input Input;
 
 	/// <summary>
 	/// Optional Virtual Button name
@@ -161,13 +166,15 @@ public class VirtualButton
 	/// </summary>
 	public bool ReleaseConsumed { get; private set; }
 
-	public VirtualButton(string name, float buffer = 0)
+	public VirtualButton(Input input, string name, float buffer = 0)
 	{
+		Input = input;
+
 		// Using a Weak Reference to subscribe this object to Updates
 		// This way it's automatically collected if the user is no longer
 		// using it, and we don't require the user to call a Dispose or 
 		// Unsubscribe callback
-		Input.VirtualButtons.Add(new WeakReference<VirtualButton>(this));
+		input.VirtualButtons.Add(new WeakReference<VirtualButton>(this));
 
 		Name = name;
 		Buffer = buffer;
@@ -175,66 +182,66 @@ public class VirtualButton
 		RepeatInterval = Input.RepeatInterval;
 	}
 
-	public VirtualButton(float buffer = 0)
-		: this("VirtualButton", buffer) {}
+	public VirtualButton(Input input, float buffer = 0)
+		: this(input, "VirtualButton", buffer) {}
 
 	public VirtualButton Add(params Keys[] keys)
 	{
 		foreach (var key in keys)
-			Bindings.Add(new KeyBinding(key));
+			Bindings.Add(new KeyBinding(Input, key));
 		return this;
 	}
 
 	public VirtualButton Add(params MouseButtons[] buttons)
 	{
 		foreach (var button in buttons)
-			Bindings.Add(new MouseBinding(button));
+			Bindings.Add(new MouseBinding(Input, button));
 		return this;
 	}
 
 	public VirtualButton Add(int controller, params Buttons[] buttons)
 	{
 		foreach (var button in buttons)
-			Bindings.Add(new ButtonBinding(controller, button));
+			Bindings.Add(new ButtonBinding(Input, controller, button));
 		return this;
 	}
 
 	public VirtualButton Add(int controller, Axes axis, int sign, float threshold)
 	{
-		Bindings.Add(new AxisBinding(controller, axis, sign, threshold));
+		Bindings.Add(new AxisBinding(Input, controller, axis, sign, threshold));
 		return this;
 	}
 
 	public VirtualButton Add(ConditionFn condition, params Keys[] keys)
 	{
 		foreach (var key in keys)
-			Bindings.Add(new KeyBinding(key) { Enabled = condition });
+			Bindings.Add(new KeyBinding(Input, key) { Enabled = condition });
 		return this;
 	}
 
 	public VirtualButton Add(ConditionFn condition, params MouseButtons[] buttons)
 	{
 		foreach (var button in buttons)
-			Bindings.Add(new MouseBinding(button) { Enabled = condition });
+			Bindings.Add(new MouseBinding(Input, button) { Enabled = condition });
 		return this;
 	}
 
 	public VirtualButton Add(ConditionFn condition, int controller, params Buttons[] buttons)
 	{
 		foreach (var button in buttons)
-			Bindings.Add(new ButtonBinding(controller, button) { Enabled = condition });
+			Bindings.Add(new ButtonBinding(Input, controller, button) { Enabled = condition });
 		return this;
 	}
 
 	public VirtualButton Add(ConditionFn condition, int controller, Axes axis, int sign, float threshold)
 	{
-		Bindings.Add(new AxisBinding(controller, axis, sign, threshold) { Enabled = condition });
+		Bindings.Add(new AxisBinding(Input, controller, axis, sign, threshold) { Enabled = condition });
 		return this;
 	}
 
 	public VirtualButton AddMouseMotion(Vector2 normal, int sign, float maximumValue)
 	{
-		Bindings.Add(new MouseMotionBinding(normal, sign, 0, maximumValue));
+		Bindings.Add(new MouseMotionBinding(Input, normal, sign, 0, maximumValue));
 		return this;
 	}
 
@@ -297,7 +304,7 @@ public class VirtualButton
 	[Obsolete("Use VirtualButton.ConsumePress() instead")]
 	public void ConsumeBuffer() => ConsumePress();
 
-	internal void Update()
+	internal void Update(in Time time)
 	{
 		Pressed = GetPressed();
 		Released = GetReleased();
@@ -308,9 +315,9 @@ public class VirtualButton
 		if (Pressed)
 		{
 			PressConsumed = false;
-			PressTimestamp = Time.Duration;
+			PressTimestamp = time.Elapsed;
 		}
-		else if (!PressConsumed && PressTimestamp > TimeSpan.Zero && (Time.Duration - PressTimestamp).TotalSeconds < Buffer)
+		else if (!PressConsumed && PressTimestamp > TimeSpan.Zero && (time.Elapsed - PressTimestamp).TotalSeconds < Buffer)
 		{
 			Pressed = true;
 		}
@@ -318,18 +325,18 @@ public class VirtualButton
 		if (Released)
 		{
 			ReleaseConsumed = false;
-			ReleaseTimestamp = Time.Duration;
+			ReleaseTimestamp = time.Elapsed;
 		}
-		else if (!ReleaseConsumed && ReleaseTimestamp > TimeSpan.Zero && (Time.Duration - ReleaseTimestamp).TotalSeconds < Buffer)
+		else if (!ReleaseConsumed && ReleaseTimestamp > TimeSpan.Zero && (time.Elapsed - ReleaseTimestamp).TotalSeconds < Buffer)
 		{
 			Released = true;
 		}
 
-		if (Down && (Time.Duration - PressTimestamp).TotalSeconds > RepeatDelay)
+		if (Down && (time.Elapsed - PressTimestamp).TotalSeconds > RepeatDelay)
 		{
 			if (Time.OnInterval(
-				(Time.Duration - PressTimestamp).TotalSeconds - RepeatDelay,
-				Time.Delta,
+				(time.Elapsed - PressTimestamp).TotalSeconds - RepeatDelay,
+				time.Delta,
 				RepeatInterval, 0))
 			{
 				Repeated = true;
