@@ -6,12 +6,13 @@ namespace Foster.Framework;
 
 public sealed class Window : IDrawableTarget
 {
-    internal nint Handle { get; private set; }
+	internal nint Handle { get; private set; }
 	internal readonly uint ID;
 
-    private string title = string.Empty;
-    private readonly Renderer renderer;
-    private readonly Exception closedWindowException = new("The Window has been Closed");
+	private string title = string.Empty;
+	private readonly App app;
+	private readonly Renderer renderer;
+	private readonly Exception closedWindowException = new("The Window has been Closed");
 
 	/// <summary>
 	/// Holds a reference to the current cursor in use, to avoid it getting collected.
@@ -34,8 +35,8 @@ public sealed class Window : IDrawableTarget
 			if (title != value)
 			{
 				title = value;
-                if (Handle != nint.Zero)
-				    SDL_SetWindowTitle(Handle, value);
+				if (Handle != nint.Zero)
+					SDL_SetWindowTitle(Handle, value);
 			}
 		}
 	}
@@ -68,15 +69,15 @@ public sealed class Window : IDrawableTarget
 	{
 		get
 		{
-            if (Handle == nint.Zero)
-                throw closedWindowException;
+			if (Handle == nint.Zero)
+				throw closedWindowException;
 			SDL_GetWindowSize(Handle, out int w, out int h);
 			return new(w, h);
 		}
 		set
 		{
-            if (Handle == nint.Zero)
-                throw closedWindowException;
+			if (Handle == nint.Zero)
+				throw closedWindowException;
 			SDL_SetWindowSize(Handle, value.X, value.Y);
 		}
 	}
@@ -98,8 +99,8 @@ public sealed class Window : IDrawableTarget
 	{
 		get
 		{
-            if (Handle == nint.Zero)
-                throw closedWindowException;
+			if (Handle == nint.Zero)
+				throw closedWindowException;
 			SDL_GetWindowSizeInPixels(Handle, out int w, out int h);
 			return new(w, h);
 		}
@@ -112,8 +113,8 @@ public sealed class Window : IDrawableTarget
 	{
 		get
 		{
-            if (Handle == nint.Zero)
-                throw closedWindowException;
+			if (Handle == nint.Zero)
+				throw closedWindowException;
 			var index = SDL_GetDisplayForWindow(Handle);
 			var mode = (SDL_DisplayMode*)SDL_GetCurrentDisplayMode(index);
 			if (mode == null)
@@ -129,8 +130,8 @@ public sealed class Window : IDrawableTarget
 	{
 		get
 		{
-            if (Handle == nint.Zero)
-                throw closedWindowException;
+			if (Handle == nint.Zero)
+				throw closedWindowException;
 			var scale = SDL_GetWindowDisplayScale(Handle);
 			if (scale <= 0)
 			{
@@ -148,14 +149,14 @@ public sealed class Window : IDrawableTarget
 	{
 		get
 		{
-            if (Handle == nint.Zero)
-                throw closedWindowException;
+			if (Handle == nint.Zero)
+				throw closedWindowException;
 			return (SDL_GetWindowFlags(Handle) & SDL_WindowFlags.SDL_WINDOW_FULLSCREEN) != 0;
 		}
 		set
 		{
-            if (Handle == nint.Zero)
-                throw closedWindowException;
+			if (Handle == nint.Zero)
+				throw closedWindowException;
 			SDL_SetWindowFullscreen(Handle, value);
 		}
 	}
@@ -167,14 +168,14 @@ public sealed class Window : IDrawableTarget
 	{
 		get
 		{
-            if (Handle == nint.Zero)
-                throw closedWindowException;
+			if (Handle == nint.Zero)
+				throw closedWindowException;
 			return (SDL_GetWindowFlags(Handle) & SDL_WindowFlags.SDL_WINDOW_RESIZABLE) != 0;
 		}
 		set
 		{
-            if (Handle == nint.Zero)
-                throw closedWindowException;
+			if (Handle == nint.Zero)
+				throw closedWindowException;
 			SDL_SetWindowResizable(Handle, value);
 		}
 	}
@@ -186,14 +187,14 @@ public sealed class Window : IDrawableTarget
 	{
 		get
 		{
-            if (Handle == nint.Zero)
-                throw closedWindowException;
+			if (Handle == nint.Zero)
+				throw closedWindowException;
 			return (SDL_GetWindowFlags(Handle) & SDL_WindowFlags.SDL_WINDOW_MAXIMIZED) != 0;
 		}
 		set
 		{
-            if (Handle == nint.Zero)
-                throw closedWindowException;
+			if (Handle == nint.Zero)
+				throw closedWindowException;
 			if (value && !Maximized)
 				SDL_MaximizeWindow(Handle);
 			else if (!value && Maximized)
@@ -208,8 +209,8 @@ public sealed class Window : IDrawableTarget
 	{
 		get
 		{
-            if (Handle == nint.Zero)
-                throw closedWindowException;
+			if (Handle == nint.Zero)
+				throw closedWindowException;
 			var flags = SDL_WindowFlags.SDL_WINDOW_INPUT_FOCUS | SDL_WindowFlags.SDL_WINDOW_MOUSE_FOCUS;
 			return (SDL_GetWindowFlags(Handle) & flags) != 0;
 		}
@@ -218,74 +219,81 @@ public sealed class Window : IDrawableTarget
 	/// <summary>
 	/// Called when the Window gains focus
 	/// </summary>
-    public event Action? OnFocusGain = null;
+	public event Action? OnFocusGain = null;
 
 	/// <summary>
 	/// Called when the Window loses focus
 	/// </summary>
-    public event Action? OnFocusLost = null;
+	public event Action? OnFocusLost = null;
 
 	/// <summary>
 	/// Called when the Mouse enters the Window
 	/// </summary>
-    public event Action? OnMouseEnter = null;
+	public event Action? OnMouseEnter = null;
 
 	/// <summary>
 	/// Called when the Mouse leaves the Window
 	/// </summary>
-    public event Action? OnMouseLeave = null;
+	public event Action? OnMouseLeave = null;
 
 	/// <summary>
 	/// Called when the Window is resized
 	/// </summary>
-    public event Action? OnResize = null;
+	public event Action? OnResize = null;
 
 	/// <summary>
 	/// Called when the Window is restored (after being minimized)
 	/// </summary>
-    public event Action? OnRestore = null;
+	public event Action? OnRestore = null;
 
 	/// <summary>
 	/// Called when the Window is maximized
 	/// </summary>
-    public event Action? OnMaximize = null;
+	public event Action? OnMaximize = null;
 
 	/// <summary>
 	/// Called when the Window is minimized
 	/// </summary>
-    public event Action? OnMinimize = null;
+	public event Action? OnMinimize = null;
 
 	/// <summary>
 	/// Called when the Window enters full screen mode
 	/// </summary>
-    public event Action? OnFullscreenEnter = null;
+	public event Action? OnFullscreenEnter = null;
 
 	/// <summary>
 	/// Called when the Window exits full screen mode
 	/// </summary>
-    public event Action? OnFullscreenExit = null;
+	public event Action? OnFullscreenExit = null;
 
-    internal Window(Renderer renderer, string title, int width, int height, bool fullscreen)
-    {
+	/// <summary>
+	/// What action to perform when the user requests for the Window to close.
+	/// If not assigned, the default behavior will call <see cref="App.Exit"/>.
+	/// </summary>
+	public Action? OnCloseRequested;
+
+	internal Window(App app, Renderer renderer, string title, int width, int height, bool fullscreen)
+	{
+		this.app = app;
 		this.renderer = renderer;
-        this.title = title;
+		this.title = title;
 
-        var windowFlags = 
-            SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WindowFlags.SDL_WINDOW_RESIZABLE | 
-            SDL_WindowFlags.SDL_WINDOW_HIDDEN;
+		var windowFlags = 
+			SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WindowFlags.SDL_WINDOW_RESIZABLE | 
+			SDL_WindowFlags.SDL_WINDOW_HIDDEN;
 
-        if (fullscreen)
-            windowFlags |= SDL_WindowFlags.SDL_WINDOW_FULLSCREEN;
+		if (fullscreen)
+			windowFlags |= SDL_WindowFlags.SDL_WINDOW_FULLSCREEN;
 
-        if (renderer.Driver == GraphicsDriver.OpenGL)
-            windowFlags |= SDL_WindowFlags.SDL_WINDOW_OPENGL;
+		if (renderer.Driver == GraphicsDriver.OpenGL)
+			windowFlags |= SDL_WindowFlags.SDL_WINDOW_OPENGL;
 
-        Handle = SDL_CreateWindow(title, width, height, windowFlags);
-        if (Handle == IntPtr.Zero)
-            throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateWindow));
+		Handle = SDL_CreateWindow(title, width, height, windowFlags);
+		if (Handle == IntPtr.Zero)
+			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateWindow));
 
 		ID = SDL_GetWindowID(Handle);
-    }
+	}
 	
 	/// <summary>
 	/// Sets whether the Mouse Cursor should be visible while over the Application Window
@@ -336,61 +344,67 @@ public sealed class Window : IDrawableTarget
 			currentCursor = cursor;
 	}
 
-    internal void OnEvent(SDL_EventType ev)
-    {
-        switch (ev)
-        {
-        case SDL_EventType.SDL_EVENT_WINDOW_FOCUS_GAINED:
-            OnFocusGain?.Invoke();
-            break;
-        case SDL_EventType.SDL_EVENT_WINDOW_FOCUS_LOST:
-            OnFocusLost?.Invoke();
-            break;
-        case SDL_EventType.SDL_EVENT_WINDOW_MOUSE_ENTER:
-            OnMouseEnter?.Invoke();
-            break;
-        case SDL_EventType.SDL_EVENT_WINDOW_MOUSE_LEAVE:
-            OnMouseLeave?.Invoke();
-            break;
-        case SDL_EventType.SDL_EVENT_WINDOW_RESIZED:
-            OnResize?.Invoke();
-            break;
-        case SDL_EventType.SDL_EVENT_WINDOW_RESTORED:
-            OnRestore?.Invoke();
-            break;
-        case SDL_EventType.SDL_EVENT_WINDOW_MAXIMIZED:
-            OnMaximize?.Invoke();
-            break;
-        case SDL_EventType.SDL_EVENT_WINDOW_MINIMIZED:
-            OnMinimize?.Invoke();
-            break;
-        case SDL_EventType.SDL_EVENT_WINDOW_ENTER_FULLSCREEN:
-            OnFullscreenEnter?.Invoke();
-            break;
-        case SDL_EventType.SDL_EVENT_WINDOW_LEAVE_FULLSCREEN:
-            OnFullscreenExit?.Invoke();
-            break;
-        }
-    }
+	internal void OnEvent(SDL_EventType ev)
+	{
+		switch (ev)
+		{
+		case SDL_EventType.SDL_EVENT_WINDOW_FOCUS_GAINED:
+			OnFocusGain?.Invoke();
+			break;
+		case SDL_EventType.SDL_EVENT_WINDOW_FOCUS_LOST:
+			OnFocusLost?.Invoke();
+			break;
+		case SDL_EventType.SDL_EVENT_WINDOW_MOUSE_ENTER:
+			OnMouseEnter?.Invoke();
+			break;
+		case SDL_EventType.SDL_EVENT_WINDOW_MOUSE_LEAVE:
+			OnMouseLeave?.Invoke();
+			break;
+		case SDL_EventType.SDL_EVENT_WINDOW_RESIZED:
+			OnResize?.Invoke();
+			break;
+		case SDL_EventType.SDL_EVENT_WINDOW_RESTORED:
+			OnRestore?.Invoke();
+			break;
+		case SDL_EventType.SDL_EVENT_WINDOW_MAXIMIZED:
+			OnMaximize?.Invoke();
+			break;
+		case SDL_EventType.SDL_EVENT_WINDOW_MINIMIZED:
+			OnMinimize?.Invoke();
+			break;
+		case SDL_EventType.SDL_EVENT_WINDOW_ENTER_FULLSCREEN:
+			OnFullscreenEnter?.Invoke();
+			break;
+		case SDL_EventType.SDL_EVENT_WINDOW_LEAVE_FULLSCREEN:
+			OnFullscreenExit?.Invoke();
+			break;
+		case SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+			if (OnCloseRequested != null)
+				OnCloseRequested.Invoke();
+			else
+				app.Exit();
+			break;
+		}
+	}
 
-    internal void Show()
-    {
+	internal void Show()
+	{
 		SDL_ShowWindow(Handle);
 		SDL_StartTextInput(Handle);
-        SDL_SetWindowFullscreenMode(Handle, ref Unsafe.NullRef<SDL_DisplayMode>());
+		SDL_SetWindowFullscreenMode(Handle, ref Unsafe.NullRef<SDL_DisplayMode>());
 		SDL_SetWindowBordered(Handle, true);
 		SDL_ShowCursor();
-    }
+	}
 
-    internal void Hide()
-    {
+	internal void Hide()
+	{
 		SDL_StopTextInput(Handle);
 		SDL_HideWindow(Handle);
-    }
+	}
 
-    internal void Close()
-    {
+	internal void Close()
+	{
 		SDL_DestroyWindow(Handle);
-        Handle = nint.Zero;
-    }
+		Handle = nint.Zero;
+	}
 }

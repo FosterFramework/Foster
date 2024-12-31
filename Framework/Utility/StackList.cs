@@ -252,12 +252,12 @@ public struct StackList8<T> : IEnumerable<T>, IList<T>
 		private int index = -1;
 
 		public readonly T Current => list[index];
-        readonly object IEnumerator.Current => Current!;
+		readonly object IEnumerator.Current => Current!;
 
 		public readonly void Dispose() { }
-        public bool MoveNext() => (++index) < list.Count;
-        public void Reset() => index = -1;
-    }
+		public bool MoveNext() => (++index) < list.Count;
+		public void Reset() => index = -1;
+	}
 }
 
 public struct StackList16<T> : IEnumerable<T>, IList<T>
@@ -377,12 +377,12 @@ public struct StackList16<T> : IEnumerable<T>, IList<T>
 		private int index = -1;
 
 		public readonly T Current => list[index];
-        readonly object IEnumerator.Current => Current!;
+		readonly object IEnumerator.Current => Current!;
 
 		public readonly void Dispose() { }
-        public bool MoveNext() => (++index) < list.Count;
-        public void Reset() => index = -1;
-    }
+		public bool MoveNext() => (++index) < list.Count;
+		public void Reset() => index = -1;
+	}
 }
 
 public struct StackList32<T> : IEnumerable<T>, IList<T>
@@ -502,12 +502,12 @@ public struct StackList32<T> : IEnumerable<T>, IList<T>
 		private int index = -1;
 
 		public readonly T Current => list[index];
-        readonly object IEnumerator.Current => Current!;
+		readonly object IEnumerator.Current => Current!;
 
 		public readonly void Dispose() { }
-        public bool MoveNext() => (++index) < list.Count;
-        public void Reset() => index = -1;
-    }
+		public bool MoveNext() => (++index) < list.Count;
+		public void Reset() => index = -1;
+	}
 }
 
 public struct StackList64<T> : IEnumerable<T>, IList<T>
@@ -627,10 +627,10 @@ public struct StackList64<T> : IEnumerable<T>, IList<T>
 		private int index = -1;
 
 		public readonly T Current => list[index];
-        readonly object IEnumerator.Current => Current!;
+		readonly object IEnumerator.Current => Current!;
 
 		public readonly void Dispose() { }
-        public bool MoveNext() => (++index) < list.Count;
-        public void Reset() => index = -1;
-    }
+		public bool MoveNext() => (++index) < list.Count;
+		public void Reset() => index = -1;
+	}
 }

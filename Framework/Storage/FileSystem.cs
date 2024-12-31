@@ -9,12 +9,12 @@ namespace Foster.Framework;
 /// </summary>
 public sealed class FileSystem
 {
-    private readonly App app;
+	private readonly App app;
 
-    internal FileSystem(App app)
-    {
-        this.app = app;
-    }
+	internal FileSystem(App app)
+	{
+		this.app = app;
+	}
 
 	/// <summary>
 	/// Opens a user storage, and invokes a callback with the storage object when ready.
@@ -110,7 +110,7 @@ public sealed class FileSystem
 			return storage;
 		}
 	}
-    
+	
 	public enum DialogResult
 	{
 		/// <summary>

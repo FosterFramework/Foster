@@ -112,7 +112,7 @@ public abstract class App : IDisposable
 
 	/// <summary>
 	/// What action to perform when the user requests for the Application to exit.
-	/// If not assigned, the default behavior is to call <see cref="Exit"/>.
+	/// If not assigned, the default behavior will call <see cref="Exit"/>.
 	/// </summary>
 	public Action? OnExitRequested;
 
@@ -176,7 +176,7 @@ public abstract class App : IDisposable
 		FileSystem = new(this);
 		Renderer = Platform.CreateRenderer(this, config.PreferredGraphicsDriver);
 		Renderer.CreateDevice();
-		Window = new Window(Renderer, config.WindowTitle, config.Width, config.Height, config.Fullscreen);
+		Window = new Window(this, Renderer, config.WindowTitle, config.Width, config.Height, config.Fullscreen);
 		Renderer.Startup(Window.Handle);
 
 		// try to load default SDL gamepad mappings
@@ -416,6 +416,7 @@ public abstract class App : IDisposable
 			case SDL_EventType.SDL_EVENT_WINDOW_MINIMIZED:
 			case SDL_EventType.SDL_EVENT_WINDOW_ENTER_FULLSCREEN:
 			case SDL_EventType.SDL_EVENT_WINDOW_LEAVE_FULLSCREEN:
+			case SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED:
 				if (ev.window.windowID == Window.ID)
 					Window.OnEvent((SDL_EventType)ev.type);
 				break;

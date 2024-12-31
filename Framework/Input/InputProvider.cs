@@ -8,25 +8,25 @@ namespace Foster.Framework;
 /// </summary>
 public abstract class InputProvider
 {
-    /// <summary>
-    /// Our Input Module
-    /// </summary>
-    public readonly Input Input;
+	/// <summary>
+	/// Our Input Module
+	/// </summary>
+	public readonly Input Input;
 
-    public InputProvider()
-    {
-        Input = new(this);
-    }
+	public InputProvider()
+	{
+		Input = new(this);
+	}
 
-    /// <summary>
-    /// What to do when the user tries to set the clipboard
-    /// </summary>
-    public abstract void SetClipboard(string text);
+	/// <summary>
+	/// What to do when the user tries to set the clipboard
+	/// </summary>
+	public abstract void SetClipboard(string text);
 
-    /// <summary>
-    /// What to do when the user tries to get the clipboard
-    /// </summary>
-    public abstract string GetClipboard();
+	/// <summary>
+	/// What to do when the user tries to get the clipboard
+	/// </summary>
+	public abstract string GetClipboard();
 
 	/// <summary>
 	/// Rumbles a specific controller
@@ -39,8 +39,8 @@ public abstract class InputProvider
 	public virtual void Update(in Time time)
 		=> Input.Step(time);
 
-    public void Text(ReadOnlySpan<char> text)
-    	=> Input.OnText(text);
+	public void Text(ReadOnlySpan<char> text)
+		=> Input.OnText(text);
 
 	internal unsafe void Text(nint cstr)
 	{
@@ -58,7 +58,7 @@ public abstract class InputProvider
 		int written = System.Text.Encoding.UTF8.GetChars(ptr, len, chars, 64);
 
 		// append chars
-        Text(new ReadOnlySpan<char>(chars, written));
+		Text(new ReadOnlySpan<char>(chars, written));
 	}
 
 	public void Key(int key, bool pressed, in TimeSpan time)

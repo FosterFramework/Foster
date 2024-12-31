@@ -106,10 +106,10 @@ public sealed class Input
 	internal void OnText(ReadOnlySpan<char> text)
 	{
 		foreach (var it in text)
-        {
-            NextState.Keyboard.Text.Append(it);
-            OnTextEvent?.Invoke(it);
-        }
+		{
+			NextState.Keyboard.Text.Append(it);
+			OnTextEvent?.Invoke(it);
+		}
 	}
 
 	internal void ConnectController(
