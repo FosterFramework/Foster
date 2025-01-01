@@ -163,4 +163,20 @@ public class VirtualAxis(Input input, string name, VirtualAxis.Overlaps overlapB
 		Negative.Clear();
 		Positive.Clear();
 	}
+
+	public bool Pressed
+		=> GetValue(true) switch
+		{
+			> 0 => Positive.Pressed,
+			< 0 => Negative.Pressed,
+			_ => false,
+		};
+
+	public int PressedSign
+		=> GetValue(true) switch
+		{
+			> 0 => (Positive.Pressed ? 1 : 0),
+			< 0 => (Negative.Pressed ? -1 : 0),
+			_ => 0,
+		};
 }
