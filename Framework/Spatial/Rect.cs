@@ -84,6 +84,9 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 
 	#region Points
 
+	public readonly Vector2 Min => new(Math.Min(Left, Right), Math.Min(Top, Bottom));
+	public readonly Vector2 Max => new(Math.Max(Left, Right), Math.Max(Top, Bottom));
+
 	public Vector2 TopLeft
 	{
 		readonly get => new(Left, Top);
