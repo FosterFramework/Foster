@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 
 namespace Foster.Framework;
 
@@ -21,12 +22,12 @@ public struct Point2(int x, int y) : IEquatable<Point2>
 	/// <summary>
 	/// The X component of the Point
 	/// </summary>
-	public int X = x;
+	[JsonInclude] public int X = x;
 
 	/// <summary>
 	/// The Y component of the Point
 	/// </summary>
-	public int Y = y;
+	[JsonInclude] public int Y = y;
 
 	/// <summary>
 	/// Gets the Length of the Point
@@ -122,14 +123,14 @@ public struct Point2(int x, int y) : IEquatable<Point2>
 		Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y);
 
 	public static Point2 FromBools(bool left, bool right, bool up, bool down)
-	{
-		Point2 result = Point2.Zero;
-		if (right) result += Point2.Right;
-		if (up) result += Point2.Up;
-		if (left) result += Point2.Left;
-		if (down) result += Point2.Down;
-		return result;
-	}
+		=> (left, right, up, down) switch
+		{
+			(_, true, _, _) => Right,
+			(_, _, true, _) => Up,
+			(true, _, _, _) => Left,
+			(_, _, _, true) => Down,
+			_ => Zero,
+		};
 
 	public static implicit operator Point2((int X, int Y) tuple) => new(tuple.X, tuple.Y);
 
@@ -157,11 +158,6 @@ public struct Point2(int x, int y) : IEquatable<Point2>
 	public static Rect operator +(Rect a, Point2 b) => new(b.X + a.X, b.Y + a.Y, a.Width, a.Height);
 
 	public static Rect operator -(Rect a, Point2 b) => new(a.X - b.X, a.Y - b.Y, a.Width, a.Height);
-
-	public static RectInt operator +(Point2 a, RectInt b) => new(a.X + b.X, a.Y + b.Y, b.Width, b.Height);
-	public static RectInt operator +(RectInt a, Point2 b) => new(b.X + a.X, b.Y + a.Y, a.Width, a.Height);
-
-	public static RectInt operator -(RectInt a, Point2 b) => new(a.X - b.X, a.Y - b.Y, a.Width, a.Height);
 
 	public static bool operator ==(Point2 a, Point2 b) => a.X == b.X && a.Y == b.Y;
 	public static bool operator !=(Point2 a, Point2 b) => a.X != b.X || a.Y != b.Y;
