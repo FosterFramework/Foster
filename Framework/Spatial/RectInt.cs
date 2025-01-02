@@ -79,8 +79,8 @@ public struct RectInt(int x, int y, int w, int h) : IEquatable<RectInt>
 
 	#region Points
 
-	public readonly Point2 Min => new(Math.Min(X, Right), Math.Min(Y, Bottom));
-	public readonly Point2 Max => new(Math.Max(X, Right), Math.Max(Y, Bottom));
+	public readonly Point2 Min => new(Math.Min(Left, Right), Math.Min(Top, Bottom));
+	public readonly Point2 Max => new(Math.Max(Left, Right), Math.Max(Top, Bottom));
 
 	public Point2 TopLeft
 	{

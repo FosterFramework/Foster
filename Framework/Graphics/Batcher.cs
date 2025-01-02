@@ -1463,16 +1463,16 @@ public class Batcher : IDisposable
 	{
 		SetTexture(subtex.Texture);
 		Quad(
-			subtex.DrawCoords0, subtex.DrawCoords1, subtex.DrawCoords2, subtex.DrawCoords3,
-			subtex.TexCoords0, subtex.TexCoords1, subtex.TexCoords2, subtex.TexCoords3,
+			subtex.DrawCoords[0], subtex.DrawCoords[1], subtex.DrawCoords[2], subtex.DrawCoords[3],
+			subtex.TexCoords[0], subtex.TexCoords[1], subtex.TexCoords[2], subtex.TexCoords[3],
 			color);
 	}
 
 	public void Image(in Subtexture subtex, in Vector2 position, Color color)
 	{
 		SetTexture(subtex.Texture);
-		Quad(position + subtex.DrawCoords0, position + subtex.DrawCoords1, position + subtex.DrawCoords2, position + subtex.DrawCoords3,
-			subtex.TexCoords0, subtex.TexCoords1, subtex.TexCoords2, subtex.TexCoords3,
+		Quad(position + subtex.DrawCoords[0], position + subtex.DrawCoords[1], position + subtex.DrawCoords[2], position + subtex.DrawCoords[3],
+			subtex.TexCoords[0], subtex.TexCoords[1], subtex.TexCoords[2], subtex.TexCoords[3],
 			color);
 	}
 
@@ -1484,8 +1484,8 @@ public class Batcher : IDisposable
 
 		SetTexture(subtex.Texture);
 		Quad(
-			subtex.DrawCoords0, subtex.DrawCoords1, subtex.DrawCoords2, subtex.DrawCoords3,
-			subtex.TexCoords0, subtex.TexCoords1, subtex.TexCoords2, subtex.TexCoords3,
+			subtex.DrawCoords[0], subtex.DrawCoords[1], subtex.DrawCoords[2], subtex.DrawCoords[3],
+			subtex.TexCoords[0], subtex.TexCoords[1], subtex.TexCoords[2], subtex.TexCoords[3],
 			color);
 
 		Matrix = was;
@@ -1499,8 +1499,8 @@ public class Batcher : IDisposable
 
 		SetTexture(subtex.Texture);
 		Quad(
-			subtex.DrawCoords0, subtex.DrawCoords1, subtex.DrawCoords2, subtex.DrawCoords3,
-			subtex.TexCoords0, subtex.TexCoords1, subtex.TexCoords2, subtex.TexCoords3,
+			subtex.DrawCoords[0], subtex.DrawCoords[1], subtex.DrawCoords[2], subtex.DrawCoords[3],
+			subtex.TexCoords[0], subtex.TexCoords[1], subtex.TexCoords[2], subtex.TexCoords[3],
 			c0, c1, c2, c3);
 
 		Matrix = was;
@@ -1546,7 +1546,7 @@ public class Batcher : IDisposable
 		SetTexture(subtex.Texture);
 		Quad(
 			rect.TopLeft, rect.TopRight, rect.BottomRight, rect.BottomLeft,
-			subtex.TexCoords0, subtex.TexCoords1, subtex.TexCoords2, subtex.TexCoords3,
+			subtex.TexCoords[0], subtex.TexCoords[1], subtex.TexCoords[2], subtex.TexCoords[3],
 			color);
 	}
 
@@ -1560,7 +1560,7 @@ public class Batcher : IDisposable
 		SetTexture(subtex.Texture);
 		Quad(
 			Vector2.Zero, rect.TopRight - pos, rect.BottomRight - pos, rect.BottomLeft - pos,
-			subtex.TexCoords0, subtex.TexCoords1, subtex.TexCoords2, subtex.TexCoords3,
+			subtex.TexCoords[0], subtex.TexCoords[1], subtex.TexCoords[2], subtex.TexCoords[3],
 			color);
 
 		Matrix = was;
@@ -1571,7 +1571,7 @@ public class Batcher : IDisposable
 		SetTexture(subtex.Texture);
 		Quad(
 			rect.TopLeft, rect.TopRight, rect.BottomRight, rect.BottomLeft,
-			subtex.TexCoords0, subtex.TexCoords1, subtex.TexCoords2, subtex.TexCoords3,
+			subtex.TexCoords[0], subtex.TexCoords[1], subtex.TexCoords[2], subtex.TexCoords[3],
 			c0, c1, c2, c3);
 	}
 
@@ -1585,7 +1585,7 @@ public class Batcher : IDisposable
 		SetTexture(subtex.Texture);
 		Quad(
 			Vector2.Zero, rect.TopRight - pos, rect.BottomRight - pos, rect.BottomLeft - pos,
-			subtex.TexCoords0, subtex.TexCoords1, subtex.TexCoords2, subtex.TexCoords3,
+			subtex.TexCoords[0], subtex.TexCoords[1], subtex.TexCoords[2], subtex.TexCoords[3],
 			c0, c1, c2, c3);
 
 		Matrix = was;
