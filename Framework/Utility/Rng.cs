@@ -126,4 +126,5 @@ public struct Rng
 		};
 
 	public Point2 Shake() => new(Choose(-1, 0, 1), Choose(-1, 0, 1));
+	public float Angle() => Float(Calc.TAU);
 }
