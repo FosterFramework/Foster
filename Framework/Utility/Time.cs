@@ -5,16 +5,21 @@ namespace Foster.Framework;
 /// Application Time state management
 /// </summary>
 /// <param name="Elapsed">Accumulation of Delta Time since the Application Started</param>
-/// <param name="Delta">The time, in seconds, from the previous frame</param>
+/// <param name="Previous">The Previous Elapsed Time value</param>
 /// <param name="Frame">The total number of update frames since the Application Started</param>
 /// <param name="RenderFrame">The total number of render frames since the Application Started</param>
 public readonly record struct Time(
 	TimeSpan Elapsed,
-	float Delta,
+	TimeSpan Previous,
 	ulong Frame,
 	ulong RenderFrame
 )
 {
+	/// <summary>
+	/// Time, in seconds, since the previous Update
+	/// </summary>
+	public readonly float Delta = (float)(Elapsed - Previous).TotalSeconds;
+
 	/// <summary>
 	/// Advances <see cref="Elapsed"/> by the given delta value, increments <see cref="Frame"/> and assigns <see cref="Delta"/>.<br/>
 	/// This does not advance <see cref="RenderFrame"/>. 
@@ -23,8 +28,8 @@ public readonly record struct Time(
 	public readonly Time Advance(TimeSpan delta)
 	{
 		return new Time(
+			Elapsed + delta,
 			Elapsed,
-			(float)delta.TotalSeconds,
 			Frame + 1,
 			RenderFrame	
 		);
