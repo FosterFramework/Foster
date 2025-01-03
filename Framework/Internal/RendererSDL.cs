@@ -888,50 +888,29 @@ internal unsafe class RendererSDL : Renderer
 		if (!BeginRenderPassOnDrawableTarget(target, default))
 			return;
 
-		// set scissor
-		if (command.Scissor != renderPassScissor)
+		// set viewport
+		var nextViewport = command.Viewport ?? new RectInt(0, 0, renderPassTargetSize.X, renderPassTargetSize.Y);
+		if (renderPassViewport != nextViewport)
 		{
-			renderPassScissor = command.Scissor;
-			if (command.Scissor.HasValue)
+			renderPassViewport = nextViewport;
+			SDL_SetGPUViewport(renderPass, new()
 			{
-				SDL_SetGPUScissor(renderPass, new()
-				{
-					x = command.Scissor.Value.X, y = command.Scissor.Value.Y,
-					w = command.Scissor.Value.Width, h = command.Scissor.Value.Height,
-				});
-			}
-			else
-			{
-				SDL_SetGPUScissor(renderPass, new()
-				{
-					x = 0, y = 0,
-					w = renderPassTargetSize.X, h = renderPassTargetSize.Y,
-				});
-			}
+				x = nextViewport.X, y = nextViewport.Y,
+				w = nextViewport.Width, h = nextViewport.Height,
+				min_depth = 0, max_depth = 1
+			});
 		}
 
-		// set viewport
-		if (command.Viewport != renderPassViewport)
+		// set scissor
+		var nextScissor = command.Scissor ?? new RectInt(0, 0, nextViewport.Width, nextViewport.Height);
+		if (renderPassScissor != nextScissor)
 		{
-			renderPassViewport = command.Viewport;
-			if (command.Viewport.HasValue)
+			renderPassScissor = nextScissor;
+			SDL_SetGPUScissor(renderPass, new()
 			{
-				SDL_SetGPUViewport(renderPass, new()
-				{
-					x = command.Viewport.Value.X, y = command.Viewport.Value.Y,
-					w = command.Viewport.Value.Width, h = command.Viewport.Value.Height,
-					min_depth = 0, max_depth = float.MaxValue
-				});
-			}
-			else
-			{
-				SDL_SetGPUViewport(renderPass, new()
-				{
-					x = 0, y = 0,
-					w = renderPassTargetSize.X, h = renderPassTargetSize.Y,
-					min_depth = 0, max_depth = float.MaxValue
-				});
-			}
+				x = nextScissor.X, y = nextScissor.Y,
+				w = nextScissor.Width, h = nextScissor.Height,
+			});
 		}
 
 		// figure out graphics pipeline, potentially create a new one
