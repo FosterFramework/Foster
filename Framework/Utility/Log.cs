@@ -64,11 +64,9 @@ public static class Log
 		Info(new ReadOnlySpan<byte>(ptr, len));
 	}
 
-	public static void Info(string message)
-		=> Info(message.AsSpan());
-
-	public static void Info(object? obj)
-		=> Info(obj?.ToString() ?? "null");
+	public static void Info(int value) => Info(value.ToString());
+	public static void Info(string message) => Info(message.AsSpan());
+	public static void Info(object? obj) => Info(obj?.ToString() ?? "null");
 
 	public static void Warning(ReadOnlySpan<char> message)
 	{
