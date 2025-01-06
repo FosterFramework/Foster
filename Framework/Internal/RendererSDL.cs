@@ -199,7 +199,8 @@ internal unsafe class RendererSDL : Renderer
 			device,
 			SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
 			SDL_GPUTextureType.SDL_GPU_TEXTURETYPE_2D,
-			SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET);
+			SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET | 
+			SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER);
 
 		supportsMailbox = SDL_WindowSupportsGPUPresentMode(device, window,
 			SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX);
@@ -1510,6 +1511,8 @@ internal unsafe class RendererSDL : Renderer
 				address_mode_u = GetWrapMode(sampler.WrapX),
 				address_mode_v = GetWrapMode(sampler.WrapY),
 				address_mode_w = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+				compare_op = SDL_GPUCompareOp.SDL_GPU_COMPAREOP_ALWAYS,
+				enable_compare = false,
 			};
 			result = SDL_CreateGPUSampler(device, info);
 			if (result == nint.Zero)
