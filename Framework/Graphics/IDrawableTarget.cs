@@ -12,9 +12,14 @@ public interface IDrawableTarget
 
 public static class IDrawableTargetExt
 {
-	public static void Clear(this IDrawableTarget target, Color color, float depth, int stencil, ClearMask mask)
+	public static void Clear(this IDrawableTarget target, ReadOnlySpan<Color> color, float depth, int stencil, ClearMask mask)
 	{
 		target.Renderer.Clear(target, color, depth, stencil, mask);
+	}
+
+	public static void Clear(this IDrawableTarget target, Color color, float depth, int stencil, ClearMask mask)
+	{
+		target.Renderer.Clear(target, [color], depth, stencil, mask);
 	}
 
 	public static void Clear(this IDrawableTarget target, Color color)

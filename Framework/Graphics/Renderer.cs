@@ -55,7 +55,7 @@ public abstract class Renderer
 	internal abstract IHandle CreateShader(in ShaderCreateInfo shaderInfo);
 	internal abstract void DestroyResource(IHandle resource);
 	internal abstract void PerformDraw(DrawCommand command);
-	internal abstract void Clear(IDrawableTarget target, Color color, float depth, int stencil, ClearMask mask);
+	internal abstract void Clear(IDrawableTarget target, ReadOnlySpan<Color> color, float depth, int stencil, ClearMask mask);
 
 	/// <summary>
 	/// Performs a draw command

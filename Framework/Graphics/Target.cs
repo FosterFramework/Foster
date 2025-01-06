@@ -74,16 +74,6 @@ public class Target : IResource, IDrawableTarget
 	}
 
 	/// <summary>
-	/// Clears the Target
-	/// </summary>
-	public unsafe void Clear(Color color, float depth, int stencil, ClearMask mask)
-	{
-		if (IsDisposed)
-			throw new Exception("Resource is Disposed");
-		Renderer.Clear(this, color, depth, stencil, mask);
-	}
-
-	/// <summary>
 	/// Disposes of the Target and all its Attachments
 	/// </summary>
 	public void Dispose()

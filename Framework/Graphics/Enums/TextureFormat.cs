@@ -33,4 +33,16 @@ public static class TextureFormatExt
 			TextureFormat.Depth24Stencil8 => 4,
 			_ => throw new NotImplementedException()
 		};
+
+	public static bool IsColorAttachment(this TextureFormat format)
+		=> format switch
+		{
+			TextureFormat.R8G8B8A8 => true,
+			TextureFormat.R8 => true,
+			TextureFormat.Depth24Stencil8 => false,
+			_ => throw new NotImplementedException()
+		};
+
+	public static bool IsDepthStencilAttachment(this TextureFormat format)
+		=> !IsColorAttachment(format);
 }

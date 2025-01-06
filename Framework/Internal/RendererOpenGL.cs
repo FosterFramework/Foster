@@ -723,7 +723,7 @@ internal sealed unsafe class RendererOpenGL(App app) : Renderer(app)
 		}
 	}
 
-	internal override void Clear(IDrawableTarget target, Color color, float depth, int stencil, ClearMask mask)
+	internal override void Clear(IDrawableTarget target, ReadOnlySpan<Color> color, float depth, int stencil, ClearMask mask)
 	{
 		BeginThreadSafeCalls(out var state);
 
@@ -737,7 +737,7 @@ internal sealed unsafe class RendererOpenGL(App app) : Renderer(app)
 		{
 			clear |= GL.COLOR_BUFFER_BIT;
 			state.GL.ColorMask(true, true, true, true);
-			state.GL.ClearColor(color.R / 255.0f, color.G / 255.0f, color.B / 255.0f, color.A / 255.0f);
+			state.GL.ClearColor(color[0].R / 255.0f, color[0].G / 255.0f, color[0].B / 255.0f, color[0].A / 255.0f);
 		}
 
 		if (mask.Has(ClearMask.Depth))

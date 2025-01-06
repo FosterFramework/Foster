@@ -43,7 +43,7 @@ internal unsafe class RendererSDL : Renderer
 		public nint FragmentShader;
 	}
 
-	private record struct ClearInfo(Color? Color, float? Depth, int? Stencil);
+	private record struct ClearInfo(StackList4<Color>? Color, float? Depth, int? Stencil);
 
 	// TODO: this is set to 1 since SDL currently improperly awaits fences
 	// change back to 3 once fixed
@@ -1023,7 +1023,7 @@ internal unsafe class RendererSDL : Renderer
 		);
 	}
 
-	internal override void Clear(IDrawableTarget target, Color color, float depth, int stencil, ClearMask mask)
+	internal override void Clear(IDrawableTarget target, ReadOnlySpan<Color> color, float depth, int stencil, ClearMask mask)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
@@ -1032,7 +1032,7 @@ internal unsafe class RendererSDL : Renderer
 		{
 			BeginRenderPassOnDrawableTarget(target, new()
 			{
-				Color = mask.Has(ClearMask.Color) ? color : null,
+				Color = mask.Has(ClearMask.Color) ? [..color] : null,
 				Depth = mask.Has(ClearMask.Depth) ? depth : null,
 				Stencil = mask.Has(ClearMask.Stencil) ? stencil : null
 			});
@@ -1175,12 +1175,13 @@ internal unsafe class RendererSDL : Renderer
 		// get color infos
 		for (int i = 0; i < colorTargets.Count; i++)
 		{
+			var col = clear.Color.HasValue && clear.Color.Value.Count > i ? clear.Color.Value[i] : Color.Transparent;
 			colorInfo[i] = new()
 			{
 				texture = colorTargets[i],
 				mip_level = 0,
 				layer_or_depth_plane = 0,
-				clear_color = GetColor(clear.Color ?? Color.Transparent),
+				clear_color = GetColor(col),
 				load_op = clear.Color.HasValue ?
 					SDL_GPULoadOp.SDL_GPU_LOADOP_CLEAR :
 					SDL_GPULoadOp.SDL_GPU_LOADOP_LOAD,
