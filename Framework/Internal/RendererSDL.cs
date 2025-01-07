@@ -665,7 +665,8 @@ internal unsafe class RendererSDL : Renderer
 			int size;
 			if(res.Capacity == 0)
 			{
-				size = required;
+				// never create a buffer that has 0 length
+				size = Math.Max(8, required);
 			}
 			else
 			{
