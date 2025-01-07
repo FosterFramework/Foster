@@ -418,7 +418,7 @@ internal unsafe class RendererSDL : Renderer
 
 		if (targetBinding != null)
 		{
-			if (format == TextureFormat.Depth24Stencil8)
+			if (format.IsDepthStencilFormat())
 				info.usage |= SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
 			else
 				info.usage |= SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
@@ -1158,7 +1158,7 @@ internal unsafe class RendererSDL : Renderer
 				if (it.IsDisposed || !it.IsTargetAttachment || res == nint.Zero)
 					throw new Exception("Drawing to a Disposed or Invalid Texture");
 
-				if (it.Format == TextureFormat.Depth24Stencil8)
+				if (it.Format.IsDepthStencilFormat())
 					depthStencilTarget = res;
 				else
 					colorTargets.Add(res);
@@ -1273,7 +1273,7 @@ internal unsafe class RendererSDL : Renderer
 			{
 				foreach (var it in target.Attachments)
 				{
-					if (it.Format == TextureFormat.Depth24Stencil8)
+					if (it.Format.IsDepthStencilFormat())
 					{
 						depthStencilAttachment = ((TextureResource)it.Resource).Format;
 					}

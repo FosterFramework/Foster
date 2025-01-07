@@ -800,9 +800,12 @@ internal sealed unsafe class RendererOpenGL(App app) : Renderer(app)
 		state.GL = new();
 
 		// setup debug callback
-		state.GL.Enable(GL.DEBUG_OUTPUT);
-		state.GL.Enable(GL.DEBUG_OUTPUT_SYNCHRONOUS);
-		state.GL.DebugMessageCallback(&OnDebugMessageCallback, nint.Zero);
+		if (state.GL.DebugMessageCallback != null)
+		{
+			state.GL.Enable(GL.DEBUG_OUTPUT);
+			state.GL.Enable(GL.DEBUG_OUTPUT_SYNCHRONOUS);
+			state.GL.DebugMessageCallback(&OnDebugMessageCallback, nint.Zero);
+		}
 
 		// don't include row padding
 		state.GL.PixelStorei(GL.PACK_ALIGNMENT, 1);

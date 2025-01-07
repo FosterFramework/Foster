@@ -34,7 +34,7 @@ public static class TextureFormatExt
 			_ => throw new NotImplementedException()
 		};
 
-	public static bool IsColorAttachment(this TextureFormat format)
+	public static bool IsColorFormat(this TextureFormat format)
 		=> format switch
 		{
 			TextureFormat.R8G8B8A8 => true,
@@ -43,6 +43,6 @@ public static class TextureFormatExt
 			_ => throw new NotImplementedException()
 		};
 
-	public static bool IsDepthStencilAttachment(this TextureFormat format)
-		=> !IsColorAttachment(format);
+	public static bool IsDepthStencilFormat(this TextureFormat format)
+		=> !IsColorFormat(format);
 }
