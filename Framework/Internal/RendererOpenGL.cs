@@ -212,6 +212,12 @@ internal sealed unsafe class RendererOpenGL(App app) : Renderer(app)
 		SDL_GL_SwapWindow(window);
 	}
 
+	public override bool IsTextureFormatSupported(TextureFormat format)
+	{
+		// TODO: ?
+		return true;
+	}
+
 	internal override IHandle CreateTexture(int width, int height, TextureFormat format, IHandle? targetBinding)
 	{
 		BeginThreadSafeCalls(out var state);
@@ -229,6 +235,10 @@ internal sealed unsafe class RendererOpenGL(App app) : Renderer(app)
 			TextureFormat.R8 => (GL.RED, GL.RED, GL.UNSIGNED_BYTE),
 			TextureFormat.R8G8B8A8 => (GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE),
 			TextureFormat.Depth24Stencil8 => (GL.DEPTH24_STENCIL8, GL.DEPTH_STENCIL, GL.UNSIGNED_INT_24_8),
+			TextureFormat.Depth32Stencil8 => (GL.DEPTH32F_STENCIL8, GL.DEPTH_STENCIL, GL.FLOAT_32_UNSIGNED_INT_24_8_REV),
+			TextureFormat.Depth16 => (GL.DEPTH_COMPONENT16, GL.DEPTH_COMPONENT, GL.UNSIGNED_INT),
+			TextureFormat.Depth24 => (GL.DEPTH_COMPONENT24, GL.DEPTH_COMPONENT, GL.UNSIGNED_INT),
+			TextureFormat.Depth32 => (GL.DEPTH_COMPONENT32F, GL.DEPTH_COMPONENT, GL.FLOAT),
 			_ => throw new NotImplementedException()
 		};
 
@@ -255,7 +265,7 @@ internal sealed unsafe class RendererOpenGL(App app) : Renderer(app)
 		// potentially bind to a target
 		if (targetBinding is TargetResource target)
 		{
-			if (texture.InternalFormatGL == GL.DEPTH24_STENCIL8)
+			if (texture.Format.IsDepthStencilFormat())
 				target.DepthAttachment = texture;
 			else
 				target.ColorAttachments.Add(texture);
@@ -1397,6 +1407,7 @@ internal sealed unsafe class RendererOpenGL(App app) : Renderer(app)
 		BGRA = 0x80E1,
 		DEPTH_COMPONENT16 = 0x81A5,
 		DEPTH_COMPONENT24 = 0x81A6,
+		DEPTH_COMPONENT32F = 0x8CAC,
 		RG = 0x8227,
 		RG8 = 0x822B,
 		RG16 = 0x822C,
@@ -1407,6 +1418,8 @@ internal sealed unsafe class RendererOpenGL(App app) : Renderer(app)
 		RGBA32F = 0x8814,
 		RGBA16F = 0x881A,
 		DEPTH24_STENCIL8 = 0x88F0,
+		DEPTH32F_STENCIL8 = 0x8CAD,
+		FLOAT_32_UNSIGNED_INT_24_8_REV = 0x8DAD,
 		COMPRESSED_TEXTURE_FORMATS = 0x86A3,
 		COMPRESSED_RGBA_S3TC_DXT1_EXT = 0x83F1,
 		COMPRESSED_RGBA_S3TC_DXT3_EXT = 0x83F2,

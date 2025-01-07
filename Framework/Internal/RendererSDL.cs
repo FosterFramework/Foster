@@ -68,7 +68,6 @@ internal unsafe class RendererSDL : Renderer
 	private RectInt? renderPassViewport;
 
 	// supported feature set
-	private bool supportsD24S8;
 	private bool supportsMailbox;
 
 	// state
@@ -193,14 +192,6 @@ internal unsafe class RendererSDL : Renderer
 
 		if (!SDL_ClaimWindowForGPUDevice(device, window))
 			throw Platform.CreateExceptionFromSDL(nameof(SDL_ClaimWindowForGPUDevice));
-
-		// some platforms don't support D24S8 depth/stencil format
-		supportsD24S8 = SDL_GPUTextureSupportsFormat(
-			device,
-			SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
-			SDL_GPUTextureType.SDL_GPU_TEXTURETYPE_2D,
-			SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET | 
-			SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER);
 
 		supportsMailbox = SDL_WindowSupportsGPUPresentMode(device, window,
 			SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX);
@@ -391,6 +382,19 @@ internal unsafe class RendererSDL : Renderer
 		frameCounter = (frameCounter + 1) % MaxFramesInFlight;
 	}
 
+	public override bool IsTextureFormatSupported(TextureFormat format)
+	{
+		var usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER;
+		if (format.IsDepthStencilFormat())
+			usage |= SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
+		else
+			usage |= SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
+
+		var type = SDL_GPUTextureType.SDL_GPU_TEXTURETYPE_2D;
+
+		return SDL_GPUTextureSupportsFormat(device, GetTextureFormat(format), type, usage);
+	}
+
 	internal override IHandle CreateTexture(int width, int height, TextureFormat format, IHandle? targetBinding)
 	{
 		if (device == nint.Zero)
@@ -399,15 +403,7 @@ internal unsafe class RendererSDL : Renderer
 		SDL_GPUTextureCreateInfo info = new()
 		{
 			type = SDL_GPUTextureType.SDL_GPU_TEXTURETYPE_2D,
-			format = format switch
-			{
-				TextureFormat.R8G8B8A8 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
-				TextureFormat.R8 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_R8_UNORM,
-				TextureFormat.Depth24Stencil8 => supportsD24S8
-					? SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT
-					: SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT,
-				_ => throw new System.ComponentModel.InvalidEnumArgumentException(nameof(format), (int)format, typeof(TextureFormat))
-			},
+			format = GetTextureFormat(format),
 			usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER,
 			width = (uint)width,
 			height = (uint)height,
@@ -1548,6 +1544,18 @@ internal unsafe class RendererSDL : Renderer
 			_ => throw new NotImplementedException(),
 		};
 	}
+
+	private SDL_GPUTextureFormat GetTextureFormat(TextureFormat format) => format switch
+	{
+		TextureFormat.R8G8B8A8 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+		TextureFormat.R8 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_R8_UNORM,
+		TextureFormat.Depth24Stencil8 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
+		TextureFormat.Depth32Stencil8 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT,
+		TextureFormat.Depth16 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D16_UNORM,
+		TextureFormat.Depth24 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D24_UNORM,
+		TextureFormat.Depth32 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D32_FLOAT,
+		_ => throw new System.ComponentModel.InvalidEnumArgumentException(nameof(format), (int)format, typeof(TextureFormat)),
+	};
 
 	private SDL_FColor GetColor(Color color)
 	{

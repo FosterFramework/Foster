@@ -58,6 +58,11 @@ public abstract class Renderer
 	internal abstract void Clear(IDrawableTarget target, ReadOnlySpan<Color> color, float depth, int stencil, ClearMask mask);
 
 	/// <summary>
+	/// Checks if a given Texture Format is supported
+	/// </summary>
+	public abstract bool IsTextureFormatSupported(TextureFormat format);
+
+	/// <summary>
 	/// Performs a draw command
 	/// </summary>
 	public void Draw(DrawCommand command)
