@@ -62,19 +62,43 @@ public abstract class Renderer
 	/// </summary>
 	public void Draw(DrawCommand command)
 	{
-		var mat = command.Material ?? throw new Exception("Material is Invalid");
+		var mat = command.Material ?? throw new Exception("Attempting to render with a null Material");
 		var shader = mat.Shader;
 		var target = command.Target;
 		var mesh = command.Mesh;
 
 		if (shader == null || shader.IsDisposed)
-			throw new Exception("Material Shader is Invalid");
+			throw new Exception("Attempting to render a null or disposed Shader");
 
-		if (target == null)
-			throw new Exception("Target is Invalid");
+		if (target == null || (target is Target t && t.IsDisposed))
+			throw new Exception("Attempting to render a null or disposed Target");
 
-		if (mesh == null || mesh.Resource == null || mesh.IsDisposed)
-			throw new Exception("Mesh is Invalid");
+		if (mesh == null || mesh.IsDisposed)
+			throw new Exception("Attempting to render a null or disposed Mesh");
+
+		if (mesh.Resource == null || mesh.VertexCount <= 0 || mesh.IndexCount <= 0)
+		{
+			Log.Warning("Attempting to render an empty Mesh");
+			return;
+		}
+
+		if (command.MeshIndexCount <= 0)
+		{
+			Log.Warning("Attempting to render 0 indices");
+			return;
+		}
+
+		if (command.Viewport is {} viewport && (viewport.Width <= 0 || viewport.Height <= 0))
+		{
+			Log.Warning("Attempting to render with an empty Viewport");
+			return;
+		}
+
+		if (command.Scissor is {} scissor && (scissor.Width <= 0 || scissor.Height <= 0))
+		{
+			Log.Warning("Attempting to render with an empty Scissor");
+			return;
+		}
 
 		PerformDraw(command);
 	}
