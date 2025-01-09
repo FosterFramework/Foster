@@ -1,36 +1,9 @@
 namespace Foster.Framework;
 
 /// <summary>
-/// Holds information on an individual Shader Uniform
-/// </summary>
-public readonly record struct ShaderUniform(
-	string Name,
-	UniformType Type,
-	int ArrayElements = 1
-);
-
-/// <summary>
-/// Reflection Data used to create a new Shader Program
-/// </summary>
-public readonly record struct ShaderProgramInfo(
-	byte[] Code,
-	int SamplerCount,
-	ShaderUniform[] Uniforms,
-	string EntryPoint = "main"
-);
-
-/// <summary>
-/// Data Required to create a new Shader
-/// </summary>
-public readonly record struct ShaderCreateInfo(
-	ShaderProgramInfo Vertex, 
-	ShaderProgramInfo Fragment
-);
-
-/// <summary>
 /// A combination of a Vertex and Fragment Shader programs used for Rendering
 /// </summary>
-public class Shader : IResource
+public class Shader : IGraphicalResource
 {
 	/// <summary>
 	/// Holds information about a Shader Program

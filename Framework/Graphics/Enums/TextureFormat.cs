@@ -50,6 +50,9 @@ public enum TextureFormat
 
 public static class TextureFormatExt
 {
+	/// <summary>
+	/// Gets the size in bytes of a Texture Format
+	/// </summary>
 	public static int Size(this TextureFormat format)
 		=> format switch
 		{
@@ -63,6 +66,9 @@ public static class TextureFormatExt
 			_ => throw new NotImplementedException()
 		};
 
+	/// <summary>
+	/// Returns true of the given format is a Color format
+	/// </summary>
 	public static bool IsColorFormat(this TextureFormat format)
 		=> format switch
 		{
@@ -76,6 +82,9 @@ public static class TextureFormatExt
 			_ => throw new NotImplementedException()
 		};
 
+	/// <summary>
+	/// Returns true of the given format is a Depth/Stencil format
+	/// </summary>
 	public static bool IsDepthStencilFormat(this TextureFormat format)
 		=> !IsColorFormat(format);
 }

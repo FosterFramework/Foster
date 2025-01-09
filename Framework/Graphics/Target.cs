@@ -3,7 +3,7 @@ namespace Foster.Framework;
 /// <summary>
 /// A 2D Render Target used to draw content off-frame.
 /// </summary>
-public class Target : IResource, IDrawableTarget
+public class Target : IGraphicalResource, IDrawableTarget
 {
 	private static readonly TextureFormat[] defaultFormats = [ TextureFormat.Color ];
 
@@ -42,8 +42,8 @@ public class Target : IResource, IDrawableTarget
 	/// </summary>
 	public readonly Texture[] Attachments;
 
-	public int WidthInPixels => Width;
-	public int HeightInPixels => Height;
+	int IDrawableTarget.WidthInPixels => Width;
+	int IDrawableTarget.HeightInPixels => Height;
 
 	internal readonly Renderer.IHandle Resource;
 
@@ -78,13 +78,8 @@ public class Target : IResource, IDrawableTarget
 	/// </summary>
 	public void Dispose()
 	{
-		Dispose(true);
-		GC.SuppressFinalize(this);
-	}
-
-	private void Dispose(bool disposing)
-	{
 		Renderer.DestroyResource(Resource);
+		GC.SuppressFinalize(this);
 	}
 
 	public static implicit operator Texture(Target target) => target.Attachments[0];

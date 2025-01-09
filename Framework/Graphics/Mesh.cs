@@ -4,7 +4,7 @@ namespace Foster.Framework;
 /// The Mesh contains a Vertex and Index Buffer used for drawing.
 /// Used in a <seealso cref="DrawCommand"/>.
 /// </summary>
-public class Mesh(Renderer renderer) : IResource
+public class Mesh(Renderer renderer) : IGraphicalResource
 {
 	/// <summary>
 	/// The Renderer this Mesh was created in
