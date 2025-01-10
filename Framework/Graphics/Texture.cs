@@ -6,7 +6,7 @@ namespace Foster.Framework;
 /// <summary>
 /// A 2D Texture used for Rendering
 /// </summary>
-public class Texture : IGraphicalResource
+public class Texture : IGraphicResource
 {
 	/// <summary>
 	/// The Renderer this Texture was created in

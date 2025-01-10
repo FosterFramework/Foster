@@ -3,7 +3,7 @@ namespace Foster.Framework;
 /// <summary>
 /// A 2D Render Target used to draw content off-frame.
 /// </summary>
-public class Target : IGraphicalResource, IDrawableTarget
+public class Target : IGraphicResource, IDrawableTarget
 {
 	private static readonly TextureFormat[] defaultFormats = [ TextureFormat.Color ];
 
@@ -70,7 +70,7 @@ public class Target : IGraphicalResource, IDrawableTarget
 
 	~Target()
 	{
-		Dispose(false);
+		Dispose();
 	}
 
 	/// <summary>

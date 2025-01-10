@@ -70,7 +70,7 @@ public sealed class Input
 	/// <summary>
 	/// Holds references to all Virtual Buttons so they can be updated.
 	/// </summary>
-	internal readonly List<WeakReference<VirtualButton>> VirtualButtons = [];
+	private readonly List<WeakReference<VirtualInput>> virtualInputs = [];
 
 	private readonly InputProvider provider;
 
@@ -102,6 +102,49 @@ public sealed class Input
 	/// </summary>
 	public string GetClipboardString()
 		=> provider.GetClipboard();
+
+	/// <summary>
+	/// Creates a new Virtual Input Action
+	/// </summary>
+	public VirtualAction CreateAction(in ActionBinding binding, int controllerIndex = 0, float buffer = 0)
+	{
+		var it = new VirtualAction(this, binding, controllerIndex)
+		{
+			Buffer = buffer
+		};
+		virtualInputs.Add(new WeakReference<VirtualInput>(it));
+		return it;
+	}
+
+	/// <summary>
+	/// Creates a new Virtual Input Axis
+	/// </summary>
+	public VirtualAxis CreateAxis(in AxisBinding binding, int controllerIndex = 0)
+	{
+		var it = new VirtualAxis(this, binding, controllerIndex);
+		virtualInputs.Add(new WeakReference<VirtualInput>(it));
+		return it;
+	}
+
+	/// <summary>
+	/// Creates a new Virtual Input Stick
+	/// </summary>
+	public VirtualStick CreateStick(in StickBinding binding, int controllerIndex = 0)
+	{
+		var it = new VirtualStick(this, binding, controllerIndex);
+		virtualInputs.Add(new WeakReference<VirtualInput>(it));
+		return it;
+	}
+
+	internal void RemoveVirtualInput(VirtualInput it)
+	{
+		for (int i = virtualInputs.Count - 1; i >= 0; i --)
+			if (virtualInputs[i].TryGetTarget(out var input) && input == it)
+			{
+				virtualInputs.RemoveAt(i);
+				break;
+			}
+	}
 
 	internal void OnText(ReadOnlySpan<char> text)
 	{
@@ -163,13 +206,13 @@ public sealed class Input
 		NextState.Step(time);
 
 		// update virtual buttons, remove unreferenced ones
-		for (int i = VirtualButtons.Count - 1; i >= 0; i--)
+		for (int i = virtualInputs.Count - 1; i >= 0; i--)
 		{
-			var button = VirtualButtons[i];
-			if (button.TryGetTarget(out var target))
+			var it = virtualInputs[i];
+			if (it.TryGetTarget(out var target))
 				target.Update(time);
 			else
-				VirtualButtons.RemoveAt(i);
+				virtualInputs.RemoveAt(i);
 		}
 	}
 

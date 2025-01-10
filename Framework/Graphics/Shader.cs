@@ -3,7 +3,7 @@ namespace Foster.Framework;
 /// <summary>
 /// A combination of a Vertex and Fragment Shader programs used for Rendering
 /// </summary>
-public class Shader : IGraphicalResource
+public class Shader : IGraphicResource
 {
 	/// <summary>
 	/// Holds information about a Shader Program

@@ -13,6 +13,7 @@ public sealed class Mouse
 	private readonly bool[] down = new bool[MaxButtons];
 	private readonly bool[] released = new bool[MaxButtons];
 	private readonly TimeSpan[] timestamp = new TimeSpan[MaxButtons];
+	private TimeSpan motionTimestamp;
 	private Vector2 wheelValue;
 	private Time time;
 
@@ -43,6 +44,7 @@ public sealed class Mouse
 	public bool Released(MouseButtons button) => released[(int)button];
 
 	public TimeSpan Timestamp(MouseButtons button) => timestamp[(int)button];
+	public TimeSpan MotionTimestamp() => motionTimestamp;
 
 	public bool Repeated(MouseButtons button, float delay, float interval)
 	{
@@ -107,6 +109,12 @@ public sealed class Mouse
 				released[buttonIndex] = true;
 			}
 		}
+	}
+
+	internal void OnMotion(in Vector2 position, in TimeSpan time)
+	{
+		Position = position;
+		motionTimestamp = time;
 	}
 
 	internal void OnWheel(in Vector2 value)
