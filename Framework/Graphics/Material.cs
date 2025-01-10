@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Numerics;
 
 namespace Foster.Framework;
@@ -125,21 +126,19 @@ public class Material(Renderer renderer)
 		if (shader == null)
 			return false;
 
-		foreach (var it in shader.Vertex.Uniforms)
-			if (it.Name.Equals(uniform))
-			{
-				type = it.Type;
-				arrayElements = it.ArrayElements;
-				return true;
-			}
+		if (shader.Vertex.Uniforms.TryGetValue(uniform, out var it))
+		{
+			type = it.Type;
+			arrayElements = it.ArrayElements;
+			return true;
+		}
 
-		foreach (var it in shader.Fragment.Uniforms)
-			if (it.Name.Equals(uniform))
-			{
-				type = it.Type;
-				arrayElements = it.ArrayElements;
-				return true;
-			}
+		if (shader.Fragment.Uniforms.TryGetValue(uniform, out it))
+		{
+			type = it.Type;
+			arrayElements = it.ArrayElements;
+			return true;
+		}
 			
 		return false;
 	}
@@ -223,28 +222,26 @@ public class Material(Renderer renderer)
 
 	public void Set(string uniform, ReadOnlySpan<byte> data)
 	{
-		static unsafe void FindUniformAndCopyData(string name, ShaderUniform[] uniforms, in ReadOnlySpan<byte> srcBuffer, Span<byte> dstBuffer)
+		static unsafe void CopyData(
+			Shader.Program.Uniform uniform,
+			in ReadOnlySpan<byte> srcBuffer,
+			Span<byte> dstBuffer)
 		{
 			var src = srcBuffer;
-			var offset = 0;
-			foreach (var it in uniforms)
-			{
-				if (it.Name == name)
-				{
-					var dst = dstBuffer[offset..];
-					if (src.Length > dst.Length)
-						src = src[0..dst.Length];
-					src.CopyTo(dst);
-					break;
-				}
-				offset += it.Type.SizeInBytes() * it.ArrayElements;
-			}
+			var dst = dstBuffer[uniform.OffsetInBytes..];
+			if (src.Length > uniform.SizeInBytes)
+				src = src[0..uniform.SizeInBytes];
+			if (src.Length > dst.Length)
+				src = src[0..dst.Length];
+			src.CopyTo(dst);
 		}
 
 		if (shader != null)
 		{
-			FindUniformAndCopyData(uniform, shader.Vertex.Uniforms, data, VertexUniformBuffer);
-			FindUniformAndCopyData(uniform, shader.Fragment.Uniforms, data, FragmentUniformBuffer);
+			if (shader.Vertex.Uniforms.TryGetValue(uniform, out var vertexUniform))
+				CopyData(vertexUniform, data, VertexUniformBuffer);
+			if (shader.Fragment.Uniforms.TryGetValue(uniform, out var fragmentUniform))
+				CopyData(fragmentUniform, data, FragmentUniformBuffer);
 		}
 	}
 

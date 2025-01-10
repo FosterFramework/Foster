@@ -706,26 +706,17 @@ internal sealed unsafe class RendererOpenGL(App app) : Renderer(app)
 		static bool TryGetUniformDataBuffer(string name, Material material, out Span<byte> data)
 		{
 			var shader = material.Shader!;
-			int offset = 0;
-			foreach (var it in shader.Vertex.Uniforms)
+
+			if (shader.Vertex.Uniforms.TryGetValue(name, out var it))
 			{
-				if (it.Name == name)
-				{
-					data = material.VertexUniformBuffer.AsSpan(offset);
-					return true;
-				}
-				offset += it.Type.SizeInBytes() * it.ArrayElements;
+				data = material.VertexUniformBuffer.AsSpan(it.OffsetInBytes);
+				return true;
 			}
 
-			offset = 0;
-			foreach (var it in shader.Fragment.Uniforms)
+			if (shader.Fragment.Uniforms.TryGetValue(name, out it))
 			{
-				if (it.Name == name)
-				{
-					data = material.FragmentUniformBuffer.AsSpan(offset);
-					return true;
-				}
-				offset += it.Type.SizeInBytes() * it.ArrayElements;
+				data = material.FragmentUniformBuffer.AsSpan(it.OffsetInBytes);
+				return true;
 			}
 
 			data = Span<byte>.Empty;

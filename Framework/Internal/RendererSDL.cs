@@ -996,7 +996,7 @@ internal unsafe class RendererSDL : Renderer
 
 		// Upload Vertex Uniforms
 		// TODO: only do this if Uniforms change
-		if (shader.Vertex.Uniforms.Length > 0)
+		if (shader.Vertex.Uniforms.Count > 0)
 		{
 			fixed (byte* ptr = mat.VertexUniformBuffer)
 				SDL_PushGPUVertexUniformData(cmdRender, 0, new nint(ptr), (uint)shader.Vertex.UniformSizeInBytes);
@@ -1004,7 +1004,7 @@ internal unsafe class RendererSDL : Renderer
 
 		// Upload Fragment Uniforms
 		// TODO: only do this if Uniforms change
-		if (shader.Fragment.Uniforms.Length > 0)
+		if (shader.Fragment.Uniforms.Count > 0)
 		{
 			fixed (byte* ptr = mat.FragmentUniformBuffer)
 				SDL_PushGPUFragmentUniformData(cmdRender, 0, new nint(ptr), (uint)shader.Fragment.UniformSizeInBytes);

@@ -1,3 +1,5 @@
+using System.Collections.Frozen;
+
 namespace Foster.Framework;
 
 /// <summary>
@@ -14,11 +16,38 @@ public class Shader : IGraphicResource
 	/// <summary>
 	/// Holds information about a Shader Program
 	/// </summary>
-	public class Program(int samplerCount, ShaderUniform[] uniforms)
+	public class Program
 	{
-		public readonly int SamplerCount = samplerCount;
-		public readonly ShaderUniform[] Uniforms = uniforms;
-		public readonly int UniformSizeInBytes = uniforms.Sum(it => it.Type.SizeInBytes() * it.ArrayElements);
+		public readonly record struct Uniform(
+			UniformType Type,
+			int ArrayElements,
+			int OffsetInBytes,
+			int SizeInBytes
+		);
+
+		public readonly int SamplerCount;
+		public readonly int UniformSizeInBytes;
+		public readonly FrozenDictionary<string, Uniform> Uniforms;
+
+		internal Program(int samplerCount, ShaderUniform[] uniforms)
+		{
+			SamplerCount = samplerCount;
+
+			var offset = 0;
+			var dict = new Dictionary<string, Uniform>();
+
+			// TODO: account for packing/offset/alignment
+
+			foreach (var it in uniforms)
+			{
+				var uniform = new Uniform(it.Type, it.ArrayElements, offset, it.Type.SizeInBytes() * it.ArrayElements);
+				dict.Add(it.Name, uniform);
+				offset += uniform.SizeInBytes;
+			}
+			
+			Uniforms = dict.ToFrozenDictionary();
+			UniformSizeInBytes = offset;
+		}
 	}
 
 	/// <summary>
