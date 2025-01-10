@@ -48,16 +48,21 @@ internal sealed class InputProviderSDL(App app) : InputProvider, IDisposable
 
 	public override void Update(in Time time)
 	{
-		SDL_GetMouseState(out float mouseX, out float mouseY);
 		SDL_GetRelativeMouseState(out float deltaX, out float deltaY);
 
-		var size = new Point2(App.Window.Width, App.Window.Height);
-		var pixels = new Point2(App.Window.WidthInPixels, App.Window.HeightInPixels);
+		if (deltaX != 0 || deltaY != 0)
+		{
+			SDL_GetMouseState(out float mouseX, out float mouseY);
 
-		MouseMove(
-			new Vector2((mouseX / size.X) * pixels.X, (mouseY / size.Y) * pixels.Y),
-			new Vector2(deltaX, deltaY)
-		);
+			var size = new Point2(App.Window.Width, App.Window.Height);
+			var pixels = new Point2(App.Window.WidthInPixels, App.Window.HeightInPixels);
+
+			MouseMove(
+				new Vector2((mouseX / size.X) * pixels.X, (mouseY / size.Y) * pixels.Y),
+				new Vector2(deltaX, deltaY),
+				time.Elapsed
+			);
+		}
 
 		base.Update(time);
 	}

@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 namespace Foster.Framework;
 
 /// <summary>
-/// A Subtexture representing a rectangular segment of a Texture
+/// A Subtexture representing a rectangular segment of a <see cref="Texture"/>
 /// </summary>
 public readonly struct Subtexture
 {

@@ -1,8 +1,9 @@
 namespace Foster.Framework;
 
 /// <summary>
-/// The Packer takes source image data and packs them into large texture pages that can then be used for Atlases
-/// This is useful for sprite fonts, sprite sheets, etc.
+/// The Packer takes source image data and packs them into large texture 
+/// pages that can then be used for Atlases. This is useful for sprite fonts, 
+/// sprite sheets, etc.
 /// </summary>
 public class Packer
 {

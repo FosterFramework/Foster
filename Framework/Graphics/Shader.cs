@@ -1,7 +1,13 @@
 namespace Foster.Framework;
 
 /// <summary>
-/// A combination of a Vertex and Fragment Shader programs used for Rendering
+/// A combination of a Vertex and Fragment Shader programs used for Rendering.<br/>
+/// <br/>
+/// The Provided <see cref="ShaderProgramInfo.Code"/> must match the <see cref="GraphicsDriver"/>
+/// in use, which can be checked with <see cref="Renderer.Driver"/>.<br/>
+/// <br/>
+/// Shaders must match SDL_GPU Shader resource binding rules:
+/// https://wiki.libsdl.org/SDL3/SDL_CreateGPUShader#remarks
 /// </summary>
 public class Shader : IGraphicResource
 {

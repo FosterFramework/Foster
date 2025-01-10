@@ -4,6 +4,10 @@ using System.Numerics;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// A 2D Sprite Batcher.
+/// Internally builds a Mesh which can be drawn by calling Render.
+/// </summary>
 public class Batcher : IDisposable
 {
 	/// <summary>

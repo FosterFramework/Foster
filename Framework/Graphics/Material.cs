@@ -6,12 +6,15 @@ namespace Foster.Framework;
 /// A Material references a Shader and holds the applied values for each Uniform and Texture Sampler.
 /// This way, you can have a single Shader in memory but many different applied values.
 /// </summary>
-public class Material
+/// <remarks>
+/// Constructs an Empty Material
+/// </remarks>
+public class Material(Renderer renderer)
 {
 	/// <summary>
 	/// The Renderer this Material was created in
 	/// </summary>
-	public readonly Renderer Renderer;
+	public readonly Renderer Renderer = renderer;
 
 	/// <summary>
 	/// Combination of Texture and Sampler bound to a Slot in the Material
@@ -38,14 +41,14 @@ public class Material
 	}
 
 	/// <summary>
-	/// Constructs an Empty Material
+	/// Constructs a Material using the given Shader
 	/// </summary>
-	public Material(Renderer renderer) => Renderer = renderer;
+	public Material(Renderer renderer, Shader? shader) : this(renderer) => SetShader(shader);
 
 	/// <summary>
 	/// Constructs a Material using the given Shader
 	/// </summary>
-	public Material(Renderer renderer, Shader? shader) : this(renderer) => SetShader(shader);
+	public Material(Shader shader) : this(shader.Renderer) => SetShader(shader);
 
 	/// <summary>
 	/// Stores the Vertex Uniform Block Data

@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 namespace Foster.Framework;
 
 /// <summary>
-/// Color Data
+/// 8-bit RGBA Color struct
 /// </summary>
 [StructLayout(LayoutKind.Sequential, Pack = 4, Size = 4)]
 public struct Color : IEquatable<Color>

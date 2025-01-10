@@ -5,12 +5,13 @@ using System.Numerics;
 namespace Foster.Framework;
 
 /// <summary>
-/// A Font used to render text in a Sprite Batch.
-/// By default the SpriteFont will prepare characters as they are requested,
-/// which means there can occasionally be a delay between requesting to draw 
-/// some text and it actually appearing on-screen. To remove this delay, you
-/// can call <see cref="PrepareCharacters(ReadOnlySpan{char}, bool)"/> to 
-/// to pre-render all characters that you would like to use.
+/// A Font used to render text to a Sprite <see cref="Batcher"/>.<br/>
+/// <br/>
+/// By default the <see cref="SpriteFont"/> will prepare characters as they are
+/// requested, which means there can occasionally be a delay between trying
+/// to draw some text and it actually appearing on-screen. To remove this delay, 
+/// you can call <see cref="PrepareCharacters(ReadOnlySpan{char}, bool)"/> to 
+/// pre-render all characters that you would like to use.
 /// </summary>
 public class SpriteFont : IDisposable
 {

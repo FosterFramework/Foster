@@ -1,7 +1,7 @@
 namespace Foster.Framework;
 
 /// <summary>
-/// The Rendering Module
+/// The Rendering Module which can subbmit <see cref="DrawCommand"/>'s through the <see cref="Draw"/> method.
 /// </summary>
 public abstract class Renderer
 {

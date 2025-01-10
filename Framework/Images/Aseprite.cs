@@ -4,6 +4,9 @@ using System.Text;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// Parses Aseprite files
+/// </summary>
 public class Aseprite : Aseprite.IUserDataTarget
 {
 	private enum ChunkType

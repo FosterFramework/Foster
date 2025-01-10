@@ -39,6 +39,9 @@ public abstract class InputProvider
 	public virtual void Update(in Time time)
 		=> Input.Step(time);
 
+	/// <summary>
+	/// Notifies the Input of the given keyboard text
+	/// </summary>
 	public void Text(ReadOnlySpan<char> text)
 		=> Input.OnText(text);
 
@@ -61,21 +64,33 @@ public abstract class InputProvider
 		Text(new ReadOnlySpan<char>(chars, written));
 	}
 
+	/// <summary>
+	/// Notifies the Input of a change in keyboard key state
+	/// </summary>
 	public void Key(int key, bool pressed, in TimeSpan time)
 		=> Input.NextState.Keyboard.OnKey(key, pressed, time);
 
+	/// <summary>
+	/// Notifies the Input of a change in mouse button state
+	/// </summary>
 	public void MouseButton(int button, bool pressed, in TimeSpan time)
 		=> Input.NextState.Mouse.OnButton(button, pressed, time);
 
-	public void MouseMove(Vector2 position, Vector2 delta)
-	{
-		Input.NextState.Mouse.Position = position;
-		Input.NextState.Mouse.Delta = delta;
-	}
+	/// <summary>
+	/// Notifies the Input of a change in Mouse position state
+	/// </summary>
+	public void MouseMove(Vector2 position, Vector2 delta, in TimeSpan time)
+		=> Input.NextState.Mouse.OnMotion(position, delta, time);
 
+	/// <summary>
+	/// Notifies the Input of a change in Mouse Wheel state
+	/// </summary>
 	public void MouseWheel(Vector2 wheel)
 		=> Input.NextState.Mouse.OnWheel(wheel);
 
+	/// <summary>
+	/// Notifies the Input of a controller connection
+	/// </summary>
 	public void ConnectController(
 		ControllerID id,
 		string name,
@@ -88,12 +103,21 @@ public abstract class InputProvider
 		ushort version)
 		=> Input.ConnectController(id, name, buttonCount, axisCount, isGamepad, type, vendor, product, version);
 
+	/// <summary>
+	/// Notifies the Input of a controller disconnection
+	/// </summary>
 	public void DisconnectController(ControllerID id)
 		=> Input.DisconnectController(id);
 
+	/// <summary>
+	/// Notifies the Input of a change in controller button state
+	/// </summary>
 	public void ControllerButton(ControllerID id, int button, bool pressed, in TimeSpan time)
 		=> Input.NextState.GetController(id)?.OnButton(button, pressed, time);
 
+	/// <summary>
+	/// Notifies the Input of a change in controller axis state
+	/// </summary>
 	public void ControllerAxis(ControllerID id, int axis, float value, in TimeSpan time)
 		=> Input.NextState.GetController(id)?.OnAxis(axis, value, time);
 }

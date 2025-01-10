@@ -111,9 +111,10 @@ public sealed class Mouse
 		}
 	}
 
-	internal void OnMotion(in Vector2 position, in TimeSpan time)
+	internal void OnMotion(in Vector2 position, in Vector2 delta, in TimeSpan time)
 	{
 		Position = position;
+		Delta = delta;
 		motionTimestamp = time;
 	}
 

@@ -5,7 +5,7 @@ namespace Foster.Framework;
 
 /// <summary>
 /// Queries and rasterizes characters from a Font File.
-/// To draw a font to the screen, use SpriteFont.
+/// To draw a font to the screen, use <see cref="SpriteFont"/>.
 /// </summary>
 public class Font : IDisposable
 {
