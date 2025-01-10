@@ -4,19 +4,18 @@ namespace Foster.Framework;
 
 /// <summary>
 /// A virtual 2D Axis/Stick input.
-/// Call <see cref="Input.CreateStick(in StickBinding, int)"/> to instantiate one.
 /// </summary>
-public sealed class VirtualStick: VirtualInput
+public sealed class VirtualStick(Input input, StickBinding binding, int controllerIndex = 0) : VirtualInput(input)
 {
 	/// <summary>
 	/// The Binding Action
 	/// </summary>
-	public readonly StickBinding Binding;
+	public readonly StickBinding Binding = binding;
 
 	/// <summary>
 	/// The Device Index
 	/// </summary>
-	public readonly int Device;
+	public readonly int Device = controllerIndex;
 
 	/// <summary>
 	/// Current Value of the Virtual Stick
@@ -37,12 +36,6 @@ public sealed class VirtualStick: VirtualInput
 	/// Current Value without deadzones of the Virtual Stick rounded to Integer values
 	/// </summary>
 	public Point2 IntValueNoDeadzone { get; private set; }
-
-	internal VirtualStick(Input input, StickBinding binding, int device) : base(input)
-	{
-		Binding = binding;
-		Device = device;
-	}
 
 	internal override void Update(in Time time)
 	{

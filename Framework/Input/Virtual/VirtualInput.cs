@@ -8,7 +8,11 @@ public abstract class VirtualInput : IDisposable
 	public readonly Input Input;
 	public bool IsDisposed { get; private set; }
 
-	internal VirtualInput(Input input) => Input = input;
+	internal VirtualInput(Input input)
+	{
+		Input = input;
+		Input.AddVirtualInput(this);
+	}
 
 	/// <summary>
 	/// Updates the Virtual Input values

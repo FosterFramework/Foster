@@ -103,37 +103,9 @@ public sealed class Input
 	public string GetClipboardString()
 		=> provider.GetClipboard();
 
-	/// <summary>
-	/// Creates a new Virtual Input Action
-	/// </summary>
-	public VirtualAction CreateAction(in ActionBinding binding, int controllerIndex = 0, float buffer = 0)
+	internal void AddVirtualInput(VirtualInput it)
 	{
-		var it = new VirtualAction(this, binding, controllerIndex)
-		{
-			Buffer = buffer
-		};
 		virtualInputs.Add(new WeakReference<VirtualInput>(it));
-		return it;
-	}
-
-	/// <summary>
-	/// Creates a new Virtual Input Axis
-	/// </summary>
-	public VirtualAxis CreateAxis(in AxisBinding binding, int controllerIndex = 0)
-	{
-		var it = new VirtualAxis(this, binding, controllerIndex);
-		virtualInputs.Add(new WeakReference<VirtualInput>(it));
-		return it;
-	}
-
-	/// <summary>
-	/// Creates a new Virtual Input Stick
-	/// </summary>
-	public VirtualStick CreateStick(in StickBinding binding, int controllerIndex = 0)
-	{
-		var it = new VirtualStick(this, binding, controllerIndex);
-		virtualInputs.Add(new WeakReference<VirtualInput>(it));
-		return it;
 	}
 
 	internal void RemoveVirtualInput(VirtualInput it)

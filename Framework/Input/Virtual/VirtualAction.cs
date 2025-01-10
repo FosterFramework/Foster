@@ -2,19 +2,18 @@ namespace Foster.Framework;
 
 /// <summary>
 /// A virtual action input.
-/// Call <see cref="Input.CreateAction(in ActionBinding, int, float)"/> to instantiate one.
 /// </summary>
-public sealed class VirtualAction : VirtualInput
+public sealed class VirtualAction(Input input, ActionBinding action, int controllerIndex = 0, float buffer = 0) : VirtualInput(input)
 {
 	/// <summary>
 	/// The Binding Action
 	/// </summary>
-	public readonly ActionBinding Binding;
+	public readonly ActionBinding Binding = action;
 
 	/// <summary>
 	/// The Device Index
 	/// </summary>
-	public readonly int Device;
+	public readonly int Device = controllerIndex;
 
 	/// <summary>
 	/// How long before invoking the first Repeated signal
@@ -29,7 +28,7 @@ public sealed class VirtualAction : VirtualInput
 	/// <summary>
 	/// Input buffer
 	/// </summary>
-	public float Buffer;
+	public float Buffer = buffer;
 
 	/// <summary>
 	/// If the Action was pressed this frame
@@ -75,12 +74,6 @@ public sealed class VirtualAction : VirtualInput
 	/// The time since the Action was last pressed
 	/// </summary>
 	public TimeSpan Timestamp { get; private set; }
-
-	internal VirtualAction(Input input, ActionBinding action, int device) : base(input)
-	{
-		Binding = action;
-		Device = device;
-	}
 
 	internal override void Update(in Time time)
 	{

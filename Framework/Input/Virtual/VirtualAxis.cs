@@ -4,19 +4,18 @@ namespace Foster.Framework;
 
 /// <summary>
 /// A virtual axis input.
-/// Call <see cref="Input.CreateAxis(in AxisBinding, int)"/> to instantiate one.
 /// </summary>
-public sealed class VirtualAxis : VirtualInput
+public sealed class VirtualAxis(Input input, AxisBinding binding, int controllerIndex = 0) : VirtualInput(input)
 {
 	/// <summary>
 	/// The Binding Action
 	/// </summary>
-	public readonly AxisBinding Binding;
+	public readonly AxisBinding Binding = binding;
 
 	/// <summary>
 	/// The Device Index
 	/// </summary>
-	public readonly int Device;
+	public readonly int Device = controllerIndex;
 
 	/// <summary>
 	/// Current Value of the Virtual Axis
@@ -47,12 +46,6 @@ public sealed class VirtualAxis : VirtualInput
 	/// 
 	/// </summary>
 	public int PressedSign { get; private set; }
-
-	internal VirtualAxis(Input input, AxisBinding binding, int device) : base(input)
-	{
-		Binding = binding;
-		Device = device;
-	}
 
 	internal override void Update(in Time time)
 	{
