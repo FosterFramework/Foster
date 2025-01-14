@@ -1,7 +1,7 @@
 namespace Foster.Framework;
 
 /// <summary>
-/// A 2D Render Target used to draw content off-frame.
+/// A 2D Render Target used to draw content off-screen.
 /// </summary>
 public class Target : IGraphicResource, IDrawableTarget
 {

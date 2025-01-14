@@ -25,10 +25,11 @@ public abstract class VirtualInput : IDisposable
 	/// </summary>
 	public void Dispose()
 	{
+		GC.SuppressFinalize(this);
+
 		if (!IsDisposed)
-		{
-			IsDisposed = true;
 			Input.RemoveVirtualInput(this);
-		}
+
+		IsDisposed = true;
 	}
 }

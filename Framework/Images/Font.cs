@@ -25,6 +25,7 @@ public class Font : IDisposable
 	private GCHandle dataHandle;
 	private int dataLength;
 	private readonly Dictionary<int, int> codepointToGlyphLookup = [];
+	private static readonly Exception invalidFontException = new("Attempting to use an invalid/disposed Font");
 
 	public int Ascent { get; private set; }
 	public int Descent { get; private set; }
@@ -95,7 +96,7 @@ public class Font : IDisposable
 	public float GetScale(float size)
 	{
 		if (fontPtr == IntPtr.Zero)
-			throw new Exception("Trying to use an invalid Font");
+			throw invalidFontException;
 		return Platform.FontGetScale(fontPtr, size);
 	}
 
@@ -125,7 +126,7 @@ public class Font : IDisposable
 	public float GetKerningBetweenGlyphs(int glyph1, int glyph2, float scale)
 	{
 		if (fontPtr == IntPtr.Zero)
-			throw new Exception("Trying to use an invalid Font");
+			throw invalidFontException;
 		return Platform.FontGetKerning(fontPtr, glyph1, glyph2, scale);
 	}
 
@@ -135,7 +136,7 @@ public class Font : IDisposable
 	public Character GetCharacter(char ch, float scale)
 	{
 		if (fontPtr == IntPtr.Zero)
-			throw new Exception("Trying to use an invalid Font");
+			throw invalidFontException;
 		return GetCharacterOfGlyph(GetGlyphIndex(ch), scale);
 	}
 
@@ -145,7 +146,7 @@ public class Font : IDisposable
 	public Character GetCharacter(int codepoint, float scale)
 	{
 		if (fontPtr == IntPtr.Zero)
-			throw new Exception("Trying to use an invalid Font");
+			throw invalidFontException;
 		return GetCharacterOfGlyph(GetGlyphIndex(codepoint), scale);
 	}
 	
@@ -155,7 +156,7 @@ public class Font : IDisposable
 	public Character GetCharacterOfGlyph(int glyphIndex, float scale)
 	{
 		if (fontPtr == IntPtr.Zero)
-			throw new Exception("Trying to use an invalid Font");
+			throw invalidFontException;
 		
 		Platform.FontGetCharacter(fontPtr, glyphIndex, scale,
 			out int width, out int height, out float advance, out float offsetX, out float offsetY, out int visible);
@@ -199,7 +200,7 @@ public class Font : IDisposable
 	public bool GetPixels(in Character character, Span<Color> destination)
 	{
 		if (fontPtr == IntPtr.Zero)
-			throw new Exception("Trying to use an invalid Font");
+			throw invalidFontException;
 
 		if (!character.Visible)
 			return false;

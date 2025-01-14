@@ -20,17 +20,6 @@ public enum GamepadTypes
 }
 
 /// <summary>
-/// Types of GamePad Providers
-/// </summary>
-public enum GamepadProviders
-{
-	Unknown,
-	Xbox,
-	PlayStation,
-	Nintendo
-}
-
-/// <summary>
 /// Known popular gamepad types
 /// </summary>
 [Obsolete("Use GamepadTypes or GamepadProviders instead")]

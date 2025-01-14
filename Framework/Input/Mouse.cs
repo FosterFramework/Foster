@@ -83,6 +83,7 @@ public sealed class Mouse
 		Delta = other.Delta;
 		wheelValue = other.wheelValue;
 		time = other.time;
+		motionTimestamp = other.motionTimestamp;
 	}
 
 	internal void Step(in Time time)
