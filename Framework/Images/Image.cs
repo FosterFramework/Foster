@@ -107,7 +107,7 @@ public class Image : IDisposable
 	{
 		// get all the bytes
 		var data = new byte[stream.Length - stream.Position];
-		stream.Read(data);
+		stream.ReadExactly(data);
 
 		// load image from byte data
 		nint mem;

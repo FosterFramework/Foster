@@ -16,7 +16,7 @@ There is a [Samples](https://github.com/FosterFramework/Samples) repo which cont
 Check out [Discussons](https://github.com/FosterFramework/Foster/discussions) or [Discord](https://discord.gg/K7tdFuP3Bg) to get involved.
 
 ### Dependencies
- - [dotnet 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) and [C# 12](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-12)
+ - [dotnet 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) and [C# 13](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13)
  - [SDL2](https://github.com/libsdl-org/sdl) is the only external dependency, which is required by the [Platform library](https://github.com/FosterFramework/Foster/tree/main/Platform). By default this is statically compiled.
 
 ### Platform Library
@@ -27,7 +27,7 @@ Check out [Discussons](https://github.com/FosterFramework/Foster/discussions) or
 ### Rendering
  - Implemented in OpenGL for Linux/Mac/Windows and D3D11 for Windows.
  - Separate Shaders are required depending on which rendering API you're targetting.
- - Planning to replace the rendering implementation with [SDL3 GPU when it is complete](https://github.com/FosterFramework/Foster/issues/1).
+ - Replacing the rendering implementation with [SDL3 GPU](https://github.com/FosterFramework/Foster/tree/app-refactor) in the near
 
 ### Notes
  - Taken a lot of inspiration from other Frameworks and APIs, namely [FNA](https://fna-xna.github.io/).

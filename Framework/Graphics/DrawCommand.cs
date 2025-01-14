@@ -1,32 +1,32 @@
 
 namespace Foster.Framework;
 
-public struct DrawCommand()
+public struct DrawCommand(Target? target, Mesh mesh, Material material)
 {
 	/// <summary>
 	/// Render Target. If not assigned, will target the Back Buffer
 	/// </summary>
-	public Target? Target;
+	public Target? Target = target;
 
 	/// <summary>
 	/// Material to use
 	/// </summary>
-	public Material Material;
+	public Material Material = material;
 
 	/// <summary>
 	/// Mesh to use
 	/// </summary>
-	public Mesh Mesh;
+	public Mesh Mesh = mesh;
 
 	/// <summary>
 	/// The Index to begin rendering from the Mesh
 	/// </summary>
-	public int MeshIndexStart;
+	public int MeshIndexStart = 0;
 
 	/// <summary>
 	/// The total number of Indices to draw from the Mesh
 	/// </summary>
-	public int MeshIndexCount;
+	public int MeshIndexCount = mesh.IndexCount;
 
 	/// <summary>
 	/// The Render State Blend Mode
@@ -57,19 +57,6 @@ public struct DrawCommand()
 	/// The Render State Scissor Rectangle
 	/// </summary>
 	public RectInt? Scissor = null;
-
-	/// <summary>
-	/// Creates a Draw Command based on the given mesh and material
-	/// </summary>
-	public DrawCommand(Target? target, Mesh mesh, Material material)
-		: this()
-	{
-		Target = target;
-		Mesh = mesh;
-		Material = material;
-		MeshIndexStart = 0;
-		MeshIndexCount = mesh.IndexCount;
-	}
 
 	public readonly void Submit()
 	{
