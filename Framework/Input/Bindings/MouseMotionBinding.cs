@@ -13,6 +13,16 @@ public sealed class MouseMotionBinding : Binding
 	[JsonInclude] public float MinimumValue;
 	[JsonInclude] public float MaximumValue;
 
+	public MouseMotionBinding() {}
+
+	public MouseMotionBinding(in Vector2 axis, int sign, float minValue, float maxValue)
+	{
+		Axis = axis;
+		Sign = sign;
+		MinimumValue = minValue;
+		MaximumValue = maxValue;
+	}
+
 	public override BindingState GetState(Input input, int device) => new(
 		Pressed: GetValue(input.State) > 0 && GetValue(input.LastState) <= 0,
 		Released: GetValue(input.State) <= 0 && GetValue(input.LastState) > 0,

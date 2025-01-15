@@ -14,6 +14,9 @@ public class ActionBinding
 	public ActionBinding(params ReadOnlySpan<Binding> bindings) =>
 		Bindings.AddRange(bindings);
 
+	/// <summary>
+	/// Adds Keyboard Key mappings to this Binding
+	/// </summary>
 	public ActionBinding Add(params ReadOnlySpan<Keys> values)
 	{
 		foreach (var it in values)
@@ -21,6 +24,9 @@ public class ActionBinding
 		return this;
 	}
 
+	/// <summary>
+	/// Adds GamePad Button mappings to this Binding
+	/// </summary>
 	public ActionBinding Add(params ReadOnlySpan<Buttons> values)
 	{
 		foreach (var it in values)
@@ -28,16 +34,22 @@ public class ActionBinding
 		return this;
 	}
 
+	/// <summary>
+	/// Adds GamePad Axis mappings to this Binding
+	/// </summary>
+	public ActionBinding Add(Axes axes, int sign, float deadzone)
+	{
+		Bindings.Add(new ControllerAxisBinding(axes, sign, deadzone));
+		return this;
+	}
+
+	/// <summary>
+	/// Adds Mouse Button mappings to this Binding
+	/// </summary>
 	public ActionBinding Add(params ReadOnlySpan<MouseButtons> values)
 	{
 		foreach (var it in values)
 			Bindings.Add(new MouseButtonBinding(it));
-		return this;
-	}
-
-	public ActionBinding Add(Axes axes, int sign, float deadzone)
-	{
-		Bindings.Add(new ControllerAxisBinding(axes, sign, deadzone));
 		return this;
 	}
 

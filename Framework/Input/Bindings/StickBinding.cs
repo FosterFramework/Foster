@@ -32,6 +32,9 @@ public class StickBinding
 		Y.OverlapBehaviour = overlapBehavior;
 	}
 
+	/// <summary>
+	/// Adds a Keyboard Key mapping
+	/// </summary>
 	public StickBinding Add(Keys left, Keys right, Keys up, Keys down)
 	{
 		X.Add(left, right);
@@ -39,6 +42,9 @@ public class StickBinding
 		return this;
 	}
 
+	/// <summary>
+	/// Adds a GamePad Button mapping
+	/// </summary>
 	public StickBinding Add(Buttons left, Buttons right, Buttons up, Buttons down)
 	{
 		X.Add(left, right);
@@ -46,12 +52,42 @@ public class StickBinding
 		return this;
 	}
 
+	/// <summary>
+	/// Adds a GamePad Axis mapping
+	/// </summary>
 	public StickBinding Add(Axes x, Axes y)
 	{
 		X.Add(x);
 		Y.Add(y);
 		return this;
 	}
+
+	/// <summary>
+	/// Adds a Mouse Motion mapping
+	/// </summary>
+	public StickBinding AddMouseMotion(float maxMotion = 25)
+	{
+		X.Negative.Bindings.Add(new MouseMotionBinding(Vector2.UnitX, -1, 0, maxMotion));
+		X.Positive.Bindings.Add(new MouseMotionBinding(Vector2.UnitX, 1, 0, maxMotion));
+		Y.Negative.Bindings.Add(new MouseMotionBinding(Vector2.UnitY, -1, 0, maxMotion));
+		Y.Positive.Bindings.Add(new MouseMotionBinding(Vector2.UnitY, 1, 0, maxMotion));
+		return this;
+	}
+
+	public StickBinding AddArrowKeys()
+		=> Add(Keys.Left, Keys.Right, Keys.Up, Keys.Down);
+
+	public StickBinding AddWasd()
+		=> Add(Keys.A, Keys.D, Keys.W, Keys.S);
+
+	public StickBinding AddLeftJoystick()
+		=> Add(Axes.LeftX, Axes.LeftY);
+
+	public StickBinding AddRightJoystick()
+		=> Add(Axes.RightX, Axes.RightY);
+
+	public StickBinding AddDPad()
+		=> Add(Buttons.Left, Buttons.Right, Buttons.Up, Buttons.Down);
 
 	public Vector2 Value(Input input, int device)
 	{

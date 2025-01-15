@@ -12,5 +12,8 @@ namespace Foster.Framework;
 [JsonDerivedType(typeof(MouseMotionBinding), typeDiscriminator: "MouseMotion")]
 public abstract class Binding
 {
+	/// <summary>
+	/// Gets the current state of the Binding from the provided Input
+	/// </summary>
 	public abstract BindingState GetState(Input input, int device);
 }

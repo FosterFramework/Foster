@@ -118,6 +118,7 @@ public sealed class Mouse
 		Array.Fill(pressed, false);
 		Array.Fill(released, false);
 		wheelValue = Vector2.Zero;
+		Delta = Vector2.Zero;
 		this.time = time;
 	}
 

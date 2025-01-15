@@ -51,6 +51,9 @@ public class AxisBinding
 		}
 	}
 
+	/// <summary>
+	/// Adds a Keyboard Key mapping
+	/// </summary>
 	public AxisBinding Add(Keys negative, Keys positive)
 	{
 		Negative.Add(negative);
@@ -58,6 +61,9 @@ public class AxisBinding
 		return this;
 	}
 
+	/// <summary>
+	/// Adds a GamePad Button mapping
+	/// </summary>
 	public AxisBinding Add(Buttons negative, Buttons positive)
 	{
 		Negative.Add(negative);
@@ -65,6 +71,9 @@ public class AxisBinding
 		return this;
 	}
 
+	/// <summary>
+	/// Adds a GamePad Axis mapping
+	/// </summary>
 	public AxisBinding Add(Axes axis, float deadzone = 0)
 	{
 		Negative.Add(axis, -1, deadzone);
@@ -72,9 +81,15 @@ public class AxisBinding
 		return this;
 	}
 
+	/// <summary>
+	/// Gets the Value of the Axis from the provided Input
+	/// </summary>
 	public float Value(Input input, int device)
 		=> Value(input, device, true);
 	
+	/// <summary>
+	/// Gets the Value of the Axis from the provided Input without a Deadzone applied
+	/// </summary>
 	public float ValueNoDeadzone(Input input, int device)
 		=> Value(input, device, false);
 
