@@ -1,6 +1,4 @@
 ﻿
-using System.Collections.ObjectModel;
-
 namespace Foster.Framework;
 
 /// <summary>
@@ -30,17 +28,17 @@ public sealed class Input
 	/// <summary>
 	/// The Keyboard of the current State
 	/// </summary>
-	public Keyboard Keyboard => State.Keyboard;
+	public KeyboardState Keyboard => State.Keyboard;
 
 	/// <summary>
 	/// The Mouse of the Current State
 	/// </summary>
-	public Mouse Mouse => State.Mouse;
+	public MouseState Mouse => State.Mouse;
 
 	/// <summary>
 	/// The Controllers of the Current State
 	/// </summary>
-	public ReadOnlyCollection<Controller> Controllers => State.Controllers;
+	public ControllerState[] Controllers => State.Controllers;
 
 	/// <summary>
 	/// Default delay before a key or button starts repeating, in seconds
@@ -80,16 +78,16 @@ public sealed class Input
 	internal Input(InputProvider provider)
 	{
 		this.provider = provider;
-		State = new(provider);
-		LastState = new(provider);
-		NextState = new(provider);
+		State = new();
+		LastState = new();
+		NextState = new();
 	}
 
 	/// <summary>
 	/// Finds a Connected Controller by the given ID.
 	/// If it is not found, or no longer connected, null is returned.
 	/// </summary>
-	public Controller? GetController(ControllerID id) => State.GetController(id);
+	public ControllerState? GetController(ControllerID id) => State.GetController(id);
 
 	/// <summary>
 	/// Sets the Clipboard to the given String
@@ -102,6 +100,56 @@ public sealed class Input
 	/// </summary>
 	public string GetClipboardString()
 		=> provider.GetClipboard();
+
+	/// <summary>
+	/// Rumbles a Controller for a give duration.
+	/// This will cancel any previous rumble effects.
+	/// </summary>
+	/// <param name="id">The ID of the Controller to Rumble</param>
+	/// <param name="intensity">From 0.0 to 1.0 intensity of the Rumble</param>
+	/// <param name="duration">How long, in seconds, for the Rumble to last</param>
+	public void Rumble(ControllerID id, float intensity, float duration)
+		=> Rumble(id, intensity, intensity, duration);
+
+	/// <summary>
+	/// Rumbles a Controller for a give duration.
+	/// This will cancel any previous rumble effects.
+	/// </summary>
+	/// <param name="controllerIndex">The Index of the Controller to Rumble</param>
+	/// <param name="intensity">From 0.0 to 1.0 intensity of the Rumble</param>
+	/// <param name="duration">How long, in seconds, for the Rumble to last</param>
+	public void Rumble(int controllerIndex, float intensity, float duration)
+		=> Rumble(controllerIndex, intensity, intensity, duration);
+
+	/// <summary>
+	/// Rumbles a Controller for a give duration.
+	/// This will cancel any previous rumble effects.
+	/// </summary>
+	/// <param name="id">The ID of the Controller to Rumble</param>
+	/// <param name="lowIntensity">From 0.0 to 1.0 intensity of the Low-Intensity Rumble</param>
+	/// <param name="highIntensity">From 0.0 to 1.0 intensity of the High-Intensity Rumble</param>
+	/// <param name="duration">How long, in seconds, for the Rumble to last</param>
+	public void Rumble(ControllerID id, float lowIntensity, float highIntensity, float duration)
+	{
+		var it = GetController(id);
+		if (it != null && it.Connected)
+			provider.Rumble(id, lowIntensity, highIntensity, duration);
+	}
+
+	/// <summary>
+	/// Rumbles a Controller for a give duration.
+	/// This will cancel any previous rumble effects.
+	/// </summary>
+	/// <param name="controllerIndex">The Index of the Controller to Rumble</param>
+	/// <param name="lowIntensity">From 0.0 to 1.0 intensity of the Low-Intensity Rumble</param>
+	/// <param name="highIntensity">From 0.0 to 1.0 intensity of the High-Intensity Rumble</param>
+	/// <param name="duration">How long, in seconds, for the Rumble to last</param>
+	public void Rumble(int controllerIndex, float lowIntensity, float highIntensity, float duration)
+	{
+		var it = Controllers[controllerIndex];
+		if (it.Connected)
+			provider.Rumble(it.ID, lowIntensity, highIntensity, duration);
+	}
 
 	internal void AddVirtualInput(VirtualInput it)
 	{

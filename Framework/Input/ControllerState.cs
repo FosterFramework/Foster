@@ -11,15 +11,10 @@ public readonly record struct ControllerID(uint Value);
 /// <summary>
 /// Stores the state of a GamePad or Joystick Controller.
 /// </summary>
-public class Controller(InputProvider provider, int index)
+public sealed class ControllerState(int index)
 {
 	public const int MaxButtons = 64;
 	public const int MaxAxis = 64;
-
-	/// <summary>
-	/// The Input Provider we belong to
-	/// </summary>
-	private readonly InputProvider provider = provider;
 
 	/// <summary>
 	/// The current Controller Slot Index.
@@ -113,6 +108,65 @@ public class Controller(InputProvider provider, int index)
 	private readonly TimeSpan[] axisTimestamp = new TimeSpan[MaxAxis];
 	private Time time;
 
+	public bool Pressed(int buttonIndex) => buttonIndex >= 0 && buttonIndex < MaxButtons && pressed[buttonIndex];
+	public bool Pressed(Buttons button) => Pressed((int)button);
+
+	public TimeSpan Timestamp(int buttonIndex) => buttonIndex >= 0 && buttonIndex < MaxButtons ? timestamp[buttonIndex] : TimeSpan.Zero;
+	public TimeSpan Timestamp(Buttons button) => Timestamp((int)button);
+	public TimeSpan Timestamp(Axes axis) => axisTimestamp[(int)axis];
+
+	public bool Down(int buttonIndex) => buttonIndex >= 0 && buttonIndex < MaxButtons && down[buttonIndex];
+	public bool Down(Buttons button) => Down((int)button);
+
+	public bool Released(int buttonIndex) => buttonIndex >= 0 && buttonIndex < MaxButtons && released[buttonIndex];
+	public bool Released(Buttons button) => Released((int)button);
+
+	public float Axis(int axisIndex) => (axisIndex >= 0 && axisIndex < MaxAxis) ? axis[axisIndex] : 0f;
+	public float Axis(Axes axis) => Axis((int)axis);
+
+	public Vector2 Axis(int axisX, int axisY) => new(Axis(axisX), Axis(axisY));
+	public Vector2 Axis(Axes axisX, Axes axisY) => new(Axis(axisX), Axis(axisY));
+
+	public Vector2 LeftStick => Axis(Foster.Framework.Axes.LeftX, Foster.Framework.Axes.LeftY);
+	public Vector2 RightStick => Axis(Foster.Framework.Axes.RightX, Foster.Framework.Axes.RightY);
+
+	public bool Repeated(Buttons button)
+	{
+		return Repeated(button, Input.RepeatDelay, Input.RepeatInterval);
+	}
+
+	public bool Repeated(Buttons button, float delay, float interval)
+	{
+		if (Pressed(button))
+			return true;
+
+		if (Down(button))
+		{
+			var stamp = Timestamp(button) / 1000.0;
+			return (time.Elapsed - stamp).TotalSeconds > delay && Time.OnInterval(time, interval, stamp.TotalSeconds);
+		}
+
+		return false;
+	}
+
+	/// <summary>
+	/// Creates a Snapshot of this Controller State and returns it
+	/// </summary>
+	public ControllerState Snapshot()
+	{
+		var result = new ControllerState(Index);
+		result.Copy(this);
+		return result;
+	}
+
+	/// <summary>
+	/// Copies a Snapshot of this Controller State into the provided value
+	/// </summary>
+	public void Snapshot(ControllerState into)
+	{
+		into.Copy(this);
+	}
+
 	internal void Connect(ControllerID id, string name, int buttonCount, int axisCount, bool isGamepad, GamepadTypes type, ushort vendor, ushort product, ushort version)
 	{
 		ID = id;
@@ -155,7 +209,7 @@ public class Controller(InputProvider provider, int index)
 		this.time = time;
 	}
 
-	internal void Copy(Controller other)
+	internal void Copy(ControllerState other)
 	{
 		ID = other.ID;
 		Connected = other.Connected;
@@ -202,70 +256,5 @@ public class Controller(InputProvider provider, int index)
 			axis[axisIndex] = axisValue;
 			axisTimestamp[axisIndex] = time;
 		}
-	}
-
-	/// <summary>
-	/// Rumbles the Controller for a give duration.
-	/// This will cancel any previous rumble effects.
-	/// </summary>
-	/// <param name="intensity">From 0.0 to 1.0 intensity of the Rumble</param>
-	/// <param name="duration">How long, in seconds, for the Rumble to last</param>
-	public void Rumble(float intensity, float duration)
-		=> Rumble(intensity, intensity, duration);
-
-	/// <summary>
-	/// Rumbles the Controller for a give duration.
-	/// This will cancel any previous rumble effects.
-	/// </summary>
-	/// <param name="lowIntensity">From 0.0 to 1.0 intensity of the Low-Intensity Rumble</param>
-	/// <param name="highIntensity">From 0.0 to 1.0 intensity of the High-Intensity Rumble</param>
-	/// <param name="duration">How long, in seconds, for the Rumble to last</param>
-	public void Rumble(float lowIntensity, float highIntensity, float duration)
-	{
-		if (!Connected)
-			return;
-
-		provider.Rumble(ID, lowIntensity, highIntensity, duration);
-	}
-
-	public bool Pressed(int buttonIndex) => buttonIndex >= 0 && buttonIndex < MaxButtons && pressed[buttonIndex];
-	public bool Pressed(Buttons button) => Pressed((int)button);
-
-	public TimeSpan Timestamp(int buttonIndex) => buttonIndex >= 0 && buttonIndex < MaxButtons ? timestamp[buttonIndex] : TimeSpan.Zero;
-	public TimeSpan Timestamp(Buttons button) => Timestamp((int)button);
-	public TimeSpan Timestamp(Axes axis) => axisTimestamp[(int)axis];
-
-	public bool Down(int buttonIndex) => buttonIndex >= 0 && buttonIndex < MaxButtons && down[buttonIndex];
-	public bool Down(Buttons button) => Down((int)button);
-
-	public bool Released(int buttonIndex) => buttonIndex >= 0 && buttonIndex < MaxButtons && released[buttonIndex];
-	public bool Released(Buttons button) => Released((int)button);
-
-	public float Axis(int axisIndex) => (axisIndex >= 0 && axisIndex < MaxAxis) ? axis[axisIndex] : 0f;
-	public float Axis(Axes axis) => Axis((int)axis);
-
-	public Vector2 Axis(int axisX, int axisY) => new(Axis(axisX), Axis(axisY));
-	public Vector2 Axis(Axes axisX, Axes axisY) => new(Axis(axisX), Axis(axisY));
-
-	public Vector2 LeftStick => Axis(Foster.Framework.Axes.LeftX, Foster.Framework.Axes.LeftY);
-	public Vector2 RightStick => Axis(Foster.Framework.Axes.RightX, Foster.Framework.Axes.RightY);
-
-	public bool Repeated(Buttons button)
-	{
-		return Repeated(button, Input.RepeatDelay, Input.RepeatInterval);
-	}
-
-	public bool Repeated(Buttons button, float delay, float interval)
-	{
-		if (Pressed(button))
-			return true;
-
-		if (Down(button))
-		{
-			var stamp = Timestamp(button) / 1000.0;
-			return (time.Elapsed - stamp).TotalSeconds > delay && Time.OnInterval(time, interval, stamp.TotalSeconds);
-		}
-
-		return false;
 	}
 }

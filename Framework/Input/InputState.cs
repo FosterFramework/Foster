@@ -1,5 +1,4 @@
-﻿using System.Collections.ObjectModel;
-
+﻿
 namespace Foster.Framework;
 
 /// <summary>
@@ -15,49 +14,52 @@ public class InputState
 	/// <summary>
 	/// The Keyboard State
 	/// </summary>
-	public readonly Keyboard Keyboard;
+	public readonly KeyboardState Keyboard = new();
+
 	/// <summary>
 	/// The Mouse State
 	/// </summary>
-	public readonly Mouse Mouse;
+	public readonly MouseState Mouse = new();
 
 	/// <summary>
-	/// A list of all the Controllers
+	/// The Controllers state
 	/// </summary>
-	private readonly Controller[] controllers;
-
-	/// <summary>
-	/// A Read-Only Collection of the Controllers
-	/// Note that they aren't necessarily connected
-	/// </summary>
-	public readonly ReadOnlyCollection<Controller> Controllers;
-	
-	internal InputState(InputProvider provider)
-	{
-		controllers = new Controller[MaxControllers];
-		for (int i = 0; i < controllers.Length; i++)
-			controllers[i] = new Controller(provider, i);
-
-		Controllers = new ReadOnlyCollection<Controller>(controllers);
-		Keyboard = new Keyboard();
-		Mouse = new Mouse();
-	}
+	public readonly ControllerState[] Controllers = 
+		[.. Enumerable.Range(0, MaxControllers).Select(it => new ControllerState(it))];
 
 	/// <summary>
 	/// Finds a Connected Controller by the given ID.
 	/// If it is not found, or no longer connected, null is returned.
 	/// </summary>
-	public Controller? GetController(ControllerID id)
+	public ControllerState? GetController(ControllerID id)
 	{
-		for (int i = 0; i < controllers.Length; i ++)
-			if (controllers[i].ID == id)
-				return controllers[i];
+		for (int i = 0; i < Controllers.Length; i ++)
+			if (Controllers[i].ID == id)
+				return Controllers[i];
 		return null;
+	}
+
+	/// <summary>
+	/// Creates a Snapshot of this Input State and returns it
+	/// </summary>
+	public InputState Snapshot()
+	{
+		var result = new InputState();
+		result.Copy(this);
+		return result;
+	}
+
+	/// <summary>
+	/// Copies a Snapshot of this Input State into the provided value
+	/// </summary>
+	public void Snapshot(InputState into)
+	{
+		into.Copy(this);
 	}
 
 	internal void Step(in Time time)
 	{
-		for (int i = 0; i < Controllers.Count; i++)
+		for (int i = 0; i < Controllers.Length; i++)
 		{
 			if (Controllers[i].Connected)
 				Controllers[i].Step(time);
@@ -68,7 +70,7 @@ public class InputState
 
 	internal void Copy(InputState other)
 	{
-		for (int i = 0; i < Controllers.Count; i++)
+		for (int i = 0; i < Controllers.Length; i++)
 		{
 			if (other.Controllers[i].Connected || (Controllers[i].Connected != other.Controllers[i].Connected))
 				Controllers[i].Copy(other.Controllers[i]);

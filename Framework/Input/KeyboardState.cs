@@ -5,7 +5,7 @@ namespace Foster.Framework;
 /// <summary>
 /// Stores the state of the Keyboard.
 /// </summary>
-public sealed class Keyboard
+public sealed class KeyboardState
 {
 	public const int MaxKeys = 512;
 
@@ -247,6 +247,9 @@ public sealed class Keyboard
 			? Timestamp(Keys.LeftShift) 
 			: Timestamp(Keys.RightShift);
 
+	/// <summary>
+	/// Clears the Keyboard State
+	/// </summary>
 	public void Clear()
 	{
 		Array.Clear(pressed, 0, MaxKeys);
@@ -256,6 +259,9 @@ public sealed class Keyboard
 		Text.Clear();
 	}
 
+	/// <summary>
+	/// Clears the state of a specific Keyboard Key
+	/// </summary>
 	public void Clear(Keys key)
 	{
 		pressed[(int)key] = false;
@@ -264,7 +270,25 @@ public sealed class Keyboard
 		timestamp[(int)key] = TimeSpan.Zero;
 	}
 
-	internal void Copy(Keyboard other)
+	/// <summary>
+	/// Creates a Snapshot of this Keyboard State and returns it
+	/// </summary>
+	public KeyboardState Snapshot()
+	{
+		var result = new KeyboardState();
+		result.Copy(this);
+		return result;
+	}
+
+	/// <summary>
+	/// Copies a Snapshot of this Keyboard State into the provided value
+	/// </summary>
+	public void Snapshot(KeyboardState into)
+	{
+		into.Copy(this);
+	}
+
+	internal void Copy(KeyboardState other)
 	{
 		Array.Copy(other.pressed, 0, pressed, 0, MaxKeys);
 		Array.Copy(other.down, 0, down, 0, MaxKeys);

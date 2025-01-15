@@ -5,17 +5,9 @@ namespace Foster.Framework;
 /// <summary>
 /// Stores the state of the Mouse
 /// </summary>
-public sealed class Mouse
+public sealed class MouseState
 {
 	public const int MaxButtons = 5;
-
-	private readonly bool[] pressed = new bool[MaxButtons];
-	private readonly bool[] down = new bool[MaxButtons];
-	private readonly bool[] released = new bool[MaxButtons];
-	private readonly TimeSpan[] timestamp = new TimeSpan[MaxButtons];
-	private TimeSpan motionTimestamp;
-	private Vector2 wheelValue;
-	private Time time;
 
 	/// <summary>
 	/// Mouse position, relative to the window, in Pixel Coordinates.
@@ -63,7 +55,7 @@ public sealed class Mouse
 	/// <summary>
 	/// Returns the timestamp of the last time the given Mouse Button was pressed
 	/// </summary>
-	public TimeSpan Timestamp(MouseButtons button) => timestamp[(int)button];
+	public TimeSpan PressedTimestamp(MouseButtons button) => timestamp[(int)button];
 
 	/// <summary>
 	/// Returns the timestamp of the last time the mouse was moved
@@ -97,9 +89,38 @@ public sealed class Mouse
 	public bool MiddleDown => down[(int)MouseButtons.Middle];
 	public bool MiddleReleased => released[(int)MouseButtons.Middle];
 
+	/// <summary>
+	/// The Mouse Wheel value
+	/// </summary>
 	public Vector2 Wheel => wheelValue;
 
-	internal void Copy(Mouse other)
+	private readonly bool[] pressed = new bool[MaxButtons];
+	private readonly bool[] down = new bool[MaxButtons];
+	private readonly bool[] released = new bool[MaxButtons];
+	private readonly TimeSpan[] timestamp = new TimeSpan[MaxButtons];
+	private TimeSpan motionTimestamp;
+	private Vector2 wheelValue;
+	private Time time;
+
+	/// <summary>
+	/// Creates a Snapshot of this Mouse State and returns it
+	/// </summary>
+	public MouseState Snapshot()
+	{
+		var result = new MouseState();
+		result.Copy(this);
+		return result;
+	}
+
+	/// <summary>
+	/// Copies a Snapshot of this Mouse State into the provided value
+	/// </summary>
+	public void Snapshot(MouseState into)
+	{
+		into.Copy(this);
+	}
+
+	internal void Copy(MouseState other)
 	{
 		Array.Copy(other.pressed, 0, pressed, 0, MaxButtons);
 		Array.Copy(other.down, 0, down, 0, MaxButtons);
