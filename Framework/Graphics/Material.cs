@@ -1,4 +1,3 @@
-using System.Collections.Frozen;
 using System.Numerics;
 
 namespace Foster.Framework;
@@ -222,7 +221,7 @@ public class Material(Renderer renderer)
 
 	public void Set(string uniform, ReadOnlySpan<byte> data)
 	{
-		static unsafe void CopyData(
+		static void CopyData(
 			Shader.Program.Uniform uniform,
 			in ReadOnlySpan<byte> srcBuffer,
 			Span<byte> dstBuffer)

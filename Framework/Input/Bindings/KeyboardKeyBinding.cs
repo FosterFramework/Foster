@@ -2,6 +2,9 @@ using System.Text.Json.Serialization;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// An Input Binding mapped to a Keyboard Key
+/// </summary>
 public sealed class KeyboardKeyBinding : Binding
 {
 	[JsonInclude] public Keys Key;

@@ -3,7 +3,7 @@ using System.Numerics;
 namespace Foster.Framework;
 
 /// <summary>
-/// A virtual axis input.
+/// A virtual Axis input, which detects user input mapped through a <see cref="AxisBinding"/>.
 /// </summary>
 public sealed class VirtualAxis(Input input, AxisBinding binding, int controllerIndex = 0) : VirtualInput(input)
 {

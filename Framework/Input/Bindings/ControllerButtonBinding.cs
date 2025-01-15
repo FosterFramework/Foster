@@ -2,6 +2,9 @@ using System.Text.Json.Serialization;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// An Input Binding mapped to a Controller Binding
+/// </summary>
 public sealed class ControllerButtonBinding : Binding
 {
 	[JsonInclude] public Buttons Button;

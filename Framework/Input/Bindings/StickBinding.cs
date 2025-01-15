@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace Foster.Framework;
 
 /// <summary>
-/// An Input binding that represents a 2D Axis
+/// An Input binding that represents a 2D Axis/Stick
 /// </summary>
 public class StickBinding
 {

@@ -3,7 +3,7 @@ using System.Numerics;
 namespace Foster.Framework;
 
 /// <summary>
-/// A virtual 2D Axis/Stick input.
+/// A virtual 2D Axis/Stick input, which detects user input mapped through a <see cref="StickBinding"/>.
 /// </summary>
 public sealed class VirtualStick(Input input, StickBinding binding, int controllerIndex = 0) : VirtualInput(input)
 {

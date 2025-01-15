@@ -1,7 +1,7 @@
 ﻿namespace Foster.Framework;
 
 /// <summary>
-/// List of Keys
+/// Keyboard Keys
 /// </summary>
 public enum Keys
 {

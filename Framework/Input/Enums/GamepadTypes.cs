@@ -2,7 +2,7 @@ namespace Foster.Framework;
 
 /// <summary>
 /// Type of Gamepads.
-/// This is a 1-1 mapping with SDL_GamepadType
+/// This is a 1-1 mapping with SDL_GamepadType.
 /// </summary>
 public enum GamepadTypes
 {

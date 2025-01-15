@@ -1,7 +1,7 @@
 namespace Foster.Framework;
 
 /// <summary>
-/// A virtual action input.
+/// A virtual Action/Button input, which detects user input mapped through a <see cref="ActionBinding"/>.
 /// </summary>
 public sealed class VirtualAction(Input input, ActionBinding action, int controllerIndex = 0, float buffer = 0) : VirtualInput(input)
 {

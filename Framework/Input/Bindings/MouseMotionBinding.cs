@@ -3,6 +3,9 @@ using System.Text.Json.Serialization;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// An Input Binding mapped to Mouse Motion along an axis
+/// </summary>
 public sealed class MouseMotionBinding : Binding
 {
 	[JsonInclude] public Vector2 Axis;

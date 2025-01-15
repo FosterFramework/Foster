@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 namespace Foster.Framework;
 
 /// <summary>
-/// The Input Manager that stores the current Input State
+/// The Input Manager which can be used to query the previous and current state of Input.
 /// </summary>
 public sealed class Input
 {

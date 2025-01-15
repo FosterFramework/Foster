@@ -647,8 +647,7 @@ internal unsafe class RendererSDL : Renderer
 	{
 		// (re)create buffer if needed
 		var required = dataSize + dataDestOffset;
-		if (required > res.Capacity ||
-			res.Handle == nint.Zero)
+		if (required > res.Capacity || res.Handle == nint.Zero)
 		{
 			// TODO: A resize wipes all contents, not particularly ideal
 			if (res.Handle != nint.Zero)
@@ -671,18 +670,21 @@ internal unsafe class RendererSDL : Renderer
 					size *= 2;
 			}
 
-			SDL_GPUBufferCreateInfo info = new()
+			res.Handle = SDL_CreateGPUBuffer(device, new()
 			{
 				usage = usage,
 				size = (uint)size,
 				props = 0
-			};
-
-			res.Handle = SDL_CreateGPUBuffer(device, info);
+			});
+			
 			if (res.Handle == nint.Zero)
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUBuffer), "Mesh Creation Failed");
 			res.Capacity = size;
 		}
+
+		// exit out of there's no data to upload
+		if (data == nint.Zero)
+			return;
 
 		bool cycle = true; // TODO: this is controlled by hints/logic in FNA3D, where it can lead to a potential flush
 		bool transferCycle = bufferUploadBufferOffset == 0;

@@ -9,7 +9,7 @@ namespace Foster.Framework;
 public readonly record struct ControllerID(uint Value);
 
 /// <summary>
-/// Represents a Gamepad or Joystick
+/// Stores the state of a GamePad or Joystick Controller.
 /// </summary>
 public class Controller(InputProvider provider, int index)
 {

@@ -300,6 +300,10 @@ public sealed class Window : IDrawableTarget
 	/// </summary>
 	public void SetMouseVisible(bool enabled)
 	{
+		// TODO:
+		// Should this method be here? It seems like it's maybe application-specific
+		// instead of unique to a given window.
+		
 		bool result;
 		if (enabled)
 			result = SDL_ShowCursor();

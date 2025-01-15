@@ -3,7 +3,7 @@
 namespace Foster.Framework;
 
 /// <summary>
-/// Stores a Keyboard State
+/// Stores the state of the Keyboard.
 /// </summary>
 public sealed class Keyboard
 {

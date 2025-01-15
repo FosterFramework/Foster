@@ -2,6 +2,9 @@ using System.Text.Json.Serialization;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// An Input Binding mapped to a Controller Axis
+/// </summary>
 public sealed class ControllerAxisBinding : Binding
 {
 	[JsonInclude] public Axes Axis;

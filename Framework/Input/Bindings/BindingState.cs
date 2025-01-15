@@ -1,7 +1,7 @@
 namespace Foster.Framework;
 
 /// <summary>
-/// A single-frame state of an Input Binding
+/// A single-frame of state for an Input Binding
 /// </summary>
 public readonly record struct BindingState(
 	bool Pressed,

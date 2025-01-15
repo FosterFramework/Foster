@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace Foster.Framework;
 
 /// <summary>
-/// Represents an Input Binding
+/// Represents an Input Binding/Mapping
 /// </summary>
 [JsonDerivedType(typeof(KeyboardKeyBinding), typeDiscriminator: "Key")]
 [JsonDerivedType(typeof(ControllerAxisBinding), typeDiscriminator: "Axis")]

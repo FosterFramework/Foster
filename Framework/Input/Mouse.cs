@@ -27,25 +27,52 @@ public sealed class Mouse
 	/// </summary>
 	public Vector2 Delta;
 
+	/// <summary>
+	/// Shorthand to <see cref="Position"/>'s X component
+	/// </summary>
 	public float X
 	{
 		get => Position.X;
 		set => Position.X = value;
 	}
 
+	/// <summary>
+	/// Shorthand to <see cref="Position"/>'s Y component
+	/// </summary>
 	public float Y
 	{
 		get => Position.Y;
 		set => Position.Y = value;
 	}
 
+	/// <summary>
+	/// Returns true if the given Mouse Button was pressed
+	/// </summary>
 	public bool Pressed(MouseButtons button) => pressed[(int)button];
+
+	/// <summary>
+	/// Returns true if the given Mouse Button is held down
+	/// </summary>
 	public bool Down(MouseButtons button) => down[(int)button];
+
+	/// <summary>
+	/// Returns true if the given Mouse Button was released
+	/// </summary>
 	public bool Released(MouseButtons button) => released[(int)button];
 
+	/// <summary>
+	/// Returns the timestamp of the last time the given Mouse Button was pressed
+	/// </summary>
 	public TimeSpan Timestamp(MouseButtons button) => timestamp[(int)button];
+
+	/// <summary>
+	/// Returns the timestamp of the last time the mouse was moved
+	/// </summary>
 	public TimeSpan MotionTimestamp() => motionTimestamp;
 
+	/// <summary>
+	/// Returns true if the given Mouse Button is repeating presses
+	/// </summary>
 	public bool Repeated(MouseButtons button, float delay, float interval)
 	{
 		if (Pressed(button))

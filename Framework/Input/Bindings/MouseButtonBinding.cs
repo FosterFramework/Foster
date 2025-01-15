@@ -2,6 +2,9 @@ using System.Text.Json.Serialization;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// An Input Binding mapped to a Mouse Button
+/// </summary>
 public sealed class MouseButtonBinding : Binding
 {
 	[JsonInclude] public MouseButtons Button;
