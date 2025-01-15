@@ -4,7 +4,7 @@ namespace Foster.Framework;
 /// <summary>
 /// Captures a single frame of input.
 /// </summary>
-public class InputState
+public sealed class InputState
 {
 	/// <summary>
 	/// The Maximum number of Controllers

@@ -5,7 +5,7 @@ namespace Foster.Framework;
 /// <summary>
 /// An Input binding that represents an Action
 /// </summary>
-public class ActionBinding
+public sealed class ActionBinding
 {
 	[JsonInclude] public readonly List<Binding> Bindings = [];
 

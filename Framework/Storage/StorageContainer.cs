@@ -2,6 +2,9 @@ using System.Text;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// A File Storage interface
+/// </summary>
 public abstract class StorageContainer : IDisposable
 {
 	/// <summary>

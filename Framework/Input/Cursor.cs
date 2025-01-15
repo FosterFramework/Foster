@@ -10,7 +10,8 @@ public sealed class Cursor : IDisposable
 {
 	/// <summary>
 	/// Built In System Cursors.
-	/// Note that this is 1-1 with SDL's SDL_SystemCursor
+	/// This enum is a one-to-one mapping of SDL_SystemCursor:
+	/// https://wiki.libsdl.org/SDL3/SDL_SystemCursor
 	/// </summary>
 	public enum SystemTypes
 	{

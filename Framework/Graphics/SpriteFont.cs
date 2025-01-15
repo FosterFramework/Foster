@@ -28,7 +28,7 @@ public class SpriteFont : IDisposable
 	/// <summary>
 	/// Set of ASCII character unicode values
 	/// </summary>
-	public static readonly int[] Ascii = Enumerable.Range(32, 128 - 32).ToArray();
+	public static readonly int[] Ascii = [.. Enumerable.Range(32, 128 - 32)];
 
 	/// <summary>
 	/// The Renderer the Sprite Font belongs to

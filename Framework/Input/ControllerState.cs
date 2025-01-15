@@ -53,21 +53,7 @@ public sealed class ControllerState(int index)
 	/// <summary>
 	/// The Gamepad Provider
 	/// </summary>
-	public GamepadProviders GamepadProvider => GamepadType switch
-	{
-		GamepadTypes.Unknown => GamepadProviders.Unknown,
-		GamepadTypes.Standard => GamepadProviders.Xbox,
-		GamepadTypes.Xbox360 => GamepadProviders.Xbox,
-		GamepadTypes.XboxOne => GamepadProviders.Xbox,
-		GamepadTypes.PS3 => GamepadProviders.PlayStation,
-		GamepadTypes.PS4 => GamepadProviders.PlayStation,
-		GamepadTypes.PS5 => GamepadProviders.PlayStation,
-		GamepadTypes.NintendoSwitchPro => GamepadProviders.Nintendo,
-		GamepadTypes.NintendoSwitchJoyconLeft => GamepadProviders.Nintendo,
-		GamepadTypes.NintendoSwitchJoyconRight => GamepadProviders.Nintendo,
-		GamepadTypes.NintendoSwitchJoyconPair => GamepadProviders.Nintendo,
-		_ => GamepadProviders.Unknown
-	};
+	public GamepadProviders GamepadProvider => GamepadType.Provider();
 
 	/// <summary>
 	/// The Gamepad type, if known.

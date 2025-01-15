@@ -6,7 +6,7 @@ namespace Foster.Framework;
 /// <summary>
 /// An Input binding that represents a 2D Axis/Stick
 /// </summary>
-public class StickBinding
+public sealed class StickBinding
 {
 	/// <summary>
 	/// Circular Deadzone to apply across the resulting 2D vector

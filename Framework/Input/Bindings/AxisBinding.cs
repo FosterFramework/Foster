@@ -5,7 +5,7 @@ namespace Foster.Framework;
 /// <summary>
 /// An Input binding that represents an 1D Axis
 /// </summary>
-public class AxisBinding
+public sealed class AxisBinding
 {
 	public enum Overlaps
 	{
