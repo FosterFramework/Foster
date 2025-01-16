@@ -6,10 +6,34 @@ namespace Foster.Framework;
 
 /// <summary>
 /// A 2D Sprite Batcher.
-/// Internally builds a Mesh which can be drawn by calling Render.
+/// Constructs a <see cref="Mesh"/> which can be drawn by calling Render.<br/>
+/// Note if you intend to re-use the Batcher over multiple frames, be sure to 
+/// call <see cref="Clear"/> after you have rendered it so it's ready for the
+/// next frame.
 /// </summary>
 public class Batcher : IDisposable
 {
+	/// <summary>
+	/// Sprite Batcher Texture Drawing Modes
+	/// </summary>
+	public enum Modes
+	{
+		/// <summary>
+		/// Renders Textures normally, Multiplied by the Vertex Color
+		/// </summary>
+		Normal,
+
+		/// <summary>
+		/// Renders Textures washed using Vertex Colors, only using the Texture alpha channel.
+		/// </summary>
+		Wash,
+
+		/// <summary>
+		/// Renders only using Vertex Colors, essentially ignoring the Texture data entirely.
+		/// </summary>
+		Fill
+	}
+
 	/// <summary>
 	/// The Renderer this Batcher was created with
 	/// </summary>
@@ -61,22 +85,20 @@ public class Batcher : IDisposable
 	private readonly Stack<int> layerStack = [];
 	private readonly Stack<Color> modeStack = [];
 	private readonly List<Batch> batches = [];
-	private readonly Mesh mesh;
-	private Batch currentBatch;
-	private int currentBatchInsert;
-	private Color mode = new(255, 0, 0, 0);
-	private bool meshDirty;
-
 	private readonly List<Material> materialPool = [];
-	private int materialPoolIndex;
+	private readonly Mesh mesh;
 
+	private Color mode = new(255, 0, 0, 0);
+	private Batch currentBatch;
 	private IntPtr vertexPtr = IntPtr.Zero;
+	private IntPtr indexPtr = IntPtr.Zero;
 	private int vertexCount = 0;
 	private int vertexCapacity = 0;
-
-	private IntPtr indexPtr = IntPtr.Zero;
 	private int indexCount = 0;
 	private int indexCapacity = 0;
+	private int currentBatchInsert;
+	private int materialPoolIndex;
+	private bool meshDirty;
 
 	private readonly record struct MaterialState(
 		Material Material,
@@ -260,10 +282,7 @@ public class Batcher : IDisposable
 
 	#region Modify State
 
-	/// <summary>
-	/// Sets the Current Texture being drawn
-	/// </summary>
-	public void SetTexture(Texture? texture)
+	private void SetTexture(Texture? texture)
 	{
 		if (currentBatch.Texture == null || currentBatch.Elements == 0)
 		{
@@ -282,10 +301,7 @@ public class Batcher : IDisposable
 		}
 	}
 
-	/// <summary>
-	/// Sets the Current Texture Sampler being used
-	/// </summary>
-	public void SetSampler(TextureSampler sampler)
+	private void SetSampler(TextureSampler sampler)
 	{
 		if (currentBatch.Sampler == sampler || currentBatch.Elements == 0)
 		{
@@ -302,11 +318,7 @@ public class Batcher : IDisposable
 		}
 	}
 
-	/// <summary>
-	/// Sets the current Layer to draw at.
-	/// Note that this is not very performant and should generally be avoided.
-	/// </summary>
-	public void SetLayer(int layer)
+	private void SetLayer(int layer)
 	{
 		if (currentBatch.Layer == layer)
 			return;
@@ -558,41 +570,20 @@ public class Batcher : IDisposable
 	}
 
 	/// <summary>
-	/// Pushes the Normal drawing mode.
-	/// This mode is used for drawing textures normally.
+	/// Pushes a Texture Color Mode
 	/// </summary>
-	public void PushModeNormal()
+	public void PushMode(Modes mode)
 	{
-		modeStack.Push(mode);
-		mode = new Color(255, 0, 0, 0);
-	}
+		var value = mode switch
+		{
+			Modes.Normal => new Color(255, 0, 0, 0),
+			Modes.Wash => new Color(0, 255, 0, 0),
+			Modes.Fill => new Color(0, 0, 255, 0),
+			_ => throw new NotImplementedException()
+		};
 
-	/// <summary>
-	/// Pushes the Wash drawing mode, where only texture transparency is used and vertex color is the resulting output.
-	/// </summary>
-	public void PushModeWash()
-	{
-		modeStack.Push(mode);
-		mode = new Color(0, 255, 0, 0);
-	}
-
-	/// <summary>
-	/// Pushes the Fill drawing mode, where the texture is entirely ignored and the vertex color and alpha will be the resulting output.
-	/// This mode is used for drawing shapes.
-	/// </summary>
-	public void PushModeFill()
-	{
-		modeStack.Push(mode);
-		mode = new Color(0, 0, 255, 0);
-	}
-
-	/// <summary>
-	/// Pushes a custom Mode value
-	/// </summary>
-	public void PushMode(Color value)
-	{
-		modeStack.Push(mode);
-		mode = value;
+		modeStack.Push(value);
+		this.mode = value;
 	}
 
 	/// <summary>
@@ -679,8 +670,9 @@ public class Batcher : IDisposable
 		vertexCount += 4;
 	}
 
-	public void Quad(in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 v3, in Vector2 t0, in Vector2 t1, in Vector2 t2, in Vector2 t3, in Color color)
+	public void Quad(Texture? texture, in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 v3, in Vector2 t0, in Vector2 t1, in Vector2 t2, in Vector2 t3, in Color color)
 	{
+		SetTexture(texture);
 		PushQuad();
 		EnsureVertexCapacity(vertexCount + 4);
 
@@ -739,8 +731,9 @@ public class Batcher : IDisposable
 		vertexCount += 4;
 	}
 
-	public void Quad(in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 v3, in Vector2 t0, in Vector2 t1, in Vector2 t2, in Vector2 t3, Color c0, Color c1, Color c2, Color c3)
+	public void Quad(Texture? texture, in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 v3, in Vector2 t0, in Vector2 t1, in Vector2 t2, in Vector2 t3, Color c0, Color c1, Color c2, Color c3)
 	{
+		SetTexture(texture);
 		PushQuad();
 		EnsureVertexCapacity(vertexCount + 4);
 
@@ -812,8 +805,9 @@ public class Batcher : IDisposable
 		vertexCount += 3;
 	}
 
-	public void Triangle(in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 uv0, in Vector2 uv1, in Vector2 uv2, Color color)
+	public void Triangle(Texture? texture, in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 t0, in Vector2 t1, in Vector2 t2, Color color)
 	{
+		SetTexture(texture);
 		PushTriangle();
 		EnsureVertexCapacity(vertexCount + 3);
 
@@ -824,9 +818,9 @@ public class Batcher : IDisposable
 			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
 			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
 			vertexArray[2].Pos = Vector2.Transform(v2, Matrix);
-			vertexArray[0].Tex = uv0;
-			vertexArray[1].Tex = uv1;
-			vertexArray[2].Tex = uv2;
+			vertexArray[0].Tex = t0;
+			vertexArray[1].Tex = t1;
+			vertexArray[2].Tex = t2;
 			vertexArray[0].Col = color;
 			vertexArray[1].Col = color;
 			vertexArray[2].Col = color;
@@ -1351,26 +1345,23 @@ public class Batcher : IDisposable
 
 	public void Image(Texture texture,
 		in Vector2 pos0, in Vector2 pos1, in Vector2 pos2, in Vector2 pos3,
-		in Vector2 uv0, in Vector2 uv1, in Vector2 uv2, in Vector2 uv3,
+		in Vector2 t0, in Vector2 t1, in Vector2 t2, in Vector2 uv3,
 		Color col0, Color col1, Color col2, Color col3)
 	{
-		SetTexture(texture);
-		Quad(pos0, pos1, pos2, pos3, uv0, uv1, uv2, uv3, col0, col1, col2, col3);
+		Quad(texture, pos0, pos1, pos2, pos3, t0, t1, t2, uv3, col0, col1, col2, col3);
 	}
 
 	public void Image(Texture texture,
 		in Vector2 pos0, in Vector2 pos1, in Vector2 pos2, in Vector2 pos3,
-		in Vector2 uv0, in Vector2 uv1, in Vector2 uv2, in Vector2 uv3,
+		in Vector2 t0, in Vector2 t1, in Vector2 t2, in Vector2 uv3,
 		Color color)
 	{
-		SetTexture(texture);
-		Quad(pos0, pos1, pos2, pos3, uv0, uv1, uv2, uv3, color);
+		Quad(texture, pos0, pos1, pos2, pos3, t0, t1, t2, uv3, color);
 	}
 
 	public void Image(Texture texture, Color color)
 	{
-		SetTexture(texture);
-		Quad(
+		Quad(texture,
 			new Vector2(0, 0),
 			new Vector2(texture.Width, 0),
 			new Vector2(texture.Width, texture.Height),
@@ -1384,8 +1375,7 @@ public class Batcher : IDisposable
 
 	public void Image(Texture texture, in Vector2 position, Color color)
 	{
-		SetTexture(texture);
-		Quad(
+		Quad(texture,
 			position,
 			position + new Vector2(texture.Width, 0),
 			position + new Vector2(texture.Width, texture.Height),
@@ -1403,8 +1393,7 @@ public class Batcher : IDisposable
 
 		Matrix = Transform.CreateMatrix(position, origin, scale, rotation) * Matrix;
 
-		SetTexture(texture);
-		Quad(
+		Quad(texture,
 			new Vector2(0, 0),
 			new Vector2(texture.Width, 0),
 			new Vector2(texture.Width, texture.Height),
@@ -1425,8 +1414,7 @@ public class Batcher : IDisposable
 		var tx1 = clip.Right / texture.Width;
 		var ty1 = clip.Bottom / texture.Height;
 
-		SetTexture(texture);
-		Quad(
+		Quad(texture,
 			position,
 			position + new Vector2(clip.Width, 0),
 			position + new Vector2(clip.Width, clip.Height),
@@ -1448,8 +1436,7 @@ public class Batcher : IDisposable
 		var tx1 = clip.Right / texture.Width;
 		var ty1 = clip.Bottom / texture.Height;
 
-		SetTexture(texture);
-		Quad(
+		Quad(texture,
 			new Vector2(0, 0),
 			new Vector2(clip.Width, 0),
 			new Vector2(clip.Width, clip.Height),
@@ -1465,8 +1452,7 @@ public class Batcher : IDisposable
 
 	public void Image(in Subtexture subtex, Color color)
 	{
-		SetTexture(subtex.Texture);
-		Quad(
+		Quad(subtex.Texture,
 			subtex.DrawCoords[0], subtex.DrawCoords[1], subtex.DrawCoords[2], subtex.DrawCoords[3],
 			subtex.TexCoords[0], subtex.TexCoords[1], subtex.TexCoords[2], subtex.TexCoords[3],
 			color);
@@ -1474,8 +1460,8 @@ public class Batcher : IDisposable
 
 	public void Image(in Subtexture subtex, in Vector2 position, Color color)
 	{
-		SetTexture(subtex.Texture);
-		Quad(position + subtex.DrawCoords[0], position + subtex.DrawCoords[1], position + subtex.DrawCoords[2], position + subtex.DrawCoords[3],
+		Quad(subtex.Texture,
+			position + subtex.DrawCoords[0], position + subtex.DrawCoords[1], position + subtex.DrawCoords[2], position + subtex.DrawCoords[3],
 			subtex.TexCoords[0], subtex.TexCoords[1], subtex.TexCoords[2], subtex.TexCoords[3],
 			color);
 	}
@@ -1486,8 +1472,7 @@ public class Batcher : IDisposable
 
 		Matrix = Transform.CreateMatrix(position, origin, scale, rotation) * Matrix;
 
-		SetTexture(subtex.Texture);
-		Quad(
+		Quad(subtex.Texture,
 			subtex.DrawCoords[0], subtex.DrawCoords[1], subtex.DrawCoords[2], subtex.DrawCoords[3],
 			subtex.TexCoords[0], subtex.TexCoords[1], subtex.TexCoords[2], subtex.TexCoords[3],
 			color);
@@ -1501,8 +1486,7 @@ public class Batcher : IDisposable
 
 		Matrix = Transform.CreateMatrix(position, origin, scale, rotation) * Matrix;
 
-		SetTexture(subtex.Texture);
-		Quad(
+		Quad(subtex.Texture,
 			subtex.DrawCoords[0], subtex.DrawCoords[1], subtex.DrawCoords[2], subtex.DrawCoords[3],
 			subtex.TexCoords[0], subtex.TexCoords[1], subtex.TexCoords[2], subtex.TexCoords[3],
 			c0, c1, c2, c3);
@@ -1536,8 +1520,7 @@ public class Batcher : IDisposable
 			ty1 = source.Bottom / tex.Height;
 		}
 
-		SetTexture(subtex.Texture);
-		Quad(
+		Quad(subtex.Texture,
 			new Vector2(px0, py0), new Vector2(px1, py0), new Vector2(px1, py1), new Vector2(px0, py1),
 			new Vector2(tx0, ty0), new Vector2(tx1, ty0), new Vector2(tx1, ty1), new Vector2(tx0, ty1),
 			color);
@@ -1547,8 +1530,7 @@ public class Batcher : IDisposable
 
 	public void ImageStretch(in Subtexture subtex, in Rect rect, Color color)
 	{
-		SetTexture(subtex.Texture);
-		Quad(
+		Quad(subtex.Texture,
 			rect.TopLeft, rect.TopRight, rect.BottomRight, rect.BottomLeft,
 			subtex.TexCoords[0], subtex.TexCoords[1], subtex.TexCoords[2], subtex.TexCoords[3],
 			color);
@@ -1561,8 +1543,7 @@ public class Batcher : IDisposable
 		var pos = rect.Position;
 		Matrix = Transform.CreateMatrix(pos, origin, scale, rotation) * Matrix;
 
-		SetTexture(subtex.Texture);
-		Quad(
+		Quad(subtex.Texture,
 			Vector2.Zero, rect.TopRight - pos, rect.BottomRight - pos, rect.BottomLeft - pos,
 			subtex.TexCoords[0], subtex.TexCoords[1], subtex.TexCoords[2], subtex.TexCoords[3],
 			color);
@@ -1572,8 +1553,7 @@ public class Batcher : IDisposable
 
 	public void ImageStretch(in Subtexture subtex, in Rect rect, Color c0, Color c1, Color c2, Color c3)
 	{
-		SetTexture(subtex.Texture);
-		Quad(
+		Quad(subtex.Texture,
 			rect.TopLeft, rect.TopRight, rect.BottomRight, rect.BottomLeft,
 			subtex.TexCoords[0], subtex.TexCoords[1], subtex.TexCoords[2], subtex.TexCoords[3],
 			c0, c1, c2, c3);
@@ -1586,8 +1566,7 @@ public class Batcher : IDisposable
 		var pos = rect.Position;
 		Matrix = Transform.CreateMatrix(pos, origin, scale, rotation) * Matrix;
 
-		SetTexture(subtex.Texture);
-		Quad(
+		Quad(subtex.Texture,
 			Vector2.Zero, rect.TopRight - pos, rect.BottomRight - pos, rect.BottomLeft - pos,
 			subtex.TexCoords[0], subtex.TexCoords[1], subtex.TexCoords[2], subtex.TexCoords[3],
 			c0, c1, c2, c3);
