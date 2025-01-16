@@ -5,8 +5,10 @@ using System.Numerics;
 namespace Foster.Framework;
 
 /// <summary>
-/// A 2D Sprite Batcher.
+/// A 2D Sprite Batcher.<br/>
+/// <br/>
 /// Constructs a <see cref="Mesh"/> which can be drawn by calling Render.<br/>
+/// <br />
 /// Note if you intend to re-use the Batcher over multiple frames, be sure to 
 /// call <see cref="Clear"/> after you have rendered it so it's ready for the
 /// next frame.
