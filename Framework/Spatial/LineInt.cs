@@ -3,6 +3,9 @@ using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// A 2D Integer Line
+/// </summary>
 [StructLayout(LayoutKind.Sequential)]
 public struct LineInt(Point2 from, Point2 to) : IConvexShape
 {

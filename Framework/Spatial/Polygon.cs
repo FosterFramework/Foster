@@ -4,6 +4,9 @@ using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// A 2D Polygon
+/// </summary>
 public class Polygon : IEnumerable<Vector2>
 {
 	private readonly List<Vector2> vertices = [];

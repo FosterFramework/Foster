@@ -4,6 +4,9 @@ using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// A 2D Convex Polygon
+/// </summary>
 [StructLayout(LayoutKind.Sequential)]
 public unsafe struct ConvexPolygon : IConvexShape, IEnumerable<Vector2>
 {

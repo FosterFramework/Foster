@@ -4,7 +4,6 @@ namespace Foster.Framework;
 
 /// <summary>
 /// A binary struct, where Left is any negative value and Right is zero or any positive number
-/// Useful for 2D Platformers.
 /// </summary>
 public readonly struct Facing(int val) : IEquatable<Facing>
 {

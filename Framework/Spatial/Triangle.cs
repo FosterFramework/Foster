@@ -3,6 +3,9 @@ using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// A 2D Triangle
+/// </summary>
 [StructLayout(LayoutKind.Sequential)]
 public struct Triangle(Vector2 a, Vector2 b, Vector2 c) : IConvexShape
 {

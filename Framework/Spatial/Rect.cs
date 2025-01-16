@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 namespace Foster.Framework;
 
 /// <summary>
-/// A 2D Rectangle
+/// A 2D Floating-Point Rectangle
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
 public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatable<Rect>

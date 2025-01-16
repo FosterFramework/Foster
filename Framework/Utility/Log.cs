@@ -2,8 +2,14 @@ using System.Text;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// Logging Utility Methods
+/// </summary>
 public static class Log
 {
+	/// <summary>
+	/// A Logging Function
+	/// </summary>
 	public delegate void Fn(ReadOnlySpan<char> text);
 
 	[Obsolete("Use Log.GetHistory")]
@@ -21,7 +27,8 @@ public static class Log
 	private static readonly StringBuilder logs = new();
 
 	/// <summary>
-	/// Sets optional custom logging callbacks
+	/// Sets optional custom logging callbacks.
+	/// Callbacks are not guaranteed to be called on the Main thread.
 	/// </summary>
 	public static void SetCallbacks(Fn? onInfo, Fn? onWarn, Fn? onError)
 	{
@@ -30,6 +37,9 @@ public static class Log
 		Log.onError = onError;
 	}
 
+	/// <summary>
+	/// Append a string to the Log
+	/// </summary>
 	public static void Info(ReadOnlySpan<char> message)
 	{
 		Append(message);
@@ -40,6 +50,10 @@ public static class Log
 			Console.Out.WriteLine(message);
 	}
 
+
+	/// <summary>
+	/// Append a UTF8 string to the Log
+	/// </summary>
 	public static void Info(ReadOnlySpan<byte> utf8)
 	{
 		var len = Encoding.UTF8.GetCharCount(utf8);
@@ -55,6 +69,9 @@ public static class Log
 		}
 	}
 
+	/// <summary>
+	/// Append a UTF8 null-terminated string to the Log
+	/// </summary>
 	public static unsafe void Info(IntPtr utf8)
 	{
 		byte* ptr = (byte*)utf8.ToPointer();
@@ -64,10 +81,24 @@ public static class Log
 		Info(new ReadOnlySpan<byte>(ptr, len));
 	}
 
+	/// <summary>
+	/// Append an integer value to the Log
+	/// </summary>
 	public static void Info(int value) => Info(value.ToString());
+
+	/// <summary>
+	/// Append a string message to the Log
+	/// </summary>
 	public static void Info(string message) => Info(message.AsSpan());
+
+	/// <summary>
+	/// Append an object value to the Log
+	/// </summary>
 	public static void Info(object? obj) => Info(obj?.ToString() ?? "null");
 
+	/// <summary>
+	/// Append a Warning string to the Log.
+	/// </summary>
 	public static void Warning(ReadOnlySpan<char> message)
 	{
 		Append(message);
@@ -78,6 +109,9 @@ public static class Log
 			Console.Out.WriteLine(message);
 	}
 
+	/// <summary>
+	/// Append a UTF8 Warning string to the Log.
+	/// </summary>
 	public static void Warning(ReadOnlySpan<byte> utf8)
 	{
 		var len = Encoding.UTF8.GetCharCount(utf8);
@@ -93,6 +127,9 @@ public static class Log
 		}
 	}
 
+	/// <summary>
+	/// Append a UTF8 null-terminated Warning string to the Log.
+	/// </summary>
 	public static unsafe void Warning(IntPtr utf8)
 	{
 		byte* ptr = (byte*)utf8.ToPointer();
@@ -102,9 +139,15 @@ public static class Log
 		Warning(new ReadOnlySpan<byte>(ptr, len));
 	}
 
+	/// <summary>
+	/// Append a Warning to the Log
+	/// </summary>
 	public static void Warning(string message)
 		=> Warning(message.AsSpan());
 
+	/// <summary>
+	/// Append an Error string to the Log.
+	/// </summary>
 	public static void Error(ReadOnlySpan<char> message)
 	{
 		Append(message);
@@ -115,6 +158,9 @@ public static class Log
 			Console.Out.WriteLine(message);
 	}
 
+	/// <summary>
+	/// Append a UTF8 Error string to the Log.
+	/// </summary>
 	public static void Error(ReadOnlySpan<byte> utf8)
 	{
 		var len = Encoding.UTF8.GetCharCount(utf8);
@@ -130,6 +176,9 @@ public static class Log
 		}
 	}
 
+	/// <summary>
+	/// Append a UTF8 null-terminated Error string to the Log.
+	/// </summary>
 	public static unsafe void Error(IntPtr utf8)
 	{
 		byte* ptr = (byte*)utf8.ToPointer();
@@ -139,6 +188,9 @@ public static class Log
 		Error(new ReadOnlySpan<byte>(ptr, len));
 	}
 
+	/// <summary>
+	/// Append an Error to the Log
+	/// </summary>
 	public static void Error(string message)
 		=> Error(message.AsSpan());
 
@@ -166,7 +218,7 @@ public static class Log
 	}
 
 	/// <summary>
-	/// Iterates over all the chunks in the log history, calling the given method for each entry.
+	/// Iterates over all the log data, calling the given method for each entry.
 	/// </summary>
 	public static void GetHistory(Action<ReadOnlyMemory<char>> readChunk)
 	{

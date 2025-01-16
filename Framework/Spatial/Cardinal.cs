@@ -4,8 +4,7 @@ using System.Numerics;
 namespace Foster.Framework;
 
 /// <summary>
-/// A 4-directional struct representing the Cardinal Directions.
-/// Useful for 2D games.
+/// A 2D 4-directional struct representing the Cardinal Directions.
 /// </summary>
 public readonly struct Cardinal : IEquatable<Cardinal>
 {
