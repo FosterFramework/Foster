@@ -55,10 +55,10 @@ public sealed class StickBinding
 	/// <summary>
 	/// Adds a GamePad Axis mapping
 	/// </summary>
-	public StickBinding Add(Axes x, Axes y)
+	public StickBinding Add(Axes x, Axes y, float xDeadzone = 0, float yDeadzone = 0)
 	{
-		X.Add(x);
-		Y.Add(y);
+		X.Add(x, xDeadzone);
+		Y.Add(y, yDeadzone);
 		return this;
 	}
 
@@ -80,11 +80,11 @@ public sealed class StickBinding
 	public StickBinding AddWasd()
 		=> Add(Keys.A, Keys.D, Keys.W, Keys.S);
 
-	public StickBinding AddLeftJoystick()
-		=> Add(Axes.LeftX, Axes.LeftY);
+	public StickBinding AddLeftJoystick(float xDeadzone = 0, float yDeadzone = 0)
+		=> Add(Axes.LeftX, Axes.LeftY, xDeadzone, yDeadzone);
 
-	public StickBinding AddRightJoystick()
-		=> Add(Axes.RightX, Axes.RightY);
+	public StickBinding AddRightJoystick(float xDeadzone = 0, float yDeadzone = 0)
+		=> Add(Axes.RightX, Axes.RightY, xDeadzone, yDeadzone);
 
 	public StickBinding AddDPad()
 		=> Add(Buttons.Left, Buttons.Right, Buttons.Up, Buttons.Down);

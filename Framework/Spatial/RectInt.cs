@@ -646,6 +646,8 @@ public struct RectInt(int x, int y, int w, int h) : IEquatable<RectInt>
 	public static bool operator !=(RectInt a, RectInt b) => !(a == b);
 	public static RectInt operator +(in RectInt a, in Point2 b) => new(a.X + b.X, a.Y + b.Y, a.Width, a.Height);
 	public static RectInt operator -(in RectInt a, in Point2 b) => new(a.X - b.X, a.Y - b.Y, a.Width, a.Height);
+	public static RectInt operator +(in Point2 a, in RectInt b) => new(b.X + a.X, b.Y + a.Y, b.Width, b.Height);
+	public static RectInt operator -(in Point2 a, in RectInt b) => new(b.X - a.X, b.Y - a.Y, b.Width, b.Height);
 	public static RectInt operator *(in RectInt rect, int scaler) => rect.Scale(scaler);
 	public static RectInt operator /(in RectInt rect, int scaler)
 		=> new RectInt(rect.X / scaler, rect.Y / scaler, rect.Width / scaler, rect.Height / scaler).ValidateSize();
