@@ -49,9 +49,9 @@ public abstract class Renderer
 	internal abstract void SetTextureData(IHandle texture, nint data, int length);
 	internal abstract void GetTextureData(IHandle texture, nint data, int length);
 	internal abstract IHandle CreateTarget(int width, int height);
-	internal abstract IHandle CreateMesh();
-	internal abstract void SetMeshVertexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, in VertexFormat format);
-	internal abstract void SetMeshIndexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, IndexFormat format);
+	internal abstract IHandle CreateMesh(in VertexFormat vertexFormat, IndexFormat indexFormat);
+	internal abstract void SetMeshVertexData(IHandle mesh, nint data, int dataSize, int dataDestOffset);
+	internal abstract void SetMeshIndexData(IHandle mesh, nint data, int dataSize, int dataDestOffset);
 	internal abstract IHandle CreateShader(in ShaderCreateInfo shaderInfo);
 	internal abstract void DestroyResource(IHandle resource);
 	internal abstract void PerformDraw(DrawCommand command);

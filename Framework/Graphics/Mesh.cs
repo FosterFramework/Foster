@@ -1,10 +1,11 @@
 namespace Foster.Framework;
 
 /// <summary>
-/// The Mesh contains a Vertex and Index Buffer used for drawing.
+/// The Mesh contains a vertex and index buffer used for drawing.
+/// Use <see cref="Mesh{T}"/> to create a mesh of your given Vertex Format.
 /// Used in a <seealso cref="DrawCommand"/>.
 /// </summary>
-public class Mesh(Renderer renderer) : IGraphicResource
+public class Mesh(Renderer renderer, VertexFormat vertexFormat, IndexFormat indexFormat) : IGraphicResource
 {
 	/// <summary>
 	/// The Renderer this Mesh was created in
@@ -32,213 +33,74 @@ public class Mesh(Renderer renderer) : IGraphicResource
 	public int IndexCount { get; private set; } = 0;
 
 	/// <summary>
-	/// Current Index Format
+	/// The Mesh's Index Format
 	/// </summary>
-	public IndexFormat? IndexFormat { get; private set; }
+	public readonly IndexFormat IndexFormat = indexFormat;
 
 	/// <summary>
-	/// Current Vertex Format
+	/// The Mesh's Vertex Format
 	/// </summary>
-	public VertexFormat? VertexFormat { get; private set; }
+	public readonly VertexFormat VertexFormat = vertexFormat;
 
 	internal Renderer.IHandle? Resource { get; private set; }
 
 	/// <summary>
 	/// Disposes the Mesh resources
 	/// </summary>
-	~Mesh()
-	{
-		Dispose(false);
-	}
-
-	private unsafe void SetIndicesSpan<T>(ReadOnlySpan<T> indices, IndexFormat format) where T : unmanaged
-	{
-		fixed (void* ptr = indices)
-			SetIndices(new nint(ptr), indices.Length, format);
-	}
-
-	private unsafe void SetSubIndicesSpan<T>(int offset, ReadOnlySpan<T> indices, IndexFormat format) where T : unmanaged
-	{
-		if (!IndexFormat.HasValue || IndexFormat.Value != format)
-			throw new Exception("Index Format mismatch; SetSubIndices must use the existing Format set in SetIndices");
-
-		fixed (void* ptr = indices)
-			SetSubIndices(offset, new nint(ptr), indices.Length);
-	}
+	~Mesh() => Dispose();
 
 	/// <summary>
-	/// Recreates the Mesh's Index Buffer to a given number of indices of the given format.
+	/// Resizes the Mesh's index buffer to a given number of indices of the given format.
 	/// </summary>
-	public unsafe void SetIndices(int count, IndexFormat format)
-		=> SetIndices(nint.Zero, count, format);
-
-	[Obsolete("Use non-generic SetIndices methods")]
-	public void SetIndices<T>(ReadOnlySpan<T> indices) where T : unmanaged
-	{
-		SetIndicesSpan(indices, true switch
-		{
-			true when typeof(T) == typeof(short) => Framework.IndexFormat.Sixteen,
-			true when typeof(T) == typeof(ushort) => Framework.IndexFormat.Sixteen,
-			true when typeof(T) == typeof(int) => Framework.IndexFormat.ThirtyTwo,
-			true when typeof(T) == typeof(uint) => Framework.IndexFormat.ThirtyTwo,
-			_ => throw new NotImplementedException(),
-		});
-	}
+	public unsafe void SetIndexCount(int count)
+		=> SetIndices(nint.Zero, 0, count);
 
 	/// <summary>
-	/// Recreates the Mesh's Index Buffer to a given index data.
+	/// Resizes the Mesh's Vertex Buffer to a given vertex count and format
 	/// </summary>
-	public void SetIndices(ReadOnlySpan<ushort> indices)
-		=> SetIndicesSpan(indices, Framework.IndexFormat.Sixteen);
+	public void SetVertexCount(int count)
+		=> SetVertices(nint.Zero, 0, count);
 
-	/// <inheritdoc cref="SetIndices(ReadOnlySpan{ushort})"/>
-	public void SetIndices(ReadOnlySpan<short> indices)
-		=> SetIndicesSpan(indices, Framework.IndexFormat.Sixteen);
-
-	/// <inheritdoc cref="SetIndices(ReadOnlySpan{ushort})"/>
-	public void SetIndices(ReadOnlySpan<uint> indices)
-		=> SetIndicesSpan(indices, Framework.IndexFormat.ThirtyTwo);
-
-	/// <inheritdoc cref="SetIndices(ReadOnlySpan{ushort})"/>
-	public void SetIndices(ReadOnlySpan<int> indices)
-		=> SetIndicesSpan(indices, Framework.IndexFormat.ThirtyTwo);
-
-	/// <inheritdoc cref="SetIndices(ReadOnlySpan{ushort})"/>
+	/// <summary>
+	/// Uploads the given data to the Mesh's index buffer, increasing the
+	/// size of the underlying index buffer if required.
+	/// </summary>
 	/// <param name="data">The Index Data to apply</param>
-	/// <param name="count">The number of indices to set. Note this is the number of vertices, not the size.</param>
-	/// <param name="format">The Index Format to use, which is used to calculate the total size in bytes.</param>
-	public void SetIndices(nint data, int count, IndexFormat format)
+	/// <param name="count">The number of indices to set. Note this is the number, not the size.</param>
+	/// <param name="offset">The destination offset to upload the indices to.</param>
+	public void SetIndices(nint data, int count, int offset = 0)
 	{
 		if (IsDisposed)
 			throw new Exception("Resource is Disposed");
 
 		IndexCount = count;
-		Resource ??= Renderer.CreateMesh();
+		Resource ??= Renderer.CreateMesh(VertexFormat, IndexFormat);
 
 		Renderer.SetMeshIndexData(
 			Resource,
 			data,
-			format.SizeInBytes() * count,
-			0,
-			(IndexFormat = format).Value
+			IndexFormat.SizeInBytes() * count,
+			IndexFormat.SizeInBytes() * offset
 		);
 	}
 
 	/// <summary>
-	/// Sets a sub region of the Index Buffer to the given data.
-	/// The Mesh must already be able to fit this with a previous call to SetIndices.
-	/// This cannot modify the existing Index Format.
+	/// Uploads the given data to the Mesh's vertex buffer, increasing the
+	/// size of the underlying vertex buffer if required.
 	/// </summary>
-	public void SetSubIndices(int offset, ReadOnlySpan<ushort> indices)
-		=> SetSubIndicesSpan(offset, indices, Framework.IndexFormat.Sixteen);
-
-	/// <inheritdoc cref="SetSubIndices(int, ReadOnlySpan{ushort})"/>
-	public void SetSubIndices(int offset, ReadOnlySpan<short> indices)
-		=> SetSubIndicesSpan(offset, indices, Framework.IndexFormat.Sixteen);
-
-	/// <inheritdoc cref="SetSubIndices(int, ReadOnlySpan{ushort})"/>
-	public void SetSubIndices(int offset, ReadOnlySpan<uint> indices)
-		=> SetSubIndicesSpan(offset, indices, Framework.IndexFormat.ThirtyTwo);
-
-	/// <inheritdoc cref="SetSubIndices(int, ReadOnlySpan{ushort})"/>
-	public void SetSubIndices(int offset, ReadOnlySpan<int> indices)
-		=> SetSubIndicesSpan(offset, indices, Framework.IndexFormat.ThirtyTwo);
-
-	/// <inheritdoc cref="SetSubIndices(int, ReadOnlySpan{ushort})"/>
-	public void SetSubIndices(int offset, nint data, int count)
-	{
-		if (IsDisposed)
-			throw new Exception("Resource is Disposed");
-
-		if (!IndexFormat.HasValue)
-			throw new Exception("Must call SetIndices before SetSubIndices");
-
-		if (offset + count > IndexCount)
-			throw new Exception("SetSubIndices is out of range of the existing Index Buffer");
-
-		Resource ??= Renderer.CreateMesh();
-
-		Renderer.SetMeshIndexData(
-			Resource,
-			data,
-			IndexFormat.Value.SizeInBytes() * count,
-			IndexFormat.Value.SizeInBytes() * offset,
-			IndexFormat.Value
-		);
-	}
-
-	/// <summary>
-	/// Recreates the Mesh's Vertex Buffer to a given index data.
-	/// </summary>
-	public void SetVertices<T>(ReadOnlySpan<T> vertices) where T : unmanaged, IVertex
-		=> SetVertices(vertices, default(T).Format);
-
-	/// <summary>
-	/// Recreates the Mesh's Vertex Buffer to a given index data.
-	/// </summary>
-	public unsafe void SetVertices<T>(ReadOnlySpan<T> vertices, in VertexFormat format) where T : unmanaged
-	{
-		fixed (void* ptr = vertices)
-			SetVertices(new nint(ptr), vertices.Length, format);
-	}
-
-	/// <summary>
-	/// Recreates the Mesh's Vertex Buffer to a given vertex count and format
-	/// </summary>
-	public void SetVertices(int count, in VertexFormat format)
-		=> SetVertices(nint.Zero, count, format);
-
-	/// <summary>
-	/// Recreates the Mesh's Vertex Buffer to a given index data.
-	/// </summary>
-	public void SetVertices(nint data, int count, in VertexFormat format)
+	public void SetVertices(nint data, int count, int offset = 0)
 	{
 		if (IsDisposed)
 			throw new Exception("Resource is Disposed");
 
 		VertexCount = count;
-		Resource ??= Renderer.CreateMesh();
+		Resource ??= Renderer.CreateMesh(VertexFormat, IndexFormat);
 
 		Renderer.SetMeshVertexData(
 			Resource,
 			data,
-			format.Stride * count,
-			0,
-			(VertexFormat = format).Value
-		);
-	}
-
-	/// <summary>
-	/// Sets a sub region of the Vertex Buffer to the given data.
-	/// The Mesh must already be able to fit this with a previous call to SetVertices.
-	/// This also cannot modify the existing Vertex Format.
-	/// </summary>
-	public unsafe void SetSubVertices<T>(int offset, ReadOnlySpan<T> vertices) where T : unmanaged
-	{
-		fixed (void* ptr = vertices)
-			SetSubVertices(offset, new nint(ptr), vertices.Length);
-	}
-
-	/// <inheritdoc cref="SetSubVertices{T}"/>
-	public unsafe void SetSubVertices(int offset, nint data, int count)
-	{
-		if (IsDisposed)
-			throw new Exception("Resource is Disposed");
-
-		if (!VertexFormat.HasValue)
-			throw new Exception("Must call SetVertices before SetSubVertices");
-
-		if (offset + count > VertexCount)
-			throw new Exception("SetSubVertices is out of range of the existing Vertex Buffer");
-
-		Resource ??= Renderer.CreateMesh();
-
-		Renderer.SetMeshVertexData(
-			Resource,
-			data,
-			VertexFormat.Value.Stride * count,
-			VertexFormat.Value.Stride * offset,
-			VertexFormat.Value
+			VertexFormat.Stride * count,
+			VertexFormat.Stride * offset
 		);
 	}
 
@@ -248,13 +110,41 @@ public class Mesh(Renderer renderer) : IGraphicResource
 	/// </summary>
 	public void Dispose()
 	{
-		Dispose(true);
-		GC.SuppressFinalize(this);
-	}
-
-	private void Dispose(bool disposing)
-	{
 		if (Resource != null)
 			Renderer.DestroyResource(Resource);
+		GC.SuppressFinalize(this);
 	}
 }
+
+/// <summary>
+/// A Mesh with the given Vertex Buffer and Index Buffer types
+/// </summary>
+/// <typeparam name="TVertex">The Vertex Buffer Type</typeparam>
+/// <typeparam name="TIndex">The Index Buffer Type, which must be either <see cref="int"/>, <see cref="uint"/>, <see cref="short"/>, or <see cref="ushort"/></typeparam>
+public class Mesh<TVertex, TIndex>(Renderer renderer)
+	: Mesh(renderer, new TVertex().Format, IndexFormatExt.GetFormatOf<TIndex>())
+	where TVertex : unmanaged, IVertex
+	where TIndex : unmanaged
+{
+	/// <inheritdoc cref="Mesh.SetVertices(nint, int, int)"/>
+	public unsafe void SetVertices(ReadOnlySpan<TVertex> data, int offset = 0)
+	{
+		fixed (void* ptr = data)
+			SetVertices(new nint(ptr), data.Length, offset);
+	}
+
+	/// <inheritdoc cref="Mesh.SetIndices(nint, int, int)"/>
+	public unsafe void SetIndices(ReadOnlySpan<TIndex> data, int offset = 0)
+	{
+		fixed (void* ptr = data)
+			SetIndices(new nint(ptr), data.Length, offset);
+	}
+}
+
+/// <summary>
+/// A Mesh with a given Vertex Buffer type, and Integer Indices
+/// </summary>
+/// <typeparam name="TVertex">The Vertex Buffer Type</typeparam>
+public class Mesh<TVertex>(Renderer renderer)
+	: Mesh<TVertex, int>(renderer)
+	where TVertex : unmanaged, IVertex;

@@ -26,15 +26,15 @@ internal unsafe class RendererSDL : Renderer
 		public readonly List<TextureResource> Attachments = [];
 	}
 
-	private class MeshResource(Renderer renderer) : Resource(renderer)
+	private class MeshResource(Renderer renderer, VertexFormat vertexFormat, IndexFormat indexFormat) : Resource(renderer)
 	{
 		public record struct Buffer(nint Handle, int Capacity, bool Dirty);
 
 		public Buffer Index = new();
 		public Buffer Vertex = new();
 		public Buffer Instance = new();
-		public IndexFormat IndexFormat;
-		public VertexFormat VertexFormat;
+		public readonly VertexFormat VertexFormat = vertexFormat;
+		public readonly IndexFormat IndexFormat = indexFormat;
 	}
 
 	private class ShaderResource(Renderer renderer) : Resource(renderer)
@@ -584,12 +584,12 @@ internal unsafe class RendererSDL : Renderer
 		}
 	}
 
-	internal override IHandle CreateMesh()
+	internal override IHandle CreateMesh(in VertexFormat vertexFormat, IndexFormat indexFormat)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
 
-		var res = new MeshResource(this);
+		var res = new MeshResource(this, vertexFormat, indexFormat);
 
 		lock (resources)
 			resources.Add(res);
@@ -597,7 +597,7 @@ internal unsafe class RendererSDL : Renderer
 		return res;
 	}
 
-	internal override void SetMeshVertexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, in VertexFormat format)
+	internal override void SetMeshVertexData(IHandle mesh, nint data, int dataSize, int dataDestOffset)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
@@ -606,12 +606,11 @@ internal unsafe class RendererSDL : Renderer
 		if (res.Renderer != this)
 			throw deviceWasDestroyed;
 
-		res.VertexFormat = format;
 		res.Vertex.Dirty = true;
 		UploadMeshBuffer(ref res.Vertex, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_VERTEX);
 	}
 
-	internal override void SetMeshIndexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, IndexFormat format)
+	internal override void SetMeshIndexData(IHandle mesh, nint data, int dataSize, int dataDestOffset)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
@@ -620,7 +619,6 @@ internal unsafe class RendererSDL : Renderer
 		if (res.Renderer != this)
 			throw deviceWasDestroyed;
 
-		res.IndexFormat = format;
 		res.Index.Dirty = true;
 		UploadMeshBuffer(ref res.Index, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_INDEX);
 	}
@@ -1240,7 +1238,7 @@ internal unsafe class RendererSDL : Renderer
 		var material = command.Material;
 		var shader = material.Shader!;
 		var shaderRes = (ShaderResource)shader.Resource;
-		var vertexFormat = mesh.VertexFormat!.Value;
+		var vertexFormat = mesh.VertexFormat;
 
 		if (shaderRes.Renderer != this)
 			throw deviceWasDestroyed;

@@ -60,18 +60,18 @@ internal sealed unsafe class RendererOpenGL(App app) : Renderer(app)
 		public readonly ShaderCreateInfo Info = info;
 	}
 
-	private class MeshResource(Renderer renderer) : Resource(renderer)
+	private class MeshResource(Renderer renderer, in VertexFormat vertexFormat, IndexFormat indexFormat) : Resource(renderer)
 	{
 		public readonly Dictionary<nint, uint> ContextVAO = [];
 		public readonly Dictionary<nint, VertexFormat> ContextBoundVertexFormat = [];
 
 		public uint IndexBuffer;
 		public int IndexBufferSize;
-		public IndexFormat IndexBufferElementFormat;
+		public readonly IndexFormat IndexBufferElementFormat = indexFormat;
 
 		public uint VertexBuffer;
 		public int VertexBufferSize;
-		public VertexFormat VertexFormat;
+		public readonly VertexFormat VertexFormat = vertexFormat;
 		// public bool VertexAttributesEnabled;
 		// public uint[] VertexAttributes = new uint[32];
 
@@ -334,18 +334,17 @@ internal sealed unsafe class RendererOpenGL(App app) : Renderer(app)
 			DestroyResource(target.DepthAttachment);
 	}
 
-	internal override IHandle CreateMesh()
+	internal override IHandle CreateMesh(in VertexFormat vertexFormat, IndexFormat indexFormat)
 	{
-		var mesh = new MeshResource(this);
+		var mesh = new MeshResource(this, vertexFormat, indexFormat);
 		TrackResource(mesh);
 		return mesh;
 	}
 
-	internal override void SetMeshVertexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, in VertexFormat format)
+	internal override void SetMeshVertexData(IHandle mesh, nint data, int dataSize, int dataDestOffset)
 	{
 		if (mesh is not MeshResource it)
 			return;
-		it.VertexFormat = format;
 
 		BeginThreadSafeCalls(out var state);
 		
@@ -375,7 +374,7 @@ internal sealed unsafe class RendererOpenGL(App app) : Renderer(app)
 		EndThreadSafeCalls(state);
 	}
 
-	internal override void SetMeshIndexData(IHandle mesh, nint data, int dataSize, int dataDestOffset, IndexFormat format)
+	internal override void SetMeshIndexData(IHandle mesh, nint data, int dataSize, int dataDestOffset)
 	{
 		if (mesh is not MeshResource it)
 			return;
@@ -392,9 +391,6 @@ internal sealed unsafe class RendererOpenGL(App app) : Renderer(app)
 
 		BindArray(state, it);
 		BindIndexBuffer(state, it.IndexBuffer);
-
-		// verify format
-		it.IndexBufferElementFormat = format;
 
 		// expand buffer if needed
 		int totalSize = dataDestOffset + dataSize;

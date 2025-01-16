@@ -101,7 +101,7 @@ public class Batcher : IDisposable
 	{
 		Renderer = renderer;
 		defaultMaterial = new(renderer);
-		mesh = new(renderer);
+		mesh = new Mesh<BatcherVertex>(renderer);
 		defaultMaterialState = new(defaultMaterial, "Matrix", 0);
 		Clear();
 	}
@@ -118,8 +118,8 @@ public class Batcher : IDisposable
 	{
 		if (meshDirty && indexPtr != IntPtr.Zero && vertexPtr != IntPtr.Zero)
 		{
-			mesh.SetIndices(indexPtr, indexCount, IndexFormat.ThirtyTwo);
-			mesh.SetVertices(vertexPtr, vertexCount, default(BatcherVertex).Format);
+			mesh.SetIndices(indexPtr, indexCount);
+			mesh.SetVertices(vertexPtr, vertexCount);
 			meshDirty = false;
 		}
 	}
