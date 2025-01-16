@@ -69,9 +69,9 @@ public abstract class App : IDisposable
 	public readonly Input Input;
 
 	/// <summary>
-	/// The Rendering Module
+	/// The GPU Rendering Module
 	/// </summary>
-	public readonly Renderer Renderer;
+	public readonly GraphicsDevice GraphicsDevice;
 
 	/// <summary>
 	/// The FileSystem Module
@@ -174,10 +174,10 @@ public abstract class App : IDisposable
 		inputProvider = new(this);
 		Input = inputProvider.Input;
 		FileSystem = new(this);
-		Renderer = Platform.CreateRenderer(this, config.PreferredGraphicsDriver);
-		Renderer.CreateDevice();
-		Window = new Window(this, Renderer, config.WindowTitle, config.Width, config.Height, config.Fullscreen);
-		Renderer.Startup(Window.Handle);
+		GraphicsDevice = Platform.CreateGraphicsDevice(this, config.PreferredGraphicsDriver);
+		GraphicsDevice.CreateDevice();
+		Window = new Window(this, GraphicsDevice, config.WindowTitle, config.Width, config.Height, config.Fullscreen);
+		GraphicsDevice.Startup(Window.Handle);
 
 		// try to load default SDL gamepad mappings
 		Input.AddDefaultSDLGamepadMappings(AppContext.BaseDirectory);
@@ -198,9 +198,9 @@ public abstract class App : IDisposable
 		GC.SuppressFinalize(this);
 		Disposed = true;
 
-		Renderer.Shutdown();
+		GraphicsDevice.Shutdown();
 		Window.Close();
-		Renderer.DestroyDevice();
+		GraphicsDevice.DestroyDevice();
 		inputProvider.Dispose();
 		mainThreadQueue.Clear();
 		
@@ -238,6 +238,9 @@ public abstract class App : IDisposable
 			throw new Exception("Application is already running");
 		if (Exiting)
 			throw new Exception("Application is still exiting");
+
+		// Rebuild the Shaders
+		
  
 		// Clear Time
 		Running = true;
@@ -366,7 +369,7 @@ public abstract class App : IDisposable
 		{
 			Time = Time.AdvanceRenderFrame();
 			Render();
-			Renderer.Present();
+			GraphicsDevice.Present();
 		}
 	}
 

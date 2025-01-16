@@ -3,7 +3,7 @@ namespace Foster.Framework;
 /// <summary>
 /// Available Texture Formats.
 /// Some formats are not necessarily supported on every GPU.
-/// Check for support with <see cref="Renderer.IsTextureFormatSupported(TextureFormat)"/> 
+/// Check for support with <see cref="GraphicsDevice.IsTextureFormatSupported(TextureFormat)"/> 
 /// </summary>
 public enum TextureFormat
 {

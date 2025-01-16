@@ -1,9 +1,9 @@
 namespace Foster.Framework;
 
 /// <summary>
-/// The Rendering Module which can subbmit <see cref="DrawCommand"/>'s through the <see cref="Draw"/> method.
+/// The GPU Rendering Module which can subbmit <see cref="DrawCommand"/>'s through the <see cref="Draw"/> method.
 /// </summary>
-public abstract class Renderer
+public abstract class GraphicsDevice
 {
 	/// <summary>
 	/// A graphical resource handle
@@ -19,7 +19,7 @@ public abstract class Renderer
 	public abstract GraphicsDriver Driver { get; }
 
 	/// <summary>
-	/// The Application this Renderer belongs to
+	/// The Application this GraphicsDevice belongs to
 	/// </summary>
 	public readonly App App;
 
@@ -30,7 +30,7 @@ public abstract class Renderer
 	public abstract bool OriginBottomLeft { get; }
 
 	/// <summary>
-	/// If the Renderer has been disposed
+	/// If the GraphicsDevice has been disposed
 	/// </summary>
 	public abstract bool Disposed { get; }
 
@@ -39,7 +39,7 @@ public abstract class Renderer
 	/// </summary>
 	public abstract bool VSync { get; set; }
 
-	internal Renderer(App app) => App = app;
+	internal GraphicsDevice(App app) => App = app;
 	internal abstract void CreateDevice();
 	internal abstract void DestroyDevice();
 	internal abstract void Startup(nint window);

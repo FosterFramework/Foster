@@ -11,7 +11,7 @@ public sealed class Window : IDrawableTarget
 
 	private string title = string.Empty;
 	private readonly App app;
-	private readonly Renderer renderer;
+	private readonly GraphicsDevice graphicsDevice;
 	private readonly Exception closedWindowException = new("The Window has been Closed");
 
 	/// <summary>
@@ -22,7 +22,7 @@ public sealed class Window : IDrawableTarget
 	/// <summary>
 	/// The Renderer associated with this Window
 	/// </summary>
-	public Renderer Renderer => renderer;
+	public GraphicsDevice GraphicsDevice => graphicsDevice;
 
 	/// <summary>
 	/// The Window Title
@@ -272,10 +272,10 @@ public sealed class Window : IDrawableTarget
 	/// </summary>
 	public Action? OnCloseRequested;
 
-	internal Window(App app, Renderer renderer, string title, int width, int height, bool fullscreen)
+	internal Window(App app, GraphicsDevice graphicsDevice, string title, int width, int height, bool fullscreen)
 	{
 		this.app = app;
-		this.renderer = renderer;
+		this.graphicsDevice = graphicsDevice;
 		this.title = title;
 
 		var windowFlags = 
@@ -285,7 +285,7 @@ public sealed class Window : IDrawableTarget
 		if (fullscreen)
 			windowFlags |= SDL_WindowFlags.SDL_WINDOW_FULLSCREEN;
 
-		if (renderer.Driver == GraphicsDriver.OpenGL)
+		if (graphicsDevice.Driver == GraphicsDriver.OpenGL)
 			windowFlags |= SDL_WindowFlags.SDL_WINDOW_OPENGL;
 
 		Handle = SDL_CreateWindow(title, width, height, windowFlags);

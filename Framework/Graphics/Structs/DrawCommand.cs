@@ -2,7 +2,7 @@ namespace Foster.Framework;
 
 /// <summary>
 /// Stores information required to submit a draw command.
-/// Call <see cref="Submit"/> or <see cref="Renderer.Draw"/> to submit.
+/// Call <see cref="Submit"/> or <see cref="GraphicsDevice.Draw"/> to submit.
 /// </summary>
 public struct DrawCommand
 {
@@ -84,6 +84,6 @@ public struct DrawCommand
 		MeshIndexCount = mesh.IndexCount;
 	}
 
-	public readonly void Submit(Renderer renderer)
-		=> renderer.Draw(this);
+	public readonly void Submit(GraphicsDevice graphicsDevice)
+		=> graphicsDevice.Draw(this);
 }

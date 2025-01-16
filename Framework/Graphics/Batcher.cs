@@ -37,9 +37,9 @@ public class Batcher : IDisposable
 	}
 
 	/// <summary>
-	/// The Renderer this Batcher was created with
+	/// The GraphicsDevice this Batcher was created with
 	/// </summary>
-	public readonly Renderer Renderer;
+	public readonly GraphicsDevice GraphicsDevice;
 
 	/// <summary>
 	/// The Default shader used by the Batcher.
@@ -108,7 +108,7 @@ public class Batcher : IDisposable
 		int SamplerIndex
 	);
 
-	private struct Batch(Renderer renderer, MaterialState material, BlendMode blend, Texture? texture, TextureSampler sampler, int offset, int elements)
+	private struct Batch(GraphicsDevice graphicsDevice, MaterialState material, BlendMode blend, Texture? texture, TextureSampler sampler, int offset, int elements)
 	{
 		public int Layer = 0;
 		public MaterialState MaterialState = material;
@@ -118,14 +118,14 @@ public class Batcher : IDisposable
 		public TextureSampler Sampler = sampler;
 		public int Offset = offset;
 		public int Elements = elements;
-		public bool FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && renderer.OriginBottomLeft;
+		public bool FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && graphicsDevice.OriginBottomLeft;
 	}
 
-	public Batcher(Renderer renderer)
+	public Batcher(GraphicsDevice graphicsDevice)
 	{
-		Renderer = renderer;
-		defaultMaterial = new(renderer);
-		mesh = new Mesh<BatcherVertex>(renderer);
+		GraphicsDevice = graphicsDevice;
+		defaultMaterial = new(graphicsDevice);
+		mesh = new Mesh<BatcherVertex>(graphicsDevice);
 		defaultMaterialState = new(defaultMaterial, "Matrix", 0);
 		Clear();
 	}
@@ -177,7 +177,7 @@ public class Batcher : IDisposable
 		indexCount = 0;
 		currentBatchInsert = 0;
 		materialPoolIndex = 0;
-		currentBatch = new Batch(Renderer, defaultMaterialState, BlendMode.Premultiply, null, new(), 0, 0);
+		currentBatch = new Batch(GraphicsDevice, defaultMaterialState, BlendMode.Premultiply, null, new(), 0, 0);
 		mode = new Color(255, 0, 0, 0);
 		batches.Clear();
 		matrixStack.Clear();
@@ -234,7 +234,7 @@ public class Batcher : IDisposable
 
 		// make sure default shader and material are valid
 		if (DefaultShader == null || DefaultShader.IsDisposed)
-			DefaultShader = new BatcherShader(Renderer);
+			DefaultShader = new BatcherShader(GraphicsDevice);
 		defaultMaterial.Shader = DefaultShader;
 
 		// render batches
@@ -267,7 +267,7 @@ public class Batcher : IDisposable
 		mat.Set(batch.MaterialState.MatrixUniform, matrix);
 		mat.FragmentSamplers[batch.MaterialState.SamplerIndex] = new(texture, batch.Sampler);
 
-		Renderer.Draw(new(target, mesh, mat)
+		GraphicsDevice.Draw(new(target, mesh, mat)
 		{
 			Viewport = viewport,
 			Scissor = trimmed,
@@ -289,14 +289,14 @@ public class Batcher : IDisposable
 		if (currentBatch.Texture == null || currentBatch.Elements == 0)
 		{
 			currentBatch.Texture = texture;
-			currentBatch.FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && Renderer.OriginBottomLeft;
+			currentBatch.FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && GraphicsDevice.OriginBottomLeft;
 		}
 		else if (currentBatch.Texture != texture)
 		{
 			batches.Insert(currentBatchInsert, currentBatch);
 
 			currentBatch.Texture = texture;
-			currentBatch.FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && Renderer.OriginBottomLeft;
+			currentBatch.FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && GraphicsDevice.OriginBottomLeft;
 			currentBatch.Offset += currentBatch.Elements;
 			currentBatch.Elements = 0;
 			currentBatchInsert++;
@@ -438,7 +438,7 @@ public class Batcher : IDisposable
 		if (materialPoolIndex < materialPool.Count)
 			copy = materialPool[materialPoolIndex];
 		else
-			materialPool.Add(copy = new Material(Renderer));
+			materialPool.Add(copy = new Material(GraphicsDevice));
 		materialPoolIndex++;
 
 		// copy the values to our internal material & set it

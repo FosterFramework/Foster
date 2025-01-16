@@ -7192,7 +7192,7 @@ public static unsafe partial class SDL
 		SDL_TEXTUREACCESS_TARGET = 2,
 	}
 
-	public enum SDL_RendererLogicalPresentation
+	public enum SDL_GraphicsDeviceLogicalPresentation
 	{
 		SDL_LOGICAL_PRESENTATION_DISABLED = 0,
 		SDL_LOGICAL_PRESENTATION_STRETCH = 1,
@@ -7221,56 +7221,56 @@ public static unsafe partial class SDL
 
 	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_CreateWindowAndRenderer(string title, int width, int height, SDL_WindowFlags window_flags, out IntPtr window, out IntPtr renderer);
+	public static partial SDLBool SDL_CreateWindowAndGraphicsDevice(string title, int width, int height, SDL_WindowFlags window_flags, out IntPtr window, out IntPtr graphicsDevice);
 
 	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_CreateRenderer(IntPtr window, string name);
+	public static partial IntPtr SDL_CreateGraphicsDevice(IntPtr window, string name);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_CreateRendererWithProperties(uint props);
+	public static partial IntPtr SDL_CreateGraphicsDeviceWithProperties(uint props);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_CreateSoftwareRenderer(IntPtr surface);
+	public static partial IntPtr SDL_CreateSoftwareGraphicsDevice(IntPtr surface);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_GetRenderer(IntPtr window);
+	public static partial IntPtr SDL_GetGraphicsDevice(IntPtr window);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_GetRenderWindow(IntPtr renderer);
+	public static partial IntPtr SDL_GetRenderWindow(IntPtr graphicsDevice);
 
 	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	[return: MarshalUsing(typeof(SDLOwnedStringMarshaller))]
-	public static partial string SDL_GetRendererName(IntPtr renderer);
+	public static partial string SDL_GetGraphicsDeviceName(IntPtr graphicsDevice);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial uint SDL_GetRendererProperties(IntPtr renderer);
+	public static partial uint SDL_GetGraphicsDeviceProperties(IntPtr graphicsDevice);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_GetRenderOutputSize(IntPtr renderer, out int w, out int h);
+	public static partial SDLBool SDL_GetRenderOutputSize(IntPtr graphicsDevice, out int w, out int h);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_GetCurrentRenderOutputSize(IntPtr renderer, out int w, out int h);
+	public static partial SDLBool SDL_GetCurrentRenderOutputSize(IntPtr graphicsDevice, out int w, out int h);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_CreateTexture(IntPtr renderer, SDL_PixelFormat format, SDL_TextureAccess access, int w, int h);
+	public static partial IntPtr SDL_CreateTexture(IntPtr graphicsDevice, SDL_PixelFormat format, SDL_TextureAccess access, int w, int h);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_CreateTextureFromSurface(IntPtr renderer, IntPtr surface);
+	public static partial IntPtr SDL_CreateTextureFromSurface(IntPtr graphicsDevice, IntPtr surface);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_CreateTextureWithProperties(IntPtr renderer, uint props);
+	public static partial IntPtr SDL_CreateTextureWithProperties(IntPtr graphicsDevice, uint props);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
@@ -7278,7 +7278,7 @@ public static unsafe partial class SDL
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_GetRendererFromTexture(IntPtr texture); // WARN_UNKNOWN_POINTER_PARAMETER
+	public static partial IntPtr SDL_GetGraphicsDeviceFromTexture(IntPtr texture); // WARN_UNKNOWN_POINTER_PARAMETER
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
@@ -7358,171 +7358,171 @@ public static unsafe partial class SDL
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_SetRenderTarget(IntPtr renderer, IntPtr texture); // WARN_UNKNOWN_POINTER_PARAMETER
+	public static partial SDLBool SDL_SetRenderTarget(IntPtr graphicsDevice, IntPtr texture); // WARN_UNKNOWN_POINTER_PARAMETER
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_GetRenderTarget(IntPtr renderer);
+	public static partial IntPtr SDL_GetRenderTarget(IntPtr graphicsDevice);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_SetRenderLogicalPresentation(IntPtr renderer, int w, int h, SDL_RendererLogicalPresentation mode);
+	public static partial SDLBool SDL_SetRenderLogicalPresentation(IntPtr graphicsDevice, int w, int h, SDL_GraphicsDeviceLogicalPresentation mode);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_GetRenderLogicalPresentation(IntPtr renderer, out int w, out int h, out SDL_RendererLogicalPresentation mode);
+	public static partial SDLBool SDL_GetRenderLogicalPresentation(IntPtr graphicsDevice, out int w, out int h, out SDL_GraphicsDeviceLogicalPresentation mode);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_GetRenderLogicalPresentationRect(IntPtr renderer, out SDL_FRect rect);
+	public static partial SDLBool SDL_GetRenderLogicalPresentationRect(IntPtr graphicsDevice, out SDL_FRect rect);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderCoordinatesFromWindow(IntPtr renderer, float window_x, float window_y, out float x, out float y);
+	public static partial SDLBool SDL_RenderCoordinatesFromWindow(IntPtr graphicsDevice, float window_x, float window_y, out float x, out float y);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderCoordinatesToWindow(IntPtr renderer, float x, float y, out float window_x, out float window_y);
+	public static partial SDLBool SDL_RenderCoordinatesToWindow(IntPtr graphicsDevice, float x, float y, out float window_x, out float window_y);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_ConvertEventToRenderCoordinates(IntPtr renderer, ref SDL_Event @event);
+	public static partial SDLBool SDL_ConvertEventToRenderCoordinates(IntPtr graphicsDevice, ref SDL_Event @event);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_SetRenderViewport(IntPtr renderer, ref SDL_Rect rect);
+	public static partial SDLBool SDL_SetRenderViewport(IntPtr graphicsDevice, ref SDL_Rect rect);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_GetRenderViewport(IntPtr renderer, out SDL_Rect rect);
+	public static partial SDLBool SDL_GetRenderViewport(IntPtr graphicsDevice, out SDL_Rect rect);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderViewportSet(IntPtr renderer);
+	public static partial SDLBool SDL_RenderViewportSet(IntPtr graphicsDevice);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_GetRenderSafeArea(IntPtr renderer, out SDL_Rect rect);
+	public static partial SDLBool SDL_GetRenderSafeArea(IntPtr graphicsDevice, out SDL_Rect rect);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_SetRenderClipRect(IntPtr renderer, ref SDL_Rect rect);
+	public static partial SDLBool SDL_SetRenderClipRect(IntPtr graphicsDevice, ref SDL_Rect rect);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_GetRenderClipRect(IntPtr renderer, out SDL_Rect rect);
+	public static partial SDLBool SDL_GetRenderClipRect(IntPtr graphicsDevice, out SDL_Rect rect);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderClipEnabled(IntPtr renderer);
+	public static partial SDLBool SDL_RenderClipEnabled(IntPtr graphicsDevice);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_SetRenderScale(IntPtr renderer, float scaleX, float scaleY);
+	public static partial SDLBool SDL_SetRenderScale(IntPtr graphicsDevice, float scaleX, float scaleY);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_GetRenderScale(IntPtr renderer, out float scaleX, out float scaleY);
+	public static partial SDLBool SDL_GetRenderScale(IntPtr graphicsDevice, out float scaleX, out float scaleY);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_SetRenderDrawColor(IntPtr renderer, byte r, byte g, byte b, byte a);
+	public static partial SDLBool SDL_SetRenderDrawColor(IntPtr graphicsDevice, byte r, byte g, byte b, byte a);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_SetRenderDrawColorFloat(IntPtr renderer, float r, float g, float b, float a);
+	public static partial SDLBool SDL_SetRenderDrawColorFloat(IntPtr graphicsDevice, float r, float g, float b, float a);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_GetRenderDrawColor(IntPtr renderer, out byte r, out byte g, out byte b, out byte a);
+	public static partial SDLBool SDL_GetRenderDrawColor(IntPtr graphicsDevice, out byte r, out byte g, out byte b, out byte a);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_GetRenderDrawColorFloat(IntPtr renderer, out float r, out float g, out float b, out float a);
+	public static partial SDLBool SDL_GetRenderDrawColorFloat(IntPtr graphicsDevice, out float r, out float g, out float b, out float a);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_SetRenderColorScale(IntPtr renderer, float scale);
+	public static partial SDLBool SDL_SetRenderColorScale(IntPtr graphicsDevice, float scale);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_GetRenderColorScale(IntPtr renderer, out float scale);
+	public static partial SDLBool SDL_GetRenderColorScale(IntPtr graphicsDevice, out float scale);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_SetRenderDrawBlendMode(IntPtr renderer, uint blendMode);
+	public static partial SDLBool SDL_SetRenderDrawBlendMode(IntPtr graphicsDevice, uint blendMode);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_GetRenderDrawBlendMode(IntPtr renderer, IntPtr blendMode);
+	public static partial SDLBool SDL_GetRenderDrawBlendMode(IntPtr graphicsDevice, IntPtr blendMode);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderClear(IntPtr renderer);
+	public static partial SDLBool SDL_RenderClear(IntPtr graphicsDevice);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderPoint(IntPtr renderer, float x, float y);
+	public static partial SDLBool SDL_RenderPoint(IntPtr graphicsDevice, float x, float y);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderPoints(IntPtr renderer, Span<SDL_FPoint> points, int count);
+	public static partial SDLBool SDL_RenderPoints(IntPtr graphicsDevice, Span<SDL_FPoint> points, int count);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderLine(IntPtr renderer, float x1, float y1, float x2, float y2);
+	public static partial SDLBool SDL_RenderLine(IntPtr graphicsDevice, float x1, float y1, float x2, float y2);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderLines(IntPtr renderer, Span<SDL_FPoint> points, int count);
+	public static partial SDLBool SDL_RenderLines(IntPtr graphicsDevice, Span<SDL_FPoint> points, int count);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderRect(IntPtr renderer, ref SDL_FRect rect);
+	public static partial SDLBool SDL_RenderRect(IntPtr graphicsDevice, ref SDL_FRect rect);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderRects(IntPtr renderer, Span<SDL_FRect> rects, int count);
+	public static partial SDLBool SDL_RenderRects(IntPtr graphicsDevice, Span<SDL_FRect> rects, int count);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderFillRect(IntPtr renderer, ref SDL_FRect rect);
+	public static partial SDLBool SDL_RenderFillRect(IntPtr graphicsDevice, ref SDL_FRect rect);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderFillRects(IntPtr renderer, Span<SDL_FRect> rects, int count);
+	public static partial SDLBool SDL_RenderFillRects(IntPtr graphicsDevice, Span<SDL_FRect> rects, int count);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderTexture(IntPtr renderer, IntPtr texture, ref SDL_FRect srcrect, ref SDL_FRect dstrect); // WARN_UNKNOWN_POINTER_PARAMETER
+	public static partial SDLBool SDL_RenderTexture(IntPtr graphicsDevice, IntPtr texture, ref SDL_FRect srcrect, ref SDL_FRect dstrect); // WARN_UNKNOWN_POINTER_PARAMETER
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderTextureRotated(IntPtr renderer, IntPtr texture, ref SDL_FRect srcrect, ref SDL_FRect dstrect, double angle, ref SDL_FPoint center, SDL_FlipMode flip); // WARN_UNKNOWN_POINTER_PARAMETER
+	public static partial SDLBool SDL_RenderTextureRotated(IntPtr graphicsDevice, IntPtr texture, ref SDL_FRect srcrect, ref SDL_FRect dstrect, double angle, ref SDL_FPoint center, SDL_FlipMode flip); // WARN_UNKNOWN_POINTER_PARAMETER
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderTextureTiled(IntPtr renderer, IntPtr texture, ref SDL_FRect srcrect, float scale, ref SDL_FRect dstrect); // WARN_UNKNOWN_POINTER_PARAMETER
+	public static partial SDLBool SDL_RenderTextureTiled(IntPtr graphicsDevice, IntPtr texture, ref SDL_FRect srcrect, float scale, ref SDL_FRect dstrect); // WARN_UNKNOWN_POINTER_PARAMETER
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderTexture9Grid(IntPtr renderer, IntPtr texture, ref SDL_FRect srcrect, float left_width, float right_width, float top_height, float bottom_height, float scale, ref SDL_FRect dstrect); // WARN_UNKNOWN_POINTER_PARAMETER
+	public static partial SDLBool SDL_RenderTexture9Grid(IntPtr graphicsDevice, IntPtr texture, ref SDL_FRect srcrect, float left_width, float right_width, float top_height, float bottom_height, float scale, ref SDL_FRect dstrect); // WARN_UNKNOWN_POINTER_PARAMETER
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderGeometry(IntPtr renderer, IntPtr texture, Span<SDL_Vertex> vertices, int num_vertices, Span<int> indices, int num_indices); // WARN_UNKNOWN_POINTER_PARAMETER
+	public static partial SDLBool SDL_RenderGeometry(IntPtr graphicsDevice, IntPtr texture, Span<SDL_Vertex> vertices, int num_vertices, Span<int> indices, int num_indices); // WARN_UNKNOWN_POINTER_PARAMETER
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderGeometryRaw(IntPtr renderer, IntPtr texture, IntPtr xy, int xy_stride, IntPtr color, int color_stride, IntPtr uv, int uv_stride, int num_vertices, IntPtr indices, int num_indices, int size_indices); // WARN_UNKNOWN_POINTER_PARAMETER
+	public static partial SDLBool SDL_RenderGeometryRaw(IntPtr graphicsDevice, IntPtr texture, IntPtr xy, int xy_stride, IntPtr color, int color_stride, IntPtr uv, int uv_stride, int num_vertices, IntPtr indices, int num_indices, int size_indices); // WARN_UNKNOWN_POINTER_PARAMETER
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_RenderReadPixels(IntPtr renderer, ref SDL_Rect rect);
+	public static partial IntPtr SDL_RenderReadPixels(IntPtr graphicsDevice, ref SDL_Rect rect);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_RenderPresent(IntPtr renderer);
+	public static partial SDLBool SDL_RenderPresent(IntPtr graphicsDevice);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
@@ -7530,31 +7530,31 @@ public static unsafe partial class SDL
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial void SDL_DestroyRenderer(IntPtr renderer);
+	public static partial void SDL_DestroyGraphicsDevice(IntPtr graphicsDevice);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_FlushRenderer(IntPtr renderer);
+	public static partial SDLBool SDL_FlushGraphicsDevice(IntPtr graphicsDevice);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_GetRenderMetalLayer(IntPtr renderer);
+	public static partial IntPtr SDL_GetRenderMetalLayer(IntPtr graphicsDevice);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_GetRenderMetalCommandEncoder(IntPtr renderer);
+	public static partial IntPtr SDL_GetRenderMetalCommandEncoder(IntPtr graphicsDevice);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_AddVulkanRenderSemaphores(IntPtr renderer, uint wait_stage_mask, long wait_semaphore, long signal_semaphore);
+	public static partial SDLBool SDL_AddVulkanRenderSemaphores(IntPtr graphicsDevice, uint wait_stage_mask, long wait_semaphore, long signal_semaphore);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_SetRenderVSync(IntPtr renderer, int vsync);
+	public static partial SDLBool SDL_SetRenderVSync(IntPtr graphicsDevice, int vsync);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_GetRenderVSync(IntPtr renderer, out int vsync);
+	public static partial SDLBool SDL_GetRenderVSync(IntPtr graphicsDevice, out int vsync);
 
 	// /usr/local/include/SDL3/SDL_storage.h
 

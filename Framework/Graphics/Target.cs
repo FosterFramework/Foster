@@ -8,9 +8,9 @@ public class Target : IGraphicResource, IDrawableTarget
 	private static readonly TextureFormat[] defaultFormats = [ TextureFormat.Color ];
 
 	/// <summary>
-	/// The Renderer this Texture was created in
+	/// The GraphicsDevice this Texture was created in
 	/// </summary>
-	public Renderer Renderer { get; private set; }
+	public GraphicsDevice GraphicsDevice { get; private set; }
 
 	/// <summary>
 	/// Optional Target Name
@@ -45,12 +45,12 @@ public class Target : IGraphicResource, IDrawableTarget
 	int IDrawableTarget.WidthInPixels => Width;
 	int IDrawableTarget.HeightInPixels => Height;
 
-	internal readonly Renderer.IHandle Resource;
+	internal readonly GraphicsDevice.IHandle Resource;
 
-	public Target(Renderer renderer, int width, int height)
-		: this(renderer, width, height, defaultFormats) { }
+	public Target(GraphicsDevice graphicsDevice, int width, int height)
+		: this(graphicsDevice, width, height, defaultFormats) { }
 
-	public Target(Renderer renderer, int width, int height, in ReadOnlySpan<TextureFormat> attachments)
+	public Target(GraphicsDevice graphicsDevice, int width, int height, in ReadOnlySpan<TextureFormat> attachments)
 	{
 		if (width <= 0 || height <= 0)
 			throw new ArgumentException("Target width and height must be larger than 0");
@@ -58,14 +58,14 @@ public class Target : IGraphicResource, IDrawableTarget
 		if (attachments.Length <= 0)
 			throw new ArgumentException("Target needs at least 1 color attachment");
 
-		Renderer = renderer;
-		Resource = Renderer.CreateTarget(width, height);
+		GraphicsDevice = graphicsDevice;
+		Resource = GraphicsDevice.CreateTarget(width, height);
 		Width = width;
 		Height = height;
 		Bounds = new RectInt(0, 0, Width, Height);
 		Attachments = new Texture[attachments.Length];
 		for (int i = 0; i < attachments.Length; i ++)
-			Attachments[i] = new Texture(renderer, width, height, attachments[i], this);
+			Attachments[i] = new Texture(graphicsDevice, width, height, attachments[i], this);
 	}
 
 	~Target()
@@ -78,7 +78,7 @@ public class Target : IGraphicResource, IDrawableTarget
 	/// </summary>
 	public void Dispose()
 	{
-		Renderer.DestroyResource(Resource);
+		GraphicsDevice.DestroyResource(Resource);
 		GC.SuppressFinalize(this);
 	}
 

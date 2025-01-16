@@ -9,9 +9,9 @@ namespace Foster.Framework;
 public class Texture : IGraphicResource
 {
 	/// <summary>
-	/// The Renderer this Texture was created in
+	/// The GraphicsDevice this Texture was created in
 	/// </summary>
-	public readonly Renderer Renderer;
+	public readonly GraphicsDevice GraphicsDevice;
 
 	/// <summary>
 	/// Optional Texture Name
@@ -53,28 +53,28 @@ public class Texture : IGraphicResource
 	/// </summary>
 	public int MemorySize => Width * Height * Format.Size();
 
-	internal readonly Renderer.IHandle Resource;
+	internal readonly GraphicsDevice.IHandle Resource;
 
-	public Texture(Renderer renderer, int width, int height, TextureFormat format = TextureFormat.Color)
-		: this(renderer, width, height, format, targetBinding: null) {}
+	public Texture(GraphicsDevice graphicsDevice, int width, int height, TextureFormat format = TextureFormat.Color)
+		: this(graphicsDevice, width, height, format, targetBinding: null) {}
 
-	public Texture(Renderer renderer, int width, int height, ReadOnlySpan<Color> pixels)
-		: this(renderer, width, height, TextureFormat.Color) => SetData<Color>(pixels);
+	public Texture(GraphicsDevice graphicsDevice, int width, int height, ReadOnlySpan<Color> pixels)
+		: this(graphicsDevice, width, height, TextureFormat.Color) => SetData<Color>(pixels);
 
-	public Texture(Renderer renderer, int width, int height, ReadOnlySpan<byte> pixels)
-		: this(renderer, width, height, TextureFormat.Color) => SetData<byte>(pixels);
+	public Texture(GraphicsDevice graphicsDevice, int width, int height, ReadOnlySpan<byte> pixels)
+		: this(graphicsDevice, width, height, TextureFormat.Color) => SetData<byte>(pixels);
 
-	public Texture(Renderer renderer, Image image) 
-		: this(renderer, image.Width, image.Height, TextureFormat.Color) => SetData<Color>(image.Data);
+	public Texture(GraphicsDevice graphicsDevice, Image image) 
+		: this(graphicsDevice, image.Width, image.Height, TextureFormat.Color) => SetData<Color>(image.Data);
 
-	internal Texture(Renderer renderer, int width, int height, TextureFormat format, Target? targetBinding)
+	internal Texture(GraphicsDevice graphicsDevice, int width, int height, TextureFormat format, Target? targetBinding)
 	{
-		Renderer = renderer;
+		GraphicsDevice = graphicsDevice;
 
 		if (width <= 0 || height <= 0)
 			throw new Exception("Texture must have a size larger than 0");
 
-		Resource = renderer.CreateTexture(width, height, format, targetBinding?.Resource);
+		Resource = graphicsDevice.CreateTexture(width, height, format, targetBinding?.Resource);
 		Width = width;
 		Height = height;
 		Format = format;
@@ -101,7 +101,7 @@ public class Texture : IGraphicResource
 		fixed (byte* ptr = MemoryMarshal.AsBytes(data))
 		{
 			int length = Unsafe.SizeOf<T>()  * data.Length;
-			Renderer.SetTextureData(Resource, new nint(ptr), length);
+			GraphicsDevice.SetTextureData(Resource, new nint(ptr), length);
 		}
 	}
 
@@ -119,7 +119,7 @@ public class Texture : IGraphicResource
 		fixed (byte* ptr = MemoryMarshal.AsBytes(data))
 		{
 			int length = Unsafe.SizeOf<T>() * data.Length;
-			Renderer.GetTextureData(Resource, new nint(ptr), length);
+			GraphicsDevice.GetTextureData(Resource, new nint(ptr), length);
 		}
 	}
 
@@ -133,6 +133,6 @@ public class Texture : IGraphicResource
 	{
 		// Targets should dispose their Texture Attachments
 		if (!IsTargetAttachment)
-			Renderer.DestroyResource(Resource);
+			GraphicsDevice.DestroyResource(Resource);
 	}
 }

@@ -15,16 +15,16 @@ namespace Foster.Framework;
 // I think to solve it I'd need to make some kind of big command buffer that gets flushed.
 // Questioning how much work I want to do to make threaded GL rendering work...
 
-internal sealed unsafe class RendererOpenGL(App app) : Renderer(app)
+internal sealed unsafe class GraphicsDeviceOpenGL(App app) : GraphicsDevice(app)
 {
-	private class Resource(Renderer renderer) : IHandle
+	private class Resource(GraphicsDevice graphicsDevice) : IHandle
 	{
-		public readonly Renderer Renderer = renderer;
+		public readonly GraphicsDevice GraphicsDevice = graphicsDevice;
 		public bool Destroyed;
-		public bool Disposed => Destroyed || Renderer.Disposed;
+		public bool Disposed => Destroyed || GraphicsDevice.Disposed;
 	}
 
-	private class TextureResource(Renderer renderer) : Resource(renderer)
+	private class TextureResource(GraphicsDevice graphicsDevice) : Resource(graphicsDevice)
 	{
 		public uint ID;
 		public int Width;
@@ -36,7 +36,7 @@ internal sealed unsafe class RendererOpenGL(App app) : Renderer(app)
 		public GL TypeGL;
 	}
 
-	private class TargetResource(Renderer renderer) : Resource(renderer)
+	private class TargetResource(GraphicsDevice graphicsDevice) : Resource(graphicsDevice)
 	{
 		public readonly Dictionary<nint, uint> ContextFBO = [];
 		public int Width;
@@ -53,14 +53,14 @@ internal sealed unsafe class RendererOpenGL(App app) : Renderer(app)
 		public GL TypeGL;
 	}
 
-	private class ShaderResource(Renderer renderer, uint id, in ShaderCreateInfo info) : Resource(renderer)
+	private class ShaderResource(GraphicsDevice graphicsDevice, uint id, in ShaderCreateInfo info) : Resource(graphicsDevice)
 	{
 		public readonly uint ID = id;
 		public readonly List<Uniform> Uniforms = [];
 		public readonly ShaderCreateInfo Info = info;
 	}
 
-	private class MeshResource(Renderer renderer, in VertexFormat vertexFormat, IndexFormat indexFormat) : Resource(renderer)
+	private class MeshResource(GraphicsDevice graphicsDevice, in VertexFormat vertexFormat, IndexFormat indexFormat) : Resource(graphicsDevice)
 	{
 		public readonly Dictionary<nint, uint> ContextVAO = [];
 		public readonly Dictionary<nint, VertexFormat> ContextBoundVertexFormat = [];
@@ -171,7 +171,7 @@ internal sealed unsafe class RendererOpenGL(App app) : Renderer(app)
 		// create main context
 		InitializeContext(mainState, true);
 
-		// get version / renderer device
+		// get version / graphicsDevice device
 		mainState.GL.GetIntegerv((GL)0x821B, out int major);
 		mainState.GL.GetIntegerv((GL)0x821C, out int minor);
 		version = new(major, minor);

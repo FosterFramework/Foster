@@ -5,12 +5,12 @@ namespace Foster.Framework;
 /// Use <see cref="Mesh{T}"/> to create a mesh of your given Vertex Format.
 /// Used in a <seealso cref="DrawCommand"/>.
 /// </summary>
-public class Mesh(Renderer renderer, VertexFormat vertexFormat, IndexFormat indexFormat) : IGraphicResource
+public class Mesh(GraphicsDevice graphicsDevice, VertexFormat vertexFormat, IndexFormat indexFormat) : IGraphicResource
 {
 	/// <summary>
-	/// The Renderer this Mesh was created in
+	/// The GraphicsDevice this Mesh was created in
 	/// </summary>
-	public readonly Renderer Renderer = renderer;
+	public readonly GraphicsDevice GraphicsDevice = graphicsDevice;
 
 	/// <summary>
 	/// Optional Mesh Name
@@ -42,7 +42,7 @@ public class Mesh(Renderer renderer, VertexFormat vertexFormat, IndexFormat inde
 	/// </summary>
 	public readonly VertexFormat VertexFormat = vertexFormat;
 
-	internal Renderer.IHandle? Resource { get; private set; }
+	internal GraphicsDevice.IHandle? Resource { get; private set; }
 
 	/// <summary>
 	/// Disposes the Mesh resources
@@ -74,9 +74,9 @@ public class Mesh(Renderer renderer, VertexFormat vertexFormat, IndexFormat inde
 			throw new Exception("Resource is Disposed");
 
 		IndexCount = count;
-		Resource ??= Renderer.CreateMesh(VertexFormat, IndexFormat);
+		Resource ??= GraphicsDevice.CreateMesh(VertexFormat, IndexFormat);
 
-		Renderer.SetMeshIndexData(
+		GraphicsDevice.SetMeshIndexData(
 			Resource,
 			data,
 			IndexFormat.SizeInBytes() * count,
@@ -94,9 +94,9 @@ public class Mesh(Renderer renderer, VertexFormat vertexFormat, IndexFormat inde
 			throw new Exception("Resource is Disposed");
 
 		VertexCount = count;
-		Resource ??= Renderer.CreateMesh(VertexFormat, IndexFormat);
+		Resource ??= GraphicsDevice.CreateMesh(VertexFormat, IndexFormat);
 
-		Renderer.SetMeshVertexData(
+		GraphicsDevice.SetMeshVertexData(
 			Resource,
 			data,
 			VertexFormat.Stride * count,
@@ -111,7 +111,7 @@ public class Mesh(Renderer renderer, VertexFormat vertexFormat, IndexFormat inde
 	public void Dispose()
 	{
 		if (Resource != null)
-			Renderer.DestroyResource(Resource);
+			GraphicsDevice.DestroyResource(Resource);
 		GC.SuppressFinalize(this);
 	}
 }
@@ -121,8 +121,8 @@ public class Mesh(Renderer renderer, VertexFormat vertexFormat, IndexFormat inde
 /// </summary>
 /// <typeparam name="TVertex">The Vertex Buffer Type</typeparam>
 /// <typeparam name="TIndex">The Index Buffer Type, which must be either <see cref="int"/>, <see cref="uint"/>, <see cref="short"/>, or <see cref="ushort"/></typeparam>
-public class Mesh<TVertex, TIndex>(Renderer renderer)
-	: Mesh(renderer, new TVertex().Format, IndexFormatExt.GetFormatOf<TIndex>())
+public class Mesh<TVertex, TIndex>(GraphicsDevice graphicsDevice)
+	: Mesh(graphicsDevice, new TVertex().Format, IndexFormatExt.GetFormatOf<TIndex>())
 	where TVertex : unmanaged, IVertex
 	where TIndex : unmanaged
 {
@@ -145,6 +145,6 @@ public class Mesh<TVertex, TIndex>(Renderer renderer)
 /// A Mesh with a given Vertex Buffer type, and Integer Indices
 /// </summary>
 /// <typeparam name="TVertex">The Vertex Buffer Type</typeparam>
-public class Mesh<TVertex>(Renderer renderer)
-	: Mesh<TVertex, int>(renderer)
+public class Mesh<TVertex>(GraphicsDevice graphicsDevice)
+	: Mesh<TVertex, int>(graphicsDevice)
 	where TVertex : unmanaged, IVertex;

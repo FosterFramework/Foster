@@ -6,7 +6,7 @@ namespace Foster.Framework;
 /// A combination of a Vertex and Fragment Shader programs used for Rendering.<br/>
 /// <br/>
 /// The Provided <see cref="ShaderProgramInfo.Code"/> must match the <see cref="GraphicsDriver"/>
-/// in use, which can be checked with <see cref="Renderer.Driver"/>.<br/>
+/// in use, which can be checked with <see cref="GraphicsDevice.Driver"/>.<br/>
 /// <br/>
 /// Shaders must match SDL_GPU Shader resource binding rules:
 /// https://wiki.libsdl.org/SDL3/SDL_CreateGPUShader#remarks
@@ -51,9 +51,9 @@ public class Shader : IGraphicResource
 	}
 
 	/// <summary>
-	/// The Renderer this Shader was created in
+	/// The GraphicsDevice this Shader was created in
 	/// </summary>
-	public readonly Renderer Renderer;
+	public readonly GraphicsDevice GraphicsDevice;
 
 	/// <summary>
 	/// Optional Shader Name
@@ -75,11 +75,11 @@ public class Shader : IGraphicResource
 	/// </summary>
 	public readonly Program Fragment;
 
-	internal readonly Renderer.IHandle Resource;
+	internal readonly GraphicsDevice.IHandle Resource;
 
-	public Shader(Renderer renderer, ShaderCreateInfo createInfo)
+	public Shader(GraphicsDevice graphicsDevice, ShaderCreateInfo createInfo)
 	{
-		Renderer = renderer;
+		GraphicsDevice = graphicsDevice;
 
 		// validate that uniforms are unique, or matching.
 		// we treat vertex/fragment shaders as a combined singular shader, and thus
@@ -91,7 +91,7 @@ public class Shader : IGraphicResource
 					throw new Exception($"Uniform names must be unique between Vertex and Fragment shaders, or they must be matching types. (Uniform '{uni0.Name}' types aren't equal)");
 			}
 
-		Resource = Renderer.CreateShader(createInfo);
+		Resource = GraphicsDevice.CreateShader(createInfo);
 		Vertex = new(createInfo.Vertex.SamplerCount, createInfo.Vertex.Uniforms);
 		Fragment = new(createInfo.Fragment.SamplerCount, createInfo.Fragment.Uniforms);
 	}
@@ -109,6 +109,6 @@ public class Shader : IGraphicResource
 
 	private void Dispose(bool disposing)
 	{
-		Renderer.DestroyResource(Resource);
+		GraphicsDevice.DestroyResource(Resource);
 	}
 }

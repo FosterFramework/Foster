@@ -31,9 +31,9 @@ public class SpriteFont : IDisposable
 	public static readonly int[] Ascii = [.. Enumerable.Range(32, 128 - 32)];
 
 	/// <summary>
-	/// The Renderer the Sprite Font belongs to
+	/// The GraphicsDevice the Sprite Font belongs to
 	/// </summary>
-	public readonly Renderer Renderer;
+	public readonly GraphicsDevice GraphicsDevice;
 
 	/// <summary>
 	/// The Font being used by the SpriteFont.
@@ -111,9 +111,9 @@ public class SpriteFont : IDisposable
 	private Task? blittingTask;
 	private Color[] blitBuffer = [];
 
-	public SpriteFont(Renderer renderer, Font font, float size, ReadOnlySpan<int> prebakedCodepoints = default, bool premultiplyAlpha = true)
+	public SpriteFont(GraphicsDevice graphicsDevice, Font font, float size, ReadOnlySpan<int> prebakedCodepoints = default, bool premultiplyAlpha = true)
 	{
-		Renderer = renderer;
+		GraphicsDevice = graphicsDevice;
 		Font = font;
 		Size = size;
 		fontScale = font.GetScale(size);
@@ -126,21 +126,21 @@ public class SpriteFont : IDisposable
 			PrepareCharacters(prebakedCodepoints, true);
 	}
 
-	public SpriteFont(Renderer renderer, string path, float size, ReadOnlySpan<int> prebakedCodepoints = default, bool premultiplyAlpha = true)
-		: this(renderer, new Font(path), size, prebakedCodepoints, premultiplyAlpha)
+	public SpriteFont(GraphicsDevice graphicsDevice, string path, float size, ReadOnlySpan<int> prebakedCodepoints = default, bool premultiplyAlpha = true)
+		: this(graphicsDevice, new Font(path), size, prebakedCodepoints, premultiplyAlpha)
 	{
 
 	}
 
-	public SpriteFont(Renderer renderer, Stream stream, float size, ReadOnlySpan<int> prebakedCodepoints = default, bool premultiplyAlpha = true)
-		: this(renderer, new Font(stream), size, prebakedCodepoints, premultiplyAlpha)
+	public SpriteFont(GraphicsDevice graphicsDevice, Stream stream, float size, ReadOnlySpan<int> prebakedCodepoints = default, bool premultiplyAlpha = true)
+		: this(graphicsDevice, new Font(stream), size, prebakedCodepoints, premultiplyAlpha)
 	{
 		
 	}
 
-	public SpriteFont(Renderer renderer, float size = 16)
+	public SpriteFont(GraphicsDevice graphicsDevice, float size = 16)
 	{
-		Renderer = renderer;
+		GraphicsDevice = graphicsDevice;
 		Font = null;
 		Size = size;
 	}
@@ -653,7 +653,7 @@ public class SpriteFont : IDisposable
 			while (true)
 			{
 				if (page >= pages.Count)
-					pages.Add(new(Renderer, pageSize));
+					pages.Add(new(GraphicsDevice, pageSize));
 				if (pages[page].TryPack(blitBuffer, ch.Width, ch.Height, out var source, out var frame))
 				{
 					blittingResults.Add((codepoint, page, source, frame));
@@ -681,7 +681,7 @@ public class SpriteFont : IDisposable
 		}
 	}
 
-	private class Page(Renderer renderer, int size)
+	private class Page(GraphicsDevice graphicsDevice, int size)
 	{
 		private record struct Node(int Left, int Right, RectInt Bounds);
 		private readonly int size = size;
@@ -696,7 +696,7 @@ public class SpriteFont : IDisposable
 			if (atlasDirty)
 			{
 				atlasDirty = false;
-				atlas ??= new(renderer, size, size, TextureFormat.Color);
+				atlas ??= new(graphicsDevice, size, size, TextureFormat.Color);
 				atlas.SetData<Color>(image.Data);
 			}
 

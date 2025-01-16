@@ -1,19 +1,18 @@
-using System.Diagnostics;
 using System.Text;
 using static SDL3.SDL;
 
 namespace Foster.Framework;
 
-internal unsafe class RendererSDL : Renderer
+internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 {
-	private class Resource(Renderer renderer) : IHandle
+	private class Resource(GraphicsDevice graphicsDevice) : IHandle
 	{
-		public readonly Renderer Renderer = renderer;
+		public readonly GraphicsDevice GraphicsDevice = graphicsDevice;
 		public bool Destroyed;
-		public bool Disposed => Destroyed || Renderer.Disposed;
+		public bool Disposed => Destroyed || GraphicsDevice.Disposed;
 	}
 
-	private class TextureResource(Renderer renderer) : Resource(renderer)
+	private class TextureResource(GraphicsDevice graphicsDevice) : Resource(graphicsDevice)
 	{
 		public nint Texture;
 		public int Width;
@@ -21,12 +20,12 @@ internal unsafe class RendererSDL : Renderer
 		public SDL_GPUTextureFormat Format;
 	}
 
-	private class TargetResource(Renderer renderer) : Resource(renderer)
+	private class TargetResource(GraphicsDevice graphicsDevice) : Resource(graphicsDevice)
 	{
 		public readonly List<TextureResource> Attachments = [];
 	}
 
-	private class MeshResource(Renderer renderer, VertexFormat vertexFormat, IndexFormat indexFormat) : Resource(renderer)
+	private class MeshResource(GraphicsDevice graphicsDevice, VertexFormat vertexFormat, IndexFormat indexFormat) : Resource(graphicsDevice)
 	{
 		public record struct Buffer(nint Handle, int Capacity, bool Dirty);
 
@@ -37,7 +36,7 @@ internal unsafe class RendererSDL : Renderer
 		public readonly IndexFormat IndexFormat = indexFormat;
 	}
 
-	private class ShaderResource(Renderer renderer) : Resource(renderer)
+	private class ShaderResource(GraphicsDevice graphicsDevice) : Resource(graphicsDevice)
 	{
 		public nint VertexShader;
 		public nint FragmentShader;
@@ -132,7 +131,7 @@ internal unsafe class RendererSDL : Renderer
 
 	public override bool Disposed => device == nint.Zero;
 
-	public RendererSDL(App app, GraphicsDriver preferred) : base(app)
+	public GraphicsDeviceSDL(App app, GraphicsDriver preferred) : base(app)
 	{
 		this.preferred = preferred;
 		var sdlv = SDL_GetVersion();
@@ -448,7 +447,7 @@ internal unsafe class RendererSDL : Renderer
 
 		// get texture
 		TextureResource res = (TextureResource)texture;
-		if (res.Renderer != this)
+		if (res.GraphicsDevice != this)
 			throw deviceWasDestroyed;
 
 		bool transferCycle = textureUploadBufferOffset == 0;
@@ -603,7 +602,7 @@ internal unsafe class RendererSDL : Renderer
 			throw deviceNotCreated;
 
 		var res = (MeshResource)mesh;
-		if (res.Renderer != this)
+		if (res.GraphicsDevice != this)
 			throw deviceWasDestroyed;
 
 		res.Vertex.Dirty = true;
@@ -616,7 +615,7 @@ internal unsafe class RendererSDL : Renderer
 			throw deviceNotCreated;
 
 		var res = (MeshResource)mesh;
-		if (res.Renderer != this)
+		if (res.GraphicsDevice != this)
 			throw deviceWasDestroyed;
 
 		res.Index.Dirty = true;
@@ -921,7 +920,7 @@ internal unsafe class RendererSDL : Renderer
 
 		// bind mesh buffers
 		var meshResource = (MeshResource)mesh.Resource!;
-		if (meshResource.Renderer != this)
+		if (meshResource.GraphicsDevice != this)
 			throw deviceWasDestroyed;
 
 		if (renderPassMesh != mesh.Resource
@@ -1240,7 +1239,7 @@ internal unsafe class RendererSDL : Renderer
 		var shaderRes = (ShaderResource)shader.Resource;
 		var vertexFormat = mesh.VertexFormat;
 
-		if (shaderRes.Renderer != this)
+		if (shaderRes.GraphicsDevice != this)
 			throw deviceWasDestroyed;
 
 		// build a big hashcode of everything in use

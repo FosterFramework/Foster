@@ -10,17 +10,17 @@ internal static partial class Platform
 	public const string DLL = "FosterPlatform";
 
 	/// <summary>
-	/// Creates a new Renderer based on the current Platform and preferred Driver
+	/// Creates a new GraphicsDevice based on the current Platform and preferred Driver
 	/// </summary>
-	public static Renderer CreateRenderer(App app, GraphicsDriver preferred)
+	public static GraphicsDevice CreateGraphicsDevice(App app, GraphicsDriver preferred)
 	{
 		// TODO: Emscripten needs to default to opengl
 
 		// explicit driver preferred
 		return preferred switch
 		{
-			GraphicsDriver.OpenGL => new RendererOpenGL(app),
-			_ => new RendererSDL(app, preferred)
+			GraphicsDriver.OpenGL => new GraphicsDeviceOpenGL(app),
+			_ => new GraphicsDeviceSDL(app, preferred)
 		};
 	}
 

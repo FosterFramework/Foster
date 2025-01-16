@@ -7,7 +7,7 @@ namespace Foster.Framework;
 /// The Shader Code for the given program.<br/>
 /// <br/>
 /// The Provided <see cref="Code"/> must match the <see cref="GraphicsDriver"/>
-/// in use, which can be checked with <see cref="Renderer.Driver"/>.<br/>
+/// in use, which can be checked with <see cref="GraphicsDevice.Driver"/>.<br/>
 /// <br/>
 /// Shaders must match SDL_GPU Shader resource binding rules:
 /// https://wiki.libsdl.org/SDL3/SDL_CreateGPUShader#remarks
