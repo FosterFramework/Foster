@@ -584,7 +584,7 @@ public class Batcher : IDisposable
 			_ => throw new NotImplementedException()
 		};
 
-		modeStack.Push(value);
+		modeStack.Push(this.mode);
 		this.mode = value;
 	}
 
