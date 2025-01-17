@@ -8,7 +8,7 @@ namespace Foster.Framework;
 [JsonDerivedType(typeof(KeyboardKeyBinding), typeDiscriminator: "Key")]
 [JsonDerivedType(typeof(ControllerAxisBinding), typeDiscriminator: "Axis")]
 [JsonDerivedType(typeof(ControllerButtonBinding), typeDiscriminator: "Button")]
-[JsonDerivedType(typeof(MouseMotionBinding), typeDiscriminator: "MouseButton")]
+[JsonDerivedType(typeof(MouseButtonBinding), typeDiscriminator: "MouseButton")]
 [JsonDerivedType(typeof(MouseMotionBinding), typeDiscriminator: "MouseMotion")]
 public abstract class Binding
 {
