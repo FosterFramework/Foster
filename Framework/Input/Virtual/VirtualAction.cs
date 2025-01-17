@@ -75,6 +75,9 @@ public sealed class VirtualAction(Input input, ActionBinding action, int control
 	/// </summary>
 	public TimeSpan Timestamp { get; private set; }
 
+	public VirtualAction(Input input, int controllerIndex = 0, float buffer = 0)
+		: this(input, new(), controllerIndex, buffer) {}
+
 	internal override void Update(in Time time)
 	{
 		var state = Binding.GetState(Input, Device);

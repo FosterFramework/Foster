@@ -47,6 +47,9 @@ public sealed class VirtualAxis(Input input, AxisBinding binding, int controller
 	/// </summary>
 	public int PressedSign { get; private set; }
 
+	public VirtualAxis(Input input, int controllerIndex = 0)
+		: this(input, new(), controllerIndex) {}
+
 	internal override void Update(in Time time)
 	{
 		Value = Binding.Value(Input, Device);

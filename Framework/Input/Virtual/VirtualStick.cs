@@ -45,6 +45,9 @@ public sealed class VirtualStick(Input input, StickBinding binding, int controll
 
 	public bool PressedDown { get; private set; }
 
+	public VirtualStick(Input input, int controllerIndex = 0)
+		: this(input, new(), controllerIndex) {}
+
 	internal override void Update(in Time time)
 	{
 		Value = Binding.Value(Input, Device);
