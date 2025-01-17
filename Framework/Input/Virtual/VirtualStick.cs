@@ -37,11 +37,23 @@ public sealed class VirtualStick(Input input, StickBinding binding, int controll
 	/// </summary>
 	public Point2 IntValueNoDeadzone { get; private set; }
 
+	public bool PressedLeft { get; private set; }
+
+	public bool PressedRight { get; private set; }
+
+	public bool PressedUp { get; private set; }
+
+	public bool PressedDown { get; private set; }
+
 	internal override void Update(in Time time)
 	{
 		Value = Binding.Value(Input, Device);
 		IntValue = Value.RoundToPoint2();
-		ValueNoDeadzone = Binding.Value(Input, Device);
+		ValueNoDeadzone = Binding.ValueNoDeadzone(Input, Device);
 		IntValueNoDeadzone = ValueNoDeadzone.RoundToPoint2();
+		PressedLeft = Binding.X.Negative.GetState(Input, Device).Pressed;
+		PressedRight = Binding.X.Positive.GetState(Input, Device).Pressed;
+		PressedUp = Binding.Y.Negative.GetState(Input, Device).Pressed;
+		PressedDown = Binding.Y.Positive.GetState(Input, Device).Pressed;
 	}
 }

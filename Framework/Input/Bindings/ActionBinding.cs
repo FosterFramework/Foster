@@ -37,7 +37,7 @@ public sealed class ActionBinding
 	/// <summary>
 	/// Adds GamePad Axis mappings to this Binding
 	/// </summary>
-	public ActionBinding Add(Axes axes, int sign, float deadzone)
+	public ActionBinding Add(Axes axes, int sign, float deadzone = 0)
 	{
 		Bindings.Add(new ControllerAxisBinding(axes, sign, deadzone));
 		return this;
@@ -52,6 +52,30 @@ public sealed class ActionBinding
 			Bindings.Add(new MouseButtonBinding(it));
 		return this;
 	}
+
+	public ActionBinding AddLeftJoystickLeft(float deadzone = 0)
+		=> Add(Axes.LeftX, -1, deadzone);
+
+	public ActionBinding AddLeftJoystickRight(float deadzone = 0)
+		=> Add(Axes.LeftX, 1, deadzone);
+
+	public ActionBinding AddLeftJoystickUp(float deadzone = 0)
+		=> Add(Axes.LeftY, -1, deadzone);
+
+	public ActionBinding AddLeftJoystickDown(float deadzone = 0)
+		=> Add(Axes.LeftY, 1, deadzone);
+
+	public ActionBinding AddRightJoystickLeft(float deadzone = 0)
+		=> Add(Axes.RightX, -1, deadzone);
+
+	public ActionBinding AddRightJoystickRight(float deadzone = 0)
+		=> Add(Axes.RightX, 1, deadzone);
+
+	public ActionBinding AddRightJoystickUp(float deadzone = 0)
+		=> Add(Axes.RightY, -1, deadzone);
+
+	public ActionBinding AddRightJoystickDown(float deadzone = 0)
+		=> Add(Axes.RightY, 1, deadzone);
 
 	public BindingState GetState(Input input, int device)
 	{

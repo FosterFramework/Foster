@@ -21,6 +21,11 @@ public readonly record struct Time(
 	public readonly float Delta = (float)(Elapsed - Previous).TotalSeconds;
 
 	/// <summary>
+	/// Total time in Seconds (shorthand to Elapsed.TotalSeconds)
+	/// </summary>
+	public readonly double Seconds => Elapsed.TotalSeconds;
+
+	/// <summary>
 	/// Advances <see cref="Elapsed"/> by the given delta value, increments <see cref="Frame"/> and assigns <see cref="Delta"/>.<br/>
 	/// This does not advance <see cref="RenderFrame"/>. 
 	/// </summary>
