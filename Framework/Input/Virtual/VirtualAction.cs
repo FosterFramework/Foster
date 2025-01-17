@@ -111,7 +111,7 @@ public sealed class VirtualAction(Input input, ActionBinding action, int control
 	}
 
 	/// <summary>
-	/// Consumes the press, and VirtualButton.Pressed will return false until the next Press
+	/// Consumes the press, and <see cref="Pressed"/> will return false until the next Press
 	/// </summary>
 	/// <returns>True if there was a Press to consume</returns>
 	public bool ConsumePress()
@@ -127,7 +127,7 @@ public sealed class VirtualAction(Input input, ActionBinding action, int control
 	}
 
 	/// <summary>
-	/// Essentially Zeros out the state of the Button
+	/// Essentially Zeros out the state of the Action
 	/// </summary>
 	public void Clear()
 	{

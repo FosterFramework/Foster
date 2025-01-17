@@ -59,4 +59,13 @@ public sealed class VirtualStick(Input input, StickBinding binding, int controll
 		PressedUp = Binding.Y.Negative.GetState(Input, Device).Pressed;
 		PressedDown = Binding.Y.Positive.GetState(Input, Device).Pressed;
 	}
+
+	public void Clear()
+	{
+		Value = Vector2.Zero;
+		IntValue = Point2.Zero;
+		ValueNoDeadzone = Vector2.Zero;
+		IntValueNoDeadzone = Point2.Zero;
+		PressedLeft = PressedRight = PressedUp = PressedDown = false;
+	}
 }
