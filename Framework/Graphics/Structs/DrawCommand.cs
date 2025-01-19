@@ -14,22 +14,22 @@ public struct DrawCommand
 	/// <summary>
 	/// Material to use
 	/// </summary>
-	public Material Material;
+	public Material Material = material;
 
 	/// <summary>
 	/// Mesh to use
 	/// </summary>
-	public Mesh Mesh;
+	public Mesh Mesh = mesh;
 
 	/// <summary>
 	/// The Index to begin rendering from the Mesh
 	/// </summary>
-	public int MeshIndexStart;
+	public int MeshIndexStart = 0;
 
 	/// <summary>
 	/// The total number of Indices to draw from the Mesh
 	/// </summary>
-	public int MeshIndexCount;
+	public int MeshIndexCount = mesh.IndexCount;
 
 	/// <summary>
 	/// The Offset into the Vertex Buffer
