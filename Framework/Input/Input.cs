@@ -53,6 +53,11 @@ public static class Input
 	public static float RepeatInterval = 0.03f;
 
 	/// <summary>
+	/// If Input should be received only when the Window is Focused
+	/// </summary>
+	public static bool FocusRequired = false;
+
+	/// <summary>
 	/// 
 	/// </summary>
 	public delegate void TextInputHandler(char value);
@@ -153,6 +158,10 @@ public static class Input
 
 	internal static unsafe void OnFosterEvent(in Platform.FosterEvent ev)
 	{
+		// ignore input if we're not supposed to receive it
+		if (!App.Focused && FocusRequired)
+			return;
+
 		switch (ev.EventType)
 		{
 			case Platform.FosterEventType.KeyboardInput:
