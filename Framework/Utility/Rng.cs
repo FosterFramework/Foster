@@ -80,50 +80,8 @@ public struct Rng
 	public int Sign() => Boolean() ? 1 : -1;
 	public bool Chance(float percent) => Float() <= percent;
 
-	public T Choose<T>(T a, T b)
-		=> U8(2) switch
-		{
-			1 => b,
-			_ => a,
-		};
-
-	public T Choose<T>(T a, T b, T c)
-		=> U8(3) switch
-		{
-			1 => b,
-			2 => c,
-			_ => a,
-		};
-
-	public T Choose<T>(T a, T b, T c, T d)
-		=> U8(4) switch
-		{
-			1 => b,
-			2 => c,
-			3 => d,
-			_ => a,
-		};
-
-	public T Choose<T>(T a, T b, T c, T d, T e)
-		=> U8(5) switch
-		{
-			1 => b,
-			2 => c,
-			3 => d,
-			4 => e,
-			_ => a,
-		};
-
-	public T Choose<T>(T a, T b, T c, T d, T e, T f)
-		=> U8(6) switch
-		{
-			1 => b,
-			2 => c,
-			3 => d,
-			4 => e,
-			5 => f,
-			_ => a,
-		};
+	public T Choose<T>(params ReadOnlySpan<T> choices)
+		=> choices[Int(choices.Length)];
 
 	public Point2 Shake() => new(Choose(-1, 0, 1), Choose(-1, 0, 1));
 	public float Angle() => Float(Calc.TAU);

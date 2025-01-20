@@ -69,65 +69,8 @@ public static class Calc
 
 	#region Give Me
 
-	public static T GiveMe<T>(int index, T a, T b)
-	{
-		return index switch
-		{
-			0 => a,
-			1 => b,
-			_ => throw new Exception("Index was out of range!"),
-		};
-	}
-
-	public static T GiveMe<T>(int index, T a, T b, T c)
-	{
-		return index switch
-		{
-			0 => a,
-			1 => b,
-			2 => c,
-			_ => throw new Exception("Index was out of range!"),
-		};
-	}
-
-	public static T GiveMe<T>(int index, T a, T b, T c, T d)
-	{
-		return index switch
-		{
-			0 => a,
-			1 => b,
-			2 => c,
-			3 => d,
-			_ => throw new Exception("Index was out of range!"),
-		};
-	}
-
-	public static T GiveMe<T>(int index, T a, T b, T c, T d, T e)
-	{
-		return index switch
-		{
-			0 => a,
-			1 => b,
-			2 => c,
-			3 => d,
-			4 => e,
-			_ => throw new Exception("Index was out of range!"),
-		};
-	}
-
-	public static T GiveMe<T>(int index, T a, T b, T c, T d, T e, T f)
-	{
-		return index switch
-		{
-			0 => a,
-			1 => b,
-			2 => c,
-			3 => d,
-			4 => e,
-			5 => f,
-			_ => throw new Exception("Index was out of range!"),
-		};
-	}
+	public static T GiveMe<T>(int index, params ReadOnlySpan<T> choices)
+		=> choices[index];
 
 	#endregion
 
