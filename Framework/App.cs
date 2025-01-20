@@ -239,10 +239,6 @@ public abstract class App : IDisposable
 		if (Exiting)
 			throw new Exception("Application is still exiting");
 
-		// Rebuild the Shaders
-		
- 
-		// Clear Time
 		Running = true;
 		Time = new();
 		lastUpdateTime = TimeSpan.Zero;
@@ -252,8 +248,8 @@ public abstract class App : IDisposable
 		// poll events once, so input has controller state before Startup
 		PollEvents();
 		inputProvider.Update(Time);
-		Startup();
 		Window.Show();
+		Startup();
 
 		// begin normal game loop
 		while (!Exiting)
@@ -265,9 +261,9 @@ public abstract class App : IDisposable
 
 		// shutdown
 		Shutdown();
+		Window.Hide();
 		Running = false;
 		Exiting = false;
-		Window.Hide();
 	}
 
 	/// <summary>
