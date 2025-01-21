@@ -1,13 +1,16 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Foster.Framework;
 
 /// <summary>
 /// A 2D Integer Point
 /// </summary>
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Sequential), JsonConverter(typeof(Point2.JsonConverter))]
 public struct Point2(int x, int y) : IEquatable<Point2>
 {
 	public static readonly Point2 Zero = new(0, 0);
@@ -164,4 +167,63 @@ public struct Point2(int x, int y) : IEquatable<Point2>
 
 	public static explicit operator Point2(Vector2 vector) => new((int)vector.X, (int)vector.Y);
 	public static implicit operator Vector2(Point2 point) => new(point.X, point.Y);
+
+	internal class JsonConverter : JsonConverter<Point2>
+	{
+		public override Point2 ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		{
+			var span = (reader.GetString() ?? string.Empty).AsSpan();
+			var index = span.IndexOf(',');
+			if (index >= 0)
+			{
+				var x = span[..index];
+				var y = span[(index + 1)..];
+
+				if (int.TryParse(x, out var px) && int.TryParse(y, out var py))
+					return new(px, py);
+			}
+
+			return Zero;
+		}
+
+		public override void WriteAsPropertyName(Utf8JsonWriter writer, [DisallowNull] Point2 value, JsonSerializerOptions options)
+			=> writer.WritePropertyName($"{value.X},{value.Y}");
+
+		public override Point2 Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		{
+			Point2 value = new();
+			if (reader.TokenType == JsonTokenType.StartObject)
+			{
+				while (reader.Read())
+				{
+					if (reader.TokenType == JsonTokenType.EndObject)
+						break;
+
+					if (reader.TokenType == JsonTokenType.PropertyName)
+					{
+						var component = reader.GetString();
+						if (!reader.Read() || reader.TokenType != JsonTokenType.Number)
+							continue;
+
+						switch (component)
+						{
+						case "x": value.X = reader.GetInt32(); break;
+						case "X": value.X = reader.GetInt32(); break;
+						case "y": value.Y = reader.GetInt32(); break;
+						case "Y": value.Y = reader.GetInt32(); break;
+						}
+					}
+				}
+			}
+			return value;
+		}
+
+		public override void Write(Utf8JsonWriter writer, Point2 value, JsonSerializerOptions options)
+		{
+			writer.WriteStartObject();
+			writer.WriteNumber("X", value.X);
+			writer.WriteNumber("Y", value.Y);
+			writer.WriteEndObject();
+		}
+	}
 }
