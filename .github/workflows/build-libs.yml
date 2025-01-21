@@ -29,10 +29,6 @@ jobs:
             arch: x64
             target: linux-x64
             ext: .so
-          - os: ubuntu-latest
-            arch: arm64
-            target: linux-arm64
-            ext: .so
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
@@ -40,7 +36,7 @@ jobs:
       - name: Get CMake
         uses: lukka/get-cmake@v3.29.4
       - name: Setup Linux dependencies
-        if: ${{ runner.os == 'Linux' && matrix.arch != 'arm64' }}
+        if: ${{ runner.os == 'Linux' }}
         run: |
           sudo apt-get update
           sudo apt-get install build-essential git make \
@@ -49,23 +45,8 @@ jobs:
             libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev \
             libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
             libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev fcitx-libs-dev
-      - name: Setup Linux dependencies (arm64)
-        if: ${{ runner.os == 'Linux' && matrix.arch == 'arm64' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu
-          sudo sed -i "s/^deb/deb [arch=amd64,i386]/g" /etc/apt/sources.list
-          echo "deb [arch=arm64,armhf] http://ports.ubuntu.com/ $(lsb_release -s -c) main universe multiverse restricted" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=arm64,armhf] http://ports.ubuntu.com/ $(lsb_release -s -c)-updates main universe multiverse restricted" | sudo tee -a /etc/apt/sources.list
-          sudo dpkg --add-architecture arm64
-          sudo apt-get update
-          sudo apt-get install -y libwayland-dev:arm64 libegl-dev:arm64 libdrm-dev:arm64 libxkbcommon-dev:arm64 libpulse-dev:arm64
       - name: CMake Configure
-        if: ${{ !(runner.os == 'Linux' && matrix.arch == 'arm64') }}
         run: cmake -B build -S Platform -DFOSTER_OVERRIDE_TARGET=${{matrix.target}} -D CMAKE_SYSTEM_VERSION=10.0.26100.0
-      - name: CMake Configure (Linux-arm64)
-        if: ${{ runner.os == 'Linux' && matrix.arch == 'arm64' }}
-        run: PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig cmake -B build -S Platform -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_SYSTEM_NAME=Linux -DFOSTER_OVERRIDE_TARGET=${{matrix.target}}
       - name: CMake Build
         run: cmake --build build --config Release
       - name: Publish Artifact
@@ -95,11 +76,6 @@ jobs:
         with:
           name: ubuntu-latest-x64-build
           path: Platform/libs/linux-x64
-      - name: Download ubuntu libs (arm64)
-        uses: actions/download-artifact@v4
-        with:
-          name: ubuntu-latest-arm64-build
-          path: Platform/libs/linux-arm64
       - name: Display structure of libs
         run: ls -R
         working-directory: Platform/libs
