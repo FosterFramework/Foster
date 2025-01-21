@@ -6,6 +6,7 @@ namespace Foster.Framework;
 internal sealed class InputProviderSDL(App app) : InputProvider, IDisposable
 {
 	public readonly App App = app;
+	private Vector2 lastMouse;
 
 	private readonly List<(uint ID, nint Ptr)> openJoysticks = [];
 	private readonly List<(uint ID, nint Ptr)> openGamepads = [];
@@ -48,20 +49,27 @@ internal sealed class InputProviderSDL(App app) : InputProvider, IDisposable
 
 	public override void Update(in Time time)
 	{
-		SDL_GetRelativeMouseState(out float deltaX, out float deltaY);
+		// get window properties
+		var windowSize = new Point2(App.Window.Width, App.Window.Height);
+		var windowSizeInPx = new Point2(App.Window.WidthInPixels, App.Window.HeightInPixels);
+		var windowPos = new Point2();
+		SDL_GetWindowPosition(App.Window.Handle, out windowPos.X, out windowPos.Y);
 
-		if (deltaX != 0 || deltaY != 0)
+		// use global mouse position so we can get it as it moves outside the window
+		var mouse = new Vector2();
+		SDL_GetGlobalMouseState(out mouse.X, out mouse.Y);
+		mouse -= windowPos;
+
+		// scale it to the pixel coords
+		mouse = (mouse / windowSize) * windowSizeInPx;
+
+		// add new event if moved
+		if (lastMouse.X != mouse.X || lastMouse.Y != mouse.Y)
 		{
-			SDL_GetMouseState(out float mouseX, out float mouseY);
+			var delta = mouse - lastMouse;
+			lastMouse = mouse;
 
-			var size = new Point2(App.Window.Width, App.Window.Height);
-			var pixels = new Point2(App.Window.WidthInPixels, App.Window.HeightInPixels);
-
-			MouseMove(
-				new Vector2((mouseX / size.X) * pixels.X, (mouseY / size.Y) * pixels.Y),
-				new Vector2(deltaX, deltaY),
-				time.Elapsed
-			);
+			MouseMove(mouse,delta, time.Elapsed);
 		}
 
 		base.Update(time);
