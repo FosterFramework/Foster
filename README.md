@@ -25,10 +25,10 @@ Check out [Discussons](https://github.com/FosterFramework/Foster/discussions) or
  - To add support for other platforms you must build and include it in the [csproj](https://github.com/FosterFramework/Foster/blob/main/Framework/Foster.Framework.csproj#L27)
 
 ### Rendering
- - Rendering is implemented in both [SDL_GPU](https://wiki.libsdl.org/SDL3/CategoryGPU) and OpenGL.
- - Shaders provided to SDL_GPU must follow the [SDL_GPU shader resource requirements](https://wiki.libsdl.org/SDL3/SDL_CreateGPUShader#remarks).
- - You can specify which Renderer to use when you run your Application.
- - You must provide shaders for the resulting Renderer (ex. GLSL shaders for OpenGL, SPIR-V for Vulkan, etc). There are built-in shaders for generic 2D rendering so this only matters if you want to write custom shaders.
+ - Rendering is implemented using [SDL_GPU](https://wiki.libsdl.org/SDL3/CategoryGPU).
+ - Shaders must follow the [SDL_GPU shader resource requirements](https://wiki.libsdl.org/SDL3/SDL_CreateGPUShader#remarks).
+ - You can specify which Graphics Device to use when you run your Application.
+ - You must provide shaders for the resulting Renderer (ex. SPIR-V for Vulkan, etc). There are built-in shaders for 2D rendering so this only matters if you write custom shaders.
 
 ### Notes
  - Taken a lot of inspiration from other Frameworks and APIs, namely [FNA](https://fna-xna.github.io/).
