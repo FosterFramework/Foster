@@ -13,11 +13,11 @@ namespace Foster.Framework;
 /// https://wiki.libsdl.org/SDL3/SDL_CreateGPUShader#remarks
 /// </param>
 /// <param name="SamplerCount">The number of Samplers</param>
-/// <param name="Uniforms">A list of Uniforms used by the Shader</param>
+/// <param name="UniformBufferCount">The number of Uniform Buffers</param>
 /// <param name="EntryPoint">The Shader's Entry Point</param>
-public readonly record struct ShaderProgramInfo(
+public readonly record struct ShaderStageInfo(
 	byte[] Code,
 	int SamplerCount,
-	ShaderUniform[] Uniforms,
+	int UniformBufferCount,
 	string EntryPoint = "main"
 );

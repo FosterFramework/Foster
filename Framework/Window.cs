@@ -285,9 +285,6 @@ public sealed class Window : IDrawableTarget
 		if (fullscreen)
 			windowFlags |= SDL_WindowFlags.SDL_WINDOW_FULLSCREEN;
 
-		if (graphicsDevice.Driver == GraphicsDriver.OpenGL)
-			windowFlags |= SDL_WindowFlags.SDL_WINDOW_OPENGL;
-
 		Handle = SDL_CreateWindow(title, width, height, windowFlags);
 		if (Handle == IntPtr.Zero)
 			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateWindow));

@@ -77,17 +77,15 @@ public class Batcher : IDisposable
 	/// </summary>
 	public int BatchCount => batches.Count + (currentBatch.Elements > 0 ? 1 : 0);
 
-	private readonly MaterialState defaultMaterialState = new();
 	private readonly Material defaultMaterial;
 	private readonly Stack<Matrix3x2> matrixStack = [];
 	private readonly Stack<RectInt?> scissorStack = [];
 	private readonly Stack<BlendMode> blendStack = [];
 	private readonly Stack<TextureSampler> samplerStack = [];
-	private readonly Stack<MaterialState> materialStack = [];
+	private readonly Stack<Material> materialStack = [];
 	private readonly Stack<int> layerStack = [];
 	private readonly Stack<Color> modeStack = [];
 	private readonly List<Batch> batches = [];
-	private readonly List<Material> materialPool = [];
 	private readonly Mesh mesh;
 
 	private Color mode = new(255, 0, 0, 0);
@@ -99,19 +97,12 @@ public class Batcher : IDisposable
 	private int indexCount = 0;
 	private int indexCapacity = 0;
 	private int currentBatchInsert;
-	private int materialPoolIndex;
 	private bool meshDirty;
 
-	private readonly record struct MaterialState(
-		Material Material,
-		string MatrixUniform,
-		int SamplerIndex
-	);
-
-	private struct Batch(GraphicsDevice graphicsDevice, MaterialState material, BlendMode blend, Texture? texture, TextureSampler sampler, int offset, int elements)
+	private struct Batch(GraphicsDevice graphicsDevice, Material material, BlendMode blend, Texture? texture, TextureSampler sampler, int offset, int elements)
 	{
 		public int Layer = 0;
-		public MaterialState MaterialState = material;
+		public Material Material = material;
 		public BlendMode Blend = blend;
 		public Texture? Texture = texture;
 		public RectInt? Scissor = null;
@@ -124,9 +115,8 @@ public class Batcher : IDisposable
 	public Batcher(GraphicsDevice graphicsDevice)
 	{
 		GraphicsDevice = graphicsDevice;
-		defaultMaterial = new(graphicsDevice);
+		defaultMaterial = new();
 		mesh = new Mesh<BatcherVertex>(graphicsDevice);
-		defaultMaterialState = new(defaultMaterial, "Matrix", 0);
 		Clear();
 	}
 
@@ -163,9 +153,6 @@ public class Batcher : IDisposable
 			indexPtr = IntPtr.Zero;
 			indexCapacity = 0;
 		}
-
-		materialPool.Clear();
-		materialPoolIndex = 0;
 	}
 
 	/// <summary>
@@ -176,8 +163,7 @@ public class Batcher : IDisposable
 		vertexCount = 0;
 		indexCount = 0;
 		currentBatchInsert = 0;
-		materialPoolIndex = 0;
-		currentBatch = new Batch(GraphicsDevice, defaultMaterialState, BlendMode.Premultiply, null, new(), 0, 0);
+		currentBatch = new Batch(GraphicsDevice, defaultMaterial, BlendMode.Premultiply, null, new(), 0, 0);
 		mode = new Color(255, 0, 0, 0);
 		batches.Clear();
 		matrixStack.Clear();
@@ -262,10 +248,13 @@ public class Batcher : IDisposable
 			trimmed = batch.Scissor;
 
 		var texture = batch.Texture != null && !batch.Texture.IsDisposed ? batch.Texture : null;
+		var mat = batch.Material;
 
-		var mat = batch.MaterialState.Material;
-		mat.Set(batch.MaterialState.MatrixUniform, matrix);
-		mat.FragmentSamplers[batch.MaterialState.SamplerIndex] = new(texture, batch.Sampler);
+		// set Fragment Sampler 0 to the texture to be drawn
+		mat.Fragment.Samplers[0] = new(texture, batch.Sampler);
+
+		// set Vertex Matrix, always assumed to be in slot 0 as the first data
+		mat.Vertex.SetUniformBuffer(matrix);
 
 		GraphicsDevice.Draw(new(target, mesh, mat)
 		{
@@ -342,17 +331,17 @@ public class Batcher : IDisposable
 		currentBatchInsert = insert;
 	}
 
-	private void SetMaterial(MaterialState materialState)
+	private void SetMaterial(Material material)
 	{
 		if (currentBatch.Elements == 0)
 		{
-			currentBatch.MaterialState = materialState;
+			currentBatch.Material = material;
 		}
-		else if (currentBatch.MaterialState != materialState)
+		else if (currentBatch.Material != material)
 		{
 			batches.Insert(currentBatchInsert, currentBatch);
 
-			currentBatch.MaterialState = materialState;
+			currentBatch.Material = material;
 			currentBatch.Offset += currentBatch.Elements;
 			currentBatch.Elements = 0;
 			currentBatchInsert++;
@@ -412,38 +401,23 @@ public class Batcher : IDisposable
 	}
 
 	/// <summary>
-	/// Pushes a Material to draw with
+	/// Pushes a Material to draw with.<br/>
+	/// <br/>
 	/// This clones the state of the Material, so changing it after pushing it
-	/// will not have an effect on the resulting draw.
+	/// will not have an affect on the results.<br/>
+	/// <br/>
+	/// Note that the Batcher uses the first Fragment Sampler for its texture,
+	/// and assumes that the first Vertex Uniform Buffer begins with a Matrix4x4.
 	/// </summary>
 	public void PushMaterial(Material material)
 	{
-		PushMaterial(material, 
-			defaultMaterialState.MatrixUniform, 
-			defaultMaterialState.SamplerIndex
-		);
-	}
-
-	/// <summary>
-	/// Pushes a Material to draw with.
-	/// This clones the state of the Material, so changing it after pushing it
-	/// will not have an effect on the resulting draw.
-	/// </summary>
-	public void PushMaterial(Material material, string matrixUniform, int samplerIndex)
-	{
-		materialStack.Push(currentBatch.MaterialState);
-
-		// get a pooled material, or create a new one
-		Material? copy;
-		if (materialPoolIndex < materialPool.Count)
-			copy = materialPool[materialPoolIndex];
-		else
-			materialPool.Add(copy = new Material(GraphicsDevice));
-		materialPoolIndex++;
-
-		// copy the values to our internal material & set it
+		if (material.Shader == null)
+			throw new Exception("Material must have a Shader assigned");
+		
+		materialStack.Push(currentBatch.Material);
+		var copy = Pool.Get<Material>();
 		material.CopyTo(copy);
-		SetMaterial(new(copy, matrixUniform, samplerIndex));
+		SetMaterial(copy);
 	}
 
 	/// <summary>

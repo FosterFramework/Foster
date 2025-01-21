@@ -5,7 +5,7 @@ namespace Foster.Framework;
 /// <summary>
 /// A combination of a Vertex and Fragment Shader programs used for Rendering.<br/>
 /// <br/>
-/// The Provided <see cref="ShaderProgramInfo.Code"/> must match the <see cref="GraphicsDriver"/>
+/// The Provided <see cref="ShaderStageInfo.Code"/> must match the <see cref="GraphicsDriver"/>
 /// in use, which can be checked with <see cref="GraphicsDevice.Driver"/>.<br/>
 /// <br/>
 /// Shaders must match SDL_GPU Shader resource binding rules:
@@ -13,43 +13,6 @@ namespace Foster.Framework;
 /// </summary>
 public class Shader : IGraphicResource
 {
-	/// <summary>
-	/// Holds information about a Shader Program
-	/// </summary>
-	public class Program
-	{
-		public readonly record struct Uniform(
-			UniformType Type,
-			int ArrayElements,
-			int OffsetInBytes,
-			int SizeInBytes
-		);
-
-		public readonly int SamplerCount;
-		public readonly int UniformSizeInBytes;
-		public readonly FrozenDictionary<string, Uniform> Uniforms;
-
-		internal Program(int samplerCount, ShaderUniform[] uniforms)
-		{
-			SamplerCount = samplerCount;
-
-			var offset = 0;
-			var dict = new Dictionary<string, Uniform>();
-
-			// TODO: account for packing/offset/alignment
-
-			foreach (var it in uniforms)
-			{
-				var uniform = new Uniform(it.Type, it.ArrayElements, offset, it.Type.SizeInBytes() * it.ArrayElements);
-				dict.Add(it.Name, uniform);
-				offset += uniform.SizeInBytes;
-			}
-			
-			Uniforms = dict.ToFrozenDictionary();
-			UniformSizeInBytes = offset;
-		}
-	}
-
 	/// <summary>
 	/// The GraphicsDevice this Shader was created in
 	/// </summary>
@@ -66,34 +29,17 @@ public class Shader : IGraphicResource
 	public bool IsDisposed => Resource.Disposed;
 
 	/// <summary>
-	/// Vertex Shader Program Reflection
+	/// The Data the Shader was created with
 	/// </summary>
-	public readonly Program Vertex;
-
-	/// <summary>
-	/// Fragment Shader Program Reflection
-	/// </summary>
-	public readonly Program Fragment;
+	public readonly ShaderCreateInfo CreateInfo;
 
 	internal readonly GraphicsDevice.IHandle Resource;
 
 	public Shader(GraphicsDevice graphicsDevice, ShaderCreateInfo createInfo)
 	{
 		GraphicsDevice = graphicsDevice;
-
-		// validate that uniforms are unique, or matching.
-		// we treat vertex/fragment shaders as a combined singular shader, and thus
-		// the uniforms between them must be unique (or at least matching in type)
-		foreach (var uni0 in createInfo.Vertex.Uniforms)
-			foreach (var uni1 in createInfo.Fragment.Uniforms)
-			{
-				if (uni0.Name == uni1.Name && (uni0.Type != uni1.Type || uni0.ArrayElements != uni1.ArrayElements))
-					throw new Exception($"Uniform names must be unique between Vertex and Fragment shaders, or they must be matching types. (Uniform '{uni0.Name}' types aren't equal)");
-			}
-
+		CreateInfo = createInfo;
 		Resource = GraphicsDevice.CreateShader(createInfo);
-		Vertex = new(createInfo.Vertex.SamplerCount, createInfo.Vertex.Uniforms);
-		Fragment = new(createInfo.Fragment.SamplerCount, createInfo.Fragment.Uniforms);
 	}
 
 	~Shader()

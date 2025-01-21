@@ -25,7 +25,6 @@ public abstract class GraphicsDevice
 
 	/// <summary>
 	/// If the underlying Graphics Driver considers 0,0 to be the bottom left.
-	/// This is only ever true for <see cref="GraphicsDriver.OpenGL"/>.
 	/// </summary>
 	public abstract bool OriginBottomLeft { get; }
 

@@ -6,8 +6,7 @@ public enum GraphicsDriver
 	Private,
 	Vulkan,
 	D3D12,
-	Metal,
-	OpenGL
+	Metal
 }
 
 public static class GraphicsDriverExt
@@ -19,7 +18,6 @@ public static class GraphicsDriverExt
 		GraphicsDriver.Vulkan => "spv",
 		GraphicsDriver.D3D12 => "dxil",
 		GraphicsDriver.Metal => "msl",
-		GraphicsDriver.OpenGL => "glsl",
 		_ => throw new NotImplementedException(),
 	};
 }

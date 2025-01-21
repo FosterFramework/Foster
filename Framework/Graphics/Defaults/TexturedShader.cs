@@ -4,21 +4,19 @@ namespace Foster.Framework;
 /// A simple 2D Shader with a single Fragment Sampler.
 /// Expects <seealso cref="PosTexColVertex"/> Vertices.
 /// </summary>
-public class TexturedShader(GraphicsDevice graphicsDevice) : Shader(graphicsDevice, CreateInfo(graphicsDevice))
+public class TexturedShader(GraphicsDevice graphicsDevice) : Shader(graphicsDevice, GetCreateInfo(graphicsDevice))
 {
-	private static ShaderCreateInfo CreateInfo(GraphicsDevice graphicsDevice) => new(
+	private static ShaderCreateInfo GetCreateInfo(GraphicsDevice graphicsDevice) => new(
 		Vertex: new(
 			Code: Platform.ReadEmbeddedBytes($"Textured.vertex.{graphicsDevice.Driver.GetShaderExtension()}"),
 			SamplerCount: 0,
-			Uniforms: [
-				new("Matrix", UniformType.Mat4x4)
-			],
+			UniformBufferCount: 1,
 			EntryPoint: "vertex_main"
 		),
 		Fragment: new(
 			Code: Platform.ReadEmbeddedBytes($"Textured.fragment.{graphicsDevice.Driver.GetShaderExtension()}"),
 			SamplerCount: 1,
-			Uniforms: [],
+			UniformBufferCount: 0,
 			EntryPoint: "fragment_main"
 		)
 	);

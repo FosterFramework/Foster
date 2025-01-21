@@ -13,16 +13,7 @@ internal static partial class Platform
 	/// Creates a new GraphicsDevice based on the current Platform and preferred Driver
 	/// </summary>
 	public static GraphicsDevice CreateGraphicsDevice(App app, GraphicsDriver preferred)
-	{
-		// TODO: Emscripten needs to default to opengl
-
-		// explicit driver preferred
-		return preferred switch
-		{
-			GraphicsDriver.OpenGL => new GraphicsDeviceOpenGL(app),
-			_ => new GraphicsDeviceSDL(app, preferred)
-		};
-	}
+		=> new GraphicsDeviceSDL(app, preferred);
 
 	/// <summary>
 	/// Converts a utf8 null-terminating string into a C# string

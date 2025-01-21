@@ -150,7 +150,6 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			GraphicsDriver.Vulkan => "vulkan",
 			GraphicsDriver.D3D12 => "direct3d12",
 			GraphicsDriver.Metal => "metal",
-			GraphicsDriver.OpenGL => throw new NotImplementedException(),
 			_ => null,
 		};
 
@@ -797,7 +796,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				num_samplers = (uint)shaderInfo.Vertex.SamplerCount,
 				num_storage_textures = 0,
 				num_storage_buffers = 0,
-				num_uniform_buffers = (uint)(shaderInfo.Vertex.Uniforms.Length > 0 ? 1 : 0)
+				num_uniform_buffers = (uint)shaderInfo.Vertex.UniformBufferCount,
 			};
 
 			vertexProgram = SDL_CreateGPUShader(device, info);
@@ -819,7 +818,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				num_samplers = (uint)shaderInfo.Fragment.SamplerCount,
 				num_storage_textures = 0,
 				num_storage_buffers = 0,
-				num_uniform_buffers = (uint)(shaderInfo.Fragment.Uniforms.Length > 0 ? 1 : 0)
+				num_uniform_buffers = (uint)shaderInfo.Fragment.UniformBufferCount,
 			};
 
 			fragmentProgram = SDL_CreateGPUShader(device, info);
@@ -955,58 +954,61 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			SDL_BindGPUVertexBuffers(renderPass, 0, [vertexBinding], 1);
 		}
 
+		var fragmentInfo = shader.CreateInfo.Fragment;
+		var vertexInfo = shader.CreateInfo.Vertex;
+
 		// bind fragment samplers
 		// TODO: only do this if Samplers change
-		if (shader.Fragment.SamplerCount > 0)
+		if (fragmentInfo.SamplerCount > 0)
 		{
-			Span<SDL_GPUTextureSamplerBinding> samplers = stackalloc SDL_GPUTextureSamplerBinding[shader.Fragment.SamplerCount];
+			Span<SDL_GPUTextureSamplerBinding> samplers = stackalloc SDL_GPUTextureSamplerBinding[fragmentInfo.SamplerCount];
 
-			for (int i = 0; i < shader.Fragment.SamplerCount; i++)
+			for (int i = 0; i < fragmentInfo.SamplerCount; i++)
 			{
-				if (mat.FragmentSamplers[i].Texture is { } tex && !tex.IsDisposed)
+				if (mat.Fragment.Samplers[i].Texture is { } tex && !tex.IsDisposed)
 					samplers[i].texture = ((TextureResource)tex.Resource).Texture;
 				else
 					samplers[i].texture = ((TextureResource)emptyDefaultTexture!).Texture;
 
-				samplers[i].sampler = GetSampler(mat.FragmentSamplers[i].Sampler);
+				samplers[i].sampler = GetSampler(mat.Fragment.Samplers[i].Sampler);
 			}
 
-			SDL_BindGPUFragmentSamplers(renderPass, 0, samplers, (uint)shader.Fragment.SamplerCount);
+			SDL_BindGPUFragmentSamplers(renderPass, 0, samplers, (uint)fragmentInfo.SamplerCount);
 		}
 
 		// bind vertex samplers
 		// TODO: only do this if Samplers change
-		if (shader.Vertex.SamplerCount > 0)
+		if (vertexInfo.SamplerCount > 0)
 		{
-			Span<SDL_GPUTextureSamplerBinding> samplers = stackalloc SDL_GPUTextureSamplerBinding[shader.Vertex.SamplerCount];
+			Span<SDL_GPUTextureSamplerBinding> samplers = stackalloc SDL_GPUTextureSamplerBinding[vertexInfo.SamplerCount];
 
-			for (int i = 0; i < shader.Vertex.SamplerCount; i++)
+			for (int i = 0; i < vertexInfo.SamplerCount; i++)
 			{
-				if (mat.VertexSamplers[i].Texture is { } tex && !tex.IsDisposed)
+				if (mat.Vertex.Samplers[i].Texture is { } tex && !tex.IsDisposed)
 					samplers[i].texture = ((TextureResource)tex.Resource).Texture;
 				else
 					samplers[i].texture = ((TextureResource)emptyDefaultTexture!).Texture;
 
-				samplers[i].sampler = GetSampler(mat.VertexSamplers[i].Sampler);
+				samplers[i].sampler = GetSampler(mat.Vertex.Samplers[i].Sampler);
 			}
 
-			SDL_BindGPUVertexSamplers(renderPass, 0, samplers, (uint)shader.Vertex.SamplerCount);
-		}
-
-		// Upload Vertex Uniforms
-		// TODO: only do this if Uniforms change
-		if (shader.Vertex.Uniforms.Count > 0)
-		{
-			fixed (byte* ptr = mat.VertexUniformBuffer)
-				SDL_PushGPUVertexUniformData(cmdRender, 0, new nint(ptr), (uint)shader.Vertex.UniformSizeInBytes);
+			SDL_BindGPUVertexSamplers(renderPass, 0, samplers, (uint)vertexInfo.SamplerCount);
 		}
 
 		// Upload Fragment Uniforms
 		// TODO: only do this if Uniforms change
-		if (shader.Fragment.Uniforms.Count > 0)
+		for (int i = 0; i < fragmentInfo.UniformBufferCount; i ++)
 		{
-			fixed (byte* ptr = mat.FragmentUniformBuffer)
-				SDL_PushGPUFragmentUniformData(cmdRender, 0, new nint(ptr), (uint)shader.Fragment.UniformSizeInBytes);
+			fixed (byte* ptr = mat.Fragment.UniformBuffers[i])
+				SDL_PushGPUFragmentUniformData(cmdRender, (uint)i, new nint(ptr), (uint)mat.Fragment.UniformBuffers[i].Length);
+		}
+
+		// Upload Vertex Uniforms
+		// TODO: only do this if Uniforms change
+		for (int i = 0; i < vertexInfo.UniformBufferCount; i ++)
+		{
+			fixed (byte* ptr = mat.Vertex.UniformBuffers[i])
+				SDL_PushGPUVertexUniformData(cmdRender, (uint)i, new nint(ptr), (uint)mat.Vertex.UniformBuffers[i].Length);
 		}
 
 		// perform draw
