@@ -39,16 +39,20 @@ public sealed class Storage : StorageContainer
 
 	public override bool DirectoryExists(string path)
 	{
+		path = Calc.NormalizePath(path);
 		return 
 			handle != nint.Zero && 
 			SDL_GetStoragePathInfo(handle, path, out var info) && 
 			info.type == SDL_PathType.SDL_PATHTYPE_DIRECTORY;
 	}
 
-	public override IEnumerable<string> EnumerateDirectory(string path, string? searchPattern = null)
+	public override IEnumerable<string> EnumerateDirectory(string? path = null, string? searchPattern = null)
 	{
 		if (handle == nint.Zero)
 			yield break;
+
+		path ??= "";
+		path = Calc.NormalizePath(path);
 		
 		var results = SDL_GlobStorageDirectory(handle, path, searchPattern!, (SDL_GlobFlags)0, out int count);
 		if (results == nint.Zero)
@@ -65,19 +69,6 @@ public sealed class Storage : StorageContainer
 					break;
 
 				var filepath = Platform.ParseUTF8(ptr);
-
-				// TODO:
-				// This is a bug with SDL! It reports full filepaths instead of relative ones
-				// to the storage. Thus we need to return a relative path, which is done by
-				// hackily detecting two // in the path
-				// Relevant issue: https://github.com/libsdl-org/SDL/issues/11427
-
-				var split = filepath.IndexOf("//");
-				if (split < 0)
-					split = filepath.IndexOf("\\\\");
-				if (split >= 0)
-					filepath = filepath[(split + 2)..];
-
 				list.Add(filepath);
 			}
 		}
@@ -90,6 +81,7 @@ public sealed class Storage : StorageContainer
 
 	public override bool FileExists(string path)
 	{
+		path = Calc.NormalizePath(path);
 		return 
 			handle != nint.Zero && 
 			SDL_GetStoragePathInfo(handle, path, out var info) && 
@@ -98,6 +90,8 @@ public sealed class Storage : StorageContainer
 
 	public unsafe override Stream OpenRead(string path)
 	{
+		path = Calc.NormalizePath(path);
+
 		// TODO:
 		// Is is possible to open a stream somehow with SDL_Storage API?
 		// That would be nicer than loading it all in upfront like it is here...
@@ -120,16 +114,19 @@ public sealed class Storage : StorageContainer
 
 	public override bool CreateDirectory(string path)
 	{
+		path = Calc.NormalizePath(path);
 		return handle != nint.Zero && SDL_CreateStorageDirectory(handle, path);
 	}
 
 	public override bool Remove(string path)
 	{
+		path = Calc.NormalizePath(path);
 		return handle != nint.Zero && SDL_RemoveStoragePath(handle, path);
 	}
 
 	public override Stream Create(string path)
 	{
+		path = Calc.NormalizePath(path);
 		return new UserStream(path, handle);
 	}
 
