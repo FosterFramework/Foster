@@ -23,6 +23,7 @@ public readonly record struct AppConfig
 	int Height,
 	bool Fullscreen = false,
 	bool Resizable = true,
+	UpdateMode? UpdateMode = null,
 	GraphicsDriver PreferredGraphicsDriver = GraphicsDriver.None
 );
 
@@ -171,6 +172,7 @@ public abstract class App : IDisposable
 		UserPath = SDL_GetPrefPath(string.Empty, config.ApplicationName);
 
 		// Create Modules
+		UpdateMode = config.UpdateMode ?? UpdateMode.FixedStep(60);
 		inputProvider = new(this);
 		Input = inputProvider.Input;
 		FileSystem = new(this);
