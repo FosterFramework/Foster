@@ -55,6 +55,12 @@ public static class Calc
 	public static int EnumCount<T>() where T : struct, Enum
 		=> Enum.GetValues<T>().Length;
 
+	/// <summary>
+	/// Performantly convert an enum to int
+	/// </summary>
+	public static unsafe int EnumAsInt<TEnum>(TEnum enumValue) where TEnum : unmanaged, Enum
+		=> *(int*)(&enumValue);
+
 	#endregion
 
 	#region Binary  Operations
