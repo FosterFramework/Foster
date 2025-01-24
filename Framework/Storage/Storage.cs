@@ -31,9 +31,9 @@ public sealed class Storage : StorageContainer
 		return new Storage(handle, true);
 	}
 
-	internal static Storage OpenTitleStorage()
+	internal static Storage OpenTitleStorage(string? path)
 	{
-		var handle = SDL_OpenTitleStorage(null!, 0);
+		var handle = SDL_OpenTitleStorage(path!, 0);
 		return new Storage(handle, false);
 	}
 

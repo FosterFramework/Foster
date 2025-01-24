@@ -50,11 +50,18 @@ public sealed class FileSystem
 	/// Title Storage is intended for Game Data and Assets.
 	/// </summary>
 	public void OpenTitleStorage(Action<Storage> onReady)
+		=> OpenTitleStorage(null, onReady);
+
+	/// <summary>
+	/// Opens a application title storage, and invokes a callback with the storage object when ready.
+	/// Title Storage is intended for Game Data and Assets.
+	/// </summary>
+	public void OpenTitleStorage(string? path, Action<Storage> onReady)
 	{
 		if (app.Disposed)
 			throw app.DisposedException;
 
-		HandleOpenCallback(app, Storage.OpenTitleStorage(), onReady);
+		HandleOpenCallback(app, Storage.OpenTitleStorage(path), onReady);
 	}
 
 	/// <summary>
@@ -62,12 +69,12 @@ public sealed class FileSystem
 	/// This should not be awaited on from the Main thread.
 	/// Title Storage is intended for Game Data and Assets.
 	/// </summary>
-	public async Task<Storage> OpenTitleStorageAsync()
+	public async Task<Storage> OpenTitleStorageAsync(string? path = null)
 	{
 		if (app.Disposed)
 			throw app.DisposedException;
 			
-		return await HandleOpenAsync(Storage.OpenTitleStorage());
+		return await HandleOpenAsync(Storage.OpenTitleStorage(path));
 	}
 
 	private static void HandleOpenCallback(App app, Storage storage, Action<Storage> onReady)
