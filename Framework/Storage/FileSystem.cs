@@ -214,7 +214,7 @@ public sealed class FileSystem
 
 	private unsafe void ShowFileDialog(DialogProperties properties)
 	{
-		[UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+		// [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
 		static void CallbackFromSDL(nint userdata, nint files, int filter)
 		{
 			// get actual callback, release held handle
@@ -281,17 +281,17 @@ public sealed class FileSystem
 			{
 				case DialogModes.OpenFile:
 					SDL_ShowOpenFileDialog(
-						&CallbackFromSDL, userdata, app.Window.Handle, filtersUtf8, 
+						CallbackFromSDL, userdata, app.Window.Handle, filtersUtf8, 
 						properties.Filters.Length, defaultLocation, properties.AllowMany);
 					break;
 				case DialogModes.SaveFile:
 					SDL_ShowSaveFileDialog(
-						&CallbackFromSDL, userdata, app.Window.Handle, filtersUtf8,
+						CallbackFromSDL, userdata, app.Window.Handle, filtersUtf8,
 						properties.Filters.Length, defaultLocation);
 					break;
 				case DialogModes.OpenFolder:
 					SDL_ShowOpenFolderDialog(
-						&CallbackFromSDL, userdata, app.Window.Handle, 
+						CallbackFromSDL, userdata, app.Window.Handle, 
 						defaultLocation, properties.AllowMany);
 					break;
 			}

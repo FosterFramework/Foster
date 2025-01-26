@@ -13,6 +13,7 @@ namespace Foster.Framework;
 /// <param name="Height">The Window Height</param>
 /// <param name="Fullscreen">If the Window should default to Fullscreen</param>
 /// <param name="Resizable">If the Window should be resizable</param>
+/// <param name="UpdateMode">An optional default Update Mode to initialize the App with</param>
 /// <param name="PreferredGraphicsDriver">The preferred graphics driver, or None to use the platform-default</param>
 /// </summary>
 public readonly record struct AppConfig
@@ -152,7 +153,7 @@ public abstract class App : IDisposable
 		mainThreadID = Environment.CurrentManagedThreadId;
 
 		// set SDL logging method
-		SDL_SetLogOutputFunction(&Platform.HandleLogFromSDL, IntPtr.Zero);
+		SDL_SetLogOutputFunction(Platform.HandleLogFromSDL, IntPtr.Zero);
 
 		// by default allow controller presses while unfocused, 
 		// let game decide if it should handle them

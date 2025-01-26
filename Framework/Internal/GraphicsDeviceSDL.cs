@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text;
 using static SDL3.SDL;
 
@@ -1169,7 +1170,6 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 
 		Span<SDL_GPUColorTargetInfo> colorInfo = stackalloc SDL_GPUColorTargetInfo[colorTargets.Count];
-		var depthStencilInfo = new SDL_GPUDepthStencilTargetInfo();
 
 		// get color infos
 		for (int i = 0; i < colorTargets.Count; i++)
@@ -1190,9 +1190,13 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 
 		// get depth info
+		// the assignment here is a bit weird as SDL_BeginGPURenderPass takes an "in"
+		// parameter for the depth target, which we sometimes want to be NULL
+		var depthValue = new SDL_GPUDepthStencilTargetInfo();
+		scoped ref var depthTarget = ref Unsafe.NullRef<SDL_GPUDepthStencilTargetInfo>();
 		if (depthStencilTarget != nint.Zero)
 		{
-			depthStencilInfo = new()
+			depthValue = new()
 			{
 				texture = depthStencilTarget,
 				clear_depth = clear.Depth ?? 0,
@@ -1207,6 +1211,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				cycle = clear.Depth.HasValue && clear.Stencil.HasValue,
 				clear_stencil = (byte)(clear.Stencil ?? 0),
 			};
+			depthTarget = ref depthValue;
 		}
 
 		// begin pass
@@ -1214,7 +1219,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			cmdRender,
 			colorInfo,
 			(uint)colorTargets.Count,
-			depthStencilTarget != nint.Zero ? &depthStencilInfo : null
+			depthTarget
 		);
 
 		return renderPass != nint.Zero;

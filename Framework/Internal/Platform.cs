@@ -106,7 +106,7 @@ internal static partial class Platform
 	[LibraryImport(DLL, EntryPoint = "FosterFontFree")]
 	public static partial void FontFree(nint font);
 
-	[UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+	// [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
 	public static unsafe void HandleLogFromSDL(IntPtr userdata, int category, SDL_LogPriority priority, byte* message)
 	{
 		switch (priority)

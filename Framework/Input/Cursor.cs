@@ -74,12 +74,12 @@ public sealed class Cursor : IDisposable
 		SystemType = null;
 
 		// create SDL surface from image
-		var surface = SDL_CreateSurfaceFrom(
+		var surface = new nint(SDL_CreateSurfaceFrom(
 			image.Width,
 			image.Height,
 			SDL_PixelFormat.SDL_PIXELFORMAT_RGBA8888,
 			image.Pointer,
-			image.Width * sizeof(Color));
+			image.Width * sizeof(Color)));
 		if (surface == nint.Zero)
 			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateSurfaceFrom));
 
