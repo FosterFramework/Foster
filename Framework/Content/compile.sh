@@ -8,7 +8,6 @@ compile() {
 	shadercross "$input" -e "${stage}_main" -t $stage -s HLSL -o "$outdir/$filename.spv"
 	shadercross "$outdir/$filename.spv" -e "${stage}_main" -t $stage -s SPIRV -o "$outdir/$filename.msl"
 	shadercross "$outdir/$filename.spv" -e "${stage}_main" -t $stage -s SPIRV -o "$outdir/$filename.dxil"
-	spirv-cross "$outdir/$filename.spv" --output "$outdir/$filename.glsl" --version 450 --glsl-emit-ubo-as-plain-uniforms --glsl-force-flattened-io-blocks
 }
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
