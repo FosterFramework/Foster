@@ -1,5 +1,8 @@
 namespace Foster.Framework;
 
+/// <summary>
+/// Available backing Graphic Drivers
+/// </summary>
 public enum GraphicsDriver
 {
 	None,
@@ -9,6 +12,9 @@ public enum GraphicsDriver
 	Metal
 }
 
+/// <summary>
+/// <see cref="GraphicsDriver"/> Extension Methods
+/// </summary>
 public static class GraphicsDriverExt
 {
 	public static string GetShaderExtension(this GraphicsDriver driver) => driver switch

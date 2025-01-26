@@ -112,11 +112,11 @@ public class Batcher : IDisposable
 		public bool FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && graphicsDevice.OriginBottomLeft;
 	}
 
-	public Batcher(GraphicsDevice graphicsDevice)
+	public Batcher(GraphicsDevice graphicsDevice, string? name = null)
 	{
 		GraphicsDevice = graphicsDevice;
 		defaultMaterial = new();
-		mesh = new Mesh<BatcherVertex>(graphicsDevice);
+		mesh = new Mesh<BatcherVertex>(graphicsDevice, name: name);
 		Clear();
 	}
 

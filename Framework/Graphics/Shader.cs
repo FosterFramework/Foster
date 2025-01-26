@@ -21,7 +21,7 @@ public class Shader : IGraphicResource
 	/// <summary>
 	/// Optional Shader Name
 	/// </summary>
-	public string Name { get; set; } = string.Empty;
+	public string Name { get; }
 	
 	/// <summary>
 	/// If the Shader is disposed
@@ -35,11 +35,12 @@ public class Shader : IGraphicResource
 
 	internal readonly GraphicsDevice.IHandle Resource;
 
-	public Shader(GraphicsDevice graphicsDevice, ShaderCreateInfo createInfo)
+	public Shader(GraphicsDevice graphicsDevice, ShaderCreateInfo createInfo, string? name = null)
 	{
 		GraphicsDevice = graphicsDevice;
 		CreateInfo = createInfo;
-		Resource = GraphicsDevice.CreateShader(createInfo);
+		Name = name ?? string.Empty;
+		Resource = GraphicsDevice.CreateShader(name, createInfo);
 	}
 
 	~Shader()

@@ -15,6 +15,7 @@ namespace Foster.Framework;
 /// <param name="Resizable">If the Window should be resizable</param>
 /// <param name="UpdateMode">An optional default Update Mode to initialize the App with</param>
 /// <param name="PreferredGraphicsDriver">The preferred graphics driver, or None to use the platform-default</param>
+/// <param name="Flags">Optional App Initialization Flags</param>
 /// </summary>
 public readonly record struct AppConfig
 (
@@ -25,8 +26,23 @@ public readonly record struct AppConfig
 	bool Fullscreen = false,
 	bool Resizable = true,
 	UpdateMode? UpdateMode = null,
-	GraphicsDriver PreferredGraphicsDriver = GraphicsDriver.None
+	GraphicsDriver PreferredGraphicsDriver = GraphicsDriver.None,
+	AppFlags Flags = AppFlags.None
 );
+
+/// <summary>
+/// App Initialization Flags
+/// </summary>
+[Flags]
+public enum AppFlags
+{
+	None = 0,
+
+	/// <summary>
+	/// Enabled Graphics Debugging properties and validation
+	/// </summary>
+	EnableGraphicsDebugging = 1 << 0,
+}
 
 /// <summary>
 /// Inherit the App with your game.<br/>
@@ -178,7 +194,7 @@ public abstract class App : IDisposable
 		Input = inputProvider.Input;
 		FileSystem = new(this);
 		GraphicsDevice = Platform.CreateGraphicsDevice(this, config.PreferredGraphicsDriver);
-		GraphicsDevice.CreateDevice();
+		GraphicsDevice.CreateDevice(config.Flags);
 		Window = new Window(this, GraphicsDevice, config.WindowTitle, config.Width, config.Height, config.Fullscreen);
 		GraphicsDevice.Startup(Window.Handle);
 

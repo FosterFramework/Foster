@@ -39,19 +39,19 @@ public abstract class GraphicsDevice
 	public abstract bool VSync { get; set; }
 
 	internal GraphicsDevice(App app) => App = app;
-	internal abstract void CreateDevice();
+	internal abstract void CreateDevice(in AppFlags flags);
 	internal abstract void DestroyDevice();
 	internal abstract void Startup(nint window);
 	internal abstract void Shutdown();
 	internal abstract void Present();
-	internal abstract IHandle CreateTexture(int width, int height, TextureFormat format, IHandle? targetBinding);
+	internal abstract IHandle CreateTexture(string? name, int width, int height, TextureFormat format, IHandle? targetBinding);
 	internal abstract void SetTextureData(IHandle texture, nint data, int length);
 	internal abstract void GetTextureData(IHandle texture, nint data, int length);
 	internal abstract IHandle CreateTarget(int width, int height);
-	internal abstract IHandle CreateMesh(in VertexFormat vertexFormat, IndexFormat indexFormat);
+	internal abstract IHandle CreateMesh(string? name, in VertexFormat vertexFormat, IndexFormat indexFormat);
 	internal abstract void SetMeshVertexData(IHandle mesh, nint data, int dataSize, int dataDestOffset);
 	internal abstract void SetMeshIndexData(IHandle mesh, nint data, int dataSize, int dataDestOffset);
-	internal abstract IHandle CreateShader(in ShaderCreateInfo shaderInfo);
+	internal abstract IHandle CreateShader(string? name, in ShaderCreateInfo shaderInfo);
 	internal abstract void DestroyResource(IHandle resource);
 	internal abstract void PerformDraw(DrawCommand command);
 	internal abstract void Clear(IDrawableTarget target, ReadOnlySpan<Color> color, float depth, int stencil, ClearMask mask);

@@ -2,6 +2,9 @@ using System.Runtime.CompilerServices;
 
 namespace Foster.Framework;
 
+/// <summary>
+/// <see cref="Enum"/> Extension Methods
+/// </summary>
 public static class EnumExt
 {
 	/// <summary>

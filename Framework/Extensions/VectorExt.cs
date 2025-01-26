@@ -2,6 +2,9 @@
 
 namespace Foster.Framework;
 
+/// <summary>
+/// <see cref="Vector2"/>, <see cref="Vector3"/>, <see cref="Vector4"/> Extension Methods
+/// </summary>
 public static class VectorExt
 {
 	/// <summary>

@@ -1,5 +1,8 @@
 namespace Foster.Framework;
 
+/// <summary>
+/// How to wrap Texture Coordinates when sampling from a Texture
+/// </summary>
 public enum TextureWrap
 {
 	Repeat,

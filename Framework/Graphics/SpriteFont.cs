@@ -653,7 +653,7 @@ public class SpriteFont : IDisposable
 			while (true)
 			{
 				if (page >= pages.Count)
-					pages.Add(new(GraphicsDevice, pageSize));
+					pages.Add(new(GraphicsDevice, Name, pageSize));
 				if (pages[page].TryPack(blitBuffer, ch.Width, ch.Height, out var source, out var frame))
 				{
 					blittingResults.Add((codepoint, page, source, frame));
@@ -681,9 +681,10 @@ public class SpriteFont : IDisposable
 		}
 	}
 
-	private class Page(GraphicsDevice graphicsDevice, int size)
+	private class Page(GraphicsDevice graphicsDevice, string fontName, int size)
 	{
 		private record struct Node(int Left, int Right, RectInt Bounds);
+		private readonly string fontName = fontName;
 		private readonly int size = size;
 		private readonly Image image = new(size, size);
 		private readonly List<Node> nodes = [ new() { Bounds = new(0, 0, size, size) } ];
@@ -696,7 +697,7 @@ public class SpriteFont : IDisposable
 			if (atlasDirty)
 			{
 				atlasDirty = false;
-				atlas ??= new(graphicsDevice, size, size, TextureFormat.Color);
+				atlas ??= new(graphicsDevice, size, size, TextureFormat.Color, $"SpriteFont[{fontName}]");
 				atlas.SetData<Color>(image.Data);
 			}
 

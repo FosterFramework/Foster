@@ -1,5 +1,8 @@
 namespace Foster.Framework;
 
+/// <summary>
+/// Specifies the a blending factor used when rendering to an <see cref="IDrawableTarget"/> 
+/// </summary>
 public enum BlendFactor
 {
 	Zero,

@@ -5,6 +5,13 @@ namespace Foster.Framework;
 /// </summary>
 public interface IGraphicResource : IDisposable
 {
-	public string Name { get; set; }
+	/// <summary>
+	/// An optional Name to track the Graphical resource
+	/// </summary>
+	public string Name { get; }
+
+	/// <summary>
+	/// If the Resource has been disposed
+	/// </summary>
 	public bool IsDisposed { get; }
 }

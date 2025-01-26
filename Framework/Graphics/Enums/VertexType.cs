@@ -1,5 +1,8 @@
 namespace Foster.Framework;
 
+/// <summary>
+/// Available Vertex Types used in Vertex Buffer structs
+/// </summary>
 public enum VertexType
 {
 	None,
@@ -15,6 +18,9 @@ public enum VertexType
 	UShort4
 }
 
+/// <summary>
+/// <see cref="VertexType"/> Extension methods
+/// </summary>
 public static class VertexTypeExt
 {
 	public static int SizeInBytes(this VertexType type) => type switch

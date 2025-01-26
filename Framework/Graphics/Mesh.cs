@@ -5,7 +5,7 @@ namespace Foster.Framework;
 /// Use <see cref="Mesh{T}"/> to create a mesh of your given Vertex Format.
 /// Used in a <seealso cref="DrawCommand"/>.
 /// </summary>
-public class Mesh(GraphicsDevice graphicsDevice, VertexFormat vertexFormat, IndexFormat indexFormat) : IGraphicResource
+public class Mesh(GraphicsDevice graphicsDevice, VertexFormat vertexFormat, IndexFormat indexFormat, string? name = null) : IGraphicResource
 {
 	/// <summary>
 	/// The GraphicsDevice this Mesh was created in
@@ -15,7 +15,7 @@ public class Mesh(GraphicsDevice graphicsDevice, VertexFormat vertexFormat, Inde
 	/// <summary>
 	/// Optional Mesh Name
 	/// </summary>
-	public string Name { get; set; } = string.Empty;
+	public string Name { get; } = name ?? string.Empty;
 
 	/// <summary>
 	/// If the Mesh has been disposed
@@ -74,7 +74,7 @@ public class Mesh(GraphicsDevice graphicsDevice, VertexFormat vertexFormat, Inde
 			throw new Exception("Resource is Disposed");
 
 		IndexCount = count;
-		Resource ??= GraphicsDevice.CreateMesh(VertexFormat, IndexFormat);
+		Resource ??= GraphicsDevice.CreateMesh(Name, VertexFormat, IndexFormat);
 
 		GraphicsDevice.SetMeshIndexData(
 			Resource,
@@ -94,7 +94,7 @@ public class Mesh(GraphicsDevice graphicsDevice, VertexFormat vertexFormat, Inde
 			throw new Exception("Resource is Disposed");
 
 		VertexCount = count;
-		Resource ??= GraphicsDevice.CreateMesh(VertexFormat, IndexFormat);
+		Resource ??= GraphicsDevice.CreateMesh(Name, VertexFormat, IndexFormat);
 
 		GraphicsDevice.SetMeshVertexData(
 			Resource,
@@ -121,8 +121,8 @@ public class Mesh(GraphicsDevice graphicsDevice, VertexFormat vertexFormat, Inde
 /// </summary>
 /// <typeparam name="TVertex">The Vertex Buffer Type</typeparam>
 /// <typeparam name="TIndex">The Index Buffer Type, which must be either <see cref="int"/>, <see cref="uint"/>, <see cref="short"/>, or <see cref="ushort"/></typeparam>
-public class Mesh<TVertex, TIndex>(GraphicsDevice graphicsDevice)
-	: Mesh(graphicsDevice, new TVertex().Format, IndexFormatExt.GetFormatOf<TIndex>())
+public class Mesh<TVertex, TIndex>(GraphicsDevice graphicsDevice, string? name = null)
+	: Mesh(graphicsDevice, new TVertex().Format, IndexFormatExt.GetFormatOf<TIndex>(), name)
 	where TVertex : unmanaged, IVertex
 	where TIndex : unmanaged
 {
@@ -145,6 +145,6 @@ public class Mesh<TVertex, TIndex>(GraphicsDevice graphicsDevice)
 /// A Mesh with a given Vertex Buffer type, and Integer Indices
 /// </summary>
 /// <typeparam name="TVertex">The Vertex Buffer Type</typeparam>
-public class Mesh<TVertex>(GraphicsDevice graphicsDevice)
-	: Mesh<TVertex, int>(graphicsDevice)
+public class Mesh<TVertex>(GraphicsDevice graphicsDevice, string? name = null)
+	: Mesh<TVertex, int>(graphicsDevice, name)
 	where TVertex : unmanaged, IVertex;

@@ -4,7 +4,8 @@ namespace Foster.Framework;
 /// The Default Shader used for the <seealso cref="Batcher"/>.
 /// Expects <seealso cref="BatcherVertex"/> Vertices.
 /// </summary>
-public class BatcherShader(GraphicsDevice graphicsDevice) : Shader(graphicsDevice, GetCreateInfo(graphicsDevice))
+public class BatcherShader(GraphicsDevice graphicsDevice)
+	: Shader(graphicsDevice, GetCreateInfo(graphicsDevice), name: "Batcher")
 {
 	private static ShaderCreateInfo GetCreateInfo(GraphicsDevice graphicsDevice) => new(
 		Vertex: new(

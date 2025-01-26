@@ -26,13 +26,14 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		public readonly List<TextureResource> Attachments = [];
 	}
 
-	private class MeshResource(GraphicsDevice graphicsDevice, VertexFormat vertexFormat, IndexFormat indexFormat) : Resource(graphicsDevice)
+	private class MeshResource(GraphicsDevice graphicsDevice, string? name, VertexFormat vertexFormat, IndexFormat indexFormat) : Resource(graphicsDevice)
 	{
 		public record struct Buffer(nint Handle, int Capacity, bool Dirty);
 
 		public Buffer Index = new();
 		public Buffer Vertex = new();
 		public Buffer Instance = new();
+		public readonly string? Name = name;
 		public readonly VertexFormat VertexFormat = vertexFormat;
 		public readonly IndexFormat IndexFormat = indexFormat;
 	}
@@ -133,7 +134,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		version = new(sdlv / 1000000, (sdlv / 1000) % 1000, sdlv % 1000);
 	}
 
-	internal override void CreateDevice()
+	internal override void CreateDevice(in AppFlags flags)
 	{
 		if (device != nint.Zero)
 			throw new Exception("GPU Device is already created");
@@ -153,7 +154,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV |
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL |
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_MSL,
-			debug_mode: true, // TODO: flag?
+			debug_mode: flags.Has(AppFlags.EnableGraphicsDebugging),
 			name: driverName!);
 
 		if (device == IntPtr.Zero)
@@ -216,7 +217,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		// default texture we fall back to rendering if passed a material with a missing texture
 		{
-			emptyDefaultTexture = CreateTexture(1, 1, TextureFormat.R8G8B8A8, null);
+			emptyDefaultTexture = CreateTexture("Fallback", 1, 1, TextureFormat.R8G8B8A8, null);
 			var data = stackalloc Color[1] { 0xe82979 };
 			SetTextureData(emptyDefaultTexture, new nint(data), 4);
 		}
@@ -369,10 +370,17 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		return SDL_GPUTextureSupportsFormat(device, GetTextureFormat(format), type, usage);
 	}
 
-	internal override IHandle CreateTexture(int width, int height, TextureFormat format, IHandle? targetBinding)
+	internal override IHandle CreateTexture(string? name, int width, int height, TextureFormat format, IHandle? targetBinding)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
+
+		uint props = 0;
+		if (!string.IsNullOrEmpty(name))
+		{
+			props = SDL_CreateProperties();
+			SDL_SetStringProperty(props, SDL_PROP_GPU_TEXTURE_CREATE_NAME_STRING, name);
+		}
 
 		SDL_GPUTextureCreateInfo info = new()
 		{
@@ -384,6 +392,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			layer_count_or_depth = 1,
 			num_levels = 1,
 			sample_count = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1,
+			props = props
 		};
 
 		if (targetBinding != null)
@@ -395,6 +404,10 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 
 		nint texture = SDL_CreateGPUTexture(device, info);
+
+		if (props != 0)
+			SDL_DestroyProperties(props);
+
 		if (texture == nint.Zero)
 			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUTexture));
 
@@ -558,12 +571,12 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 	}
 
-	internal override IHandle CreateMesh(in VertexFormat vertexFormat, IndexFormat indexFormat)
+	internal override IHandle CreateMesh(string? name, in VertexFormat vertexFormat, IndexFormat indexFormat)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
 
-		var res = new MeshResource(this, vertexFormat, indexFormat);
+		var res = new MeshResource(this, name, vertexFormat, indexFormat);
 
 		lock (resources)
 			resources.Add(res);
@@ -580,8 +593,12 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (res.GraphicsDevice != this)
 			throw deviceWasDestroyed;
 
+		string? name = null;
+		if (!string.IsNullOrEmpty(res.Name))
+			name = $"{res.Name}-VertexBuffer";
+
 		res.Vertex.Dirty = true;
-		UploadMeshBuffer(ref res.Vertex, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_VERTEX);
+		UploadMeshBuffer(ref res.Vertex, name, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_VERTEX);
 	}
 
 	internal override void SetMeshIndexData(IHandle mesh, nint data, int dataSize, int dataDestOffset)
@@ -593,8 +610,12 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (res.GraphicsDevice != this)
 			throw deviceWasDestroyed;
 
+		string? name = null;
+		if (!string.IsNullOrEmpty(res.Name))
+			name = $"{res.Name}-IndexBuffer";
+
 		res.Index.Dirty = true;
-		UploadMeshBuffer(ref res.Index, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_INDEX);
+		UploadMeshBuffer(ref res.Index, name, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_INDEX);
 	}
 
 	public void DestroyMesh(IHandle mesh)
@@ -615,7 +636,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 	}
 
-	private void UploadMeshBuffer(ref MeshResource.Buffer res, nint data, int dataSize, int dataDestOffset, SDL_GPUBufferUsageFlags usage)
+	private void UploadMeshBuffer(ref MeshResource.Buffer res, string? name, nint data, int dataSize, int dataDestOffset, SDL_GPUBufferUsageFlags usage)
 	{
 		// (re)create buffer if needed
 		var required = dataSize + dataDestOffset;
@@ -642,12 +663,22 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 					size *= 2;
 			}
 
+			uint props = 0;
+			if (!string.IsNullOrEmpty(name))
+			{
+				props = SDL_CreateProperties();
+				SDL_SetStringProperty(props, SDL_PROP_GPU_BUFFER_CREATE_NAME_STRING, name);
+			}
+
 			res.Handle = SDL_CreateGPUBuffer(device, new()
 			{
 				usage = usage,
 				size = (uint)size,
-				props = 0
+				props = props
 			});
+
+			if (props != 0)
+				SDL_DestroyProperties(props);
 			
 			if (res.Handle == nint.Zero)
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUBuffer), "Mesh Creation Failed");
@@ -740,7 +771,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		res = default;
 	}
 
-	internal override IHandle CreateShader(in ShaderCreateInfo shaderInfo)
+	internal override IHandle CreateShader(string? name, in ShaderCreateInfo shaderInfo)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;

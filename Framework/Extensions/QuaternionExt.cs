@@ -2,6 +2,9 @@
 
 namespace Foster.Framework;
 
+/// <summary>
+/// <see cref="Quaternion"/> Extension Methods
+/// </summary>
 public static class QuaternionExt
 {
 	public static Quaternion Conjugated(this Quaternion q)

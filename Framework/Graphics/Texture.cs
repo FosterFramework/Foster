@@ -16,7 +16,7 @@ public class Texture : IGraphicResource
 	/// <summary>
 	/// Optional Texture Name
 	/// </summary>
-	public string Name { get; set; } = string.Empty;
+	public string Name { get; }
 
 	/// <summary>
 	/// If the Texture has been disposed
@@ -55,26 +55,27 @@ public class Texture : IGraphicResource
 
 	internal readonly GraphicsDevice.IHandle Resource;
 
-	public Texture(GraphicsDevice graphicsDevice, int width, int height, TextureFormat format = TextureFormat.Color)
-		: this(graphicsDevice, width, height, format, targetBinding: null) {}
+	public Texture(GraphicsDevice graphicsDevice, int width, int height, TextureFormat format = TextureFormat.Color, string? name = null)
+		: this(graphicsDevice, width, height, format, targetBinding: null, name) {}
 
-	public Texture(GraphicsDevice graphicsDevice, int width, int height, ReadOnlySpan<Color> pixels)
-		: this(graphicsDevice, width, height, TextureFormat.Color) => SetData<Color>(pixels);
+	public Texture(GraphicsDevice graphicsDevice, int width, int height, ReadOnlySpan<Color> pixels, string? name = null)
+		: this(graphicsDevice, width, height, TextureFormat.Color, name) => SetData<Color>(pixels);
 
-	public Texture(GraphicsDevice graphicsDevice, int width, int height, ReadOnlySpan<byte> pixels)
-		: this(graphicsDevice, width, height, TextureFormat.Color) => SetData<byte>(pixels);
+	public Texture(GraphicsDevice graphicsDevice, int width, int height, ReadOnlySpan<byte> pixels, string? name = null)
+		: this(graphicsDevice, width, height, TextureFormat.Color, name) => SetData<byte>(pixels);
 
-	public Texture(GraphicsDevice graphicsDevice, Image image) 
-		: this(graphicsDevice, image.Width, image.Height, TextureFormat.Color) => SetData<Color>(image.Data);
+	public Texture(GraphicsDevice graphicsDevice, Image image, string? name = null)
+		: this(graphicsDevice, image.Width, image.Height, TextureFormat.Color, name) => SetData<Color>(image.Data);
 
-	internal Texture(GraphicsDevice graphicsDevice, int width, int height, TextureFormat format, Target? targetBinding)
+	internal Texture(GraphicsDevice graphicsDevice, int width, int height, TextureFormat format, Target? targetBinding, string? name)
 	{
 		GraphicsDevice = graphicsDevice;
 
 		if (width <= 0 || height <= 0)
 			throw new Exception("Texture must have a size larger than 0");
 
-		Resource = graphicsDevice.CreateTexture(width, height, format, targetBinding?.Resource);
+		Resource = graphicsDevice.CreateTexture(name, width, height, format, targetBinding?.Resource);
+		Name = name ?? string.Empty;
 		Width = width;
 		Height = height;
 		Format = format;

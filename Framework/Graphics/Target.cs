@@ -15,7 +15,7 @@ public class Target : IGraphicResource, IDrawableTarget
 	/// <summary>
 	/// Optional Target Name
 	/// </summary>
-	public string Name { get; set; } = string.Empty;
+	public string Name { get; }
 
 	/// <summary>
 	/// Ii the Target has been disposed.
@@ -47,10 +47,10 @@ public class Target : IGraphicResource, IDrawableTarget
 
 	internal readonly GraphicsDevice.IHandle Resource;
 
-	public Target(GraphicsDevice graphicsDevice, int width, int height)
-		: this(graphicsDevice, width, height, defaultFormats) { }
+	public Target(GraphicsDevice graphicsDevice, int width, int height, string? name = null)
+		: this(graphicsDevice, width, height, defaultFormats, name) { }
 
-	public Target(GraphicsDevice graphicsDevice, int width, int height, in ReadOnlySpan<TextureFormat> attachments)
+	public Target(GraphicsDevice graphicsDevice, int width, int height, in ReadOnlySpan<TextureFormat> attachments, string? name = null)
 	{
 		if (width <= 0 || height <= 0)
 			throw new ArgumentException("Target width and height must be larger than 0");
@@ -58,6 +58,7 @@ public class Target : IGraphicResource, IDrawableTarget
 		if (attachments.Length <= 0)
 			throw new ArgumentException("Target needs at least 1 color attachment");
 
+		Name = name ?? string.Empty;
 		GraphicsDevice = graphicsDevice;
 		Resource = GraphicsDevice.CreateTarget(width, height);
 		Width = width;
@@ -65,7 +66,10 @@ public class Target : IGraphicResource, IDrawableTarget
 		Bounds = new RectInt(0, 0, Width, Height);
 		Attachments = new Texture[attachments.Length];
 		for (int i = 0; i < attachments.Length; i ++)
-			Attachments[i] = new Texture(graphicsDevice, width, height, attachments[i], this);
+		{
+			var attachmentName = !string.IsNullOrEmpty(name) ? $"{Name}-Attachment{i}" : null;
+			Attachments[i] = new Texture(graphicsDevice, width, height, attachments[i], this, attachmentName);
+		}
 	}
 
 	~Target()
