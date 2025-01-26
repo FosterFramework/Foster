@@ -303,9 +303,6 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		// if swapchain can be acquired, blit framebuffer to it
 		if (SDL_WaitAndAcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
 		{
-			// SDL_WaitAndAcquireGPUSwapchainTexture can return true, but no texture for a variety of reasons
-			// - window is minimized
-			// - awaiting previous frame to render
 			if (scTex != nint.Zero)
 			{
 				var resource = (TextureResource)frameBuffer?.Attachments[0].Resource!;
