@@ -45,9 +45,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 	private record struct ClearInfo(StackList4<Color>? Color, float? Depth, int? Stencil);
 
-	// TODO: this is set to 1 since SDL currently improperly awaits fences
-	// change back to 3 once fixed
-	private const int MaxFramesInFlight = 1;
+	private const int MaxFramesInFlight = 3;
 	private const uint TransferBufferSize = 16 * 1024 * 1024; // 16MB
 	private const uint MaxUploadCycleCount = 4;
 
@@ -93,10 +91,6 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	// exceptions
 	private readonly Exception deviceNotCreated = new("GPU Device has not been created");
 	private readonly Exception deviceWasDestroyed = new("This Resource was created with a previous GPU Device which has been destroyed");
-	
-	// fence/frame counter
-	private int frameCounter;
-	private readonly StackList4<nint>[] fenceGroups = new StackList4<nint>[MaxFramesInFlight];
 
 	// framebuffer
 	private Target? frameBuffer;
@@ -231,6 +225,9 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		SDL_GetWindowSizeInPixels(window, out int w, out int h);
 		frameBuffer = new Target(this, w, h, [TextureFormat.R8G8B8A8]);
 
+		// default to 3 frames in flight
+		SDL_SetGPUAllowedFramesInFlight(device, 3);
+
 		// default to vsync on
 		VSync = true;
 	}
@@ -268,14 +265,6 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			bufferUploadBuffer = nint.Zero;
 		}
 
-		// release fences
-		for (int i = 0; i < fenceGroups.Length; i ++)
-		{
-			for (int j = 0; j < fenceGroups[i].Count; j++)
-				SDL_ReleaseGPUFence(device, fenceGroups[i][j]);
-			fenceGroups[i].Clear();
-		}
-
 		// release pipelines
 		lock (graphicsPipelinesByHash)
 		{
@@ -311,19 +300,10 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		EndCopyPass();
 		EndRenderPass();
 
-		// Wait for the least-recent fence
-		if (fenceGroups[frameCounter].Count > 0)
-		{
-			SDL_WaitForGPUFences(device, true, fenceGroups[frameCounter].Span, (uint)fenceGroups[frameCounter].Count);
-			for (int i = 0; i < fenceGroups[frameCounter].Count; i ++)
-				SDL_ReleaseGPUFence(device, fenceGroups[frameCounter][i]);
-			fenceGroups[frameCounter].Clear();
-		}
-
 		// if swapchain can be acquired, blit framebuffer to it
-		if (SDL_AcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
+		if (SDL_WaitAndAcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
 		{
-			// SDL_AcquireGPUSwapchainTexture can return true, but no texture for a variety of reasons
+			// SDL_WaitAndAcquireGPUSwapchainTexture can return true, but no texture for a variety of reasons
 			// - window is minimized
 			// - awaiting previous frame to render
 			if (scTex != nint.Zero)
@@ -372,13 +352,11 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 		else
 		{
-			Log.Warning($"{nameof(SDL_AcquireGPUSwapchainTexture)} failed: {SDL_GetError()}");
+			Log.Warning($"{nameof(SDL_WaitAndAcquireGPUSwapchainTexture)} failed: {SDL_GetError()}");
 		}
 
 		// flush commands from this frame
-		FlushCommandsAndAcquireFence(out var nextFences);
-		fenceGroups[frameCounter] = nextFences;
-		frameCounter = (frameCounter + 1) % MaxFramesInFlight;
+		FlushCommands();
 	}
 
 	public override bool IsTextureFormatSupported(TextureFormat format)
@@ -1050,33 +1028,28 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		ResetCommandBufferState();
 	}
 
-	private void FlushCommandsAndAcquireFence(out StackList4<nint> fences)
+	private void FlushCommandsAndStall()
 	{
 		EndCopyPass();
 		EndRenderPass();
 
-		fences = new();
+		StackList4<nint> fences = new();
 
 		var uploadFence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmdUpload);
-		if (uploadFence == nint.Zero)
-			Log.Warning($"Failed to acquire upload fence: {SDL_GetError()}");
-		else
+		if (uploadFence != nint.Zero)
 			fences.Add(uploadFence);
+		else
+			Log.Warning($"Failed to acquire upload fence: {SDL_GetError()}");
 
 		var renderFence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmdRender);
-		if (renderFence == nint.Zero)
-			Log.Warning($"Failed to acquire render fence: {SDL_GetError()}");
-		else
+		if (renderFence != nint.Zero)
 			fences.Add(renderFence);
+		else
+			Log.Warning($"Failed to acquire render fence: {SDL_GetError()}");
 
 		cmdUpload = nint.Zero;
 		cmdRender = nint.Zero;
 		ResetCommandBufferState();
-	}
-
-	private void FlushCommandsAndStall()
-	{
-		FlushCommandsAndAcquireFence(out var fences);
 
 		if (fences.Count > 0)
 			SDL_WaitForGPUFences(device, true, fences.Span, (uint)fences.Count);
