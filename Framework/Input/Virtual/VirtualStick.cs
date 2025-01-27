@@ -41,7 +41,7 @@ public sealed class VirtualStick(Input input, StickBinding binding, int controll
 	internal override void Update(in Time time)
 	{
 		Value = Binding.Value(Input, Device);
-		IntValue = Value.RoundToPoint2();
+		IntValue = new(MathF.Sign(Value.X), MathF.Sign(Value.Y));
 		PressedLeft = Binding.X.Negative.GetState(Input, Device).Pressed;
 		PressedRight = Binding.X.Positive.GetState(Input, Device).Pressed;
 		PressedUp = Binding.Y.Negative.GetState(Input, Device).Pressed;

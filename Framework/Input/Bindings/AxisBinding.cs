@@ -91,25 +91,25 @@ public sealed class AxisBinding
 
 		if (OverlapBehaviour == Overlaps.CancelOut)
 		{
-			return Calc.Clamp(negativeState.Value + positiveState.Value, -1, 1);
+			return Calc.Clamp(positiveState.Value - negativeState.Value, -1, 1);
 		}
 		else if (OverlapBehaviour == Overlaps.TakeNewer)
 		{
 			if (positiveState.Down && negativeState.Down)
-				return negativeState.Timestamp > positiveState.Timestamp ? negativeState.Value : positiveState.Value;
+				return negativeState.Timestamp > positiveState.Timestamp ? -negativeState.Value : positiveState.Value;
 			else if (positiveState.Down)
 				return positiveState.Value;
 			else if (negativeState.Down)
-				return negativeState.Value;
+				return -negativeState.Value;
 		}
 		else if (OverlapBehaviour == Overlaps.TakeOlder)
 		{
 			if (positiveState.Down && negativeState.Down)
-				return negativeState.Timestamp < positiveState.Timestamp ? negativeState.Value : positiveState.Value;
+				return negativeState.Timestamp < positiveState.Timestamp ? -negativeState.Value : positiveState.Value;
 			else if (positiveState.Down)
 				return positiveState.Value;
 			else if (negativeState.Down)
-				return negativeState.Value;
+				return -negativeState.Value;
 		}
 
 		return 0;

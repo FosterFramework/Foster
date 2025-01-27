@@ -219,28 +219,26 @@ public sealed class ControllerState(int index)
 
 	internal void OnButton(int buttonIndex, bool buttonPressed, in TimeSpan time)
 	{
-		if (buttonIndex >= 0 && buttonIndex < MaxButtons)
+		if (buttonIndex is < 0 or >= MaxButtons) return;
+
+		if (buttonPressed)
 		{
-			if (buttonPressed)
-			{
-				down[buttonIndex] = true;
-				pressed[buttonIndex] = true;
-				timestamp[buttonIndex] = time;
-			}
-			else
-			{
-				down[buttonIndex] = false;
-				released[buttonIndex] = true;
-			}
+			down[buttonIndex] = true;
+			pressed[buttonIndex] = true;
+			timestamp[buttonIndex] = time;
+		}
+		else
+		{
+			down[buttonIndex] = false;
+			released[buttonIndex] = true;
 		}
 	}
 
 	internal void OnAxis(int axisIndex, float axisValue, in TimeSpan time)
 	{
-		if (axisIndex >= 0 && axisIndex < MaxAxis)
-		{
-			axis[axisIndex] = axisValue;
-			axisTimestamp[axisIndex] = time;
-		}
+		if (axisIndex is < 0 or >= MaxAxis) return;
+
+		axis[axisIndex] = axisValue;
+		axisTimestamp[axisIndex] = time;
 	}
 }

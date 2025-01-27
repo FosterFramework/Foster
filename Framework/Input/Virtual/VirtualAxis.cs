@@ -43,7 +43,7 @@ public sealed class VirtualAxis(Input input, AxisBinding binding, int controller
 	internal override void Update(in Time time)
 	{
 		Value = Binding.Value(Input, Device);
-		IntValue = (int)Value;
+		IntValue = MathF.Sign(Value);
 
 		Pressed = Value switch
 		{
