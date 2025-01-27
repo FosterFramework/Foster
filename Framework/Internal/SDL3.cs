@@ -25,7 +25,7 @@
  */
 
 // Changes for Foster:
-// String Marshallers return given ! to avoid nullable warnings
+// String Marshallers handle null strings to avoid warnings
 
 // NOTE: This file is auto-generated.
 using System;
@@ -47,7 +47,7 @@ public static unsafe partial class SDL
 		/// </summary>
 		/// <returns>A managed string.</returns>
 		public static string ConvertToManaged(byte* unmanaged)
-			=> Marshal.PtrToStringUTF8((IntPtr) unmanaged)!;
+			=> Marshal.PtrToStringUTF8((IntPtr) unmanaged) ?? string.Empty;
 	}
 
 	// Custom marshaller for caller-owned strings returned by SDL.
@@ -59,7 +59,7 @@ public static unsafe partial class SDL
 		/// </summary>
 		/// <returns>A managed string.</returns>
 		public static string ConvertToManaged(byte* unmanaged)
-			=> Marshal.PtrToStringUTF8((IntPtr) unmanaged)!;
+			=> Marshal.PtrToStringUTF8((IntPtr) unmanaged) ?? string.Empty;
 
 		/// <summary>
 		/// Free the memory for a specified unmanaged string.
