@@ -54,7 +54,9 @@ public readonly struct Facing(int val) : IEquatable<Facing>
 
 	public override int GetHashCode() => Sign;
 	public override bool Equals(object? obj) =>
-		obj != null && obj is Facing f && f == this;
+		obj is Facing f && f == this;
 
 	public bool Equals(Facing other) => this == other;
+
+	public override string ToString() => value < 0 ? "Left" : "Right";
 }

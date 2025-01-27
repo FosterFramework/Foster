@@ -145,7 +145,7 @@ public sealed class MouseState
 
 	internal void OnButton(int buttonIndex, bool buttonPressed, in TimeSpan time)
 	{
-		if (buttonIndex >= 0 && buttonIndex < MaxButtons)
+		if (buttonIndex is >= 0 and < MaxButtons)
 		{
 			if (buttonPressed)
 			{
