@@ -38,12 +38,12 @@ public sealed class VirtualAxis(Input input, AxisBinding binding, int controller
 	public int IntValueNoDeadzone { get; private set; }
 
 	/// <summary>
-	/// 
+	///
 	/// </summary>
 	public bool Pressed { get; private set; }
 
 	/// <summary>
-	/// 
+	///
 	/// </summary>
 	public int PressedSign { get; private set; }
 
@@ -54,9 +54,9 @@ public sealed class VirtualAxis(Input input, AxisBinding binding, int controller
 	{
 		Value = Binding.Value(Input, Device);
 		IntValue = (int)Value;
-		ValueNoDeadzone = Binding.Value(Input, Device);
+		ValueNoDeadzone = Binding.ValueNoDeadzone(Input, Device);
 		IntValueNoDeadzone = (int)ValueNoDeadzone;
-		
+
 		Pressed = Value switch
 		{
 			> 0 => Binding.Positive.GetState(Input, Device).Pressed,

@@ -19,18 +19,24 @@ public sealed class ControllerAxisBinding : Binding
 		Deadzone = deadzone;
 	}
 
-	public override BindingState GetState(Input input, int device) => new(
-		Pressed: GetValue(input.State, device, Deadzone) > 0 && GetValue(input.LastState, device, Deadzone) <= 0,
-		Released: GetValue(input.State, device, Deadzone) <= 0 && GetValue(input.LastState, device, Deadzone) > 0,
-		Down: GetValue(input.State, device, Deadzone) > 0,
-		Value: GetValue(input.State, device, Deadzone),
-		ValueNoDeadzone: GetValue(input.State, device, 0),
-		Timestamp: input.Controllers[device].Timestamp(Axis)
-	);
+	public override BindingState GetState(Input input, int device)
+	{
+		var value = GetValue(input.State, device, Deadzone);
+		var prevValue = GetValue(input.LastState, device, Deadzone);
+
+		return new(
+			Pressed: value > 0 && prevValue <= 0,
+			Released: value <= 0 && prevValue > 0,
+			Down: value > 0,
+			Value: value,
+			ValueNoDeadzone: GetValue(input.State, device, 0),
+			Timestamp: input.Controllers[device].Timestamp(Axis)
+		);
+	}
 
 	private float GetValue(InputState state, int device, float deadzone)
 	{
 		var value = state.Controllers[device].Axis(Axis);
-		return Calc.ClampedMap(value, Sign * deadzone, Sign, 0.0f, 1.0f);
+		return Calc.ClampedMap(value, Sign * deadzone, Sign);
 	}
 }
