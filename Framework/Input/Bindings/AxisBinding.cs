@@ -82,45 +82,34 @@ public sealed class AxisBinding
 	}
 
 	/// <summary>
-	/// Gets the Value of the Axis from the provided Input
+	/// Gets the current Value of the Axis from the provided Input
 	/// </summary>
 	public float Value(Input input, int device)
-		=> Value(input, device, true);
-	
-	/// <summary>
-	/// Gets the Value of the Axis from the provided Input without a Deadzone applied
-	/// </summary>
-	public float ValueNoDeadzone(Input input, int device)
-		=> Value(input, device, false);
-
-	private float Value(Input input, int device, bool deadzone)
 	{
 		var negativeState = Negative.GetState(input, device);
-		var negativeValue = -(deadzone ? negativeState.Value : negativeState.ValueNoDeadzone);
 		var positiveState = Positive.GetState(input, device);
-		var positiveValue = deadzone ? positiveState.Value : positiveState.ValueNoDeadzone;
 
 		if (OverlapBehaviour == Overlaps.CancelOut)
 		{
-			return Calc.Clamp(negativeValue + positiveValue, -1, 1);
+			return Calc.Clamp(negativeState.Value + positiveState.Value, -1, 1);
 		}
 		else if (OverlapBehaviour == Overlaps.TakeNewer)
 		{
 			if (positiveState.Down && negativeState.Down)
-				return negativeState.Timestamp > positiveState.Timestamp ? negativeValue : positiveValue;
+				return negativeState.Timestamp > positiveState.Timestamp ? negativeState.Value : positiveState.Value;
 			else if (positiveState.Down)
-				return positiveValue;
+				return positiveState.Value;
 			else if (negativeState.Down)
-				return negativeValue;
+				return negativeState.Value;
 		}
 		else if (OverlapBehaviour == Overlaps.TakeOlder)
 		{
 			if (positiveState.Down && negativeState.Down)
-				return negativeState.Timestamp < positiveState.Timestamp ? negativeValue : positiveValue;
+				return negativeState.Timestamp < positiveState.Timestamp ? negativeState.Value : positiveState.Value;
 			else if (positiveState.Down)
-				return positiveValue;
+				return positiveState.Value;
 			else if (negativeState.Down)
-				return negativeValue;
+				return negativeState.Value;
 		}
 
 		return 0;

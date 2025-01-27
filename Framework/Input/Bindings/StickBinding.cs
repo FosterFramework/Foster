@@ -101,9 +101,4 @@ public sealed class StickBinding
 
 		return it;
 	}
-
-	public Vector2 ValueNoDeadzone(Input input, int device) => new(
-		X.ValueNoDeadzone(input, device),
-		Y.ValueNoDeadzone(input, device)
-	);
 }

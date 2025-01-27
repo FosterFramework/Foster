@@ -89,7 +89,6 @@ public sealed class ActionBinding
 				Released: result.Released || state.Released,
 				Down: result.Down || state.Down,
 				Value: Math.Max(result.Value, state.Value),
-				ValueNoDeadzone: Math.Max(result.ValueNoDeadzone, state.ValueNoDeadzone),
 				Timestamp: result.Timestamp > state.Timestamp ? result.Timestamp : state.Timestamp
 			);
 		}

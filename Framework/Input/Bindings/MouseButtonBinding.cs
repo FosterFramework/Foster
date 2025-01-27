@@ -17,7 +17,6 @@ public sealed class MouseButtonBinding : Binding
 		Released: input.Mouse.Pressed(Button),
 		Down: input.Mouse.Down(Button),
 		Value: input.Mouse.Down(Button) ? 1 : 0,
-		ValueNoDeadzone: input.Mouse.Down(Button) ? 1 : 0,
 		Timestamp: input.Mouse.PressedTimestamp(Button)
 	);
 }

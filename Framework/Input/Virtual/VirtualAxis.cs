@@ -28,16 +28,6 @@ public sealed class VirtualAxis(Input input, AxisBinding binding, int controller
 	public int IntValue { get; private set; }
 
 	/// <summary>
-	/// Current Value without deadzones of the Virtual Axis
-	/// </summary>
-	public float ValueNoDeadzone { get; private set; }
-
-	/// <summary>
-	/// Current Value without deadzones of the Virtual Axis as an integer
-	/// </summary>
-	public int IntValueNoDeadzone { get; private set; }
-
-	/// <summary>
 	///
 	/// </summary>
 	public bool Pressed { get; private set; }
@@ -54,8 +44,6 @@ public sealed class VirtualAxis(Input input, AxisBinding binding, int controller
 	{
 		Value = Binding.Value(Input, Device);
 		IntValue = (int)Value;
-		ValueNoDeadzone = Binding.ValueNoDeadzone(Input, Device);
-		IntValueNoDeadzone = (int)ValueNoDeadzone;
 
 		Pressed = Value switch
 		{
@@ -76,8 +64,6 @@ public sealed class VirtualAxis(Input input, AxisBinding binding, int controller
 	{
 		Value = 0;
 		IntValue = 0;
-		ValueNoDeadzone = 0;
-		IntValueNoDeadzone = 0;
 		Pressed = false;
 		PressedSign = 0;
 	}

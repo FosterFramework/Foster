@@ -17,7 +17,6 @@ public sealed class KeyboardKeyBinding : Binding
 		Released: input.Keyboard.Pressed(Key),
 		Down: input.Keyboard.Down(Key),
 		Value: input.Keyboard.Down(Key) ? 1 : 0,
-		ValueNoDeadzone: input.Keyboard.Down(Key) ? 1 : 0,
 		Timestamp: input.Keyboard.Timestamp(Key)
 	);
 }

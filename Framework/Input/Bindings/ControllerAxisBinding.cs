@@ -29,7 +29,6 @@ public sealed class ControllerAxisBinding : Binding
 			Released: value <= 0 && prevValue > 0,
 			Down: value > 0,
 			Value: value,
-			ValueNoDeadzone: GetValue(input.State, device, 0),
 			Timestamp: input.Controllers[device].Timestamp(Axis)
 		);
 	}

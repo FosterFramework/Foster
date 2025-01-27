@@ -17,7 +17,6 @@ public sealed class ControllerButtonBinding : Binding
 		Released: input.Controllers[device].Pressed(Button),
 		Down: input.Controllers[device].Down(Button),
 		Value: input.Controllers[device].Down(Button) ? 1 : 0,
-		ValueNoDeadzone: input.Controllers[device].Down(Button) ? 1 : 0,
 		Timestamp: input.Controllers[device].Timestamp(Button)
 	);
 }

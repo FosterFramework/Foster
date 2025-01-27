@@ -28,7 +28,6 @@ public sealed class MouseMotionBinding : Binding
 		Released: GetValue(input.State) <= 0 && GetValue(input.LastState) > 0,
 		Down: GetValue(input.State) > 0,
 		Value: GetValue(input.State),
-		ValueNoDeadzone: GetValue(input.State),
 		Timestamp: input.Mouse.MotionTimestamp()
 	);
 
