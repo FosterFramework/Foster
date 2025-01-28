@@ -234,12 +234,9 @@ internal sealed class InputProviderSDL(App app) : InputProvider, IDisposable
 					axis: (int)Platform.GetAxisFromSDL((SDL_GamepadAxis)ev.gaxis.axis),
 					value: value,
 					time: App.Time.Elapsed);
-					
+
 				break;
 			}
-
-		default:
-			break;
 		}
 	}
 
