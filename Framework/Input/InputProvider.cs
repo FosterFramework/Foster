@@ -42,10 +42,10 @@ public abstract class InputProvider
 	/// <summary>
 	/// Notifies the Input of the given keyboard text
 	/// </summary>
-	public void Text(ReadOnlySpan<char> text)
-		=> Input.OnText(text);
+	public void Text(in ReadOnlySpan<char> text, Window? window = null)
+		=> Input.OnText(text, window);
 
-	internal unsafe void Text(nint cstr)
+	internal unsafe void Text(nint cstr, Window? window)
 	{
 		byte* ptr = (byte*)cstr;
 		if (ptr == null || ptr[0] == 0)
@@ -61,7 +61,7 @@ public abstract class InputProvider
 		int written = System.Text.Encoding.UTF8.GetChars(ptr, len, chars, 64);
 
 		// append chars
-		Text(new ReadOnlySpan<char>(chars, written));
+		Text(new ReadOnlySpan<char>(chars, written), window);
 	}
 
 	/// <summary>

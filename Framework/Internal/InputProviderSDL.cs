@@ -101,7 +101,7 @@ internal sealed class InputProviderSDL(App app) : InputProvider, IDisposable
 			break;
 
 		case SDL_EventType.SDL_EVENT_TEXT_INPUT:
-			Text(new nint(ev.text.text));
+			Text(new nint(ev.text.text), App.Window);
 			break;
 
 		// joystick
