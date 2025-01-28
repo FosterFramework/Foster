@@ -33,6 +33,12 @@ public struct Point2(int x, int y) : IEquatable<Point2>
 	[JsonInclude] public int Y = y;
 
 	/// <summary>
+	/// Constructs a 0,0 Point2
+	/// </summary>
+	public Point2()
+		: this(0, 0) {}
+
+	/// <summary>
 	/// Gets the Length of the Point
 	/// </summary>
 	public readonly float Length() => new Vector2(X, Y).Length();
