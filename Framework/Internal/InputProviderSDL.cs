@@ -107,7 +107,7 @@ internal sealed class InputProviderSDL(App app) : InputProvider, IDisposable
 			break;
 
 		case SDL_EventType.SDL_EVENT_TEXT_INPUT:
-			Text(new nint(ev.text.text));
+			Text(new nint(ev.text.text), App.Window);
 			break;
 
 		// joystick
@@ -240,12 +240,9 @@ internal sealed class InputProviderSDL(App app) : InputProvider, IDisposable
 					axis: (int)Platform.GetAxisFromSDL((SDL_GamepadAxis)ev.gaxis.axis),
 					value: value,
 					time: App.Time.Elapsed);
-					
+
 				break;
 			}
-
-		default:
-			break;
 		}
 	}
 

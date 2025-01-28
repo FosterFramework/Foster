@@ -347,6 +347,25 @@ public sealed class Window : IDrawableTarget
 			currentCursor = cursor;
 	}
 
+	/// <summary>
+	/// This will enable Text input in the Window, by populating keyboard 
+	/// text in <see cref="KeyboardState.Text"/>.<br/>
+	/// <br/>
+	/// On some platforms this function will show an on-screen keyboard.
+	/// </summary>
+	public void StartTextInput()
+	{
+		app.RunOnMainThread(() => SDL_StartTextInput(Handle));
+	}
+
+	/// <summary>
+	/// This disables Text input in the Window
+	/// </summary>
+	public void StopTextInput()
+	{
+		app.RunOnMainThread(() => SDL_StopTextInput(Handle));
+	}
+
 	internal void OnEvent(SDL_EventType ev)
 	{
 		switch (ev)
@@ -393,7 +412,6 @@ public sealed class Window : IDrawableTarget
 	internal void Show()
 	{
 		SDL_ShowWindow(Handle);
-		SDL_StartTextInput(Handle);
 		SDL_SetWindowFullscreenMode(Handle, ref Unsafe.NullRef<SDL_DisplayMode>());
 		SDL_SetWindowBordered(Handle, true);
 		SDL_ShowCursor();
@@ -401,7 +419,6 @@ public sealed class Window : IDrawableTarget
 
 	internal void Hide()
 	{
-		SDL_StopTextInput(Handle);
 		SDL_HideWindow(Handle);
 	}
 

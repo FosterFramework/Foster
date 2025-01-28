@@ -74,7 +74,7 @@ public abstract class App : IDisposable
 	/// <summary>
 	/// How the Application should update
 	/// </summary>
-	public UpdateMode UpdateMode = UpdateMode.FixedStep(60);
+	public UpdateMode UpdateMode;
 
 	/// <summary>
 	/// The Application Window
@@ -116,7 +116,7 @@ public abstract class App : IDisposable
 	/// store application data like settings or save data.<br/>
 	/// <br/>
 	/// The location of this directory is platform and application dependent.
-	/// For example on Windows this is usually in `C:/User/{user}/AppData/Roaming/{App.Name}`, 
+	/// For example on Windows this is usually in `C:/User/{user}/AppData/Roaming/{App.Name}`,
 	/// where as on Linux it's usually in `~/.local/share/{App.Name}`.<br/>
 	/// <br/>
 	/// Note that while using <see cref="System.IO"/> operations on the UserPath is generally
@@ -126,7 +126,7 @@ public abstract class App : IDisposable
 	/// If you intend to target non-desktop platforms, you should implement user data
 	/// through the <see cref="FileSystem.OpenUserStorage(Action{Storage})"/> API via <see cref="FileSystem"/>
 	/// </summary>
-	public string UserPath { get; private set; } = string.Empty;
+	public string UserPath { get; private set; }
 
 	/// <summary>
 	/// What action to perform when the user requests for the Application to exit.
@@ -171,13 +171,13 @@ public abstract class App : IDisposable
 		// set SDL logging method
 		SDL_SetLogOutputFunction(Platform.HandleLogFromSDL, IntPtr.Zero);
 
-		// by default allow controller presses while unfocused, 
+		// by default allow controller presses while unfocused,
 		// let game decide if it should handle them
 		SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 
 		// initialize SDL3
 		{
-			var initFlags = 
+			var initFlags =
 				SDL_InitFlags.SDL_INIT_VIDEO | SDL_InitFlags.SDL_INIT_TIMER | SDL_InitFlags.SDL_INIT_EVENTS |
 				SDL_InitFlags.SDL_INIT_JOYSTICK | SDL_InitFlags.SDL_INIT_GAMEPAD;
 
@@ -222,7 +222,7 @@ public abstract class App : IDisposable
 		GraphicsDevice.DestroyDevice();
 		inputProvider.Dispose();
 		mainThreadQueue.Clear();
-		
+
 		SDL_Quit();
 	}
 
@@ -332,7 +332,7 @@ public abstract class App : IDisposable
 
 			Update();
 		}
-		
+
 		var update = UpdateMode;
 		var currentTime = timer.Elapsed;
 		var deltaTime = currentTime - lastUpdateTime;

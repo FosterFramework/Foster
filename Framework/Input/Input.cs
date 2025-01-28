@@ -6,7 +6,7 @@ namespace Foster.Framework;
 /// </summary>
 public sealed class Input
 {
-	public delegate void TextInputHandlerFn(char value);
+	public delegate void TextInputHandlerFn(in ReadOnlySpan<char> value, Window? window);
 	public delegate void ControllerConnectedFn(ControllerID id);
 	public delegate void ControllerDisconnectedFn(ControllerID id);
 
@@ -51,7 +51,7 @@ public sealed class Input
 	public static float RepeatInterval = 0.03f;
 
 	/// <summary>
-	/// Called whenever keyboard text is typed
+	/// Called whenever keyboard text is typed if <see cref="Window.StartTextInput"/> was called.
 	/// </summary>
 	public event TextInputHandlerFn? OnTextEvent;
 
@@ -172,13 +172,10 @@ public sealed class Input
 			}
 	}
 
-	internal void OnText(ReadOnlySpan<char> text)
+	internal void OnText(in ReadOnlySpan<char> text, Window? window)
 	{
-		foreach (var it in text)
-		{
-			NextState.Keyboard.Text.Append(it);
-			OnTextEvent?.Invoke(it);
-		}
+		NextState.Keyboard.Text.Append(text);
+		OnTextEvent?.Invoke(text, window);
 	}
 
 	internal void ConnectController(

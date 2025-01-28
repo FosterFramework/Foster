@@ -16,7 +16,7 @@ public sealed class KeyboardState
 	private Time time;
 
 	/// <summary>
-	/// Any Text that was typed over the last frame
+	/// Any Text that was typed over the last frame if <see cref="Window.StartTextInput"/> was called.
 	/// </summary>
 	public readonly StringBuilder Text = new();
 
