@@ -80,7 +80,7 @@ public sealed class VirtualAction(Input input, ActionBinding action, int control
 
 	internal override void Update(in Time time)
 	{
-		var state = Binding.GetState(Input, Device);
+		var state = Binding.GetState(Input, Device, Input.BindingFilters);
 
 		Pressed = state.Pressed;
 		Released = state.Released;

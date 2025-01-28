@@ -62,12 +62,32 @@ public sealed class AxisBinding
 	}
 
 	/// <summary>
+	/// Adds a Keyboard Key mapping
+	/// </summary>
+	public AxisBinding Add(in ReadOnlySpan<string> masks, Keys negative, Keys positive)
+	{
+		Negative.Add(masks, negative);
+		Positive.Add(masks, positive);
+		return this;
+	}
+
+	/// <summary>
 	/// Adds a GamePad Button mapping
 	/// </summary>
 	public AxisBinding Add(Buttons negative, Buttons positive)
 	{
 		Negative.Add(negative);
 		Positive.Add(positive);
+		return this;
+	}
+
+	/// <summary>
+	/// Adds a GamePad Button mapping
+	/// </summary>
+	public AxisBinding Add(in ReadOnlySpan<string> masks, Buttons negative, Buttons positive)
+	{
+		Negative.Add(masks, negative);
+		Positive.Add(masks, positive);
 		return this;
 	}
 
@@ -82,12 +102,22 @@ public sealed class AxisBinding
 	}
 
 	/// <summary>
+	/// Adds a GamePad Axis mapping
+	/// </summary>
+	public AxisBinding Add(in ReadOnlySpan<string> masks, Axes axis, float deadzone = 0)
+	{
+		Negative.Add(masks, axis, -1, deadzone);
+		Positive.Add(masks, axis, 1, deadzone);
+		return this;
+	}
+
+	/// <summary>
 	/// Gets the current Value of the Axis from the provided Input
 	/// </summary>
-	public float Value(Input input, int device)
+	public float Value(Input input, int device, HashSet<string>? filters)
 	{
-		var negativeState = Negative.GetState(input, device);
-		var positiveState = Positive.GetState(input, device);
+		var negativeState = Negative.GetState(input, device, filters);
+		var positiveState = Positive.GetState(input, device, filters);
 
 		if (OverlapBehaviour == Overlaps.CancelOut)
 		{

@@ -61,15 +61,21 @@ internal sealed class InputProviderSDL(App app) : InputProvider, IDisposable
 		mouse -= windowPos;
 
 		// scale it to the pixel coords
-		mouse = (mouse / windowSize) * windowSizeInPx;
+		mouse = mouse / windowSize * windowSizeInPx;
+		var delta = mouse - lastMouse;
+
+		// get mouse delta if we're in relative mouse mode
+		if (SDL_GetWindowRelativeMouseMode(App.Window.Handle))
+		{
+			SDL_GetRelativeMouseState(out float dx, out float dy);
+			delta = new Vector2(dx, dy) / windowSize * windowSizeInPx;
+		}
 
 		// add new event if moved
-		if (lastMouse.X != mouse.X || lastMouse.Y != mouse.Y)
+		if (lastMouse.X != mouse.X || lastMouse.Y != mouse.Y || delta.X != 0 || delta.Y != 0)
 		{
-			var delta = mouse - lastMouse;
 			lastMouse = mouse;
-
-			MouseMove(mouse,delta, time.Elapsed);
+			MouseMove(mouse, delta, time.Elapsed);
 		}
 
 		base.Update(time);

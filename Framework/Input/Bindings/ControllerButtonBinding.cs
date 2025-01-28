@@ -11,6 +11,8 @@ public sealed class ControllerButtonBinding : Binding
 
 	public ControllerButtonBinding() {}
 	public ControllerButtonBinding(Buttons button) => Button = button;
+	public ControllerButtonBinding(Buttons button, in ReadOnlySpan<string> masks) : this(button)
+		=> Masks.AddRange(masks);
 
 	public override BindingState GetState(Input input, int device) => new(
 		Pressed: input.Controllers[device].Pressed(Button),

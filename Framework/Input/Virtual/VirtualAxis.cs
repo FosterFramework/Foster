@@ -42,20 +42,20 @@ public sealed class VirtualAxis(Input input, AxisBinding binding, int controller
 
 	internal override void Update(in Time time)
 	{
-		Value = Binding.Value(Input, Device);
+		Value = Binding.Value(Input, Device, Input.BindingFilters);
 		IntValue = MathF.Sign(Value);
 
 		Pressed = Value switch
 		{
-			> 0 => Binding.Positive.GetState(Input, Device).Pressed,
-			< 0 => Binding.Negative.GetState(Input, Device).Pressed,
+			> 0 => Binding.Positive.GetState(Input, Device, Input.BindingFilters).Pressed,
+			< 0 => Binding.Negative.GetState(Input, Device, Input.BindingFilters).Pressed,
 			_ => false,
 		};
 
 		PressedSign = Value switch
 		{
-			> 0 => (Binding.Positive.GetState(Input, Device).Pressed ? 1 : 0),
-			< 0 => (Binding.Negative.GetState(Input, Device).Pressed ? -1 : 0),
+			> 0 => (Binding.Positive.GetState(Input, Device, Input.BindingFilters).Pressed ? 1 : 0),
+			< 0 => (Binding.Negative.GetState(Input, Device, Input.BindingFilters).Pressed ? -1 : 0),
 			_ => 0,
 		};
 	}

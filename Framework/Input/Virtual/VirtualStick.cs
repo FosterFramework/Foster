@@ -40,12 +40,12 @@ public sealed class VirtualStick(Input input, StickBinding binding, int controll
 
 	internal override void Update(in Time time)
 	{
-		Value = Binding.Value(Input, Device);
+		Value = Binding.Value(Input, Device, Input.BindingFilters);
 		IntValue = new(MathF.Sign(Value.X), MathF.Sign(Value.Y));
-		PressedLeft = Binding.X.Negative.GetState(Input, Device).Pressed;
-		PressedRight = Binding.X.Positive.GetState(Input, Device).Pressed;
-		PressedUp = Binding.Y.Negative.GetState(Input, Device).Pressed;
-		PressedDown = Binding.Y.Positive.GetState(Input, Device).Pressed;
+		PressedLeft = Binding.X.Negative.GetState(Input, Device, Input.BindingFilters).Pressed;
+		PressedRight = Binding.X.Positive.GetState(Input, Device, Input.BindingFilters).Pressed;
+		PressedUp = Binding.Y.Negative.GetState(Input, Device, Input.BindingFilters).Pressed;
+		PressedDown = Binding.Y.Positive.GetState(Input, Device, Input.BindingFilters).Pressed;
 	}
 
 	public void Clear()

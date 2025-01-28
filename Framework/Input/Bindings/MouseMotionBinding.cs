@@ -23,6 +23,9 @@ public sealed class MouseMotionBinding : Binding
 		MaximumValue = maxValue;
 	}
 
+	public MouseMotionBinding(in Vector2 axis, int sign, float minValue, float maxValue, in ReadOnlySpan<string> masks) : this(axis, sign, minValue, maxValue)
+		=> Masks.AddRange(masks);
+
 	public override BindingState GetState(Input input, int device) => new(
 		Pressed: GetValue(input.State) > 0 && GetValue(input.LastState) <= 0,
 		Released: GetValue(input.State) <= 0 && GetValue(input.LastState) > 0,

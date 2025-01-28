@@ -12,12 +12,16 @@ public sealed class ControllerAxisBinding : Binding
 	[JsonInclude] public float Deadzone;
 
 	public ControllerAxisBinding() {}
+
 	public ControllerAxisBinding(Axes axis, int sign, float deadzone)
 	{
 		Axis = axis;
 		Sign = sign;
 		Deadzone = deadzone;
 	}
+
+	public ControllerAxisBinding(Axes axis, int sign, float deadzone, in ReadOnlySpan<string> masks) : this(axis, sign, deadzone)
+		=> Masks.AddRange(masks);
 
 	public override BindingState GetState(Input input, int device)
 	{

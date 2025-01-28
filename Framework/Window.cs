@@ -317,11 +317,13 @@ public sealed class Window : IDrawableTarget
 	/// </summary>
 	public void SetMouseRelativeMode(bool enabled)
 	{
+		if (enabled == SDL_GetWindowRelativeMouseMode(Handle))
+			return;
+
 		if (!SDL_SetWindowRelativeMouseMode(Handle, enabled))
 			Log.Warning($"Failed to set Mouse Relative Mode: {SDL_GetError()}");
 
-		if (enabled)
-			SDL_WarpMouseInWindow(Handle, Width / 2, Height / 2);
+		SDL_WarpMouseInWindow(Handle, Width / 2, Height / 2);
 	}
 
 	/// <summary>

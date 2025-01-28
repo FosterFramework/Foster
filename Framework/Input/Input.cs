@@ -66,6 +66,12 @@ public sealed class Input
 	public event ControllerDisconnectedFn? OnControllerDisconnected;
 
 	/// <summary>
+	/// Input Binding Filters.
+	/// These filter the <see cref="Binding.Masks"/> used by <see cref="VirtualInput"/>s.
+	/// </summary>
+	public readonly HashSet<string> BindingFilters = [];
+
+	/// <summary>
 	/// Holds references to all Virtual Buttons so they can be updated.
 	/// </summary>
 	private readonly List<WeakReference<VirtualInput>> virtualInputs = [];

@@ -10,7 +10,12 @@ public sealed class KeyboardKeyBinding : Binding
 	[JsonInclude] public Keys Key;
 
 	public KeyboardKeyBinding() {}
-	public KeyboardKeyBinding(Keys key) => Key = key;
+
+	public KeyboardKeyBinding(Keys key)
+		=> Key = key;
+
+	public KeyboardKeyBinding(Keys key, in ReadOnlySpan<string> masks) : this(key)
+		=> Masks.AddRange(masks);
 
 	public override BindingState GetState(Input input, int device) => new(
 		Pressed: input.Keyboard.Pressed(Key),
