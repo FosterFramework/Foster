@@ -7,12 +7,12 @@ namespace Foster.Framework;
 /// </summary>
 public sealed class ControllerButtonBinding : Binding
 {
-	[JsonInclude] public Buttons Button;
+	public Buttons Button { get; set; }
 
 	public ControllerButtonBinding() {}
 	public ControllerButtonBinding(Buttons button) => Button = button;
 	public ControllerButtonBinding(Buttons button, in ReadOnlySpan<string> masks) : this(button)
-		=> Masks.AddRange(masks);
+		=> Masks = [..masks];
 
 	public override BindingState GetState(Input input, int device) => new(
 		Pressed: input.Controllers[device].Pressed(Button),

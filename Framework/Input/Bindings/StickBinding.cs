@@ -11,17 +11,17 @@ public sealed class StickBinding
 	/// <summary>
 	/// Circular Deadzone to apply across the resulting 2D vector
 	/// </summary>
-	[JsonInclude] public float CircularDeadzone = 0;
+	public float CircularDeadzone { get; set; } = 0;
 
 	/// <summary>
 	/// The X-Axis Binding
 	/// </summary>
-	[JsonInclude] public readonly AxisBinding X = new();
+	public AxisBinding X { get; private set; } = new();
 
 	/// <summary>
 	/// The Y-Axis Binding
 	/// </summary>
-	[JsonInclude] public readonly AxisBinding Y = new();
+	public AxisBinding Y { get; private set; } = new();
 
 	public StickBinding() {}
 

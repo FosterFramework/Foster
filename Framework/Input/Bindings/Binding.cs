@@ -16,7 +16,8 @@ public abstract class Binding
 	/// Optional set of Masks to Filter the binding by.
 	/// These are filtered by <see cref="Input.BindingFilters"/> 
 	/// </summary>
-	[JsonInclude] public List<string> Masks { get; private set; } = [];
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+	public string[]? Masks { get; set; } = null;
 
 	/// <summary>
 	/// Gets the current state of the Binding from the provided Input
@@ -28,7 +29,7 @@ public abstract class Binding
 	/// </summary>
 	public bool IsIncluded(HashSet<string>? filters)
 	{
-		if (filters == null || Masks.Count <= 0)
+		if (filters == null || Masks == null || Masks.Length <= 0)
 			return true;
 
 		foreach (var it in Masks)

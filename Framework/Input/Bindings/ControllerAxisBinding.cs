@@ -7,9 +7,9 @@ namespace Foster.Framework;
 /// </summary>
 public sealed class ControllerAxisBinding : Binding
 {
-	[JsonInclude] public Axes Axis;
-	[JsonInclude] public int Sign;
-	[JsonInclude] public float Deadzone;
+	public Axes Axis { get; set; }
+	public int Sign { get; set; }
+	public float Deadzone { get; set; }
 
 	public ControllerAxisBinding() {}
 
@@ -21,7 +21,7 @@ public sealed class ControllerAxisBinding : Binding
 	}
 
 	public ControllerAxisBinding(Axes axis, int sign, float deadzone, in ReadOnlySpan<string> masks) : this(axis, sign, deadzone)
-		=> Masks.AddRange(masks);
+		=> Masks = [..masks];
 
 	public override BindingState GetState(Input input, int device)
 	{

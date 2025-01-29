@@ -28,17 +28,17 @@ public sealed class AxisBinding
 	/// <summary>
 	/// How to handle overlapping inputs between negative and positive bindings
 	/// </summary>
-	[JsonInclude] public Overlaps OverlapBehaviour;
+	public Overlaps OverlapBehaviour { get; set; }
 
 	/// <summary>
 	/// Negative Value Bindings
 	/// </summary>
-	[JsonInclude] public readonly ActionBinding Negative = new();
+	public ActionBinding Negative { get; private set; } = new();
 
 	/// <summary>
 	/// Positive Value Bindings
 	/// </summary>
-	[JsonInclude] public readonly ActionBinding Positive = new();
+	public ActionBinding Positive { get; private set; } = new();
 
 	public AxisBinding() {}
 

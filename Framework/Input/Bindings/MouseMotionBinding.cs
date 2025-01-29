@@ -8,10 +8,26 @@ namespace Foster.Framework;
 /// </summary>
 public sealed class MouseMotionBinding : Binding
 {
-	[JsonInclude] public Vector2 Axis;
-	[JsonInclude] public int Sign;
-	[JsonInclude] public float MinimumValue;
-	[JsonInclude] public float MaximumValue;
+	/// <summary>
+	/// The Axis of Mouse Motion to track
+	/// </summary>
+	[JsonConverter(typeof(JsonConverters.Vector2))]
+	public Vector2 Axis { get; set; }
+
+	/// <summary>
+	/// The Sign of the Mouse Motion to track
+	/// </summary>
+	public int Sign { get; set; }
+
+	/// <summary>
+	/// The Minimum distance before the mouse motion is tracked
+	/// </summary>
+	public float Min { get; set; }
+
+	/// <summary>
+	/// The Maximum distance before the mouse motion is clamped
+	/// </summary>
+	public float Max { get; set; }
 
 	public MouseMotionBinding() {}
 
@@ -19,12 +35,12 @@ public sealed class MouseMotionBinding : Binding
 	{
 		Axis = axis;
 		Sign = sign;
-		MinimumValue = minValue;
-		MaximumValue = maxValue;
+		Min = minValue;
+		Max = maxValue;
 	}
 
 	public MouseMotionBinding(in Vector2 axis, int sign, float minValue, float maxValue, in ReadOnlySpan<string> masks) : this(axis, sign, minValue, maxValue)
-		=> Masks.AddRange(masks);
+		=> Masks = [..masks];
 
 	public override BindingState GetState(Input input, int device) => new(
 		Pressed: GetValue(input.State) > 0 && GetValue(input.LastState) <= 0,
@@ -37,6 +53,6 @@ public sealed class MouseMotionBinding : Binding
 	private float GetValue(InputState state)
 	{
 		var value = Vector2.Dot(Axis, state.Mouse.Delta);
-		return Calc.ClampedMap(value, Sign * MinimumValue, Sign * MaximumValue, 0, 1);
+		return Calc.ClampedMap(value, Sign * Min, Sign * Max, 0, 1);
 	}
 }

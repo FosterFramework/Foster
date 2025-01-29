@@ -7,7 +7,7 @@ namespace Foster.Framework;
 /// </summary>
 public sealed class ActionBinding
 {
-	[JsonInclude] public readonly List<Binding> Bindings = [];
+	public List<Binding> Bindings { get; private set; } = [];
 
 	public ActionBinding() {}
 

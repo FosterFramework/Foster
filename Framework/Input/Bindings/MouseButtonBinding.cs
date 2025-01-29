@@ -7,14 +7,14 @@ namespace Foster.Framework;
 /// </summary>
 public sealed class MouseButtonBinding : Binding
 {
-	[JsonInclude] public MouseButtons Button;
+	public MouseButtons Button { get; set; }
 
 	public MouseButtonBinding() {}
 
 	public MouseButtonBinding(MouseButtons button) => Button = button;
 
 	public MouseButtonBinding(MouseButtons button, in ReadOnlySpan<string> masks) : this(button)
-		=> Masks.AddRange(masks);
+		=> Masks = [..masks];
 
 	public override BindingState GetState(Input input, int device) => new(
 		Pressed: input.Mouse.Pressed(Button),
