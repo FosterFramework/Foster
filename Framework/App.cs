@@ -129,8 +129,9 @@ public abstract class App : IDisposable
 	public string UserPath { get; private set; }
 
 	/// <summary>
-	/// What action to perform when the user requests for the Application to exit.
-	/// If not assigned, the default behavior will call <see cref="Exit"/>.
+	/// What action to perform when the user requests for the Application to exit.<br/>
+	/// If not assigned, the default behavior will call <see cref="Exit"/>.<br/>
+	/// There is also <seealso cref="Window.OnCloseRequested"/> which will be called if the Window close button is pressed. 
 	/// </summary>
 	public Action? OnExitRequested;
 
