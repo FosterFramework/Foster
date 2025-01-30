@@ -297,6 +297,9 @@ public sealed class Window : IDrawableTarget
 	/// </summary>
 	public void SetMouseVisible(bool enabled)
 	{
+		if (enabled == SDL_CursorVisible())
+			return;
+
 		// TODO:
 		// Should this method be here? It seems like it's maybe application-specific
 		// instead of unique to a given window.
@@ -331,6 +334,9 @@ public sealed class Window : IDrawableTarget
 	/// </summary>
 	public void SetMouseCursor(Cursor? cursor)
 	{
+		if (currentCursor == cursor)
+			return;
+
 		if (cursor == null)
 		{
 			currentCursor = null;
@@ -341,10 +347,10 @@ public sealed class Window : IDrawableTarget
 		if (cursor.Disposed)
 			throw new Exception("Using an invalid cursor!");
 
-		if (!SDL_SetCursor(cursor.Handle))
-			Log.Warning($"Failed to set Mouse Cursor: {SDL_GetError()}");
-		else
+		if (SDL_SetCursor(cursor.Handle))
 			currentCursor = cursor;
+		else
+			Log.Warning($"Failed to set Mouse Cursor: {SDL_GetError()}");
 	}
 
 	/// <summary>
@@ -355,7 +361,10 @@ public sealed class Window : IDrawableTarget
 	/// </summary>
 	public void StartTextInput()
 	{
-		app.RunOnMainThread(() => SDL_StartTextInput(Handle));
+		if (app.IsMainThread())
+			SDL_StartTextInput(Handle);
+		else
+			app.RunOnMainThread(() => SDL_StartTextInput(Handle));
 	}
 
 	/// <summary>
@@ -363,7 +372,10 @@ public sealed class Window : IDrawableTarget
 	/// </summary>
 	public void StopTextInput()
 	{
-		app.RunOnMainThread(() => SDL_StopTextInput(Handle));
+		if (app.IsMainThread())
+			SDL_StopTextInput(Handle);
+		else
+			app.RunOnMainThread(() => SDL_StopTextInput(Handle));
 	}
 
 	internal void OnEvent(SDL_EventType ev)
