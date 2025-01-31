@@ -86,6 +86,8 @@ public class Batcher : IDisposable
 	private readonly Stack<int> layerStack = [];
 	private readonly Stack<Color> modeStack = [];
 	private readonly List<Batch> batches = [];
+	private readonly List<Material> materialsUsed = [];
+	private readonly Queue<Material> materialsPool = [];
 	private readonly Mesh mesh;
 
 	private Color mode = new(255, 0, 0, 0);
@@ -140,6 +142,8 @@ public class Batcher : IDisposable
 
 	public void Dispose()
 	{
+		GC.SuppressFinalize(this);
+
 		if (vertexPtr != IntPtr.Zero)
 		{
 			Marshal.FreeHGlobal(vertexPtr);
@@ -173,6 +177,11 @@ public class Batcher : IDisposable
 		layerStack.Clear();
 		samplerStack.Clear();
 		modeStack.Clear();
+		
+		foreach (var it in materialsUsed)
+			materialsPool.Enqueue(it);
+		materialsUsed.Clear();
+
 		Matrix = Matrix3x2.Identity;
 	}
 
@@ -415,7 +424,9 @@ public class Batcher : IDisposable
 			throw new Exception("Material must have a Shader assigned");
 		
 		materialStack.Push(currentBatch.Material);
-		var copy = Pool.Get<Material>();
+		if (!materialsPool.TryDequeue(out var copy))
+			copy = new Material();
+		materialsUsed.Add(copy);
 		material.CopyTo(copy);
 		SetMaterial(copy);
 	}
