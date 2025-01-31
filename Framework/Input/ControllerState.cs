@@ -16,6 +16,8 @@ public sealed class ControllerState(int index)
 	public const int MaxButtons = 64;
 	public const int MaxAxis = 64;
 
+	internal static readonly ControllerState ClearedState = new(0);
+
 	/// <summary>
 	/// The current Controller Slot Index.
 	/// This does not change while the Controller is connected, even if there are
@@ -153,6 +155,14 @@ public sealed class ControllerState(int index)
 		into.Copy(this);
 	}
 
+	/// <summary>
+	/// Clears the Controller State (but does not clear the device/connection info)
+	/// </summary>
+	public void Clear()
+	{
+		CopyState(ClearedState);
+	}
+
 	internal void Connect(ControllerID id, string name, int buttonCount, int axisCount, bool isGamepad, GamepadTypes type, ushort vendor, ushort product, ushort version)
 	{
 		ID = id;
@@ -208,7 +218,11 @@ public sealed class ControllerState(int index)
 		Vendor = other.Vendor;
 		Version = other.Version;
 		time = other.time;
+		CopyState(other);
+	}
 
+	internal void CopyState(ControllerState other)
+	{
 		Array.Copy(other.pressed, 0, pressed, 0, pressed.Length);
 		Array.Copy(other.down, 0, down, 0, pressed.Length);
 		Array.Copy(other.released, 0, released, 0, pressed.Length);

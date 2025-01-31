@@ -13,9 +13,19 @@ public abstract class InputProvider
 	/// </summary>
 	public readonly Input Input;
 
+	/// <summary>
+	/// Echo Input Modules
+	/// </summary>
+	private readonly List<WeakReference<Input>> echos = [];
+
 	public InputProvider()
 	{
 		Input = new(this);
+	}
+
+	internal void AddEcho(Input input)
+	{
+		echos.Add(new(input));
 	}
 
 	/// <summary>
@@ -37,13 +47,26 @@ public abstract class InputProvider
 	/// Run at the beginning of a frame to increment the input state.
 	/// </summary>
 	public virtual void Update(in Time time)
-		=> Input.Step(time);
+	{
+		Input.Step(time);
+
+		foreach (var it in echos)
+			if (it.TryGetTarget(out var target))
+				target.Step(time);
+	}
 
 	/// <summary>
 	/// Notifies the Input of the given keyboard text
 	/// </summary>
 	public void Text(in ReadOnlySpan<char> text, Window? window = null)
-		=> Input.OnText(text, window);
+	{
+		if (Input.ReceiveEvents)
+			Input.OnText(text, window);
+
+		foreach (var it in echos)
+			if (it.TryGetTarget(out var target) && target.ReceiveEvents)
+				target.OnText(text, window);
+	}
 
 	internal unsafe void Text(nint cstr, Window? window)
 	{
@@ -68,25 +91,53 @@ public abstract class InputProvider
 	/// Notifies the Input of a change in keyboard key state
 	/// </summary>
 	public void Key(int key, bool pressed, in TimeSpan time)
-		=> Input.NextState.Keyboard.OnKey(key, pressed, time);
+	{
+		if (Input.ReceiveEvents)
+			Input.NextState.Keyboard.OnKey(key, pressed, time);
+
+		foreach (var it in echos)
+			if (it.TryGetTarget(out var target) && target.ReceiveEvents)
+				target.NextState.Keyboard.OnKey(key, pressed, time);
+	}
 
 	/// <summary>
 	/// Notifies the Input of a change in mouse button state
 	/// </summary>
 	public void MouseButton(int button, bool pressed, in TimeSpan time)
-		=> Input.NextState.Mouse.OnButton(button, pressed, time);
+	{
+		if (Input.ReceiveEvents)
+			Input.NextState.Mouse.OnButton(button, pressed, time);
+
+		foreach (var it in echos)
+			if (it.TryGetTarget(out var target) && target.ReceiveEvents)
+				target.NextState.Mouse.OnButton(button, pressed, time);
+	}
 
 	/// <summary>
 	/// Notifies the Input of a change in Mouse position state
 	/// </summary>
 	public void MouseMove(Vector2 position, Vector2 delta, in TimeSpan time)
-		=> Input.NextState.Mouse.OnMotion(position, delta, time);
+	{
+		if (Input.ReceiveEvents)
+			Input.NextState.Mouse.OnMotion(position, delta, time);
+
+		foreach (var it in echos)
+			if (it.TryGetTarget(out var target) && target.ReceiveEvents)
+				target.NextState.Mouse.OnMotion(position, delta, time);
+	}
 
 	/// <summary>
 	/// Notifies the Input of a change in Mouse Wheel state
 	/// </summary>
 	public void MouseWheel(Vector2 wheel)
-		=> Input.NextState.Mouse.OnWheel(wheel);
+	{
+		if (Input.ReceiveEvents)
+			Input.NextState.Mouse.OnWheel(wheel);
+
+		foreach (var it in echos)
+			if (it.TryGetTarget(out var target) && target.ReceiveEvents)
+				target.NextState.Mouse.OnWheel(wheel);
+	}
 
 	/// <summary>
 	/// Notifies the Input of a controller connection
@@ -101,23 +152,51 @@ public abstract class InputProvider
 		ushort vendor,
 		ushort product,
 		ushort version)
-		=> Input.ConnectController(id, name, buttonCount, axisCount, isGamepad, type, vendor, product, version);
+	{
+		if (Input.ReceiveEvents)
+			Input.ConnectController(id, name, buttonCount, axisCount, isGamepad, type, vendor, product, version);
+
+		foreach (var it in echos)
+			if (it.TryGetTarget(out var target))
+				target.ConnectController(id, name, buttonCount, axisCount, isGamepad, type, vendor, product, version);
+	}
 
 	/// <summary>
 	/// Notifies the Input of a controller disconnection
 	/// </summary>
 	public void DisconnectController(ControllerID id)
-		=> Input.DisconnectController(id);
+	{
+		if (Input.ReceiveEvents)
+			Input.DisconnectController(id);
+
+		foreach (var it in echos)
+			if (it.TryGetTarget(out var target))
+				target.DisconnectController(id);
+	}
 
 	/// <summary>
 	/// Notifies the Input of a change in controller button state
 	/// </summary>
 	public void ControllerButton(ControllerID id, int button, bool pressed, in TimeSpan time)
-		=> Input.NextState.GetController(id)?.OnButton(button, pressed, time);
+	{
+		if (Input.ReceiveEvents)
+			Input.NextState.GetController(id)?.OnButton(button, pressed, time);
+
+		foreach (var it in echos)
+			if (it.TryGetTarget(out var target) && target.ReceiveEvents)
+				target.NextState.GetController(id)?.OnButton(button, pressed, time);
+	}
 
 	/// <summary>
 	/// Notifies the Input of a change in controller axis state
 	/// </summary>
 	public void ControllerAxis(ControllerID id, int axis, float value, in TimeSpan time)
-		=> Input.NextState.GetController(id)?.OnAxis(axis, value, time);
+	{
+		if (Input.ReceiveEvents)
+			Input.NextState.GetController(id)?.OnAxis(axis, value, time);
+
+		foreach (var it in echos)
+			if (it.TryGetTarget(out var target) && target.ReceiveEvents)
+				target.NextState.GetController(id)?.OnAxis(axis, value, time);
+	}
 }

@@ -57,6 +57,14 @@ public sealed class InputState
 		into.Copy(this);
 	}
 
+	public void Clear()
+	{
+		Keyboard.Clear();
+		Mouse.Clear();
+		foreach (var it in Controllers)
+			it.Clear();
+	}
+
 	internal void Step(in Time time)
 	{
 		for (int i = 0; i < Controllers.Length; i++)

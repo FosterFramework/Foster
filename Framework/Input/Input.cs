@@ -11,19 +11,29 @@ public sealed class Input
 	public delegate void ControllerDisconnectedFn(ControllerID id);
 
 	/// <summary>
+	/// Default delay before a key or button starts repeating, in seconds
+	/// </summary>
+	public static float RepeatDelay = 0.4f;
+
+	/// <summary>
+	/// Default interval that the repeat is triggered, in seconds
+	/// </summary>
+	public static float RepeatInterval = 0.03f;
+
+	/// <summary>
 	/// The Current Input State
 	/// </summary>
-	public readonly InputState State;
+	public readonly InputState State = new();
 
 	/// <summary>
 	/// The Input State of the previous frame
 	/// </summary>
-	public readonly InputState LastState;
+	public readonly InputState LastState = new();
 
 	/// <summary>
 	/// The Input State of the next frame
 	/// </summary>
-	internal readonly InputState NextState;
+	internal readonly InputState NextState = new();
 
 	/// <summary>
 	/// The Keyboard of the current State
@@ -39,16 +49,6 @@ public sealed class Input
 	/// The Controllers of the Current State
 	/// </summary>
 	public ControllerState[] Controllers => State.Controllers;
-
-	/// <summary>
-	/// Default delay before a key or button starts repeating, in seconds
-	/// </summary>
-	public static float RepeatDelay = 0.4f;
-
-	/// <summary>
-	/// Default interval that the repeat is triggered, in seconds
-	/// </summary>
-	public static float RepeatInterval = 0.03f;
 
 	/// <summary>
 	/// Called whenever keyboard text is typed if <see cref="Window.StartTextInput"/> was called.
@@ -72,21 +72,34 @@ public sealed class Input
 	public readonly HashSet<string> BindingFilters = [];
 
 	/// <summary>
+	/// If the Input Module should Receive Events.
+	/// If this is false, the Input will essentially not update between frames.
+	/// </summary>
+	public bool ReceiveEvents = true;
+
+	/// <summary>
 	/// Holds references to all Virtual Buttons so they can be updated.
 	/// </summary>
 	private readonly List<WeakReference<VirtualInput>> virtualInputs = [];
 
-	private readonly InputProvider provider;
+	internal readonly InputProvider Provider;
 
 	/// <summary>
 	/// 
 	/// </summary>
 	internal Input(InputProvider provider)
 	{
-		this.provider = provider;
-		State = new();
-		LastState = new();
-		NextState = new();
+		Provider = provider;
+	}
+
+	/// <summary>
+	/// Creates an Input Module that recieves the same events as this one.
+	/// </summary>
+	public Input CreateEcho()
+	{
+		var input = new Input(Provider);
+		Provider.AddEcho(input);
+		return input;
 	}
 
 	/// <summary>
@@ -99,13 +112,13 @@ public sealed class Input
 	/// Sets the Clipboard to the given String
 	/// </summary>
 	public void SetClipboardString(string value)
-		=> provider.SetClipboard(value);
+		=> Provider.SetClipboard(value);
 
 	/// <summary>
 	/// Gets the Clipboard String
 	/// </summary>
 	public string GetClipboardString()
-		=> provider.GetClipboard();
+		=> Provider.GetClipboard();
 
 	/// <summary>
 	/// Rumbles a Controller for a give duration.
@@ -139,7 +152,7 @@ public sealed class Input
 	{
 		var it = GetController(id);
 		if (it != null && it.Connected)
-			provider.Rumble(id, lowIntensity, highIntensity, duration);
+			Provider.Rumble(id, lowIntensity, highIntensity, duration);
 	}
 
 	/// <summary>
@@ -154,7 +167,16 @@ public sealed class Input
 	{
 		var it = Controllers[controllerIndex];
 		if (it.Connected)
-			provider.Rumble(it.ID, lowIntensity, highIntensity, duration);
+			Provider.Rumble(it.ID, lowIntensity, highIntensity, duration);
+	}
+
+	/// <summary>
+	/// Clears the Input State
+	/// </summary>
+	public void Clear()
+	{
+		State.Clear();
+		NextState.Clear();
 	}
 
 	internal void AddVirtualInput(VirtualInput it)

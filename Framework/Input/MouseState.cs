@@ -8,6 +8,7 @@ namespace Foster.Framework;
 public sealed class MouseState
 {
 	public const int MaxButtons = 5;
+	internal static readonly MouseState ClearedState = new();
 
 	/// <summary>
 	/// Mouse position, relative to the window, in Pixel Coordinates.
@@ -119,6 +120,12 @@ public sealed class MouseState
 	{
 		into.Copy(this);
 	}
+
+	/// <summary>
+	/// Clears the Mouse State
+	/// </summary>
+	public void Clear()
+		=> ClearedState.Snapshot(this);
 
 	internal void Copy(MouseState other)
 	{
