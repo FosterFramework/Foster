@@ -905,7 +905,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 
 		// set scissor
-		var nextScissor = command.Scissor ?? new RectInt(0, 0, nextViewport.Width, nextViewport.Height);
+		var nextScissor = command.Scissor ?? nextViewport;
 		if (renderPassScissor != nextScissor)
 		{
 			renderPassScissor = nextScissor;
