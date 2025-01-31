@@ -50,9 +50,13 @@ public abstract class InputProvider
 	{
 		Input.Step(time);
 
-		foreach (var it in echos)
-			if (it.TryGetTarget(out var target))
+		for (int i = echos.Count - 1; i >= 0; i--)
+		{
+			if (echos[i].TryGetTarget(out var target))
 				target.Step(time);
+			else
+				echos.RemoveAt(i);
+		}
 	}
 
 	/// <summary>
@@ -153,8 +157,7 @@ public abstract class InputProvider
 		ushort product,
 		ushort version)
 	{
-		if (Input.ReceiveEvents)
-			Input.ConnectController(id, name, buttonCount, axisCount, isGamepad, type, vendor, product, version);
+		Input.ConnectController(id, name, buttonCount, axisCount, isGamepad, type, vendor, product, version);
 
 		foreach (var it in echos)
 			if (it.TryGetTarget(out var target))
@@ -166,8 +169,7 @@ public abstract class InputProvider
 	/// </summary>
 	public void DisconnectController(ControllerID id)
 	{
-		if (Input.ReceiveEvents)
-			Input.DisconnectController(id);
+		Input.DisconnectController(id);
 
 		foreach (var it in echos)
 			if (it.TryGetTarget(out var target))
