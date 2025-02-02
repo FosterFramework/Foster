@@ -42,6 +42,7 @@ public class Target : IGraphicResource, IDrawableTarget
 	/// </summary>
 	public readonly Texture[] Attachments;
 
+	object? IDrawableTarget.Surface => this;
 	int IDrawableTarget.WidthInPixels => Width;
 	int IDrawableTarget.HeightInPixels => Height;
 

@@ -1118,7 +1118,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 	private bool BeginRenderPassOnDrawableTarget(IDrawableTarget target, ClearInfo clear)
 	{
-		if (target is Target renderTarget)
+		if (target.Surface is Target renderTarget)
 			return BeginRenderPass(renderTarget, clear);
 		else
 			return BeginRenderPass(null, clear);

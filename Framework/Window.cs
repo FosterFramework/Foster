@@ -13,6 +13,7 @@ public sealed class Window : IDrawableTarget
 	private readonly App app;
 	private readonly GraphicsDevice graphicsDevice;
 	private readonly Exception closedWindowException = new("The Window has been Closed");
+	object? IDrawableTarget.Surface => this;
 
 	/// <summary>
 	/// Holds a reference to the current cursor in use, to avoid it getting collected.
