@@ -190,7 +190,7 @@ public class Batcher : IDisposable
 	/// <summary>
 	/// Draws the Batcher to the given Target
 	/// </summary>
-	/// <param name="target">What Target to Draw to, or null for the Window's backbuffer</param>
+	/// <param name="target">What Target to Draw to.<br/>The value should be either a <see cref="Target"/> or <see cref="Window"/>.</param>
 	/// <param name="viewport">Optional Viewport Rectangle</param>
 	/// <param name="scissor">Optional Scissor Rectangle, which will clip any Scissor rectangles pushed to the Batcher.</param>
 	public void Render(IDrawableTarget target, RectInt? viewport = null, RectInt? scissor = null)
@@ -209,7 +209,7 @@ public class Batcher : IDisposable
 	/// <summary>
 	/// Draws the Batcher to the given Target with the given Matrix Transformation
 	/// </summary>
-	/// <param name="target">What Target to Draw to, or null for the Window's backbuffer</param>
+	/// <param name="target">What Target to Draw to.<br/>The value should be either a <see cref="Target"/> or <see cref="Window"/>.</param>
 	/// <param name="matrix">Transforms the entire Batch</param>
 	/// <param name="viewport">Optional Viewport Rectangle</param>
 	/// <param name="scissor">Optional Scissor Rectangle, which will clip any Scissor rectangles pushed to the Batcher.</param>
