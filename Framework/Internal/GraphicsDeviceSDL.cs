@@ -85,6 +85,8 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	private nint textureUploadBuffer;
 	private uint textureUploadBufferOffset;
 	private uint textureUploadCycleCount;
+	private nint textureDownloadBuffer;
+	private uint textureDownloadBufferSize;
 	private nint bufferUploadBuffer;
 	private uint bufferUploadBufferOffset;
 	private uint bufferUploadCycleCount;
@@ -260,6 +262,9 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		// destroy transfer buffers
 		{
+			if (textureDownloadBuffer != nint.Zero)
+				SDL_ReleaseGPUTransferBuffer(device, textureDownloadBuffer);
+			textureDownloadBuffer = nint.Zero;
 			SDL_ReleaseGPUTransferBuffer(device, textureUploadBuffer);
 			textureUploadBuffer = nint.Zero;
 			SDL_ReleaseGPUTransferBuffer(device, bufferUploadBuffer);
@@ -449,13 +454,12 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		// acquire transfer buffer
 		if (length >= TransferBufferSize)
 		{
-			SDL_GPUTransferBufferCreateInfo info = new()
+			transferBuffer = SDL_CreateGPUTransferBuffer(device, new()
 			{
 				usage = SDL_GPUTransferBufferUsage.SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
 				size = (uint)length,
 				props = 0
-			};
-			transferBuffer = SDL_CreateGPUTransferBuffer(device, info);
+			});
 			usingTemporaryTransferBuffer = true;
 			transferCycle = false;
 			transferOffset = 0;
@@ -489,44 +493,100 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		{
 			BeginCopyPass();
 
-			SDL_GPUTextureTransferInfo info = new()
-			{
-				transfer_buffer = transferBuffer,
-				offset = transferOffset,
-				pixels_per_row = (uint)res.Width, // TODO: FNA3D uses 0
-				rows_per_layer = (uint)res.Height, // TODO: FNA3D uses 0
-			};
-
-			SDL_GPUTextureRegion region = new()
-			{
-				texture = res.Texture,
-				layer = 0,
-				mip_level = 0,
-				x = 0,
-				y = 0,
-				z = 0,
-				w = (uint)res.Width,
-				h = (uint)res.Height,
-				d = 1
-			};
-
-			SDL_UploadToGPUTexture(copyPass, info, region, cycle: false); // TODO: FNA uses false, we were using true
+			SDL_UploadToGPUTexture(
+				copyPass,
+				source: new()
+				{
+					transfer_buffer = transferBuffer,
+					offset = transferOffset,
+					pixels_per_row = (uint)res.Width, // TODO: FNA3D uses 0?
+					rows_per_layer = (uint)res.Height, // TODO: FNA3D uses 0?
+				},
+				destination: new()
+				{
+					texture = res.Texture,
+					layer = 0,
+					mip_level = 0,
+					x = 0,
+					y = 0,
+					z = 0,
+					w = (uint)res.Width,
+					h = (uint)res.Height,
+					d = 1
+				},
+				cycle: false
+			);
 		}
 
 		// transfer buffer management
 		if (usingTemporaryTransferBuffer)
-		{
 			SDL_ReleaseGPUTransferBuffer(device, transferBuffer);
-		}
 		else
-		{
 			textureUploadBufferOffset += (uint)length;
-		}
 	}
 
 	internal override void GetTextureData(IHandle texture, nint data, int length)
 	{
-		throw new NotImplementedException();
+		if (device == nint.Zero)
+			throw deviceNotCreated;
+
+		// get texture
+		TextureResource res = (TextureResource)texture;
+		if (res.GraphicsDevice != this)
+			throw deviceWasDestroyed;
+
+		// verify download buffer is big enough
+		if (textureDownloadBuffer == nint.Zero || textureDownloadBufferSize < length)
+		{
+			if (textureDownloadBuffer != nint.Zero)
+				SDL_ReleaseGPUTransferBuffer(device, textureDownloadBuffer);
+			
+			textureDownloadBuffer = SDL_CreateGPUTransferBuffer(device, new()
+			{
+				usage = SDL_GPUTransferBufferUsage.SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD,
+				size = (uint)length,
+				props = 0
+			});
+			textureDownloadBufferSize = (uint)length;
+		}
+
+		// download from the gpu
+		{
+			BeginCopyPass();
+
+			SDL_DownloadFromGPUTexture(
+				copyPass,
+				source: new()
+				{
+					texture = res.Texture,
+					layer = 0,
+					mip_level = 0,
+					x = 0,
+					y = 0,
+					z = 0,
+					w = (uint)res.Width,
+					h = (uint)res.Height,
+					d = 1
+				},
+				destination: new()
+				{
+					transfer_buffer = textureDownloadBuffer,
+					offset = 0,
+					pixels_per_row = (uint)res.Width, // TODO: FNA3D uses 0?
+					rows_per_layer = (uint)res.Height, // TODO: FNA3D uses 0?
+				}
+			);
+		}
+		
+		// flush and stall so the data is up to date
+		FlushCommandsAndStall();
+		
+		// copy data
+		{
+			byte* src = (byte*)SDL_MapGPUTransferBuffer(device, textureDownloadBuffer, false);
+			Buffer.MemoryCopy(src, (void*)data, length, length);
+			SDL_UnmapGPUTransferBuffer(device, textureDownloadBuffer);
+		}
 	}
 
 	public void DestroyTexture(IHandle texture)
