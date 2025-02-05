@@ -174,7 +174,7 @@ public struct Point2(int x, int y) : IEquatable<Point2>
 	public static explicit operator Point2(Vector2 vector) => new((int)vector.X, (int)vector.Y);
 	public static implicit operator Vector2(Point2 point) => new(point.X, point.Y);
 
-	internal class JsonConverter : JsonConverter<Point2>
+	public class JsonConverter : JsonConverter<Point2>
 	{
 		public override Point2 ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 		{
