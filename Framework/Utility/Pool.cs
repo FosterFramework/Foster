@@ -1,5 +1,8 @@
 ﻿using System.Collections;
+using System.Collections.Concurrent;
 using System.Diagnostics;
+using DAM = System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembersAttribute;
+using DAMT = System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes;
 
 namespace Foster.Framework;
 
@@ -14,24 +17,22 @@ public interface IPoolable
 /// <summary>
 /// Simple static Object pool, call <see cref="Return(T)"/> to return objects to the pool.
 /// </summary>
-public static class Pool<T> where T : class, new()
+public static class Pool<[DAM(DAMT.PublicMethods)] T> where T : class, new()
 {
-	private static readonly Queue<T> available = new();
-	private static readonly object mutex = new();
+	private static readonly ConcurrentQueue<T> available = new();
 	
 	/// <summary>
 	/// How to zero-out the object before it's used again.
 	/// </summary>
-	public static Action<T>? ZeroOut;
+	public static Action<T> ZeroOut { get; set; } = CreateDefaultClear();
 
 	/// <summary>
 	/// Requests an instance from the Pool and returns it
 	/// </summary>
 	public static T Get()
 	{
-		T instance;
-		lock(mutex)
-			instance = (available.Count > 0 ? available.Dequeue() : new T());
+		if (!available.TryDequeue(out var instance))
+			instance = new();
 		return instance;
 	}
 
@@ -41,19 +42,41 @@ public static class Pool<T> where T : class, new()
 	public static void Return(T instance)
 	{
 		Debug.Assert(instance != null, "Can't return a null instance");
-		if (instance is IList list)
-			list.Clear();
-		else if (instance is IPoolable returnable)
-			returnable.Recycle();
-		ZeroOut?.Invoke(instance);
-		lock(mutex)
-			available.Enqueue(instance);
+		ZeroOut.Invoke(instance);
+		available.Enqueue(instance);
 	}
 
+	/// <summary>
+	/// Clears all objects from the Pool, allowing them to be collected.
+	/// </summary>
 	public static void Clear()
 	{
-		lock(mutex)
-			available.Clear();
+		available.Clear();
+	}
+	
+	/// <summary>
+	/// Creates a Default Clear method for various container types
+	/// </summary>
+	private static Action<T> CreateDefaultClear()
+	{
+		if (typeof(T).IsAssignableTo(typeof(IList)))
+			return static (it) => ((IList)it).Clear();
+		if (typeof(T).IsAssignableTo(typeof(IDictionary)))
+			return static (it) => ((IDictionary)it).Clear();
+		if (typeof(T).IsAssignableTo(typeof(IPoolable)))
+			return static (it) => ((IPoolable)it).Recycle();
+
+		// this is all done just so that HashSet automatically clears
+		// It has no non-generic interface like IList or IDictionary
+		if (typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(HashSet<>))
+		{
+			// TODO: should be nameof(HashSet<>.Clear) but that's apparently a preview feature
+			var method = typeof(T).GetMethod(nameof(HashSet<int>.Clear));
+			if (method != null)
+				return (Action<T>)Delegate.CreateDelegate(typeof(Action<T>), method);
+		}
+
+		return static (it) => { };
 	}
 }
 
@@ -62,21 +85,20 @@ public static class Pool<T> where T : class, new()
 /// </summary>
 public static class Pool
 {
-	public static T Get<T>() where T : class, new()
+	public static T Get<[DAM(DAMT.PublicMethods)] T>() where T : class, new()
 		=> Pool<T>.Get();
 
-	public static void Return<T>(T instance) where T : class, new()
+	public static void Return<[DAM(DAMT.PublicMethods)] T>(T instance) where T : class, new()
 		=> Pool<T>.Return(instance);
 }
 
 /// <summary>
 /// Objects retrieved from this pool are returned to the pool at the start of the next frame.
 /// </summary>
-public static class FramePool<T> where T : class, new()
+public static class FramePool<[DAM(DAMT.PublicMethods)] T> where T : class, new()
 {
-	private static readonly Queue<T> available = new();
-	private static readonly List<T> usedThisFrame = [];
-	private static readonly object mutex = new();
+	private static readonly ConcurrentQueue<T> available = new();
+	private static readonly ConcurrentBag<T> usedThisFrame = [];
 
 	static FramePool()
 		=> FramePool.RegisterNextFrame(NextFrame);
@@ -86,14 +108,9 @@ public static class FramePool<T> where T : class, new()
 	/// </summary>
 	public static T Get()
 	{
-		T instance;
-
-		lock(mutex)
-		{
-			instance = (available.Count > 0 ? available.Dequeue() : new T());
-			usedThisFrame.Add(instance);
-		}
-
+		if (!available.TryDequeue(out var instance))
+			instance = new();
+		usedThisFrame.Add(instance);
 		return instance;
 	}
 
@@ -102,11 +119,8 @@ public static class FramePool<T> where T : class, new()
 	/// </summary>
 	public static void Clear()
 	{
-		lock(mutex)
-		{
-			available.Clear();
-			usedThisFrame.Clear();
-		}
+		available.Clear();
+		usedThisFrame.Clear();
 	}
 
 	/// <summary>
@@ -114,18 +128,10 @@ public static class FramePool<T> where T : class, new()
 	/// </summary>
 	private static void NextFrame()
 	{
-		lock(mutex)
+		while (usedThisFrame.TryTake(out var it))
 		{
-			foreach (var it in usedThisFrame)
-			{
-				if (it is IList list)
-					list.Clear();
-				if (it is IPoolable returnable)
-					returnable.Recycle();
-				Pool<T>.ZeroOut?.Invoke(it);
-				available.Enqueue(it);
-			}
-			usedThisFrame.Clear();
+			Pool<T>.ZeroOut.Invoke(it);
+			available.Enqueue(it);
 		}
 	}
 }
@@ -141,7 +147,7 @@ public static class FramePool
 	/// <summary>
 	/// Shorthand to Generic <see cref="FramePool{T}.Get"/>.
 	/// </summary>
-	public static T Get<T>() where T : class, new()
+	public static T Get<[DAM(DAMT.PublicMethods)] T>() where T : class, new()
 		=> FramePool<T>.Get();
 
 	/// <summary>
