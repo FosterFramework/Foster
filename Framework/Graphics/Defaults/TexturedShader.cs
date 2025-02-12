@@ -16,7 +16,7 @@ public class TexturedShader(GraphicsDevice graphicsDevice)
 		),
 		Fragment: new(
 			Code: Platform.ReadEmbeddedBytes($"Textured.fragment.{graphicsDevice.Driver.GetShaderExtension()}"),
-			SamplerCount: 1,
+			SamplerCount: graphicsDevice.SamplerCount,
 			UniformBufferCount: 0,
 			EntryPoint: "fragment_main"
 		)

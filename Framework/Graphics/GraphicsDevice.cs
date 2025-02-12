@@ -38,6 +38,11 @@ public abstract class GraphicsDevice
 	/// </summary>
 	public abstract bool VSync { get; set; }
 
+	/// <summary>
+	/// Sampler count used for multisampling
+	/// </summary>
+	public abstract int SamplerCount { get; set; }
+
 	internal GraphicsDevice(App app) => App = app;
 	internal abstract void CreateDevice(in AppFlags flags);
 	internal abstract void DestroyDevice();
@@ -92,13 +97,13 @@ public abstract class GraphicsDevice
 			return;
 		}
 
-		if (command.Viewport is {} viewport && (viewport.Width <= 0 || viewport.Height <= 0))
+		if (command.Viewport is { } viewport && (viewport.Width <= 0 || viewport.Height <= 0))
 		{
 			Log.Warning("Attempting to render with an empty Viewport");
 			return;
 		}
 
-		if (command.Scissor is {} scissor && (scissor.Width <= 0 || scissor.Height <= 0))
+		if (command.Scissor is { } scissor && (scissor.Width <= 0 || scissor.Height <= 0))
 		{
 			Log.Warning("Attempting to render with an empty Scissor");
 			return;

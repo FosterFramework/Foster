@@ -99,6 +99,9 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	// framebuffer
 	private Target? frameBuffer;
 
+	// sampler count
+	private SDL_GPUSampleCount sampleCount;
+
 	private readonly GraphicsDriver preferred;
 	private readonly Version version;
 
@@ -128,6 +131,12 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 	}
 
+	public override int SamplerCount
+	{
+		get => (int)Math.Pow(2, (int)sampleCount);
+		set => sampleCount = GetSDLSampleCount(value);
+	}
+
 	public override bool Disposed => device == nint.Zero;
 
 	public GraphicsDeviceSDL(App app, GraphicsDriver preferred) : base(app)
@@ -153,7 +162,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		};
 
 		device = SDL_CreateGPUDevice(
-			format_flags: 
+			format_flags:
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV |
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL |
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_MSL,
@@ -234,6 +243,9 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		// default to vsync on
 		VSync = true;
+
+		// default sample count
+		sampleCount = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1;
 	}
 
 	internal override void Shutdown()
@@ -376,6 +388,17 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		return SDL_GPUTextureSupportsFormat(device, GetTextureFormat(format), type, usage);
 	}
 
+	internal SDL_GPUSampleCount GetSDLSampleCount(int value)
+	{
+		return value switch
+		{
+			2 => SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_2,
+			4 => SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_4,
+			8 => SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_8,
+			_ => SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1
+		};
+	}
+
 	internal override IHandle CreateTexture(string? name, int width, int height, TextureFormat format, IHandle? targetBinding)
 	{
 		if (device == nint.Zero)
@@ -397,7 +420,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			height = (uint)height,
 			layer_count_or_depth = 1,
 			num_levels = 1,
-			sample_count = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1,
+			sample_count = sampleCount,
 			props = props
 		};
 
@@ -692,7 +715,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (!mesh.Disposed)
 		{
 			var res = (MeshResource)mesh;
-			
+
 			lock (resources)
 			{
 				resources.Remove(mesh);
@@ -720,7 +743,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 			// TODO: Upon first creation we should probably just create a perfectly sized buffer, and afterward next Po2
 			int size;
-			if(res.Capacity == 0)
+			if (res.Capacity == 0)
 			{
 				// never create a buffer that has 0 length
 				size = Math.Max(8, required);
@@ -748,7 +771,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 			if (props != 0)
 				SDL_DestroyProperties(props);
-			
+
 			if (res.Handle == nint.Zero)
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUBuffer), "Mesh Creation Failed");
 			res.Capacity = size;
@@ -843,7 +866,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (device == nint.Zero)
 			throw deviceNotCreated;
 
-		var format = driver switch 
+		var format = driver switch
 		{
 			GraphicsDriver.Vulkan => SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
 			GraphicsDriver.D3D12 => SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL,
@@ -922,7 +945,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				resources.Remove(shader);
 				res.Destroyed = true;
 			}
-			
+
 			ReleaseGraphicsPipelinesAssociatedWith(shader);
 			SDL_ReleaseGPUShader(device, res.VertexShader);
 			SDL_ReleaseGPUShader(device, res.FragmentShader);
@@ -965,9 +988,12 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			renderPassViewport = nextViewport;
 			SDL_SetGPUViewport(renderPass, new()
 			{
-				x = nextViewport.X, y = nextViewport.Y,
-				w = nextViewport.Width, h = nextViewport.Height,
-				min_depth = 0, max_depth = 1
+				x = nextViewport.X,
+				y = nextViewport.Y,
+				w = nextViewport.Width,
+				h = nextViewport.Height,
+				min_depth = 0,
+				max_depth = 1
 			});
 		}
 
@@ -978,8 +1004,10 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			renderPassScissor = nextScissor;
 			SDL_SetGPUScissor(renderPass, new()
 			{
-				x = nextScissor.X, y = nextScissor.Y,
-				w = nextScissor.Width, h = nextScissor.Height,
+				x = nextScissor.X,
+				y = nextScissor.Y,
+				w = nextScissor.Width,
+				h = nextScissor.Height,
 			});
 		}
 
@@ -1071,7 +1099,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		// Upload Fragment Uniforms
 		// TODO: only do this if Uniforms change
-		for (int i = 0; i < fragmentInfo.UniformBufferCount; i ++)
+		for (int i = 0; i < fragmentInfo.UniformBufferCount; i++)
 		{
 			fixed (byte* ptr = mat.Fragment.UniformBuffers[i])
 				SDL_PushGPUFragmentUniformData(cmdRender, (uint)i, new nint(ptr), (uint)mat.Fragment.UniformBuffers[i].Length);
@@ -1079,7 +1107,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		// Upload Vertex Uniforms
 		// TODO: only do this if Uniforms change
-		for (int i = 0; i < vertexInfo.UniformBufferCount; i ++)
+		for (int i = 0; i < vertexInfo.UniformBufferCount; i++)
 		{
 			fixed (byte* ptr = mat.Vertex.UniformBuffers[i])
 				SDL_PushGPUVertexUniformData(cmdRender, (uint)i, new nint(ptr), (uint)mat.Vertex.UniformBuffers[i].Length);
@@ -1105,7 +1133,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		{
 			BeginRenderPassOnDrawableTarget(target, new()
 			{
-				Color = mask.Has(ClearMask.Color) ? [..color] : null,
+				Color = mask.Has(ClearMask.Color) ? [.. color] : null,
 				Depth = mask.Has(ClearMask.Depth) ? depth : null,
 				Stencil = mask.Has(ClearMask.Stencil) ? stencil : null
 			});
@@ -1149,7 +1177,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (fences.Count > 0)
 			SDL_WaitForGPUFences(device, true, fences.Span, (uint)fences.Count);
 
-		for (int i = 0; i < fences.Count; i ++)
+		for (int i = 0; i < fences.Count; i++)
 			SDL_ReleaseGPUFence(device, fences[i]);
 	}
 
@@ -1410,7 +1438,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				},
 				multisample_state = new()
 				{
-					sample_count = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1,
+					sample_count = sampleCount,
 					sample_mask = 0xFFFFFFFF
 				},
 				depth_stencil_state = new()
@@ -1596,22 +1624,22 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	{
 		return (type, normalized) switch
 		{
-			(VertexType.Float, _)       => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT,
-			(VertexType.Float2, _)      => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-			(VertexType.Float3, _)      => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-			(VertexType.Float4, _)      => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
-			(VertexType.Byte4, false)   => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_BYTE4,
-			(VertexType.Byte4, true)    => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_BYTE4_NORM,
-			(VertexType.UByte4, false)  => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4,
-			(VertexType.UByte4, true)   => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM,
-			(VertexType.Short2, false)  => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT2,
-			(VertexType.Short2, true)   => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT2_NORM,
+			(VertexType.Float, _) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT,
+			(VertexType.Float2, _) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+			(VertexType.Float3, _) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+			(VertexType.Float4, _) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+			(VertexType.Byte4, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_BYTE4,
+			(VertexType.Byte4, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_BYTE4_NORM,
+			(VertexType.UByte4, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4,
+			(VertexType.UByte4, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM,
+			(VertexType.Short2, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT2,
+			(VertexType.Short2, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT2_NORM,
 			(VertexType.UShort2, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT2,
-			(VertexType.UShort2, true)  => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT2_NORM,
-			(VertexType.Short4, false)  => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT4,
-			(VertexType.Short4, true)   => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT4_NORM,
+			(VertexType.UShort2, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT2_NORM,
+			(VertexType.Short4, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT4,
+			(VertexType.Short4, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT4_NORM,
 			(VertexType.UShort4, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT4,
-			(VertexType.UShort4, true)  => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT4_NORM,
+			(VertexType.UShort4, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT4_NORM,
 
 			_ => throw new NotImplementedException(),
 		};
