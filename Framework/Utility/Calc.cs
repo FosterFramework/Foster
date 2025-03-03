@@ -121,8 +121,8 @@ public static class Calc
 	/// Gets whether the triangle contains the point
 	/// </summary>
 	public static bool TriangleContainsPoint(in Vector2 triA, in Vector2 triB, in Vector2 triC, in Vector2 point)
-		=> Math.Abs(Orient(triA, triB, point) 
-			+ Orient(triB, triC, point) 
+		=> Math.Abs(Orient(triA, triB, point)
+			+ Orient(triB, triC, point)
 			+ Orient(triC, triA, point)) == 3;
 
 	public static float AbsDot(Vector2 a, Vector2 b)
@@ -255,12 +255,12 @@ public static class Calc
 	{
 		return Math.Min(Math.Max(value, 0), 1);
 	}
-	
+
 	/// <summary>
 	/// Shorthand to MathF.Round but returns an Integer
 	/// </summary>
 	public static int Round(float v) => (int)MathF.Round(v);
-	
+
 	/// <summary>
 	/// Shorthand to MathF.Floor but returns an Integer
 	/// </summary>
@@ -323,7 +323,7 @@ public static class Calc
 	public static float AngleDiff(float radiansA, float radiansB)
 		=> ((radiansB - radiansA - PI) % TAU + TAU) % TAU - PI;
 
-	public static float AbsAngleDiff(float radiansA, float radiansB) 
+	public static float AbsAngleDiff(float radiansA, float radiansB)
 		=> MathF.Abs(AngleDiff(radiansA, radiansB));
 
 	public static float AngleWrap(float radians)
@@ -438,8 +438,8 @@ public static class Calc
 		if (points.Count < 3)
 			return;
 
-		Span<int> list = points.Count < 1000 
-			? stackalloc int[points.Count] 
+		Span<int> list = points.Count < 1000
+			? stackalloc int[points.Count]
 			: new int[points.Count];
 
 		if (Area() > 0)
@@ -576,7 +576,7 @@ public static class Calc
 			return hash;
 		}
 	}
-	
+
 	public static int StaticStringHash(ReadOnlySpan<byte> value)
 	{
 		unchecked
@@ -586,6 +586,18 @@ public static class Calc
 				hash = ((hash << 5) + hash) + value[i];
 			return hash;
 		}
+	}
+
+	/// <summary>
+	/// Returns the amount of characters the strings have in common starting from the start
+	/// </summary>
+	public static int AmountInCommon(this string a, string b)
+	{
+		int i = 0;
+		for (; i < a.Length && i < b.Length; i++)
+			if (a[i] != b[i])
+				break;
+		return i;
 	}
 
 	public static string NormalizePath(string a, string b)
