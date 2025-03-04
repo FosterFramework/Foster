@@ -10,7 +10,7 @@ namespace Foster.Framework;
 /// <summary>
 /// A 2D Integer Point
 /// </summary>
-[StructLayout(LayoutKind.Sequential), JsonConverter(typeof(Point2.JsonConverter))]
+[StructLayout(LayoutKind.Sequential), JsonConverter(typeof(JsonConverter))]
 public struct Point2(int x, int y) : IEquatable<Point2>
 {
 	public static readonly Point2 Zero = new(0, 0);

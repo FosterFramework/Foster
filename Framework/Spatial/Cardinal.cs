@@ -1,11 +1,14 @@
 ﻿using System.Diagnostics;
 using System.Numerics;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Foster.Framework;
 
 /// <summary>
 /// A 2D 4-directional struct representing the Cardinal Directions.
 /// </summary>
+[JsonConverter(typeof(JsonConverter))]
 public readonly struct Cardinal : IEquatable<Cardinal>
 {
 	public const int RightValue = 0;
@@ -82,12 +85,18 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 			_ => "Right",
 		};
 
+	/// <summary>
+	/// Returns a Cardinal from the raw integer value (one of <see cref="RightValue"/>, <see cref="LeftValue"/>, <see cref="UpValue"/>, <see cref="DownValue"/>)
+	/// </summary>
 	public static Cardinal FromRawValue(int v)
 	{
 		Debug.Assert(v >= 0 && v < 4, "Argument out of range");
 		return new Cardinal(v);
 	}
 
+	/// <summary>
+	/// Returns a Cardinal from a 2D Vector Normal
+	/// </summary>
 	public static Cardinal FromVector(Vector2 dir)
 	{
 		if (Math.Abs(dir.X) > Math.Abs(dir.Y))
@@ -95,6 +104,9 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 		return dir.Y < 0 ? Up : Down;
 	}
 
+	/// <summary>
+	/// Returns a Cardinal from a 2D Vector Normal
+	/// </summary>
 	public static Cardinal FromVector(float x, float y)
 	{
 		if (Math.Abs(x) > Math.Abs(y))
@@ -102,6 +114,9 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 		return y < 0 ? Up : Down;
 	}
 
+	/// <summary>
+	/// Returns a Cardinal from a 2D Point Normal
+	/// </summary>
 	public static Cardinal FromPoint(Point2 dir)
 	{
 		if (Math.Abs(dir.X) > Math.Abs(dir.Y))
@@ -109,11 +124,26 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 		return dir.Y < 0 ? Up : Down;
 	}
 
+	/// <summary>
+	/// Returns a Cardinal from a 2D Point Normal
+	/// </summary>
 	public static Cardinal FromPoint(int x, int y)
 	{
 		if (Math.Abs(x) > Math.Abs(y))
 			return x < 0 ? Left : Right;
 		return y < 0 ? Up : Down;
+	}
+
+	/// <summary>
+	/// Returns a Cardinal from a string value (one of "Right", "Left", "Up", or "Down")
+	/// </summary>
+	public static Cardinal FromString(string value)
+	{
+		if (value.Equals("Right", StringComparison.OrdinalIgnoreCase)) return Right;
+		if (value.Equals("Left", StringComparison.OrdinalIgnoreCase)) return Left;
+		if (value.Equals("Up", StringComparison.OrdinalIgnoreCase)) return Up;
+		if (value.Equals("Down", StringComparison.OrdinalIgnoreCase)) return Down;
+		return default;
 	}
 
 	public bool Equals(Cardinal other) => this == other;
@@ -131,4 +161,19 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 
 	public static Cardinal operator++(Cardinal c) => new((c.Value + 1) % 4);
 	public static Cardinal operator --(Cardinal c) => new ((c.Value + 3) % 4);
+
+	public class JsonConverter : JsonConverter<Cardinal>
+	{
+		public override Cardinal Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		{
+			if (reader.TokenType == JsonTokenType.Number && reader.TryGetInt32(out var asInt))
+				return Cardinal.FromRawValue(asInt);
+			else if (reader.TokenType == JsonTokenType.String)
+				return Cardinal.FromString(reader.GetString()!);
+			return default;
+		}
+
+		public override void Write(Utf8JsonWriter writer, Cardinal value, JsonSerializerOptions options)
+			=> writer.WriteStringValue(value.ToString());
+	}
 }
