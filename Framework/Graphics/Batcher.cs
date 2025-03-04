@@ -250,11 +250,16 @@ public class Batcher : IDisposable
 
 	private void RenderBatch(IDrawableTarget target, in Batch batch, in Matrix4x4 matrix, in RectInt? viewport, in RectInt? scissor)
 	{
+		// get trimmed scissor value
 		var trimmed = scissor;
 		if (batch.Scissor.HasValue && trimmed.HasValue)
 			trimmed = batch.Scissor.Value.GetIntersection(trimmed.Value);
 		else if (batch.Scissor.HasValue)
 			trimmed = batch.Scissor;
+
+		// don't render if we're going to clip the entire visible contents
+		if (trimmed.HasValue && (trimmed.Value.Width <= 0 || trimmed.Value.Height <= 0))
+			return;
 
 		var texture = batch.Texture != null && !batch.Texture.IsDisposed ? batch.Texture : null;
 		var mat = batch.Material;

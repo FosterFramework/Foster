@@ -131,7 +131,7 @@ public abstract class App : IDisposable
 	/// <summary>
 	/// What action to perform when the user requests for the Application to exit.<br/>
 	/// If not assigned, the default behavior will call <see cref="Exit"/>.<br/>
-	/// There is also <seealso cref="Window.OnCloseRequested"/> which will be called if the Window close button is pressed. 
+	/// There is also <seealso cref="Window.OnCloseRequested"/> which will be called if the Window close button is pressed.
 	/// </summary>
 	public Action? OnExitRequested;
 
@@ -391,6 +391,10 @@ public abstract class App : IDisposable
 
 	private unsafe void PollEvents()
 	{
+		// we shouldn't need to pump events here, but we've found that if we don't,
+		// there are issues on MacOS with it not receiving mouse clicks correctly
+		SDL_PumpEvents();
+
 		while (SDL_PollEvent(out var ev) && ev.type != (uint)SDL_EventType.SDL_EVENT_POLL_SENTINEL)
 		{
 			switch ((SDL_EventType)ev.type)
