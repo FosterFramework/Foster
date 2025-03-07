@@ -56,6 +56,12 @@ public static class VectorExt
 		=> new((int)MathF.Floor(vector.X), (int)MathF.Floor(vector.Y));
 
 	/// <summary>
+	/// Ceilings the individual components of a Vector2
+	/// </summary>
+	public static Point2 CeilingToPoint2(this Vector2 vector)
+		=> new((int)MathF.Ceiling(vector.X), (int)MathF.Ceiling(vector.Y));
+
+	/// <summary>
 	/// Rounds the individual components of a Vector3
 	/// </summary>
 	public static Vector3 Round(this Vector3 vector)
