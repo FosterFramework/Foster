@@ -1,9 +1,11 @@
+using System.Buffers.Text;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Foster.Framework;
 
@@ -589,6 +591,29 @@ public static class Calc
 	}
 
 	/// <summary>
+	/// Check if two UTF8 strings are equal, ingoring case
+	/// TODO: is there a built in C# way to do this?? this seems bad
+	/// </summary>
+	public static bool EqualsOrdinalIgnoreCaseUtf8(ReadOnlySpan<byte> a, ReadOnlySpan<byte> b)
+	{
+		if (a.Length != b.Length)
+			return false;
+
+		var charCountA = Encoding.UTF8.GetCharCount(a);
+		var charCountB = Encoding.UTF8.GetCharCount(b);
+
+		if (charCountA != charCountB)
+			return false;
+
+		Span<char> charsA = stackalloc char[charCountA];
+		Span<char> charsB = stackalloc char[charCountB];
+		Encoding.UTF8.GetChars(a, charsA);
+		Encoding.UTF8.GetChars(b, charsB);
+
+		return MemoryExtensions.Equals(charsA, charsB, StringComparison.OrdinalIgnoreCase);
+	}
+
+	/// <summary>
 	/// Returns the amount of characters the strings have in common starting from the start
 	/// </summary>
 	public static int AmountInCommon(this string a, string b)
@@ -871,4 +896,5 @@ public static class Calc
 		=> new(SnapCeil(value.X, snapTo), SnapCeil(value.Y, snapTo));
 
 	#endregion
+
 }

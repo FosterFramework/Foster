@@ -167,9 +167,9 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 		public override Cardinal Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 		{
 			if (reader.TokenType == JsonTokenType.Number && reader.TryGetInt32(out var asInt))
-				return Cardinal.FromRawValue(asInt);
+				return FromRawValue(asInt);
 			else if (reader.TokenType == JsonTokenType.String)
-				return Cardinal.FromString(reader.GetString()!);
+				return FromString(reader.GetString()!);
 			return default;
 		}
 

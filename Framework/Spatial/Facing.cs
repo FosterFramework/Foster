@@ -1,10 +1,13 @@
 ﻿using System.Numerics;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Foster.Framework;
 
 /// <summary>
 /// A binary struct, where Left is any negative value and Right is zero or any positive number
 /// </summary>
+[JsonConverter(typeof(JsonConverter))]
 public readonly struct Facing(int val) : IEquatable<Facing>
 {
 	public static readonly Facing Right = new(1);
@@ -42,6 +45,16 @@ public readonly struct Facing(int val) : IEquatable<Facing>
 	/// </summary>
 	public static explicit operator Vector2(Facing f) => Vector2.UnitX * f.Sign;
 
+	/// <summary>
+	/// Converts a String to a Facing value
+	/// </summary>
+	public static Facing FromString(string? value)
+	{
+		if (value != null && value.Equals("Left", StringComparison.OrdinalIgnoreCase))
+			return Left;
+		return Right;
+	}
+
 	public static bool operator ==(Facing a, Facing b) => a.Sign == b.Sign;
 	public static bool operator !=(Facing a, Facing b) => a.Sign != b.Sign;
 	public static int operator *(Facing a, int b) => (int)a * b;
@@ -59,4 +72,19 @@ public readonly struct Facing(int val) : IEquatable<Facing>
 	public bool Equals(Facing other) => this == other;
 
 	public override string ToString() => value < 0 ? "Left" : "Right";
+
+	public class JsonConverter : JsonConverter<Facing>
+	{
+		public override Facing Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		{
+			if (reader.TokenType == JsonTokenType.Number && reader.TryGetInt32(out var asInt))
+				return new(asInt);
+			else if (reader.TokenType == JsonTokenType.String)
+				return FromString(reader.GetString()!);
+			return default;
+		}
+
+		public override void Write(Utf8JsonWriter writer, Facing value, JsonSerializerOptions options)
+			=> writer.WriteStringValue(value.ToString());
+	}
 }

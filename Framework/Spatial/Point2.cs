@@ -198,29 +198,29 @@ public struct Point2(int x, int y) : IEquatable<Point2>
 		public override Point2 Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 		{
 			Point2 value = new();
-			if (reader.TokenType == JsonTokenType.StartObject)
+			if (reader.TokenType != JsonTokenType.StartObject)
+				return value;
+
+			while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
 			{
-				while (reader.Read())
+				if (reader.TokenType != JsonTokenType.PropertyName)
+					continue;
+
+				var component = reader.ValueSpan;
+				if (!reader.Read() || reader.TokenType != JsonTokenType.Number)
 				{
-					if (reader.TokenType == JsonTokenType.EndObject)
-						break;
-
-					if (reader.TokenType == JsonTokenType.PropertyName)
-					{
-						var component = reader.GetString();
-						if (!reader.Read() || reader.TokenType != JsonTokenType.Number)
-							continue;
-
-						switch (component)
-						{
-						case "x": value.X = reader.GetInt32(); break;
-						case "X": value.X = reader.GetInt32(); break;
-						case "y": value.Y = reader.GetInt32(); break;
-						case "Y": value.Y = reader.GetInt32(); break;
-						}
-					}
+					reader.Skip();
+					continue;
 				}
+
+				if (Calc.EqualsOrdinalIgnoreCaseUtf8(component, "x"u8))
+					value.X = reader.GetInt32();
+				else if (Calc.EqualsOrdinalIgnoreCaseUtf8(component, "y"u8))
+					value.Y = reader.GetInt32();
+				else
+					reader.Skip();
 			}
+
 			return value;
 		}
 
