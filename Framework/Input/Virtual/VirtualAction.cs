@@ -13,7 +13,7 @@ public sealed class VirtualAction(Input input, ActionBinding action, int control
 	/// <summary>
 	/// The Device Index
 	/// </summary>
-	public readonly int Device = controllerIndex;
+	public int Device = controllerIndex;
 
 	/// <summary>
 	/// How long before invoking the first Repeated signal

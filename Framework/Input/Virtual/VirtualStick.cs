@@ -15,7 +15,7 @@ public sealed class VirtualStick(Input input, StickBinding binding, int controll
 	/// <summary>
 	/// The Device Index
 	/// </summary>
-	public readonly int Device = controllerIndex;
+	public int Device = controllerIndex;
 
 	/// <summary>
 	/// Current Value of the Virtual Stick

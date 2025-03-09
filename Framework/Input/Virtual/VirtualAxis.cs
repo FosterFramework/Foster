@@ -15,7 +15,7 @@ public sealed class VirtualAxis(Input input, AxisBinding binding, int controller
 	/// <summary>
 	/// The Device Index
 	/// </summary>
-	public readonly int Device = controllerIndex;
+	public int Device = controllerIndex;
 
 	/// <summary>
 	/// Current Value of the Virtual Axis
