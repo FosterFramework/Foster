@@ -1,13 +1,15 @@
 ﻿using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Foster.Framework;
 
 /// <summary>
 /// A 2D Floating-Point Rectangle
 /// </summary>
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Sequential), JsonConverter(typeof(JsonConverter))]
 public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatable<Rect>
 {
 	public float X = x;
@@ -523,4 +525,52 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 	public static Rect operator *(in Rect a, in Vector2 scaler) => a.Scale(scaler);
 	public static Rect operator /(in Rect a, in Vector2 scaler) => new Rect(a.X / scaler.X, a.Y / scaler.Y, a.Width / scaler.X, a.Height / scaler.Y).ValidateSize();
 	public static Rect operator *(in Rect rect, Facing flipX) => flipX == Facing.Right ? rect : rect.ScaleX(-1);
+
+	public class JsonConverter : JsonConverter<Rect>
+	{
+		public override Rect Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		{
+			Rect value = new();
+			if (reader.TokenType != JsonTokenType.StartObject)
+				return value;
+
+			while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
+			{
+				if (reader.TokenType != JsonTokenType.PropertyName)
+					continue;
+
+				var component = reader.ValueSpan;
+				if (!reader.Read() || reader.TokenType != JsonTokenType.Number)
+				{
+					reader.Skip();
+					continue;
+				}
+
+				if (Calc.EqualsOrdinalIgnoreCaseUtf8(component, "x"u8))
+					value.X = reader.GetSingle();
+				else if (Calc.EqualsOrdinalIgnoreCaseUtf8(component, "y"u8))
+					value.Y = reader.GetSingle();
+				else if (Calc.EqualsOrdinalIgnoreCaseUtf8(component, "h"u8) ||
+					Calc.EqualsOrdinalIgnoreCaseUtf8(component, "width"u8))
+					value.Width = reader.GetSingle();
+				else if (Calc.EqualsOrdinalIgnoreCaseUtf8(component, "h"u8) ||
+					Calc.EqualsOrdinalIgnoreCaseUtf8(component, "height"u8))
+					value.Height = reader.GetSingle();
+				else
+					reader.Skip();
+			}
+
+			return value;
+		}
+
+		public override void Write(Utf8JsonWriter writer, Rect value, JsonSerializerOptions options)
+		{
+			writer.WriteStartObject();
+			writer.WriteNumber("X", value.X);
+			writer.WriteNumber("Y", value.Y);
+			writer.WriteNumber("Width", value.Width);
+			writer.WriteNumber("Height", value.Height);
+			writer.WriteEndObject();
+		}
+	}
 }
