@@ -524,7 +524,7 @@ public class SpriteFont : IDisposable
 
 		foreach (var (Start, Length) in lines)
 		{
-			RenderText(batch, text[Start..(Start + Length)], position, justify, color);
+			RenderText(batch, text[Start..(Start + Length)], position, new Vector2(justify.X, 0), color);
 			position.Y += LineHeight;
 		}
 
