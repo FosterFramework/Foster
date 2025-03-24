@@ -331,7 +331,8 @@ public class SpriteFont : IDisposable
 			// finished
 			if (i >= text.Length - 1)
 			{
-				writeLinesTo.Add((start, text.Length - start));
+				if (text.Length - start > 0)
+					writeLinesTo.Add((start, text.Length - start));
 				break;
 			}
 		}

@@ -69,6 +69,15 @@ public class Font : IDisposable
 		Ascent = ascent;
 		Descent = descent;
 		LineGap = linegap;
+
+		// TODO: is this OK to do?
+		// some fonts don't seem to use LineGap and rely on Descent
+		// so we can override that to make our line gap work properly
+		if (LineGap <= 0 && Descent < 0)
+		{
+			LineGap = -Descent;
+			Descent = 0;
+		}
 	}
 
 	/// <summary>
