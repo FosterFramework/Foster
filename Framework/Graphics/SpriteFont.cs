@@ -345,12 +345,10 @@ public class SpriteFont : IDisposable
 	/// <param name="waitForResults">If the function should wait for all characters to be ready</param>
 	public void PrepareCharacters(ReadOnlySpan<int> codepoints, bool waitForResults)
 	{
-		var added = false;
 		foreach (var codepoint in codepoints)
-			if (BlitEnqueue(codepoint, waitForResults, out _))
-				added = true;
+			BlitEnqueue(codepoint, waitForResults, out _);
 
-		if (waitForResults && added)
+		if (waitForResults)
 			FlushPendingCharacters(true);
 	}
 
@@ -361,8 +359,6 @@ public class SpriteFont : IDisposable
 	/// <param name="waitForResults">If the function should wait for all characters to be ready</param>
 	public void PrepareCharacters(ReadOnlySpan<char> text, bool waitForResults)
 	{
-		var added = false;
-
 		int index = 0;
 		while (index < text.Length)
 		{
@@ -378,11 +374,10 @@ public class SpriteFont : IDisposable
 				index += 1;
 			}
 
-			if (BlitEnqueue(codepoint, waitForResults, out _))
-				added = true;
+			BlitEnqueue(codepoint, waitForResults, out _);
 		}
 
-		if (waitForResults && added)
+		if (waitForResults)
 			FlushPendingCharacters(true);
 	}
 
