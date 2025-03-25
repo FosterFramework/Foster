@@ -6,5 +6,8 @@ namespace Foster.Framework;
 public readonly record struct TextureSampler(
 	TextureFilter Filter,
 	TextureWrap WrapX,
-	TextureWrap WrapY
-);
+	TextureWrap WrapY)
+{
+	public TextureSampler(TextureFilter filter, TextureWrap wrapXY) 
+		: this(filter, wrapXY, wrapXY) {}
+}
