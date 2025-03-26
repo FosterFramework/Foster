@@ -96,6 +96,11 @@ public struct Point2(int x, int y) : IEquatable<Point2>
 	public readonly Point2 TurnLeft() => new(Y, -X);
 
 	/// <summary>
+	/// Returns a Point2 with the sign of both components
+	/// </summary>
+	public readonly Point2 Sign() => new(Math.Sign(X), Math.Sign(Y));
+
+	/// <summary>
 	/// Clamps the point inside the provided range.
 	/// </summary>
 	public readonly Point2 Clamp(in Point2 min, in Point2 max) =>
