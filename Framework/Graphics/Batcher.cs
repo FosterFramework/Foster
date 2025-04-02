@@ -765,6 +765,20 @@ public class Batcher : IDisposable
 		Line(d, a, thickness, color);
 	}
 
+	public void QuadLine(in Quad quad, float thickness, in Color color)
+	{
+		LineWithNormal(this, quad.A, quad.B, quad.NormalAB, thickness, color);
+		LineWithNormal(this, quad.B, quad.C, quad.NormalBC, thickness, color);
+		LineWithNormal(this, quad.C, quad.D, quad.NormalCD, thickness, color);
+		LineWithNormal(this, quad.D, quad.A, quad.NormalDA, thickness, color);
+
+		static void LineWithNormal(Batcher batcher, in Vector2 from, in Vector2 to, in Vector2 normal, float thickness, in Color color)
+		{
+			var perp = normal * thickness * .5f;
+			batcher.Quad(from + perp, from - perp, to - perp, to + perp, color);
+		}
+	}
+
 	[Obsolete("Use QuadLine instead")]
 	public void QuadLines(in Vector2 a, in Vector2 b, in Vector2 c, in Vector2 d, float thickness, in Color color)
 		=> QuadLine(a, b, c, d, thickness, color);
