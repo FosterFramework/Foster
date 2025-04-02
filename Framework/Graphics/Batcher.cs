@@ -579,6 +579,16 @@ public class Batcher : IDisposable
 	}
 
 	/// <summary>
+	/// Pushes a Texture Color Mode, using the Raw value, in case you have a
+	/// shader that utilizes this data for something else.
+	/// </summary>
+	public void PushMode(Color mode)
+	{
+		modeStack.Push(this.mode);
+		this.mode = mode;
+	}
+
+	/// <summary>
 	/// Pops the current Color Mode
 	/// </summary>
 	public void PopMode()
