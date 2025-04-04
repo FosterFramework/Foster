@@ -134,7 +134,7 @@ internal static partial class Platform
 		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_WEST => Buttons.West,
 		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_NORTH => Buttons.North,
 		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_BACK => Buttons.Back,
-		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_GUIDE => Buttons.Select,
+		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_GUIDE => Buttons.Guide,
 		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_START => Buttons.Start,
 		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_LEFT_STICK => Buttons.LeftStick,
 		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_RIGHT_STICK => Buttons.RightStick,
