@@ -54,23 +54,6 @@ internal static partial class Platform
 	public static Exception CreateExceptionFromSDL(string sdlMethod, string? fosterInfo = null)
 		=> new($"{(fosterInfo != null ? $"{fosterInfo}. " : "")}{sdlMethod} failed: {SDL_GetError()}");
 
-	/// <summary>
-	/// Returns a byte array for an embedded File
-	/// </summary>
-	public static byte[] ReadEmbeddedBytes(string name)
-	{
-		var assembly = typeof(Platform).Assembly;
-		using var stream = assembly.GetManifestResourceStream(name);
-		if (stream != null)
-		{
-			var result = new byte[stream.Length];
-			stream.ReadExactly(result);
-			return result;
-		}
-
-		return [];
-	}
-
 	public enum ImageWriteFormat { Png, Qoi }
 
 	[LibraryImport(DLL, EntryPoint = "FosterImageLoad")]

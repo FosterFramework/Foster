@@ -897,4 +897,34 @@ public static class Calc
 
 	#endregion
 
+	#region Embedded Streams
+
+	/// <summary>
+	/// Returns a byte array for an embedded file.
+	/// Throws an exception if the file does not exist.
+	/// </summary>
+	public static byte[] ReadEmbeddedBytes(Assembly assembly, string name)
+	{
+		using var stream = assembly.GetManifestResourceStream(name);
+		if (stream != null)
+		{
+			var result = new byte[stream.Length];
+			stream.ReadExactly(result);
+			return result;
+		}
+
+		throw new Exception($"Missing Embedded file '{name}' in {assembly}");
+	}
+
+	/// <summary>
+	/// Returns a byte array for an embedded file in the calling assembly.
+	/// Throws an exception if the file does not exist.
+	/// </summary>
+	public static byte[] ReadEmbeddedBytes(string name)
+	{
+		return ReadEmbeddedBytes(Assembly.GetCallingAssembly(), name);
+	}
+
+	#endregion
+
 }
