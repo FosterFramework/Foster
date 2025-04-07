@@ -66,23 +66,6 @@ public class Aseprite : Aseprite.IUserDataTarget
 		PingPongReverse = 3,
 	}
 
-	public readonly struct AseUserData
-	{
-		public readonly string Text = string.Empty;
-		public readonly Color Color = Color.Transparent;
-
-		public AseUserData(string text, Color color)
-		{
-			Text = text;
-			Color = color;
-		}
-	}
-
-	private interface IUserDataTarget
-	{
-		public AseUserData UserData { get; set; }
-	}
-
 	[Flags]
 	public enum LayerFlags
 	{
@@ -94,34 +77,6 @@ public class Aseprite : Aseprite.IUserDataTarget
 		PreferLinkedCels = 16,
 		DisplayCollapsed = 32,
 		Reference = 64,
-	}
-
-	public class Layer : IUserDataTarget
-	{
-		public LayerFlags Flags;
-		public LayerType Type;
-		public int ChildLevel;
-		public Point2 DefaultSize;
-		public BlendMode BlendMode;
-		public byte Opacity;
-		public string? Name;
-		public int TilesetIndex;
-		public AseUserData UserData { get; set; } = new();
-
-		public bool Visible => Flags.Has(LayerFlags.Visible);
-		public bool Editable => Flags.Has(LayerFlags.Editable);
-		public bool LockMovement => Flags.Has(LayerFlags.LockMovement);
-		public bool Background => Flags.Has(LayerFlags.Background);
-		public bool PreferLinkedCels => Flags.Has(LayerFlags.PreferLinkedCels);
-		public bool DisplayCollapsed => Flags.Has(LayerFlags.DisplayCollapsed);
-		public bool Reference => Flags.Has(LayerFlags.Reference);
-	}
-
-	public class Frame : IUserDataTarget
-	{
-		public int Duration;
-		public List<Cel> Cels = new();
-		public AseUserData UserData { get; set; } = new();
 	}
 
 	public enum Format
@@ -139,64 +94,77 @@ public class Aseprite : Aseprite.IUserDataTarget
 		CompressedTilemap = 3
 	}
 
-	public class Cel : IUserDataTarget
+	private interface IUserDataTarget
 	{
-		public Layer Layer;
-		public Point2 Pos;
+		public UserDataValues UserData { get; set; }
+	}
+
+	public readonly record struct UserDataValues(string Text, Color Color);
+
+	public class Layer : IUserDataTarget
+	{
+		public LayerFlags Flags;
+		public LayerType Type;
+		public int ChildLevel;
+		public Point2 DefaultSize;
+		public BlendMode BlendMode;
 		public byte Opacity;
-		public int ZIndex;
-		public Image? Image;
-		public AseUserData UserData { get; set; } = new();
-
-		public Cel(Layer layer, Point2 pos, byte opacity, int zIndex)
-		{
-			Layer = layer;
-			Pos = pos;
-			Opacity = opacity;
-			ZIndex = zIndex;
-		}
-	}
-
-	public class Tag
-	{
-		public int From;
-		public int To;
-		public LoopDir LoopDir;
-		public int Repeat;
-		public Color Color;
 		public string? Name;
-		public AseUserData UserData { get; set; } = new();
+		public int TilesetIndex;
+		public UserDataValues UserData { get; set; } = new();
+
+		public bool Visible => Flags.Has(LayerFlags.Visible);
+		public bool Editable => Flags.Has(LayerFlags.Editable);
+		public bool LockMovement => Flags.Has(LayerFlags.LockMovement);
+		public bool Background => Flags.Has(LayerFlags.Background);
+		public bool PreferLinkedCels => Flags.Has(LayerFlags.PreferLinkedCels);
+		public bool DisplayCollapsed => Flags.Has(LayerFlags.DisplayCollapsed);
+		public bool Reference => Flags.Has(LayerFlags.Reference);
 	}
 
-	public class Slice : IUserDataTarget
+	public class Frame : IUserDataTarget
 	{
-		public struct Key
-		{
-			public int FrameStart;
-			public RectInt Bounds;
-			public RectInt? NinSliceCenters;
-			public Point2? Pivot;
-		}
+		public int Duration;
+		public readonly List<Cel> Cels = [];
+		public UserDataValues UserData { get; set; } = new();
+	}
 
-		public string Name;
-		public Key[] Keys;
-		public AseUserData UserData { get; set; } = new();
+	public class Cel(Layer layer, Point2 pos, byte opacity, int zIndex, Image image) : IUserDataTarget
+	{
+		public readonly Layer Layer = layer;
+		public readonly Point2 Pos = pos;
+		public readonly byte Opacity = opacity;
+		public readonly int ZIndex = zIndex;
+		public readonly Image Image = image;
+		public UserDataValues UserData { get; set; } = new();
+	}
 
-		public Slice(string name, int count)
-		{
-			Name = name;
-			Keys = new Key[count];
-		}
+	public readonly record struct Tag(
+		int From,
+		int To,
+		LoopDir LoopDir,
+		int Repeat,
+		Color Color,
+		string? Name,
+		UserDataValues UserData
+	);
+
+	public class Slice(string name, int count) : IUserDataTarget
+	{
+		public readonly record struct Key(int FrameStart, RectInt Bounds, RectInt? NinSliceCenters, Point2? Pivot);
+		public readonly string Name = name;
+		public readonly Key[] Keys = new Key[count];
+		public UserDataValues UserData { get; set; } = new();
 	}
 
 	public int Width;
 	public int Height;
-	public Frame[] Frames = Array.Empty<Frame>();
-	public Color[] Palette = Array.Empty<Color>();
-	public Tag[] Tags = Array.Empty<Tag>();
-	public List<Slice> Slices = new();
-	public List<Layer> Layers = new();
-	public AseUserData UserData { get; set; } = new();
+	public Frame[] Frames = [];
+	public Color[] Palette = [];
+	public Tag[] Tags = [];
+	public List<Slice> Slices = [];
+	public List<Layer> Layers = [];
+	public UserDataValues UserData { get; set; } = new();
 	
 	public Aseprite(string filePath)
 	{
@@ -228,27 +196,32 @@ public class Aseprite : Aseprite.IUserDataTarget
 		void SkipTo(long chunkEnd) => bin.BaseStream.Seek(chunkEnd, SeekOrigin.Begin);
 
 		// Parse the file header
-		var fileSize = ReadDWord();
-		if (ReadWord() != 0xA5E0)
-			throw new Exception("Invalid Aseprite file, magic number is wrong");
-		var frameCount = ReadWord();
-		Width = ReadWord();
-		Height = ReadWord();
-		var format = (Format)ReadWord();
-		ReadDWord(); // Flags (IGNORE)
-		ReadWord(); // Speed (DEPRECATED)
-		ReadDWord(); // Set be 0
-		ReadDWord(); // Set be 0
-		ReadByte(); // Transparent Color Index
-		Skip(3);
-		ReadWord(); // Color Count
-		ReadByte(); // Pixel width
-		ReadByte(); // Pixel height
-		ReadShort(); // X position of the grid
-		ReadShort(); // Y position of the grid
-		ReadWord(); // Grid width
-		ReadWord(); // Grid height
-		Skip(84);
+		uint fileSize;
+		int frameCount;
+		Format format;
+		{
+			fileSize = ReadDWord();
+			if (ReadWord() != 0xA5E0)
+				throw new Exception("Invalid Aseprite file, magic number is wrong");
+			frameCount = ReadWord();
+			Width = ReadWord();
+			Height = ReadWord();
+			format = (Format)ReadWord();
+			ReadDWord(); // Flags (IGNORE)
+			ReadWord(); // Speed (DEPRECATED)
+			ReadDWord(); // Set be 0
+			ReadDWord(); // Set be 0
+			ReadByte(); // Transparent Color Index
+			Skip(3);
+			ReadWord(); // Color Count
+			ReadByte(); // Pixel width
+			ReadByte(); // Pixel height
+			ReadShort(); // X position of the grid
+			ReadShort(); // Y position of the grid
+			ReadWord(); // Grid width
+			ReadWord(); // Grid height
+			Skip(84);
+		}
 
 		// Create Frame array
 		Array.Resize(ref Frames, frameCount);
@@ -267,14 +240,16 @@ public class Aseprite : Aseprite.IUserDataTarget
 			ReadDWord(); // Bytes in this frame
 			if (ReadWord() != 0xF1FA)
 				throw new Exception("Invalid Aseprite file, frame magic number is wrong");
-			
 			int oldChunkCount = ReadWord();
 			frame.Duration = ReadWord();
 			Skip(2); // For future (set to zero)
 
+			// get chunk count
 			int chunkCount = (int)ReadDWord();
 			if (chunkCount == 0)
 				chunkCount = oldChunkCount;
+
+			var hasNewPalette = false;
 
 			// Parse all the frame chunks
 			for (int ch = 0; ch < chunkCount; ++ch)
@@ -282,177 +257,248 @@ public class Aseprite : Aseprite.IUserDataTarget
 				var chunkStart = bin.BaseStream.Position;
 				var chunkSize = ReadDWord();
 				var chunkType = (ChunkType)ReadWord();
-				if (!Enum.IsDefined(chunkType))
-					chunkType = ChunkType.Unknown;
 				var chunkEnd = chunkStart + chunkSize;
 
-				if (chunkType == ChunkType.Palette)
+				switch (chunkType)
 				{
-					var len = (int)ReadDWord();
-					var first = (int)ReadDWord();
-					var last = (int)ReadDWord();
-					Skip(8);
-
-					if (len > Palette.Length)
-						Array.Resize(ref Palette, len);
-
-					for (var i = first; i <= last; ++i)
-					{
-						var flags = ReadWord();
-						Palette[i] = new Color(ReadByte(), ReadByte(), ReadByte(), ReadByte());
-						if ((flags & 1) != 0)
-							ReadString();
-					}
-
+				case ChunkType.Palette:
+				{
+					ParsePalette();
 					userDataTarget = this;
+					hasNewPalette = true;
+					break;
 				}
-				else if (chunkType == ChunkType.Slice)
+				case ChunkType.OldPalette:
+				case ChunkType.OldPalette2:
 				{
-					var count = (int)ReadDWord();
-					var flags = ReadDWord();
-					ReadDWord();
-					var name = ReadString();
-					var hasNineSlice = (flags & 1) != 0;
-					var hasPivot = (flags & 2) != 0;
-
-					var slice = new Slice(name, count);
-					Slices.Add(slice);
+					if (!hasNewPalette)
+						ParseOldPalette();
+					break;
+				}
+				case ChunkType.Slice:
+				{
+					var slice = ParseSlice();
 					userDataTarget = slice;
-
-					for (int i = 0; i < count; ++i)
-					{
-						slice.Keys[i].FrameStart = (int)ReadDWord();
-						slice.Keys[i].Bounds = new RectInt(ReadLong(), ReadLong(), (int)ReadDWord(), (int)ReadDWord());
-						if (hasNineSlice)
-							slice.Keys[i].NinSliceCenters = new RectInt(ReadLong(), ReadLong(), (int)ReadDWord(), (int)ReadDWord());
-						if (hasPivot)
-							slice.Keys[i].Pivot = new Point2(ReadLong(), ReadLong());
-					}
+					break;
 				}
-				else if (chunkType == ChunkType.Tags)
+				case ChunkType.Tags:
 				{
-					Array.Resize(ref Tags, ReadWord());
-					Skip(8);
-					for (int t = 0; t < Tags.Length; ++t)
-					{
-						var tag = Tags[t] = new Tag();
-						tag.From = ReadWord();
-						tag.To = ReadWord();
-						tag.LoopDir = (LoopDir)ReadByte();
-						tag.Repeat = ReadWord();
-						Skip(10);
-						tag.Name = ReadString();
-					}
+					ParseTags();
 					userDataTarget = null;
+					break;
 				}
-				else if (chunkType == ChunkType.UserData)
+				case ChunkType.UserData:
 				{
-					var text = string.Empty;
-					var color = Color.Transparent;
-					var flags = ReadDWord();
-					if ((flags & 1) != 0)
-						text = ReadString();
-					if ((flags & 2) != 0)
-						color = new Color(ReadByte(), ReadByte(), ReadByte(), ReadByte());
-
+					var value = ParseUserData();
 					if (userDataTarget is IUserDataTarget target)
 					{
-						target.UserData = new(text, color);
+						target.UserData = value;
 						userDataTarget = null;
 					}
 					else if (nextTagUserData < Tags.Length)
 					{
-						Tags[nextTagUserData++].UserData = new(text, color);
+						var it = Tags[nextTagUserData];
+						it = it with { UserData = value };
+						Tags[nextTagUserData++] = it;
 					}
+					break;
 				}
-				else if (chunkType == ChunkType.Layer)
+				case ChunkType.Layer:
 				{
-					var layer = new Layer();
-					Layers.Add(layer);
+					var layer = ParseLayer();
 					userDataTarget = layer;
-
-					layer.Flags = (LayerFlags)ReadWord();
-					layer.Type = (LayerType)ReadWord();
-					layer.ChildLevel = ReadWord();
-					layer.DefaultSize = new Point2(ReadWord(), ReadWord());
-					layer.BlendMode = (BlendMode)ReadWord();
-					layer.Opacity = ReadByte();
-					Skip(3);
-					layer.Name = ReadString();
-					if (layer.Type == LayerType.Tilemap)
-						layer.TilesetIndex = (int)ReadDWord();
+					break;
 				}
-				else if (chunkType == ChunkType.Cel)
+				case ChunkType.Cel:
 				{
-					var layer = Layers[ReadWord()];
-					var pos = new Point2(ReadShort(), ReadShort());
-					var opacity = ReadByte();
-					var type = (CelType)ReadWord();
-					var zIndex = ReadShort();
-
-					// Compressed Tilemap not supported
-					if (type == CelType.CompressedTilemap)
-					{
-						Log.Warning("Aseprite Tilemaps are not supported");
-						SkipTo(chunkEnd);
-						continue;
-					}
-
-					var cel = new Cel(layer, pos, opacity, zIndex);
-					frame.Cels.Add(cel);
-					userDataTarget = cel;
-
-					Skip(5);
-
-					// references an existing Cel instead of containing its own data
-					if (type == CelType.LinkedCel)
-					{
-						var linkedFrame = ReadWord();
-						var linkedCel = Frames[linkedFrame].Cels.Find(c => c.Layer == layer)!;
-						cel.Image = linkedCel.Image;
-						SkipTo(chunkEnd);
-						continue;
-					}
-
-					var width = (int)ReadWord();
-					var height = (int)ReadWord();
-					var pixels = new Color[width * height];
-					var decompressedLen = width * height * ((int)format / 8);
-
-					if (buffer.Length < decompressedLen)
-						Array.Resize(ref buffer, decompressedLen);
-
-					if (type == CelType.RawImageData)
-					{
-						bin.Read(buffer, 0, decompressedLen);
-					}
-					else if (type == CelType.CompressedImage)
-					{
-						using var zip = new ZLibStream(bin.BaseStream, CompressionMode.Decompress, true);
-						zip.ReadExactly(buffer, 0, decompressedLen);
-					}
-
-					switch (format)
-					{
-						case Format.Rgba:
-							for (int i = 0, b = 0; i < pixels.Length; ++i, b += 4)
-								pixels[i] = new Color(buffer[b], buffer[b + 1], buffer[b + 2], buffer[b + 3]);
-							break;
-						case Format.Grayscale:
-							for (int i = 0, b = 0; i < pixels.Length; ++i, b += 2)
-								pixels[i] = new Color(buffer[b], buffer[b], buffer[b], buffer[b + 1]);
-							break;
-						case Format.Indexed:
-							for (int i = 0; i < pixels.Length; ++i)
-								pixels[i] = Palette[buffer[i]];
-							break;
-					}
-
-					cel.Image = new Image(width, height, pixels);
+					var cel = ParseCel(frame);
+					if (cel != null)
+						userDataTarget = cel;
+					break;
+				}
+				default:
+					break;
 				}
 
 				SkipTo(chunkEnd);
 			}
+		}
+
+		void ParsePalette()
+		{
+			var len = (int)ReadDWord();
+			var first = (int)ReadDWord();
+			var last = (int)ReadDWord();
+			Skip(8);
+
+			if (len > Palette.Length)
+				Array.Resize(ref Palette, len);
+
+			for (var i = first; i <= last; ++i)
+			{
+				var flags = ReadWord();
+				Palette[i] = new Color(ReadByte(), ReadByte(), ReadByte(), ReadByte());
+				if ((flags & 1) != 0)
+					ReadString();
+			}
+		}
+
+		void ParseOldPalette()
+		{
+			var packets = ReadWord();
+			for (int i = 0; i < packets; i ++)
+			{
+				var skipCount = ReadByte();
+				var colorCount = (int)ReadByte();
+				if (colorCount <= 0)
+					colorCount = 256;
+
+				var index = skipCount;
+				if (index + colorCount >= Palette.Length)
+					Array.Resize(ref Palette, index + colorCount);
+
+				for (int j = 0; j < colorCount; j ++)
+					Palette[index + j] = new Color(ReadByte(), ReadByte(), ReadByte(), 255);
+			}
+		}
+
+		Slice ParseSlice()
+		{
+			var count = (int)ReadDWord();
+			var flags = ReadDWord();
+			ReadDWord();
+			var name = ReadString();
+			var hasNineSlice = (flags & 1) != 0;
+			var hasPivot = (flags & 2) != 0;
+			var slice = new Slice(name, count);
+
+			for (int i = 0; i < count; ++i)
+			{
+				int frameStart = (int)ReadDWord();
+				RectInt bounds = new(ReadLong(), ReadLong(), (int)ReadDWord(), (int)ReadDWord());
+				RectInt? nineSliceCenter = hasNineSlice ? new(ReadLong(), ReadLong(), (int)ReadDWord(), (int)ReadDWord()) : null;
+				Point2? pivot = hasPivot ? new(ReadLong(), ReadLong()) : null;
+				slice.Keys[i] = new(frameStart, bounds, nineSliceCenter, pivot);
+			}
+
+			Slices.Add(slice);
+			return slice;
+		}
+
+		void ParseTags()
+		{
+			Array.Resize(ref Tags, ReadWord());
+			Skip(8);
+			for (int t = 0; t < Tags.Length; ++t)
+			{
+				var from = ReadWord();
+				var to = ReadWord();
+				var loopDir = (LoopDir)ReadByte();
+				var repeat = ReadWord();
+				Skip(10);
+				var name = ReadString();
+
+				Tags[t] = new Tag(from, to, loopDir, repeat, Color.Transparent, name, default);
+			}
+		}
+
+		UserDataValues ParseUserData()
+		{
+			var text = string.Empty;
+			var color = Color.Transparent;
+			var flags = ReadDWord();
+			if ((flags & 1) != 0)
+				text = ReadString();
+			if ((flags & 2) != 0)
+				color = new Color(ReadByte(), ReadByte(), ReadByte(), ReadByte());
+			return new(text, color);
+		}
+
+		Layer ParseLayer()
+		{
+			var layer = new Layer();
+			layer.Flags = (LayerFlags)ReadWord();
+			layer.Type = (LayerType)ReadWord();
+			layer.ChildLevel = ReadWord();
+			layer.DefaultSize = new Point2(ReadWord(), ReadWord());
+			layer.BlendMode = (BlendMode)ReadWord();
+			layer.Opacity = ReadByte();
+			Skip(3);
+			layer.Name = ReadString();
+			if (layer.Type == LayerType.Tilemap)
+				layer.TilesetIndex = (int)ReadDWord();
+			Layers.Add(layer);
+			return layer;
+		}
+
+		Cel? ParseCel(Frame frame)
+		{
+			var layer = Layers[ReadWord()];
+			var pos = new Point2(ReadShort(), ReadShort());
+			var opacity = ReadByte();
+			var type = (CelType)ReadWord();
+			var zIndex = ReadShort();
+			Skip(5); // for future
+
+			// Compressed Tilemap not supported
+			if (type == CelType.CompressedTilemap)
+			{
+				Log.Warning("Aseprite Tilemaps are not supported");
+				return null;
+			}
+
+			Image image;
+
+			// references an existing Cel instead of containing its own data
+			if (type == CelType.LinkedCel)
+			{
+				var linkedFrame = ReadWord();
+				var linkedCel = Frames[linkedFrame].Cels.Find(c => c.Layer == layer)!;
+				image = linkedCel.Image;
+			}
+			// normal image cel
+			else
+			{
+				var width = (int)ReadWord();
+				var height = (int)ReadWord();
+				var pixels = new Color[width * height];
+				var decompressedLen = width * height * ((int)format / 8);
+
+				if (buffer.Length < decompressedLen)
+					Array.Resize(ref buffer, decompressedLen);
+
+				if (type == CelType.RawImageData)
+				{
+					bin.Read(buffer, 0, decompressedLen);
+				}
+				else if (type == CelType.CompressedImage)
+				{
+					using var zip = new ZLibStream(bin.BaseStream, CompressionMode.Decompress, true);
+					zip.ReadExactly(buffer, 0, decompressedLen);
+				}
+
+				switch (format)
+				{
+					case Format.Rgba:
+						for (int i = 0, b = 0; i < pixels.Length; ++i, b += 4)
+							pixels[i] = new Color(buffer[b], buffer[b + 1], buffer[b + 2], buffer[b + 3]);
+						break;
+					case Format.Grayscale:
+						for (int i = 0, b = 0; i < pixels.Length; ++i, b += 2)
+							pixels[i] = new Color(buffer[b], buffer[b], buffer[b], buffer[b + 1]);
+						break;
+					case Format.Indexed:
+						for (int i = 0; i < pixels.Length; ++i)
+							pixels[i] = Palette[buffer[i]];
+						break;
+				}
+
+				image = new Image(width, height, pixels);
+			}
+
+			var cel = new Cel(layer, pos, opacity, zIndex, image);
+			frame.Cels.Add(cel);
+			return cel;
 		}
 	}
 
