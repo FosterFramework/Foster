@@ -196,7 +196,7 @@ public abstract class App : IDisposable
 		FileSystem = new(this);
 		GraphicsDevice = Platform.CreateGraphicsDevice(this, config.PreferredGraphicsDriver);
 		GraphicsDevice.CreateDevice(config.Flags);
-		Window = new Window(this, GraphicsDevice, config.WindowTitle, config.Width, config.Height, config.Fullscreen);
+		Window = new Window(this, GraphicsDevice, config.WindowTitle, config.Width, config.Height, config.Fullscreen, config.Resizable);
 		GraphicsDevice.Startup(Window.Handle);
 
 		// try to load default SDL gamepad mappings
