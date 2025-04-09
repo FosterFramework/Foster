@@ -74,7 +74,9 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	// state
 	private GraphicsDriver driver;
 	private bool vsyncEnabled;
-	private nint swapchainTexture;
+
+	// swapchain state
+	private nint? swapchainTexture; // null means not yet requested, nint.Zero means not available
 	private Point2 swapchainSize;
 	private SDL_GPUTextureFormat swapchainFormat;
 
@@ -237,7 +239,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	internal override void Shutdown()
 	{
 		// submit remaining commands
-		FlushCommands();
+		FlushCommands(stall: false);
 		SDL_SubmitGPUCommandBuffer(cmdUpload);
 		SDL_SubmitGPUCommandBuffer(cmdRender);
 		SDL_WaitForGPUIdle(device);
@@ -286,29 +288,9 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		driver = GraphicsDriver.None;
 	}
 
-	internal override void BeginRender()
+	internal override void Present()
 	{
-		swapchainTexture = nint.Zero;
-
-		if (SDL_WaitAndAcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
-		{
-			if (scTex != nint.Zero)
-			{
-				swapchainTexture = scTex;
-				swapchainSize = new Point2((int)scW, (int)scH);
-			}
-		}
-		else
-		{
-			Log.Warning($"{nameof(SDL_WaitAndAcquireGPUSwapchainTexture)} failed: {SDL_GetError()}");
-		}
-	}
-
-	internal override void EndRender()
-	{
-		EndCopyPass();
-		EndRenderPass();
-		FlushCommands();
+		FlushCommands(stall: false);
 	}
 
 	public override bool IsTextureFormatSupported(TextureFormat format)
@@ -424,7 +406,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			}
 			else
 			{
-				FlushCommandsAndStall();
+				FlushCommands(stall: true);
 				transferCycle = true;
 				transferOffset = 0;
 			}
@@ -489,7 +471,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			// TODO:
 			// If you create a texture and immediately call GetData it doesn't seem to work the first frame,
 			// unless this additional stall is here. But why?
-			FlushCommandsAndStall();
+			FlushCommands(stall: true);
 
 			// verify download buffer is big enough
 			if (textureDownloadBuffer == nint.Zero || textureDownloadBufferSize < length)
@@ -535,7 +517,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			}
 
 			// flush and stall so the data is up to date
-			FlushCommandsAndStall();
+			FlushCommands(stall: true);
 
 			// copy data
 			{
@@ -735,7 +717,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			}
 			else
 			{
-				FlushCommandsAndStall();
+				FlushCommands(stall: true);
 				transferCycle = true;
 				transferOffset = 0;
 			}
@@ -1059,43 +1041,44 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 	}
 
-	private void FlushCommands()
-	{
-		EndCopyPass();
-		EndRenderPass();
-		SDL_SubmitGPUCommandBuffer(cmdUpload);
-		SDL_SubmitGPUCommandBuffer(cmdRender);
-		cmdUpload = nint.Zero;
-		cmdRender = nint.Zero;
-		ResetCommandBufferState();
-	}
-
-	private void FlushCommandsAndStall()
+	private void FlushCommands(bool stall)
 	{
 		EndCopyPass();
 		EndRenderPass();
 
 		StackList4<nint> fences = new();
 
-		var uploadFence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmdUpload);
-		if (uploadFence != nint.Zero)
-			fences.Add(uploadFence);
-		else
-			Log.Warning($"Failed to acquire upload fence: {SDL_GetError()}");
+		// submit buffers
+		if (stall)
+		{
+			var uploadFence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmdUpload);
+			if (uploadFence != nint.Zero)
+				fences.Add(uploadFence);
+			else
+				Log.Warning($"Failed to acquire upload fence: {SDL_GetError()}");
 
-		var renderFence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmdRender);
-		if (renderFence != nint.Zero)
-			fences.Add(renderFence);
+			var renderFence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmdRender);
+			if (renderFence != nint.Zero)
+				fences.Add(renderFence);
+			else
+				Log.Warning($"Failed to acquire render fence: {SDL_GetError()}");
+		}
 		else
-			Log.Warning($"Failed to acquire render fence: {SDL_GetError()}");
+		{
+			SDL_SubmitGPUCommandBuffer(cmdUpload);
+			SDL_SubmitGPUCommandBuffer(cmdRender);
+		}
 
+		// reset state
 		cmdUpload = nint.Zero;
 		cmdRender = nint.Zero;
 		ResetCommandBufferState();
 
+		// wait for gpu fences
 		if (fences.Count > 0)
 			SDL_WaitForGPUFences(device, true, fences.Span, (uint)fences.Count);
 
+		// release gpu fences
 		for (int i = 0; i < fences.Count; i ++)
 			SDL_ReleaseGPUFence(device, fences[i]);
 	}
@@ -1112,6 +1095,10 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		textureUploadCycleCount = 0;
 		bufferUploadBufferOffset = 0;
 		bufferUploadCycleCount = 0;
+
+		// swapchain will need to be requested again now that we have a new 
+		// render command buffer
+		swapchainTexture = null;
 	}
 
 	private void BeginCopyPass()
@@ -1174,16 +1161,38 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 					colorTargets.Add(res);
 			}
 		}
-		// drawing to the backbuffer/swapchain
-		else if (swapchainTexture != nint.Zero)
-		{
-			renderPassTargetSize = swapchainSize;
-			colorTargets.Add(swapchainTexture);
-		}
-		// don't have a swapchain to draw to, cancel render pass
 		else
 		{
-			return false;
+			// request swapchain if we don't have it yet
+			if (swapchainTexture == null)
+			{
+				swapchainTexture = nint.Zero;
+
+				if (SDL_WaitAndAcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
+				{
+					if (scTex != nint.Zero)
+					{
+						swapchainTexture = scTex;
+						swapchainSize = new Point2((int)scW, (int)scH);
+					}
+				}
+				else
+				{
+					Log.Warning($"{nameof(SDL_WaitAndAcquireGPUSwapchainTexture)} failed: {SDL_GetError()}");
+				}
+			}
+
+			// draw to the swapchain
+			if (swapchainTexture != nint.Zero)
+			{
+				renderPassTargetSize = swapchainSize;
+				colorTargets.Add(swapchainTexture.Value);
+			}
+			// don't have a swapchain
+			else
+			{
+				return false;
+			}
 		}
 
 		Span<SDL_GPUColorTargetInfo> colorInfo = stackalloc SDL_GPUColorTargetInfo[colorTargets.Count];

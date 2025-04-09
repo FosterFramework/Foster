@@ -43,8 +43,7 @@ public abstract class GraphicsDevice
 	internal abstract void DestroyDevice();
 	internal abstract void Startup(nint window);
 	internal abstract void Shutdown();
-	internal abstract void BeginRender();
-	internal abstract void EndRender();
+	internal abstract void Present();
 	internal abstract IHandle CreateTexture(string? name, int width, int height, TextureFormat format, IHandle? targetBinding);
 	internal abstract void SetTextureData(IHandle texture, nint data, int length);
 	internal abstract void GetTextureData(IHandle texture, nint data, int length);
