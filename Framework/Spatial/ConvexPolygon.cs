@@ -52,11 +52,11 @@ public unsafe struct ConvexPolygon : IConvexShape, IEnumerable<Vector2>
 
 	public void RemoveAt(int index)
 		=> Vertices.RemoveAt(index);
-	
+
 	[Obsolete("Use ConvexPolygon.Add")]
 	public void AddPoint(in Vector2 value)
 		=> Vertices.Add(value);
-	
+
 	[Obsolete("Use ConvexPolygon.RemoveAt")]
 	public void RemovePointAt(int index)
 		=> Vertices.RemoveAt(index);

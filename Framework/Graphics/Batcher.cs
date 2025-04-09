@@ -9,7 +9,7 @@ namespace Foster.Framework;
 /// <br/>
 /// Constructs a <see cref="Mesh"/> which can be drawn by calling Render.<br/>
 /// <br />
-/// Note if you intend to re-use the Batcher over multiple frames, be sure to 
+/// Note if you intend to re-use the Batcher over multiple frames, be sure to
 /// call <see cref="Clear"/> after you have rendered it so it's ready for the
 /// next frame.
 /// </summary>
@@ -177,7 +177,7 @@ public class Batcher : IDisposable
 		layerStack.Clear();
 		samplerStack.Clear();
 		modeStack.Clear();
-		
+
 		foreach (var it in materialsUsed)
 			materialsPool.Enqueue(it);
 		materialsUsed.Clear();
@@ -427,7 +427,7 @@ public class Batcher : IDisposable
 	{
 		if (material.Shader == null)
 			throw new Exception("Material must have a Shader assigned");
-		
+
 		materialStack.Push(currentBatch.Material);
 		if (!materialsPool.TryDequeue(out var copy))
 			copy = new Material();
@@ -843,7 +843,7 @@ public class Batcher : IDisposable
 			vertexArray[0].Mode = mode;
 			vertexArray[1].Mode = mode;
 			vertexArray[2].Mode = mode;
-			
+
 			if (currentBatch.FlipVerticalUV)
 				FlipVerticalUVs(vertexPtr, vertexCount, 4);
 		}
@@ -944,7 +944,7 @@ public class Batcher : IDisposable
 			new Vector2(x, y + height),
 			c0, c1, c2, c3);
 	}
-	
+
 	public void RectLine(in Rect rect, float t, Color color)
 	{
 		if (t > 0)

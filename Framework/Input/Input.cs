@@ -262,7 +262,7 @@ public sealed class Input
 	}
 
 	/// <summary>
-	/// Loads 'gamecontrollerdb.txt' from a local file or falls back to the 
+	/// Loads 'gamecontrollerdb.txt' from a local file or falls back to the
 	/// default embedded SDL gamepad mappings
 	/// </summary>
 	static internal void AddDefaultSDLGamepadMappings(string relativePath)

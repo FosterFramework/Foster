@@ -57,14 +57,14 @@ public sealed class VirtualAction(Input input, ActionBinding action, int control
 
 	/// <summary>
 	/// Floating value of the Action from 0-1.
-	/// For most Actions this is always 0 or 1, 
+	/// For most Actions this is always 0 or 1,
 	/// with the exception of the Axis Binding.
 	/// </summary>
 	public float Value { get; private set; }
 
 	/// <summary>
 	/// Floating value of the Action from -1 to +1
-	/// For most Actions this is always 0 or 1, 
+	/// For most Actions this is always 0 or 1,
 	/// with the exception of the Axis Binding.
 	/// This ignores AxisBinding.Deadzone
 	/// </summary>

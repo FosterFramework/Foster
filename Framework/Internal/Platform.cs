@@ -58,34 +58,34 @@ internal static partial class Platform
 
 	[LibraryImport(DLL, EntryPoint = "FosterImageLoad")]
 	public static unsafe partial nint ImageLoad(void* memory, int length, out int w, out int h);
-	
+
 	[LibraryImport(DLL, EntryPoint = "FosterImageFree")]
 	public static partial void ImageFree(nint data);
-	
+
 	[LibraryImport(DLL, EntryPoint = "FosterImageWrite")]
 	public static unsafe partial byte ImageWrite(delegate* unmanaged<nint, nint, int, void> func, IntPtr context, ImageWriteFormat format, int w, int h, IntPtr data);
-	
+
 	[LibraryImport(DLL, EntryPoint = "FosterFontInit")]
 	public static partial nint FontInit(nint data, int length);
-	
+
 	[LibraryImport(DLL, EntryPoint = "FosterFontGetMetrics")]
 	public static partial void FontGetMetrics(nint font, out int ascent, out int descent, out int linegap);
-	
+
 	[LibraryImport(DLL, EntryPoint = "FosterFontGetGlyphIndex")]
 	public static partial int FontGetGlyphIndex(nint font, int codepoint);
-	
+
 	[LibraryImport(DLL, EntryPoint = "FosterFontGetScale")]
 	public static partial float FontGetScale(nint font, float size);
-	
+
 	[LibraryImport(DLL, EntryPoint = "FosterFontGetKerning")]
 	public static partial float FontGetKerning(nint font, int glyph1, int glyph2, float scale);
-	
+
 	[LibraryImport(DLL, EntryPoint = "FosterFontGetCharacter")]
 	public static partial void FontGetCharacter(nint font, int glyph, float scale, out int width, out int height, out float advance, out float offsetX, out float offsetY, out int visible);
-	
+
 	[LibraryImport(DLL, EntryPoint = "FosterFontGetPixels")]
 	public static partial void FontGetPixels(nint font, nint dest, int glyph, int width, int height, float scale);
-	
+
 	[LibraryImport(DLL, EntryPoint = "FosterFontFree")]
 	public static partial void FontFree(nint font);
 
@@ -108,7 +108,7 @@ internal static partial class Platform
 				break;
 		}
 	}
-	
+
 	public static Buttons GetButtonFromSDL(SDL_GamepadButton button) => button switch
 	{
 		SDL_GamepadButton.SDL_GAMEPAD_BUTTON_INVALID => Buttons.None,

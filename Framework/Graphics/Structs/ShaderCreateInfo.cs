@@ -4,6 +4,6 @@ namespace Foster.Framework;
 /// Data Required to create a new Shader
 /// </summary>
 public readonly record struct ShaderCreateInfo(
-	ShaderStageInfo Vertex, 
+	ShaderStageInfo Vertex,
 	ShaderStageInfo Fragment
 );

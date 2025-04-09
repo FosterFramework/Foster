@@ -1,7 +1,7 @@
 namespace Foster.Framework;
 
 /// <summary>
-/// Specifies which Textures to clear when rendering to an <see cref="IDrawableTarget"/> 
+/// Specifies which Textures to clear when rendering to an <see cref="IDrawableTarget"/>
 /// </summary>
 [Flags]
 public enum ClearMask

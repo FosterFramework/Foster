@@ -76,7 +76,7 @@ public struct Circle : IProjectable
 				pushout = Vector2.UnitX * combinedRadius;
 			else
 				pushout = ((Position - other.Position) / length) * (combinedRadius - length);
-			
+
 			return true;
 		}
 

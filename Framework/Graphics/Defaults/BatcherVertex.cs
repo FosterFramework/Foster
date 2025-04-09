@@ -17,7 +17,7 @@ public struct BatcherVertex(Vector2 position, Vector2 texcoord, Color color, Col
 	/// <summary>
 	/// R = Multiply, G = Wash, B = Fill, A = Padding
 	/// </summary>
-	public Color Mode = mode;  
+	public Color Mode = mode;
 
 	public readonly VertexFormat Format => format;
 

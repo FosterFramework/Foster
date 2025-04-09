@@ -73,7 +73,7 @@ public sealed class FileSystem
 	{
 		if (app.Disposed)
 			throw app.DisposedException;
-			
+
 		return await HandleOpenAsync(Storage.OpenTitleStorage(path));
 	}
 
@@ -117,7 +117,7 @@ public sealed class FileSystem
 			return storage;
 		}
 	}
-	
+
 	public enum DialogResult
 	{
 		/// <summary>
@@ -145,7 +145,7 @@ public sealed class FileSystem
 	/// Callback with the resulting file path the user selected
 	/// </summary>
 	public delegate void DialogCallbackSingleFile(string path, DialogResult result);
-	
+
 	/// <summary>
 	/// Dialog File Filter
 	/// </summary>
@@ -188,7 +188,7 @@ public sealed class FileSystem
 	{
 		void Singular(string[] files, DialogResult result)
 			=> callback(files.FirstOrDefault() ?? string.Empty, result);
-		
+
 		ShowFileDialog(new(DialogModes.SaveFile, Singular, filters, defaultLocation, false));
 	}
 
@@ -206,7 +206,7 @@ public sealed class FileSystem
 		string? DefaultLocation,
 		bool AllowMany
 	);
-	
+
 	private readonly record struct DialogUserData(
 		App App,
 		DialogCallback Callback
@@ -281,7 +281,7 @@ public sealed class FileSystem
 			{
 				case DialogModes.OpenFile:
 					SDL_ShowOpenFileDialog(
-						CallbackFromSDL, userdata, app.Window.Handle, filtersUtf8, 
+						CallbackFromSDL, userdata, app.Window.Handle, filtersUtf8,
 						properties.Filters.Length, defaultLocation, properties.AllowMany);
 					break;
 				case DialogModes.SaveFile:
@@ -291,7 +291,7 @@ public sealed class FileSystem
 					break;
 				case DialogModes.OpenFolder:
 					SDL_ShowOpenFolderDialog(
-						CallbackFromSDL, userdata, app.Window.Handle, 
+						CallbackFromSDL, userdata, app.Window.Handle,
 						defaultLocation, properties.AllowMany);
 					break;
 			}
@@ -306,7 +306,7 @@ public sealed class FileSystem
 
 		if (app.Disposed)
 			throw app.DisposedException;
-		
+
 		// SDL docs say that showing file dialogs must be invoked from the Main Thread
 		app.RunOnMainThread(() => Show(app, properties));
 	}

@@ -41,7 +41,7 @@ public sealed class Cursor : IDisposable
 	/// Reference to SDL's Cursor
 	/// </summary>
 	internal nint Handle { get; private set; }
-	
+
 	/// <summary>
 	/// The Focus Point fo the Cursor (where it is considered active)
 	/// </summary>

@@ -158,7 +158,7 @@ public class Font : IDisposable
 			throw invalidFontException;
 		return GetCharacterOfGlyph(GetGlyphIndex(codepoint), scale);
 	}
-	
+
 	/// <summary>
 	/// Gets Character Metrics of a given glyph at a given scale
 	/// </summary>
@@ -166,7 +166,7 @@ public class Font : IDisposable
 	{
 		if (fontPtr == IntPtr.Zero)
 			throw invalidFontException;
-		
+
 		Platform.FontGetCharacter(fontPtr, glyphIndex, scale,
 			out int width, out int height, out float advance, out float offsetX, out float offsetY, out int visible);
 

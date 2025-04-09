@@ -43,7 +43,7 @@ public abstract class StorageContainer : IDisposable
 	/// </summary>
 	public virtual bool CreateDirectory(string path)
 		=> throw new InvalidOperationException("This type of Storage Container is not Writable");
-	
+
 	/// <summary>
 	/// Opens a Stream to create a new file at the given Path in the Storage Container, if the Storage Container is Writable
 	/// </summary>

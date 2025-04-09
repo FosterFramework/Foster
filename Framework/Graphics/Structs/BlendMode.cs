@@ -24,8 +24,8 @@ public struct BlendMode : IEquatable<BlendMode>
 	}
 
 	public BlendMode(
-		BlendOp colorOperation, BlendFactor colorSource, BlendFactor colorDestination, 
-		BlendOp alphaOperation, BlendFactor alphaSource, BlendFactor alphaDestination, 
+		BlendOp colorOperation, BlendFactor colorSource, BlendFactor colorDestination,
+		BlendOp alphaOperation, BlendFactor alphaSource, BlendFactor alphaDestination,
 		BlendMask mask, Color color)
 	{
 		ColorOperation = colorOperation;

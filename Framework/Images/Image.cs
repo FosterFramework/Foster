@@ -5,7 +5,7 @@ namespace Foster.Framework;
 
 /// <summary>
 /// A 2D RGBA representation stored offline.
-/// To draw images to the screen use a <see cref="Texture"/> 
+/// To draw images to the screen use a <see cref="Texture"/>
 /// </summary>
 public class Image : IDisposable
 {
