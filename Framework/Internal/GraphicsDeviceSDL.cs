@@ -61,7 +61,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	private nint copyPass;
 
 	// render pass
-	private Target? renderPassTarget;
+	private IDrawableTarget? renderPassTarget;
 	private Point2 renderPassTargetSize;
 	private nint renderPassPipeline;
 	private IHandle? renderPassMesh;
@@ -154,7 +154,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		};
 
 		device = SDL_CreateGPUDevice(
-			format_flags: 
+			format_flags:
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV |
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL |
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_MSL,
@@ -621,7 +621,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (!mesh.Disposed)
 		{
 			var res = (MeshResource)mesh;
-			
+
 			lock (resources)
 			{
 				resources.Remove(mesh);
@@ -649,7 +649,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 			// TODO: Upon first creation we should probably just create a perfectly sized buffer, and afterward next Po2
 			int size;
-			if(res.Capacity == 0)
+			if (res.Capacity == 0)
 			{
 				// never create a buffer that has 0 length
 				size = Math.Max(8, required);
@@ -677,7 +677,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 			if (props != 0)
 				SDL_DestroyProperties(props);
-			
+
 			if (res.Handle == nint.Zero)
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUBuffer), "Mesh Creation Failed");
 			res.Capacity = size;
@@ -772,7 +772,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (device == nint.Zero)
 			throw deviceNotCreated;
 
-		var format = driver switch 
+		var format = driver switch
 		{
 			GraphicsDriver.Vulkan => SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
 			GraphicsDriver.D3D12 => SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL,
@@ -851,7 +851,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				resources.Remove(shader);
 				res.Destroyed = true;
 			}
-			
+
 			ReleaseGraphicsPipelinesAssociatedWith(res);
 			SDL_ReleaseGPUShader(device, res.VertexShader);
 			SDL_ReleaseGPUShader(device, res.FragmentShader);
@@ -884,7 +884,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		var mesh = command.Mesh;
 
 		// try to start a render pass
-		if (!BeginRenderPassOnDrawableTarget(target, default))
+		if (!BeginRenderPass(target, default))
 			return;
 
 		// set viewport
@@ -1032,7 +1032,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		if (mask != ClearMask.None)
 		{
-			BeginRenderPassOnDrawableTarget(target, new()
+			BeginRenderPass(target, new()
 			{
 				Color = mask.Has(ClearMask.Color) ? [..color] : null,
 				Depth = mask.Has(ClearMask.Depth) ? depth : null,
@@ -1096,7 +1096,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		bufferUploadBufferOffset = 0;
 		bufferUploadCycleCount = 0;
 
-		// swapchain will need to be requested again now that we have a new 
+		// swapchain will need to be requested again now that we have a new
 		// render command buffer
 		swapchainTexture = null;
 	}
@@ -1115,19 +1115,11 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		copyPass = nint.Zero;
 	}
 
-	private bool BeginRenderPassOnDrawableTarget(IDrawableTarget target, ClearInfo clear)
-	{
-		if (target.Surface is Target renderTarget)
-			return BeginRenderPass(renderTarget, clear);
-		else
-			return BeginRenderPass(null, clear);
-	}
-
-	private bool BeginRenderPass(Target? target, ClearInfo clear)
+	private bool BeginRenderPass(IDrawableTarget drawableTarget, ClearInfo clear)
 	{
 		// only begin if we're not already in a render pass that is matching
 		if (renderPass != nint.Zero &&
-			renderPassTarget == target &&
+			renderPassTarget == drawableTarget &&
 			!clear.Color.HasValue &&
 			!clear.Depth.HasValue &&
 			!clear.Stencil.HasValue)
@@ -1135,65 +1127,11 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		EndRenderPass();
 
-		// set next target
-		renderPassTarget = target;
-
 		// configure lists of textures used
-		StackList4<nint> colorTargets = new();
-		nint depthStencilTarget = default;
-
-		// drawing to a specific target
-		if (target != null)
-		{
-			renderPassTargetSize = target.Bounds.Size;
-
-			foreach (var it in target.Attachments)
-			{
-				var res = ((TextureResource)it.Resource).Texture;
-
-				// drawing to an invalid target
-				if (it.IsDisposed || !it.IsTargetAttachment || res == nint.Zero)
-					throw new Exception("Drawing to a Disposed or Invalid Texture");
-
-				if (it.Format.IsDepthStencilFormat())
-					depthStencilTarget = res;
-				else
-					colorTargets.Add(res);
-			}
-		}
-		else
-		{
-			// request swapchain if we don't have it yet
-			if (swapchainTexture == null)
-			{
-				swapchainTexture = nint.Zero;
-
-				if (SDL_WaitAndAcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
-				{
-					if (scTex != nint.Zero)
-					{
-						swapchainTexture = scTex;
-						swapchainSize = new Point2((int)scW, (int)scH);
-					}
-				}
-				else
-				{
-					Log.Warning($"{nameof(SDL_WaitAndAcquireGPUSwapchainTexture)} failed: {SDL_GetError()}");
-				}
-			}
-
-			// draw to the swapchain
-			if (swapchainTexture != nint.Zero)
-			{
-				renderPassTargetSize = swapchainSize;
-				colorTargets.Add(swapchainTexture.Value);
-			}
-			// don't have a swapchain
-			else
-			{
-				return false;
-			}
-		}
+		renderPassTarget = drawableTarget;
+		if (!GetDrawTargetAttachments(drawableTarget, out var colorTargets, out var depthStencilTarget, out var size))
+			return false;
+		renderPassTargetSize = size;
 
 		Span<SDL_GPUColorTargetInfo> colorInfo = stackalloc SDL_GPUColorTargetInfo[colorTargets.Count];
 
@@ -1282,29 +1220,18 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		);
 
 		// combine with target attachment formats
-		if (command.Target is Target t)
-		{
-			foreach (var it in t.Attachments)
-				hash = HashCode.Combine(hash, ((TextureResource)it.Resource).Format);
-		}
-		else
-		{
-			hash = HashCode.Combine(hash, swapchainFormat);
-		}
+		foreach (var format in GetDrawTargetFormats(command.Target))
+			hash = HashCode.Combine(hash, format);
 
 		// try to find an existing pipeline
 		var pipeline = shaderRes.Pipelines.GetOrAdd<(GraphicsDeviceSDL, DrawCommand)>(hash, static (hash, args) =>
 		{
 			var self = args.Item1;
 			var command = args.Item2;
-			var target = command.Target as Target;
-			var mesh = command.Mesh;
-			var material = command.Material;
-			var shader = material.Shader!;
-			var shaderRes = (ShaderResource)shader.Resource;
-			var vertexFormat = mesh.VertexFormat;
+			var shaderRes = (ShaderResource)command.Material.Shader!.Resource;
+			var vertexFormat = command.Mesh.VertexFormat;
 
-			var colorBlendState = self.GetBlendState(command.BlendMode);
+			var colorBlendState = GetBlendState(command.BlendMode);
 			var colorAttachments = stackalloc SDL_GPUColorTargetDescription[4];
 			var colorAttachmentCount = 0;
 			var depthStencilAttachment = SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_INVALID;
@@ -1312,35 +1239,21 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			var vertexAttributes = stackalloc SDL_GPUVertexAttribute[vertexFormat.Elements.Count];
 			var vertexOffset = 0;
 
-			// target attachments
-			if (target != null)
+			foreach (var format in self.GetDrawTargetFormats(command.Target))
 			{
-				foreach (var it in target.Attachments)
+				if (IsDepthTextureFormat(format))
 				{
-					if (it.Format.IsDepthStencilFormat())
-					{
-						depthStencilAttachment = ((TextureResource)it.Resource).Format;
-					}
-					else
-					{
-						colorAttachments[colorAttachmentCount] = new()
-						{
-							format = ((TextureResource)it.Resource).Format,
-							blend_state = colorBlendState
-						};
-						colorAttachmentCount++;
-					}
+					depthStencilAttachment = format;
 				}
-			}
-			// swapchain attachment
-			else
-			{
-				colorAttachments[colorAttachmentCount] = new()
+				else
 				{
-					format = self.swapchainFormat,
-					blend_state = colorBlendState
-				};
-				colorAttachmentCount++;
+					colorAttachments[colorAttachmentCount] = new()
+					{
+						format = format,
+						blend_state = colorBlendState
+					};
+					colorAttachmentCount++;
+				}
 			}
 
 			vertexBindings[0] = new()
@@ -1358,7 +1271,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				{
 					location = (uint)it.Index,
 					buffer_slot = 0,
-					format = self.GetVertexFormat(it.Type, it.Normalized),
+					format = GetVertexFormat(it.Type, it.Normalized),
 					offset = (uint)vertexOffset
 				};
 				vertexOffset += it.Type.SizeInBytes();
@@ -1428,12 +1341,101 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			var pipeline = SDL_CreateGPUGraphicsPipeline(self.device, info);
 			if (pipeline == nint.Zero)
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUGraphicsPipeline));
-
 			return pipeline;
 
 		}, (this, command));
 
 		return pipeline;
+	}
+
+	private StackList8<SDL_GPUTextureFormat> GetDrawTargetFormats(IDrawableTarget drawableTarget)
+	{
+		StackList8<SDL_GPUTextureFormat> formats = new();
+
+		// get specific target attachment formats
+		if (drawableTarget.Surface is Target target)
+		{
+			foreach (var it in target.Attachments)
+				formats.Add(GetTextureFormat(it.Format));
+		}
+		// get swapchain formats
+		else if (drawableTarget.Surface is Window)
+		{
+			formats.Add(swapchainFormat);
+		}
+		else
+		{
+			throw new Exception("Invalid Draw Target");
+		}
+
+		return formats;
+	}
+
+	private bool GetDrawTargetAttachments(IDrawableTarget drawableTarget, out StackList4<nint> colorTargets, out nint depthTarget, out Point2 size)
+	{
+		colorTargets = default;
+		depthTarget = nint.Zero;
+
+		// drawing to a specific target
+		if (drawableTarget.Surface is Target target)
+		{
+			size = target.Bounds.Size;
+
+			foreach (var it in target.Attachments)
+			{
+				var res = ((TextureResource)it.Resource).Texture;
+
+				// drawing to an invalid target
+				if (it.IsDisposed || !it.IsTargetAttachment || res == nint.Zero)
+					throw new Exception("Drawing to a Disposed or Invalid Texture");
+
+				if (it.Format.IsDepthStencilFormat())
+					depthTarget = res;
+				else
+					colorTargets.Add(res);
+			}
+		}
+		// draw to the swapchain
+		else if (drawableTarget.Surface is Window)
+		{
+			// request swapchain if we don't have it yet
+			if (swapchainTexture == null)
+			{
+				swapchainTexture = nint.Zero;
+
+				if (SDL_WaitAndAcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
+				{
+					if (scTex != nint.Zero)
+					{
+						swapchainTexture = scTex;
+						swapchainSize = new Point2((int)scW, (int)scH);
+					}
+				}
+				else
+				{
+					Log.Warning($"{nameof(SDL_WaitAndAcquireGPUSwapchainTexture)} failed: {SDL_GetError()}");
+				}
+			}
+
+			// draw to the swapchain
+			if (swapchainTexture != nint.Zero)
+			{
+				size = swapchainSize;
+				colorTargets.Add(swapchainTexture.Value);
+			}
+			// don't have a swapchain
+			else
+			{
+				size = default;
+				return false;
+			}
+		}
+		else
+		{
+			throw new Exception("Invalid Draw Target");
+		}
+
+		return true;
 	}
 
 	private void ReleaseGraphicsPipelinesAssociatedWith(ShaderResource shader)
@@ -1449,7 +1451,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 	}
 
-	private SDL_GPUColorTargetBlendState GetBlendState(BlendMode blend)
+	private static SDL_GPUColorTargetBlendState GetBlendState(BlendMode blend)
 	{
 		SDL_GPUBlendFactor GetFactor(BlendFactor factor) => factor switch
 		{
@@ -1511,7 +1513,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 	private nint GetSampler(in TextureSampler sampler)
 	{
-		SDL_GPUSamplerAddressMode GetWrapMode(TextureWrap wrap) => wrap switch
+		static SDL_GPUSamplerAddressMode GetWrapMode(TextureWrap wrap) => wrap switch
 		{
 			TextureWrap.Repeat => SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
 			TextureWrap.MirroredRepeat => SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_MIRRORED_REPEAT,
@@ -1547,7 +1549,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		return result;
 	}
 
-	private SDL_GPUVertexElementFormat GetVertexFormat(VertexType type, bool normalized)
+	private static SDL_GPUVertexElementFormat GetVertexFormat(VertexType type, bool normalized)
 	{
 		return (type, normalized) switch
 		{
@@ -1572,7 +1574,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		};
 	}
 
-	private SDL_GPUTextureFormat GetTextureFormat(TextureFormat format) => format switch
+	private static SDL_GPUTextureFormat GetTextureFormat(TextureFormat format) => format switch
 	{
 		TextureFormat.R8G8B8A8 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
 		TextureFormat.R8 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_R8_UNORM,
@@ -1584,7 +1586,17 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		_ => throw new System.ComponentModel.InvalidEnumArgumentException(nameof(format), (int)format, typeof(TextureFormat)),
 	};
 
-	private SDL_FColor GetColor(Color color)
+	private static bool IsDepthTextureFormat(SDL_GPUTextureFormat format) => format switch
+	{
+		SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D16_UNORM => true,
+		SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D24_UNORM => true,
+		SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D32_FLOAT => true,
+		SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT => true,
+		SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT => true,
+		_ => false
+	};
+
+	private static SDL_FColor GetColor(Color color)
 	{
 		var vec4 = color.ToVector4();
 		return new() { r = vec4.X, g = vec4.Y, b = vec4.Z, a = vec4.W, };
