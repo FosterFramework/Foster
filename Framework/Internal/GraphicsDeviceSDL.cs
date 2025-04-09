@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Text;
 using static SDL3.SDL;
@@ -42,6 +43,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	{
 		public nint VertexShader;
 		public nint FragmentShader;
+		public readonly ConcurrentDictionary<int, nint> Pipelines = [];
 	}
 
 	private record struct ClearInfo(StackList4<Color>? Color, float? Depth, int? Stencil);
@@ -72,11 +74,11 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	// state
 	private GraphicsDriver driver;
 	private bool vsyncEnabled;
+	private nint swapchainTexture;
+	private Point2 swapchainSize;
+	private SDL_GPUTextureFormat swapchainFormat;
 
 	// tracked / allocated resources
-	private readonly Dictionary<int, nint> graphicsPipelinesByHash = [];
-	private readonly Dictionary<nint, int> graphicsPipelinesToHash = [];
-	private readonly Dictionary<IHandle, List<nint>> graphicsPipelinesByResource = [];
 	private readonly HashSet<IHandle> resources = [];
 	private readonly Dictionary<TextureSampler, nint> samplers = [];
 	private IHandle? emptyDefaultTexture;
@@ -95,9 +97,6 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	// exceptions
 	private readonly Exception deviceNotCreated = new("GPU Device has not been created");
 	private readonly Exception deviceWasDestroyed = new("This Resource was created with a previous GPU Device which has been destroyed");
-
-	// framebuffer
-	private Target? frameBuffer;
 
 	private readonly GraphicsDriver preferred;
 	private readonly Version version;
@@ -225,9 +224,8 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			SetTextureData(emptyDefaultTexture, new nint(data), 4);
 		}
 
-		// create framebuffer
-		SDL_GetWindowSizeInPixels(window, out int w, out int h);
-		frameBuffer = new Target(this, w, h, [TextureFormat.R8G8B8A8]);
+		// get swapchain texture format
+		swapchainFormat = SDL_GetGPUSwapchainTextureFormat(device, window);
 
 		// default to 3 frames in flight
 		SDL_SetGPUAllowedFramesInFlight(device, 3);
@@ -243,10 +241,6 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		SDL_SubmitGPUCommandBuffer(cmdUpload);
 		SDL_SubmitGPUCommandBuffer(cmdRender);
 		SDL_WaitForGPUIdle(device);
-
-		// destroy framebuffer
-		frameBuffer?.Dispose();
-		frameBuffer = null;
 
 		// destroy default texture
 		{
@@ -272,16 +266,6 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			bufferUploadBuffer = nint.Zero;
 		}
 
-		// release pipelines
-		lock (graphicsPipelinesByHash)
-		{
-			foreach (var pipeline in graphicsPipelinesByHash.Values)
-				SDL_ReleaseGPUGraphicsPipeline(device, pipeline);
-			graphicsPipelinesByHash.Clear();
-			graphicsPipelinesToHash.Clear();
-			graphicsPipelinesByResource.Clear();
-		}
-
 		// release samplers
 		lock (samplers)
 		{
@@ -302,64 +286,28 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		driver = GraphicsDriver.None;
 	}
 
-	internal override void Present()
+	internal override void BeginRender()
 	{
-		EndCopyPass();
-		EndRenderPass();
+		swapchainTexture = nint.Zero;
 
-		// if swapchain can be acquired, blit framebuffer to it
 		if (SDL_WaitAndAcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
 		{
 			if (scTex != nint.Zero)
 			{
-				var resource = (TextureResource)frameBuffer?.Attachments[0].Resource!;
-				var blitInfo = new SDL_GPUBlitInfo();
-
-				blitInfo.source.texture = resource.Texture;
-				blitInfo.source.mip_level = 0;
-				blitInfo.source.layer_or_depth_plane = 0;
-				blitInfo.source.x = 0;
-				blitInfo.source.y = 0;
-				blitInfo.source.w = (uint)resource.Width;
-				blitInfo.source.h = (uint)resource.Height;
-
-				blitInfo.destination.texture = scTex;
-				blitInfo.destination.mip_level = 0;
-				blitInfo.destination.layer_or_depth_plane = 0;
-				blitInfo.destination.x = 0;
-				blitInfo.destination.y = 0;
-				blitInfo.destination.w = scW;
-				blitInfo.destination.h = scH;
-
-				blitInfo.load_op = SDL_GPULoadOp.SDL_GPU_LOADOP_DONT_CARE;
-				blitInfo.clear_color.r = 0;
-				blitInfo.clear_color.g = 0;
-				blitInfo.clear_color.b = 0;
-				blitInfo.clear_color.a = 0;
-				blitInfo.flip_mode = SDL_FlipMode.SDL_FLIP_NONE;
-				blitInfo.filter = SDL_GPUFilter.SDL_GPU_FILTER_LINEAR;
-				blitInfo.cycle = false;
-
-				SDL_BlitGPUTexture(
-					cmdRender,
-					blitInfo
-				);
-
-				// resize framebuffer if needed
-				// TODO: is this correct?
-				if (scW != (uint)resource.Width || scH != (uint)resource.Height)
-				{
-					frameBuffer?.Dispose();
-					frameBuffer = new Target(this, (int)scW, (int)scH);
-				}
+				swapchainTexture = scTex;
+				swapchainSize = new Point2((int)scW, (int)scH);
 			}
 		}
 		else
 		{
 			Log.Warning($"{nameof(SDL_WaitAndAcquireGPUSwapchainTexture)} failed: {SDL_GetError()}");
 		}
+	}
 
-		// flush commands from this frame
+	internal override void EndRender()
+	{
+		EndCopyPass();
+		EndRenderPass();
 		FlushCommands();
 	}
 
@@ -610,7 +558,6 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				res.Destroyed = true;
 			}
 
-			ReleaseGraphicsPipelinesAssociatedWith(texture);
 			SDL_ReleaseGPUTexture(device, res.Texture);
 		}
 	}
@@ -923,7 +870,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				res.Destroyed = true;
 			}
 			
-			ReleaseGraphicsPipelinesAssociatedWith(shader);
+			ReleaseGraphicsPipelinesAssociatedWith(res);
 			SDL_ReleaseGPUShader(device, res.VertexShader);
 			SDL_ReleaseGPUShader(device, res.FragmentShader);
 		}
@@ -1191,8 +1138,6 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 	private bool BeginRenderPass(Target? target, ClearInfo clear)
 	{
-		target ??= frameBuffer;
-
 		// only begin if we're not already in a render pass that is matching
 		if (renderPass != nint.Zero &&
 			renderPassTarget == target &&
@@ -1230,9 +1175,15 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			}
 		}
 		// drawing to the backbuffer/swapchain
+		else if (swapchainTexture != nint.Zero)
+		{
+			renderPassTargetSize = swapchainSize;
+			colorTargets.Add(swapchainTexture);
+		}
+		// don't have a swapchain to draw to, cancel render pass
 		else
 		{
-			throw new Exception("No Target");
+			return false;
 		}
 
 		Span<SDL_GPUColorTargetInfo> colorInfo = stackalloc SDL_GPUColorTargetInfo[colorTargets.Count];
@@ -1305,21 +1256,15 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 	private nint GetGraphicsPipeline(in DrawCommand command)
 	{
-		var target = command.Target as Target ?? frameBuffer;
-		var mesh = command.Mesh;
-		var material = command.Material;
-		var shader = material.Shader!;
+		var shader = command.Material.Shader!;
 		var shaderRes = (ShaderResource)shader.Resource;
-		var vertexFormat = mesh.VertexFormat;
-
 		if (shaderRes.GraphicsDevice != this)
 			throw deviceWasDestroyed;
 
 		// build a big hashcode of everything in use
 		var hash = HashCode.Combine(
-			target,
 			shader.Resource,
-			mesh.VertexFormat,
+			command.Mesh.VertexFormat,
 			command.CullMode,
 			command.DepthCompare,
 			command.DepthTestEnabled,
@@ -1327,10 +1272,30 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			command.BlendMode
 		);
 
-		// try to find an existing pipeline
-		if (!graphicsPipelinesByHash.TryGetValue(hash, out var pipeline))
+		// combine with target attachment formats
+		if (command.Target is Target t)
 		{
-			var colorBlendState = GetBlendState(command.BlendMode);
+			foreach (var it in t.Attachments)
+				hash = HashCode.Combine(hash, ((TextureResource)it.Resource).Format);
+		}
+		else
+		{
+			hash = HashCode.Combine(hash, swapchainFormat);
+		}
+
+		// try to find an existing pipeline
+		var pipeline = shaderRes.Pipelines.GetOrAdd<(GraphicsDeviceSDL, DrawCommand)>(hash, static (hash, args) =>
+		{
+			var self = args.Item1;
+			var command = args.Item2;
+			var target = command.Target as Target;
+			var mesh = command.Mesh;
+			var material = command.Material;
+			var shader = material.Shader!;
+			var shaderRes = (ShaderResource)shader.Resource;
+			var vertexFormat = mesh.VertexFormat;
+
+			var colorBlendState = self.GetBlendState(command.BlendMode);
 			var colorAttachments = stackalloc SDL_GPUColorTargetDescription[4];
 			var colorAttachmentCount = 0;
 			var depthStencilAttachment = SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_INVALID;
@@ -1338,6 +1303,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			var vertexAttributes = stackalloc SDL_GPUVertexAttribute[vertexFormat.Elements.Count];
 			var vertexOffset = 0;
 
+			// target attachments
 			if (target != null)
 			{
 				foreach (var it in target.Attachments)
@@ -1357,9 +1323,15 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 					}
 				}
 			}
+			// swapchain attachment
 			else
 			{
-				throw new Exception("Trying to create Pipeline on invalid Target");
+				colorAttachments[colorAttachmentCount] = new()
+				{
+					format = self.swapchainFormat,
+					blend_state = colorBlendState
+				};
+				colorAttachmentCount++;
 			}
 
 			vertexBindings[0] = new()
@@ -1377,7 +1349,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				{
 					location = (uint)it.Index,
 					buffer_slot = 0,
-					format = GetVertexFormat(it.Type, it.Normalized),
+					format = self.GetVertexFormat(it.Type, it.Normalized),
 					offset = (uint)vertexOffset
 				};
 				vertexOffset += it.Type.SizeInBytes();
@@ -1444,53 +1416,27 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				}
 			};
 
-			pipeline = SDL_CreateGPUGraphicsPipeline(device, info);
+			var pipeline = SDL_CreateGPUGraphicsPipeline(self.device, info);
 			if (pipeline == nint.Zero)
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUGraphicsPipeline));
 
-			lock (graphicsPipelinesByHash)
-			{
-				// track which shader uses this pipeline
-				{
-					if (!graphicsPipelinesByResource.TryGetValue(shader.Resource, out var list))
-						graphicsPipelinesByResource[shader.Resource] = list = [];
-					list.Add(pipeline);
-				}
+			return pipeline;
 
-				// track which textures uses this pipeline
-				if (target != null)
-				{
-					foreach (var it in target.Attachments)
-					{
-						if (!graphicsPipelinesByResource.TryGetValue(it.Resource, out var list))
-							graphicsPipelinesByResource[it.Resource] = list = [];
-						list.Add(pipeline);
-					}
-				}
-
-				graphicsPipelinesByHash[hash] = pipeline;
-				graphicsPipelinesToHash[pipeline] = hash;
-			}
-		}
+		}, (this, command));
 
 		return pipeline;
 	}
 
-	private void ReleaseGraphicsPipelinesAssociatedWith(IHandle resource)
+	private void ReleaseGraphicsPipelinesAssociatedWith(ShaderResource shader)
 	{
-		lock (graphicsPipelinesByHash)
+		while (!shader.Pipelines.IsEmpty)
 		{
-			if (!graphicsPipelinesByResource.Remove(resource, out var pipelines))
-				return;
-
-			foreach (var pipeline in pipelines)
-			{
-				if (!graphicsPipelinesToHash.Remove(pipeline, out var hash))
-					continue;
-
-				graphicsPipelinesByHash.Remove(hash);
-				SDL_ReleaseGPUGraphicsPipeline(device, pipeline);
-			}
+			var removing = shader.Pipelines.Keys.ToArray();
+			foreach (var it in removing)
+				if (shader.Pipelines.TryRemove(it, out var pipeline))
+				{
+					SDL_ReleaseGPUGraphicsPipeline(device, pipeline);
+				}
 		}
 	}
 

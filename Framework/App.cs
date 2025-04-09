@@ -384,8 +384,9 @@ public abstract class App : IDisposable
 		// render
 		{
 			Time = Time.AdvanceRenderFrame();
+			GraphicsDevice.BeginRender();
 			Render();
-			GraphicsDevice.Present();
+			GraphicsDevice.EndRender();
 		}
 	}
 
