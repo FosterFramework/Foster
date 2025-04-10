@@ -46,7 +46,11 @@ internal static partial class Platform
 	/// <summary>
 	/// Frees a UTF8 string that was allocated from <seealso cref="AllocateUTF8"/>
 	/// </summary>
-	public static void FreeUTF8(nint ptr) => Marshal.FreeHGlobal(ptr);
+	public static void FreeUTF8(nint ptr)
+		=> Marshal.FreeHGlobal(ptr);
+
+	public static byte[] ReadEmbeddedBytes(string name)
+		=> Calc.ReadEmbeddedBytes(typeof(Platform).Assembly, name);
 
 	/// <summary>
 	/// Creates an Exception with information from SDL_GetError()
