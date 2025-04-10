@@ -1305,7 +1305,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				multisample_state = new()
 				{
 					sample_count = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1,
-					sample_mask = 0xFFFFFFFF
+					sample_mask = 0
 				},
 				depth_stencil_state = new()
 				{
