@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
@@ -8,16 +9,33 @@ namespace Foster.Framework;
 /// Similar to <seealso cref="PosTexColVertex"/> but it has an extra "mode" color value for various effects.
 /// </summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct BatcherVertex(Vector2 position, Vector2 texcoord, Color color, Color mode) : IVertex
+public struct BatcherVertex : IVertex
 {
-	public Vector2 Pos = position;
-	public Vector2 Tex = texcoord;
-	public Color Col = color;
+	public Vector2 Pos;
+	public Vector2 Tex;
+	public Color Col;
 
 	/// <summary>
 	/// R = Multiply, G = Wash, B = Fill, A = Padding
 	/// </summary>
-	public Color Mode = mode;
+	public Color Mode;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public BatcherVertex(Vector2 position, Vector2 texcoord, Color color, Color mode)
+	{
+		Pos = position;
+		Tex = texcoord;
+		Col = color;
+		Mode = mode;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public BatcherVertex(Vector2 position, Color color, Color mode)
+	{
+		Pos = position;
+		Col = color;
+		Mode = mode;
+	}
 
 	public readonly VertexFormat Format => format;
 

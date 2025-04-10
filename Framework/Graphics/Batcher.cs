@@ -88,20 +88,25 @@ public class Batcher : IDisposable
 	private readonly List<Batch> batches = [];
 	private readonly List<Material> materialsUsed = [];
 	private readonly Queue<Material> materialsPool = [];
-	private readonly Mesh mesh;
+	private readonly Mesh<BatcherVertex, int> mesh;
 
 	private Color mode = new(255, 0, 0, 0);
 	private Batch currentBatch;
-	private IntPtr vertexPtr = IntPtr.Zero;
-	private IntPtr indexPtr = IntPtr.Zero;
+	private BatcherVertex[] vertexBuffer = [];
+	private int[] indexBuffer = [];
 	private int vertexCount = 0;
-	private int vertexCapacity = 0;
 	private int indexCount = 0;
-	private int indexCapacity = 0;
 	private int currentBatchInsert;
 	private bool meshDirty;
 
-	private struct Batch(GraphicsDevice graphicsDevice, Material material, BlendMode blend, Texture? texture, TextureSampler sampler, int offset, int elements)
+	private static readonly int[] TriangleIndices = [ 0, 1, 2 ];
+	private static readonly int[] QuadIndices = [ 0, 1, 2, 0, 2, 3 ];
+
+	private static readonly Color NormalMode = new(255, 0, 0, 0);
+	private static readonly Color WashMode = new(0, 255, 0, 0);
+	private static readonly Color FillMode = new(0, 0, 255, 0);
+
+	private struct Batch(Material material, BlendMode blend, Texture? texture, TextureSampler sampler, int offset, int elements)
 	{
 		public int Layer = 0;
 		public Material Material = material;
@@ -111,7 +116,6 @@ public class Batcher : IDisposable
 		public TextureSampler Sampler = sampler;
 		public int Offset = offset;
 		public int Elements = elements;
-		public bool FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && graphicsDevice.OriginBottomLeft;
 	}
 
 	public Batcher(GraphicsDevice graphicsDevice, string? name = null)
@@ -132,10 +136,10 @@ public class Batcher : IDisposable
 	/// </summary>
 	public void Upload()
 	{
-		if (meshDirty && indexPtr != IntPtr.Zero && vertexPtr != IntPtr.Zero)
+		if (meshDirty && indexCount > 0 && vertexCount > 0)
 		{
-			mesh.SetIndices(indexPtr, indexCount);
-			mesh.SetVertices(vertexPtr, vertexCount);
+			mesh.SetIndices(indexBuffer.AsSpan(0, indexCount));
+			mesh.SetVertices(vertexBuffer.AsSpan(0, vertexCount));
 			meshDirty = false;
 		}
 	}
@@ -143,20 +147,6 @@ public class Batcher : IDisposable
 	public void Dispose()
 	{
 		GC.SuppressFinalize(this);
-
-		if (vertexPtr != IntPtr.Zero)
-		{
-			Marshal.FreeHGlobal(vertexPtr);
-			vertexPtr = IntPtr.Zero;
-			vertexCapacity = 0;
-		}
-
-		if (indexPtr != IntPtr.Zero)
-		{
-			Marshal.FreeHGlobal(indexPtr);
-			indexPtr = IntPtr.Zero;
-			indexCapacity = 0;
-		}
 	}
 
 	/// <summary>
@@ -167,7 +157,7 @@ public class Batcher : IDisposable
 		vertexCount = 0;
 		indexCount = 0;
 		currentBatchInsert = 0;
-		currentBatch = new Batch(GraphicsDevice, defaultMaterial, BlendMode.Premultiply, null, new(), 0, 0);
+		currentBatch = new Batch(defaultMaterial, BlendMode.Premultiply, null, new(), 0, 0);
 		mode = new Color(255, 0, 0, 0);
 		batches.Clear();
 		matrixStack.Clear();
@@ -218,7 +208,7 @@ public class Batcher : IDisposable
 		if (target == null)
 			throw new Exception("Target cannot be null");
 
-		if (indexPtr == IntPtr.Zero || vertexPtr == IntPtr.Zero)
+		if (vertexCount <= 0 || indexCount <= 0)
 			return;
 
 		if (batches.Count <= 0 && currentBatch.Elements <= 0)
@@ -292,14 +282,12 @@ public class Batcher : IDisposable
 		if (currentBatch.Texture == null || currentBatch.Elements == 0)
 		{
 			currentBatch.Texture = texture;
-			currentBatch.FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && GraphicsDevice.OriginBottomLeft;
 		}
 		else if (currentBatch.Texture != texture)
 		{
 			batches.Insert(currentBatchInsert, currentBatch);
 
 			currentBatch.Texture = texture;
-			currentBatch.FlipVerticalUV = (texture?.IsTargetAttachment ?? false) && GraphicsDevice.OriginBottomLeft;
 			currentBatch.Offset += currentBatch.Elements;
 			currentBatch.Elements = 0;
 			currentBatchInsert++;
@@ -568,9 +556,9 @@ public class Batcher : IDisposable
 	{
 		var value = mode switch
 		{
-			Modes.Normal => new Color(255, 0, 0, 0),
-			Modes.Wash => new Color(0, 255, 0, 0),
-			Modes.Fill => new Color(0, 0, 255, 0),
+			Modes.Normal => NormalMode,
+			Modes.Wash => WashMode,
+			Modes.Fill => FillMode,
 			_ => throw new NotImplementedException()
 		};
 
@@ -600,17 +588,17 @@ public class Batcher : IDisposable
 
 	#region Line
 
-	public void Line(in Vector2 from, in Vector2 to, float thickness, in Color color)
+	public void Line(in Vector2 from, in Vector2 to, float lineWeight, in Color color)
 	{
 		var normal = (to - from).Normalized();
-		var perp = new Vector2(-normal.Y, normal.X) * thickness * .5f;
+		var perp = new Vector2(-normal.Y, normal.X) * lineWeight * .5f;
 		Quad(from + perp, from - perp, to - perp, to + perp, color);
 	}
 
-	public void Line(in Vector2 from, in Vector2 to, float thickness, in Color fromColor, in Color toColor)
+	public void Line(in Vector2 from, in Vector2 to, float lineWeight, in Color fromColor, in Color toColor)
 	{
 		var normal = (to - from).Normalized();
-		var perp = new Vector2(-normal.Y, normal.X) * thickness * .5f;
+		var perp = new Vector2(-normal.Y, normal.X) * lineWeight * .5f;
 		Quad(from + perp, from - perp, to - perp, to + perp, fromColor, fromColor, toColor, toColor);
 	}
 
@@ -618,12 +606,12 @@ public class Batcher : IDisposable
 
 	#region Dashed Line
 
-	public void LineDashed(Vector2 from, Vector2 to, float thickness, Color color, float dashLength, float offsetPercent)
+	public void LineDashed(Vector2 from, Vector2 to, float lineWeight, Color color, float dashLength, float offsetPercent)
 	{
 		var diff = to - from;
 		var dist = diff.Length();
 		var axis = diff.Normalized();
-		var perp = axis.TurnLeft() * (thickness * 0.5f);
+		var perp = axis.TurnLeft() * (lineWeight * 0.5f);
 		offsetPercent = ((offsetPercent % 1f) + 1f) % 1f;
 
 		var startD = dashLength * offsetPercent * 2f;
@@ -647,151 +635,82 @@ public class Batcher : IDisposable
 
 	public void Quad(in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 v3, in Color color)
 	{
-		PushQuad();
-		EnsureVertexCapacity(vertexCount + 4);
-
-		unsafe
-		{
-			var mode = new Color(0, 0, 255, 0);
-			var vertexArray = new Span<BatcherVertex>((BatcherVertex*)vertexPtr + vertexCount, 4);
-
-			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
-			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
-			vertexArray[2].Pos = Vector2.Transform(v2, Matrix);
-			vertexArray[3].Pos = Vector2.Transform(v3, Matrix);
-			vertexArray[0].Col = color;
-			vertexArray[1].Col = color;
-			vertexArray[2].Col = color;
-			vertexArray[3].Col = color;
-			vertexArray[0].Mode = mode;
-			vertexArray[1].Mode = mode;
-			vertexArray[2].Mode = mode;
-			vertexArray[3].Mode = mode;
-		}
-
-		vertexCount += 4;
+		Append(
+			vertices: [
+				new(Vector2.Transform(v0, Matrix), color, FillMode),
+				new(Vector2.Transform(v1, Matrix), color, FillMode),
+				new(Vector2.Transform(v2, Matrix), color, FillMode),
+				new(Vector2.Transform(v3, Matrix), color, FillMode),
+			],
+			indices: QuadIndices
+		);
 	}
 
 	public void Quad(Texture? texture, in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 v3, in Vector2 t0, in Vector2 t1, in Vector2 t2, in Vector2 t3, in Color color)
 	{
 		SetTexture(texture);
-		PushQuad();
-		EnsureVertexCapacity(vertexCount + 4);
-
-		unsafe
-		{
-			var vertexArray = new Span<BatcherVertex>((BatcherVertex*)vertexPtr + vertexCount, 4);
-
-			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
-			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
-			vertexArray[2].Pos = Vector2.Transform(v2, Matrix);
-			vertexArray[3].Pos = Vector2.Transform(v3, Matrix);
-			vertexArray[0].Tex = t0;
-			vertexArray[1].Tex = t1;
-			vertexArray[2].Tex = t2;
-			vertexArray[3].Tex = t3;
-			vertexArray[0].Col = color;
-			vertexArray[1].Col = color;
-			vertexArray[2].Col = color;
-			vertexArray[3].Col = color;
-			vertexArray[0].Mode = mode;
-			vertexArray[1].Mode = mode;
-			vertexArray[2].Mode = mode;
-			vertexArray[3].Mode = mode;
-
-			if (currentBatch.FlipVerticalUV)
-				FlipVerticalUVs(vertexPtr, vertexCount, 4);
-		}
-
-		vertexCount += 4;
+		Append(
+			vertices: [
+				new(Vector2.Transform(v0, Matrix), t0, color, mode),
+				new(Vector2.Transform(v1, Matrix), t1, color, mode),
+				new(Vector2.Transform(v2, Matrix), t2, color, mode),
+				new(Vector2.Transform(v3, Matrix), t3, color, mode),
+			],
+			indices: QuadIndices
+		);
 	}
 
 	public void Quad(in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 v3, in Color c0, in Color c1, in Color c2, in Color c3)
 	{
-		PushQuad();
-		EnsureVertexCapacity(vertexCount + 4);
-
-		unsafe
-		{
-			var mode = new Color(0, 0, 255, 0);
-			var vertexArray = new Span<BatcherVertex>((BatcherVertex*)vertexPtr + vertexCount, 4);
-
-			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
-			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
-			vertexArray[2].Pos = Vector2.Transform(v2, Matrix);
-			vertexArray[3].Pos = Vector2.Transform(v3, Matrix);
-			vertexArray[0].Col = c0;
-			vertexArray[1].Col = c1;
-			vertexArray[2].Col = c2;
-			vertexArray[3].Col = c3;
-			vertexArray[0].Mode = mode;
-			vertexArray[1].Mode = mode;
-			vertexArray[2].Mode = mode;
-			vertexArray[3].Mode = mode;
-		}
-
-		vertexCount += 4;
+		Append(
+			vertices: [
+				new(Vector2.Transform(v0, Matrix), c0, FillMode),
+				new(Vector2.Transform(v1, Matrix), c1, FillMode),
+				new(Vector2.Transform(v2, Matrix), c2, FillMode),
+				new(Vector2.Transform(v3, Matrix), c3, FillMode),
+			],
+			indices: QuadIndices
+		);
 	}
 
 	public void Quad(Texture? texture, in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 v3, in Vector2 t0, in Vector2 t1, in Vector2 t2, in Vector2 t3, Color c0, Color c1, Color c2, Color c3)
 	{
 		SetTexture(texture);
-		PushQuad();
-		EnsureVertexCapacity(vertexCount + 4);
-
-		unsafe
-		{
-			var vertexArray = new Span<BatcherVertex>((BatcherVertex*)vertexPtr + vertexCount, 4);
-
-			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
-			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
-			vertexArray[2].Pos = Vector2.Transform(v2, Matrix);
-			vertexArray[3].Pos = Vector2.Transform(v3, Matrix);
-			vertexArray[0].Tex = t0;
-			vertexArray[1].Tex = t1;
-			vertexArray[2].Tex = t2;
-			vertexArray[3].Tex = t3;
-			vertexArray[0].Col = c0;
-			vertexArray[1].Col = c1;
-			vertexArray[2].Col = c2;
-			vertexArray[3].Col = c3;
-			vertexArray[0].Mode = mode;
-			vertexArray[1].Mode = mode;
-			vertexArray[2].Mode = mode;
-			vertexArray[3].Mode = mode;
-
-			if (currentBatch.FlipVerticalUV)
-				FlipVerticalUVs(vertexPtr, vertexCount, 4);
-		}
-
-		vertexCount += 4;
+		Append(
+			vertices: [
+				new(Vector2.Transform(v0, Matrix), t0, c0, mode),
+				new(Vector2.Transform(v1, Matrix), t1, c1, mode),
+				new(Vector2.Transform(v2, Matrix), t2, c2, mode),
+				new(Vector2.Transform(v3, Matrix), t3, c3, mode),
+			],
+			indices: QuadIndices
+		);
 	}
 
-	public void QuadLine(in Vector2 a, in Vector2 b, in Vector2 c, in Vector2 d, float thickness, in Color color)
-	{
-		Line(a, b, thickness, color);
-		Line(b, c, thickness, color);
-		Line(c, d, thickness, color);
-		Line(d, a, thickness, color);
-	}
+	public void QuadLine(in Vector2 a, in Vector2 b, in Vector2 c, in Vector2 d, float lineWeight, in Color color)
+		=> QuadLine(new Quad(a, b, c, d), lineWeight, color);
 
-	public void QuadLine(in Quad quad, float thickness, in Color color)
+	public void QuadLine(in Quad quad, float lineWeight, in Color color)
 	{
-		LineWithNormal(this, quad.A, quad.B, quad.NormalAB, thickness, color);
-		LineWithNormal(this, quad.B, quad.C, quad.NormalBC, thickness, color);
-		LineWithNormal(this, quad.C, quad.D, quad.NormalCD, thickness, color);
-		LineWithNormal(this, quad.D, quad.A, quad.NormalDA, thickness, color);
+		var off_ab = quad.NormalAB * lineWeight;
+		var off_bc = quad.NormalBC * lineWeight;
+		var off_cd = quad.NormalCD * lineWeight;
+		var off_da = quad.NormalDA * lineWeight;
 
-		static void LineWithNormal(Batcher batcher, in Vector2 from, in Vector2 to, in Vector2 normal, float thickness, in Color color)
-		{
-			var perp = normal * thickness * .5f;
-			batcher.Quad(from + perp, from - perp, to - perp, to + perp, color);
-		}
+		var aa = Intersection(quad.D + off_da, quad.A + off_da, quad.A + off_ab, quad.B + off_ab);
+		var bb = Intersection(quad.A + off_ab, quad.B + off_ab, quad.B + off_bc, quad.C + off_bc);
+		var cc = Intersection(quad.B + off_bc, quad.C + off_bc, quad.C + off_cd, quad.D + off_cd);
+		var dd = Intersection(quad.C + off_cd, quad.D + off_cd, quad.D + off_da, quad.A + off_da);
+
+		Quad(aa, quad.A, quad.B, bb, color);
+		Quad(bb, quad.B, quad.C, cc, color);
+		Quad(cc, quad.C, quad.D, dd, color);
+		Quad(dd, quad.D, quad.A, aa, color);
 	}
 
 	[Obsolete("Use QuadLine instead")]
-	public void QuadLines(in Vector2 a, in Vector2 b, in Vector2 c, in Vector2 d, float thickness, in Color color)
-		=> QuadLine(a, b, c, d, thickness, color);
+	public void QuadLines(in Vector2 a, in Vector2 b, in Vector2 c, in Vector2 d, float lineWeight, in Color color)
+		=> QuadLine(a, b, c, d, lineWeight, color);
 
 	#endregion
 
@@ -799,87 +718,65 @@ public class Batcher : IDisposable
 
 	public void Triangle(in Vector2 v0, in Vector2 v1, in Vector2 v2, Color color)
 	{
-		PushTriangle();
-		EnsureVertexCapacity(vertexCount + 3);
-
-		unsafe
-		{
-			var mode = new Color(0, 0, 255, 0);
-			var vertexArray = new Span<BatcherVertex>((BatcherVertex*)vertexPtr + vertexCount, 3);
-
-			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
-			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
-			vertexArray[2].Pos = Vector2.Transform(v2, Matrix);
-			vertexArray[0].Col = color;
-			vertexArray[1].Col = color;
-			vertexArray[2].Col = color;
-			vertexArray[0].Mode = mode;
-			vertexArray[1].Mode = mode;
-			vertexArray[2].Mode = mode;
-		}
-
-		vertexCount += 3;
+		Append(
+			vertices: [
+				new(Vector2.Transform(v0, Matrix), color, FillMode),
+				new(Vector2.Transform(v1, Matrix), color, FillMode),
+				new(Vector2.Transform(v2, Matrix), color, FillMode),
+			],
+			indices: TriangleIndices
+		);
 	}
 
 	public void Triangle(Texture? texture, in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 t0, in Vector2 t1, in Vector2 t2, Color color)
 	{
 		SetTexture(texture);
-		PushTriangle();
-		EnsureVertexCapacity(vertexCount + 3);
-
-		unsafe
-		{
-			var vertexArray = new Span<BatcherVertex>((BatcherVertex*)vertexPtr + vertexCount, 3);
-
-			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
-			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
-			vertexArray[2].Pos = Vector2.Transform(v2, Matrix);
-			vertexArray[0].Tex = t0;
-			vertexArray[1].Tex = t1;
-			vertexArray[2].Tex = t2;
-			vertexArray[0].Col = color;
-			vertexArray[1].Col = color;
-			vertexArray[2].Col = color;
-			vertexArray[0].Mode = mode;
-			vertexArray[1].Mode = mode;
-			vertexArray[2].Mode = mode;
-
-			if (currentBatch.FlipVerticalUV)
-				FlipVerticalUVs(vertexPtr, vertexCount, 4);
-		}
-
-		vertexCount += 3;
+		Append(
+			vertices: [
+				new(Vector2.Transform(v0, Matrix), color, mode),
+				new(Vector2.Transform(v1, Matrix), color, mode),
+				new(Vector2.Transform(v2, Matrix), color, mode),
+			],
+			indices: TriangleIndices
+		);
 	}
 
 	public void Triangle(in Vector2 v0, in Vector2 v1, in Vector2 v2, Color c0, Color c1, Color c2)
 	{
-		PushTriangle();
-		EnsureVertexCapacity(vertexCount + 3);
-
-		unsafe
-		{
-			var mode = new Color(0, 0, 255, 0);
-			var vertexArray = new Span<BatcherVertex>((BatcherVertex*)vertexPtr + vertexCount, 3);
-
-			vertexArray[0].Pos = Vector2.Transform(v0, Matrix);
-			vertexArray[1].Pos = Vector2.Transform(v1, Matrix);
-			vertexArray[2].Pos = Vector2.Transform(v2, Matrix);
-			vertexArray[0].Col = c0;
-			vertexArray[1].Col = c1;
-			vertexArray[2].Col = c2;
-			vertexArray[0].Mode = mode;
-			vertexArray[1].Mode = mode;
-			vertexArray[2].Mode = mode;
-		}
-
-		vertexCount += 3;
+		Append(
+			vertices: [
+				new(Vector2.Transform(v0, Matrix), c0, FillMode),
+				new(Vector2.Transform(v1, Matrix), c1, FillMode),
+				new(Vector2.Transform(v2, Matrix), c2, FillMode),
+			],
+			indices: TriangleIndices
+		);
 	}
 
-	public void TriangleLine(in Vector2 v0, in Vector2 v1, in Vector2 v2, float thickness, in Color color)
+	public void TriangleLine(in Vector2 a, in Vector2 b, in Vector2 c, float lineWeight, in Color color)
 	{
-		Line(v0, v1, thickness, color);
-		Line(v1, v2, thickness, color);
-		Line(v2, v0, thickness, color);
+		if (lineWeight <= 0)
+			return;
+
+		// TODO:
+		// Detect if the thickness of the line fills the entire shape
+		// (in which case, draw a triangle instead)
+
+		var len_ab = (a - b).Length();
+		var len_bc = (b - c).Length();
+		var len_ca = (c - a).Length();
+
+		var off_ab = ((b - a) / len_ab).TurnLeft() * lineWeight;
+		var off_bc = ((c - b) / len_bc).TurnLeft() * lineWeight;
+		var off_ca = ((a - c) / len_ca).TurnLeft() * lineWeight;
+
+		var aa = Intersection(a + off_ca, a + off_ca, a + off_ab, b + off_ab);
+		var bb = Intersection(a + off_ab, b + off_ab, b + off_bc, c + off_bc);
+		var cc = Intersection(b + off_bc, c + off_bc, c + off_ca, a + off_ca);
+
+		Quad(aa, a, b, bb, color);
+		Quad(bb, b, c, cc, color);
+		Quad(cc, c, a, aa, color);
 	}
 
 	#endregion
@@ -889,10 +786,10 @@ public class Batcher : IDisposable
 	public void Rect(in Rect rect, Color color)
 	{
 		Quad(
-			new Vector2(rect.X, rect.Y),
-			new Vector2(rect.X + rect.Width, rect.Y),
-			new Vector2(rect.X + rect.Width, rect.Y + rect.Height),
-			new Vector2(rect.X, rect.Y + rect.Height),
+			new(rect.X, rect.Y),
+			new(rect.X + rect.Width, rect.Y),
+			new(rect.X + rect.Width, rect.Y + rect.Height),
+			new(rect.X, rect.Y + rect.Height),
 			color);
 	}
 
@@ -909,19 +806,19 @@ public class Batcher : IDisposable
 	public void Rect(float x, float y, float width, float height, Color color)
 	{
 		Quad(
-			new Vector2(x, y),
-			new Vector2(x + width, y),
-			new Vector2(x + width, y + height),
-			new Vector2(x, y + height), color);
+			new(x, y),
+			new(x + width, y),
+			new(x + width, y + height),
+			new(x, y + height), color);
 	}
 
 	public void Rect(in Rect rect, Color c0, Color c1, Color c2, Color c3)
 	{
 		Quad(
-			new Vector2(rect.X, rect.Y),
-			new Vector2(rect.X + rect.Width, rect.Y),
-			new Vector2(rect.X + rect.Width, rect.Y + rect.Height),
-			new Vector2(rect.X, rect.Y + rect.Height),
+			new(rect.X, rect.Y),
+			new(rect.X + rect.Width, rect.Y),
+			new(rect.X + rect.Width, rect.Y + rect.Height),
+			new(rect.X, rect.Y + rect.Height),
 			c0, c1, c2, c3);
 	}
 
@@ -938,34 +835,35 @@ public class Batcher : IDisposable
 	public void Rect(float x, float y, float width, float height, Color c0, Color c1, Color c2, Color c3)
 	{
 		Quad(
-			new Vector2(x, y),
-			new Vector2(x + width, y),
-			new Vector2(x + width, y + height),
-			new Vector2(x, y + height),
+			new(x, y),
+			new(x + width, y),
+			new(x + width, y + height),
+			new(x, y + height),
 			c0, c1, c2, c3);
 	}
 
-	public void RectLine(in Rect rect, float t, Color color)
+	public void RectLine(in Rect rect, float lineWeight, Color color)
 	{
-		if (t > 0)
+		if (lineWeight >= rect.Width / 2 || lineWeight >= rect.Height / 2)
 		{
-			var tx = Math.Min(t, rect.Width / 2f);
-			var ty = Math.Min(t, rect.Height / 2f);
-
-			Rect(rect.X, rect.Y, rect.Width, ty, color);
-			Rect(rect.X, rect.Bottom - ty, rect.Width, ty, color);
-			Rect(rect.X, rect.Y + ty, tx, rect.Height - ty * 2, color);
-			Rect(rect.Right - tx, rect.Y + ty, tx, rect.Height - ty * 2, color);
+			Rect(rect, color);
+		}
+		else if (lineWeight > 0)
+		{
+			Rect(rect.X, rect.Y, rect.Width, lineWeight, color);
+			Rect(rect.X, rect.Bottom - lineWeight, rect.Width, lineWeight, color);
+			Rect(rect.X, rect.Y + lineWeight, lineWeight, rect.Height - lineWeight * 2, color);
+			Rect(rect.Right - lineWeight, rect.Y + lineWeight, lineWeight, rect.Height - lineWeight * 2, color);
 		}
 	}
 
-	public void RectDashed(Rect rect, float thickness, in Color color, float dashLength, float dashOffset)
+	public void RectDashed(Rect rect, float lineWeight, in Color color, float dashLength, float dashOffset)
 	{
-		rect = rect.Inflate(-thickness / 2);
-		LineDashed(rect.TopLeft, rect.TopRight, thickness, color, dashLength, dashOffset);
-		LineDashed(rect.TopRight, rect.BottomRight, thickness, color, dashLength, dashOffset);
-		LineDashed(rect.BottomRight, rect.BottomLeft, thickness, color, dashLength, dashOffset);
-		LineDashed(rect.BottomLeft, rect.TopLeft, thickness, color, dashLength, dashOffset);
+		rect = rect.Inflate(-lineWeight / 2);
+		LineDashed(rect.TopLeft, rect.TopRight, lineWeight, color, dashLength, dashOffset);
+		LineDashed(rect.TopRight, rect.BottomRight, lineWeight, color, dashLength, dashOffset);
+		LineDashed(rect.BottomRight, rect.BottomLeft, lineWeight, color, dashLength, dashOffset);
+		LineDashed(rect.BottomLeft, rect.TopLeft, lineWeight, color, dashLength, dashOffset);
 	}
 
 	#endregion
@@ -1022,106 +920,42 @@ public class Batcher : IDisposable
 			var r3_bl = r3_tl + new Vector2(0, r3);
 			var r3_br = r3_tl + new Vector2(r3, r3);
 
-			// set tris
-			unsafe
-			{
-				EnsureIndexCapacity(indexCount + 30);
+			Append(
+				vertices: [
+					new(Vector2.Transform(r0_tr, Matrix), color, FillMode), // 0
+					new(Vector2.Transform(r0_br, Matrix), color, FillMode), // 1
+					new(Vector2.Transform(r0_bl, Matrix), color, FillMode), // 2
 
-				var indexArray = new Span<int>((int*)indexPtr + indexCount, 30);
+					new(Vector2.Transform(r1_tl, Matrix), color, FillMode), // 3
+					new(Vector2.Transform(r1_br, Matrix), color, FillMode), // 4
+					new(Vector2.Transform(r1_bl, Matrix), color, FillMode), // 5
 
-				// top quad
-				{
-					indexArray[00] = vertexCount + 00; // r0b
-					indexArray[01] = vertexCount + 03; // r1a
-					indexArray[02] = vertexCount + 05; // r1d
+					new(Vector2.Transform(r2_tl, Matrix), color, FillMode), // 6
+					new(Vector2.Transform(r2_tr, Matrix), color, FillMode), // 7
+					new(Vector2.Transform(r2_bl, Matrix), color, FillMode), // 8
 
-					indexArray[03] = vertexCount + 00; // r0b
-					indexArray[04] = vertexCount + 05; // r1d
-					indexArray[05] = vertexCount + 01; // r0c
-				}
-
-				// left quad
-				{
-					indexArray[06] = vertexCount + 02; // r0d
-					indexArray[07] = vertexCount + 01; // r0c
-					indexArray[08] = vertexCount + 10; // r3b
-
-					indexArray[09] = vertexCount + 02; // r0d
-					indexArray[10] = vertexCount + 10; // r3b
-					indexArray[11] = vertexCount + 09; // r3a
-				}
-
-				// right quad
-				{
-					indexArray[12] = vertexCount + 05; // r1d
-					indexArray[13] = vertexCount + 04; // r1c
-					indexArray[14] = vertexCount + 07; // r2b
-
-					indexArray[15] = vertexCount + 05; // r1d
-					indexArray[16] = vertexCount + 07; // r2b
-					indexArray[17] = vertexCount + 06; // r2a
-				}
-
-				// bottom quad
-				{
-					indexArray[18] = vertexCount + 10; // r3b
-					indexArray[19] = vertexCount + 06; // r2a
-					indexArray[20] = vertexCount + 08; // r2d
-
-					indexArray[21] = vertexCount + 10; // r3b
-					indexArray[22] = vertexCount + 08; // r2d
-					indexArray[23] = vertexCount + 11; // r3c
-				}
-
-				// center quad
-				{
-					indexArray[24] = vertexCount + 01; // r0c
-					indexArray[25] = vertexCount + 05; // r1d
-					indexArray[26] = vertexCount + 06; // r2a
-
-					indexArray[27] = vertexCount + 01; // r0c
-					indexArray[28] = vertexCount + 06; // r2a
-					indexArray[29] = vertexCount + 10; // r3b
-				}
-
-				indexCount += 30;
-				currentBatch.Elements += 10;
-				meshDirty = true;
-			}
-
-			// set verts
-			unsafe
-			{
-				EnsureVertexCapacity(vertexCount + 12);
-
-				var vertexArray = new Span<BatcherVertex>((BatcherVertex*)vertexPtr + vertexCount, 12);
-
-				var mode = new Color(0, 0, 255, 0);
-
-				vertexArray[00].Pos = Vector2.Transform(r0_tr, Matrix); // 0
-				vertexArray[01].Pos = Vector2.Transform(r0_br, Matrix); // 1
-				vertexArray[02].Pos = Vector2.Transform(r0_bl, Matrix); // 2
-
-				vertexArray[03].Pos = Vector2.Transform(r1_tl, Matrix); // 3
-				vertexArray[04].Pos = Vector2.Transform(r1_br, Matrix); // 4
-				vertexArray[05].Pos = Vector2.Transform(r1_bl, Matrix); // 5
-
-				vertexArray[06].Pos = Vector2.Transform(r2_tl, Matrix); // 6
-				vertexArray[07].Pos = Vector2.Transform(r2_tr, Matrix); // 7
-				vertexArray[08].Pos = Vector2.Transform(r2_bl, Matrix); // 8
-
-				vertexArray[09].Pos = Vector2.Transform(r3_tl, Matrix); // 9
-				vertexArray[10].Pos = Vector2.Transform(r3_tr, Matrix); // 10
-				vertexArray[11].Pos = Vector2.Transform(r3_br, Matrix); // 11
-
-				for (int i = 0; i < vertexArray.Length; i++)
-				{
-					vertexArray[i].Col = color;
-					vertexArray[i].Mode = mode;
-				}
-
-				vertexCount += 12;
-			}
+					new(Vector2.Transform(r3_tl, Matrix), color, FillMode), // 9
+					new(Vector2.Transform(r3_tr, Matrix), color, FillMode), // 10
+					new(Vector2.Transform(r3_br, Matrix), color, FillMode), // 11
+				],
+				indices: [
+					// top quad
+						00, /* r0b */ 03, /* r1a */ 05, /* r1d */
+						00, /* r0b */ 05, /* r1d */ 01, /* r0c */
+					// left quad
+						02, /* r0d */ 01, /* r0c */ 10, /* r3b */
+						02, /* r0d */ 10, /* r3b */ 09, /* r3a */
+					// right quad
+						05, /* r1d */ 04, /* r1c */ 07, /* r2b */
+						05, /* r1d */ 07, /* r2b */ 06, /* r2a */
+					// bottom quad
+						10, /* r3b */ 06, /* r2a */ 08, /* r2d */
+						10, /* r3b */ 08, /* r2d */ 11, /* r3c */
+					// center quad
+						01, /* r0c */ 05, /* r1d */ 06, /* r2a */
+						01, /* r0c */ 06, /* r2a */ 10, /* r3b */
+				]
+			);
 
 			var left = Calc.PI;
 			var right = 0.0f;
@@ -1248,22 +1082,32 @@ public class Batcher : IDisposable
 
 	public void Circle(in Vector2 center, float radius, int steps, in Color centerColor, in Color edgeColor)
 	{
-		var last = Calc.AngleToVector(0, radius);
+		if (steps < 3)
+			return;
 
-		for (int i = 1; i <= steps; i++)
+		var vertexStart = vertexCount;
+
+		Request(steps + 1, steps * 3, out var vertices, out var indices);
+
+		// center vertex
+		vertices[0] = new(Vector2.Transform(center, Matrix), centerColor, FillMode);
+
+		for (int n = 0, i = 0; n < steps; n++, i += 3)
 		{
-			var next = Calc.AngleToVector((i / (float)steps) * Calc.TAU, radius);
-			Triangle(center + last, center + next, center, edgeColor, edgeColor, centerColor);
-			last = next;
+			var next = Calc.AngleToVector(n / (float)steps * Calc.TAU, radius);
+			vertices[n + 1] = new(Vector2.Transform(center + next, Matrix), edgeColor, FillMode);
+			indices[i + 0] = vertexStart; // center
+			indices[i + 1] = vertexStart + 1 + n;
+			indices[i + 2] = vertexStart + 1 + (n + 1) % steps;
 		}
 	}
 
 	public void Circle(in Circle circle, int steps, in Color color)
 		=> Circle(circle.Position, circle.Radius, steps, color, color);
 
-	public void CircleLine(in Vector2 center, float radius, float thickness, int steps, in Color color)
+	public void CircleLine(in Vector2 center, float radius, float lineWeight, int steps, in Color color)
 	{
-		var innerRadius = radius - thickness;
+		var innerRadius = radius - lineWeight;
 		if (innerRadius <= 0)
 		{
 			Circle(center, radius, steps, color);
@@ -1282,10 +1126,10 @@ public class Batcher : IDisposable
 		}
 	}
 
-	public void CircleLine(in Circle circle, float thickness, int steps, in Color color)
-		=> CircleLine(circle.Position, circle.Radius, thickness, steps, color);
+	public void CircleLine(in Circle circle, float lineWeight, int steps, in Color color)
+		=> CircleLine(circle.Position, circle.Radius, lineWeight, steps, color);
 
-	public void CircleDashed(in Vector2 center, float radius, float thickness, int steps, in Color color, float dashLength, float dashOffset)
+	public void CircleDashed(in Vector2 center, float radius, float lineWeight, int steps, in Color color, float dashLength, float dashOffset)
 	{
 		var last = Calc.AngleToVector(0, radius);
 		var segmentLength = (last - Calc.AngleToVector(Calc.TAU / steps, radius)).Length();
@@ -1293,14 +1137,14 @@ public class Batcher : IDisposable
 		for (int i = 1; i <= steps; i++)
 		{
 			var next = Calc.AngleToVector((i / (float)steps) * Calc.TAU, radius);
-			LineDashed(center + last, center + next, thickness, color, dashLength, dashOffset);
+			LineDashed(center + last, center + next, lineWeight, color, dashLength, dashOffset);
 			dashOffset += segmentLength;
 			last = next;
 		}
 	}
 
-	public void CircleDashed(in Circle circle, float thickness, int steps, in Color color, float dashLength, float dashOffset)
-		=> CircleDashed(circle.Position, circle.Radius, thickness, steps, color, dashLength, dashOffset);
+	public void CircleDashed(in Circle circle, float lineWeight, int steps, in Color color, float dashLength, float dashOffset)
+		=> CircleDashed(circle.Position, circle.Radius, lineWeight, steps, color, dashLength, dashOffset);
 
 	#endregion
 
@@ -1660,103 +1504,57 @@ public class Batcher : IDisposable
 
 	#region Internal Utils
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void PushTriangle()
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	private void Append(in ReadOnlySpan<BatcherVertex> vertices, in ReadOnlySpan<int> indices)
 	{
-		EnsureIndexCapacity(indexCount + 3);
+		var vertexStart = vertexCount;
 
-		unsafe
+		Request(vertices.Length, indices.Length, out var vertexDest, out var indexDest);
+		vertices.CopyTo(vertexDest);
+
+		for (int i = 0; i < indices.Length; i ++)
+			indexDest[i] = vertexStart + indices[i];
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	private void Request(int vertexAppendCount, int indexAppendCount, out Span<BatcherVertex> vertices, out Span<int> indices)
+	{
+		// make sure we have enough vertex space
+		if (vertexCount + vertexAppendCount >= vertexBuffer.Length)
 		{
-			var indexArray = new Span<int>((int*)indexPtr + indexCount, 3);
-
-			indexArray[0] = vertexCount + 0;
-			indexArray[1] = vertexCount + 1;
-			indexArray[2] = vertexCount + 2;
+			var capacity = Math.Max(8, vertexBuffer.Length);
+			while (capacity <= vertexCount + vertexAppendCount)
+				capacity *= 2;
+			Array.Resize(ref vertexBuffer, capacity);
 		}
 
-		indexCount += 3;
-		currentBatch.Elements++;
+		// make sure we have enough index space
+		if (indexCount + indexAppendCount >= indexBuffer.Length)
+		{
+			var capacity = Math.Max(8, indexBuffer.Length);
+			while (capacity <= indexCount + indexAppendCount)
+				capacity *= 2;
+			Array.Resize(ref indexBuffer, capacity);
+		}
+
+		// get slices
+		vertices = vertexBuffer.AsSpan(vertexCount, vertexAppendCount);
+		indices = indexBuffer.AsSpan(indexCount, indexAppendCount);
+
+		// increase totals
+		indexCount += indexAppendCount;
+		vertexCount += vertexAppendCount;
+		currentBatch.Elements += indexAppendCount / 3;
 		meshDirty = true;
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void PushQuad()
+	private static Vector2 Intersection(in Vector2 p0, in Vector2 p1, in Vector2 q0, in Vector2 q1)
 	{
-		EnsureIndexCapacity(indexCount + 6);
-
-		unsafe
-		{
-			var indexArray = new Span<int>((int*)indexPtr + indexCount, 6);
-
-			indexArray[0] = vertexCount + 0;
-			indexArray[1] = vertexCount + 1;
-			indexArray[2] = vertexCount + 2;
-			indexArray[3] = vertexCount + 0;
-			indexArray[4] = vertexCount + 2;
-			indexArray[5] = vertexCount + 3;
-		}
-
-		indexCount += 6;
-		currentBatch.Elements += 2;
-		meshDirty = true;
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private unsafe void EnsureIndexCapacity(int index)
-	{
-		if (index >= indexCapacity)
-		{
-			if (indexCapacity == 0)
-				indexCapacity = 32;
-
-			while (index >= indexCapacity)
-				indexCapacity *= 2;
-
-			var newPtr = Marshal.AllocHGlobal(sizeof(int) * indexCapacity);
-
-			if (indexCount > 0)
-				Buffer.MemoryCopy((void*)indexPtr, (void*)newPtr, indexCapacity * sizeof(int), indexCount * sizeof(int));
-
-			if (indexPtr != IntPtr.Zero)
-				Marshal.FreeHGlobal(indexPtr);
-
-			indexPtr = newPtr;
-		}
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private unsafe void EnsureVertexCapacity(int index)
-	{
-		if (index >= vertexCapacity)
-		{
-			if (vertexCapacity == 0)
-				vertexCapacity = 32;
-
-			while (index >= vertexCapacity)
-				vertexCapacity *= 2;
-
-			var newPtr = Marshal.AllocHGlobal(sizeof(BatcherVertex) * vertexCapacity);
-
-			if (vertexCount > 0)
-				Buffer.MemoryCopy((void*)vertexPtr, (void*)newPtr, vertexCapacity * sizeof(BatcherVertex), vertexCount * sizeof(BatcherVertex));
-
-			if (vertexPtr != IntPtr.Zero)
-				Marshal.FreeHGlobal(vertexPtr);
-
-			vertexPtr = newPtr;
-		}
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private unsafe void FlipVerticalUVs(IntPtr ptr, int start, int count)
-	{
-		BatcherVertex* it = (BatcherVertex*)ptr + start;
-		BatcherVertex* end = it + count;
-		while (it < end)
-		{
-			it->Tex.Y = 1.0f - it->Tex.Y;
-			it++;
-		}
+		var aa = p1 - p0;
+		var bb = q0 - q1;
+		var cc = q0 - p0;
+		var t = (bb.X * cc.Y - bb.Y * cc.X) / (aa.Y * bb.X - aa.X * bb.Y);
+		return new(p0.X + t * (p1.X - p0.X), p0.Y + t * (p1.Y - p0.Y));
 	}
 
 	#endregion
