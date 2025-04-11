@@ -83,7 +83,7 @@ public static class IConvexShape2DExt
 	/// <summary>
 	/// Checks if the Convex Shape overlaps another Convex Shape, and returns the pushout vector
 	/// </summary>
-	public static bool Overlaps<TConvexA, TConvexB>(this TConvexA a, in TConvexB b, out Vector2 pushout) 
+	public static bool Overlaps<TConvexA, TConvexB>(this TConvexA a, in TConvexB b, out Vector2 pushout)
 		where TConvexA : IConvexShape
 		where TConvexB : IConvexShape
 	{

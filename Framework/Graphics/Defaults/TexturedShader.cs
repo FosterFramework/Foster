@@ -9,13 +9,13 @@ public class TexturedShader(GraphicsDevice graphicsDevice)
 {
 	private static ShaderCreateInfo GetCreateInfo(GraphicsDevice graphicsDevice) => new(
 		Vertex: new(
-			Code: Calc.ReadEmbeddedBytes($"Textured.vertex.{graphicsDevice.Driver.GetShaderExtension()}"),
+			Code: Platform.ReadEmbeddedBytes($"Textured.vertex.{graphicsDevice.Driver.GetShaderExtension()}"),
 			SamplerCount: 0,
 			UniformBufferCount: 1,
 			EntryPoint: "vertex_main"
 		),
 		Fragment: new(
-			Code: Calc.ReadEmbeddedBytes($"Textured.fragment.{graphicsDevice.Driver.GetShaderExtension()}"),
+			Code: Platform.ReadEmbeddedBytes($"Textured.fragment.{graphicsDevice.Driver.GetShaderExtension()}"),
 			SamplerCount: 1,
 			UniformBufferCount: 0,
 			EntryPoint: "fragment_main"

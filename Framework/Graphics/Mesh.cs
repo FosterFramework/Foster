@@ -105,7 +105,7 @@ public class Mesh(GraphicsDevice graphicsDevice, VertexFormat vertexFormat, Inde
 	}
 
 	/// <summary>
-	/// Disposes the graphical resources of the Mesh. 
+	/// Disposes the graphical resources of the Mesh.
 	/// Once Disposed, the Mesh is no longer usable.
 	/// </summary>
 	public void Dispose()

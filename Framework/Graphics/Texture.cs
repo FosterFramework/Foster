@@ -95,7 +95,7 @@ public class Texture : IGraphicResource
 	{
 		if (IsDisposed)
 			throw new Exception("Resource is Disposed");
-		
+
 		if (Unsafe.SizeOf<T>() * data.Length < MemorySize)
 			throw new Exception("Data Buffer is smaller than the Size of the Texture");
 

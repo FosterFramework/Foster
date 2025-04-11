@@ -165,7 +165,7 @@ public class Aseprite : Aseprite.IUserDataTarget
 	public List<Slice> Slices = [];
 	public List<Layer> Layers = [];
 	public UserDataValues UserData { get; set; } = new();
-	
+
 	public Aseprite(string filePath)
 	{
 		using var file = File.OpenRead(filePath);
@@ -536,7 +536,7 @@ public class Aseprite : Aseprite.IUserDataTarget
 	}
 
 	/// <summary>
-	/// Renders the frames in the given range. 
+	/// Renders the frames in the given range.
 	/// Note that 'to' is inclusive to match how Aseprite implements Tags.
 	/// </summary>
 	public Image[] RenderFrames(int from, int to, Predicate<Layer>? layerFilter = null)

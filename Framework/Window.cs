@@ -273,18 +273,20 @@ public sealed class Window : IDrawableTarget
 	/// </summary>
 	public Action? OnCloseRequested;
 
-	internal Window(App app, GraphicsDevice graphicsDevice, string title, int width, int height, bool fullscreen)
+	internal Window(App app, GraphicsDevice graphicsDevice, string title, int width, int height, bool fullscreen, bool resizable)
 	{
 		this.app = app;
 		this.graphicsDevice = graphicsDevice;
 		this.title = title;
 
-		var windowFlags = 
-			SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WindowFlags.SDL_WINDOW_RESIZABLE | 
+		var windowFlags =
+			SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY |
 			SDL_WindowFlags.SDL_WINDOW_HIDDEN;
 
 		if (fullscreen)
 			windowFlags |= SDL_WindowFlags.SDL_WINDOW_FULLSCREEN;
+		if (resizable)
+			windowFlags |= SDL_WindowFlags.SDL_WINDOW_RESIZABLE;
 
 		Handle = SDL_CreateWindow(title, width, height, windowFlags);
 		if (Handle == IntPtr.Zero)
@@ -292,7 +294,7 @@ public sealed class Window : IDrawableTarget
 
 		ID = SDL_GetWindowID(Handle);
 	}
-	
+
 	/// <summary>
 	/// Sets whether the Mouse Cursor should be visible while over the Application Window
 	/// </summary>
@@ -304,7 +306,7 @@ public sealed class Window : IDrawableTarget
 		// TODO:
 		// Should this method be here? It seems like it's maybe application-specific
 		// instead of unique to a given window.
-		
+
 		bool result;
 		if (enabled)
 			result = SDL_ShowCursor();
@@ -369,7 +371,7 @@ public sealed class Window : IDrawableTarget
 	}
 
 	/// <summary>
-	/// This will enable Text input in the Window, by populating keyboard 
+	/// This will enable Text input in the Window, by populating keyboard
 	/// text in <see cref="KeyboardState.Text"/>.<br/>
 	/// <br/>
 	/// On some platforms this function will show an on-screen keyboard.

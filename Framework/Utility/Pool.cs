@@ -20,7 +20,7 @@ public interface IPoolable
 public static class Pool<[DAM(DAMT.PublicMethods)] T> where T : class, new()
 {
 	private static readonly ConcurrentQueue<T> available = new();
-	
+
 	/// <summary>
 	/// How to zero-out the object before it's used again.
 	/// </summary>
@@ -53,7 +53,7 @@ public static class Pool<[DAM(DAMT.PublicMethods)] T> where T : class, new()
 	{
 		available.Clear();
 	}
-	
+
 	/// <summary>
 	/// Creates a Default Clear method for various container types
 	/// </summary>

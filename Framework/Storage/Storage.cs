@@ -40,9 +40,9 @@ public sealed class Storage : StorageContainer
 	public override bool DirectoryExists(string path)
 	{
 		path = Calc.NormalizePath(path);
-		return 
-			handle != nint.Zero && 
-			SDL_GetStoragePathInfo(handle, path, out var info) && 
+		return
+			handle != nint.Zero &&
+			SDL_GetStoragePathInfo(handle, path, out var info) &&
 			info.type == SDL_PathType.SDL_PATHTYPE_DIRECTORY;
 	}
 
@@ -53,7 +53,7 @@ public sealed class Storage : StorageContainer
 
 		path ??= "";
 		path = Calc.NormalizePath(path);
-		
+
 		var results = SDL_GlobStorageDirectory(handle, path, searchPattern!, (SDL_GlobFlags)0, out int count);
 		if (results == nint.Zero)
 			yield break;
@@ -82,9 +82,9 @@ public sealed class Storage : StorageContainer
 	public override bool FileExists(string path)
 	{
 		path = Calc.NormalizePath(path);
-		return 
-			handle != nint.Zero && 
-			SDL_GetStoragePathInfo(handle, path, out var info) && 
+		return
+			handle != nint.Zero &&
+			SDL_GetStoragePathInfo(handle, path, out var info) &&
 			info.type == SDL_PathType.SDL_PATHTYPE_FILE;
 	}
 
@@ -107,7 +107,7 @@ public sealed class Storage : StorageContainer
 			if (!SDL_ReadStorageFile(handle, path, new nint(ptr), length))
 				throw new Exception($"Failed to open file for reading: {path}");
 		}
-		
+
 		// return memory stream over result
 		return new MemoryStream(buffer);
 	}

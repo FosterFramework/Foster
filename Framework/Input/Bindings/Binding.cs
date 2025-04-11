@@ -14,7 +14,7 @@ public abstract class Binding
 {
 	/// <summary>
 	/// Optional set of Masks to Filter the binding by.
-	/// These are filtered by <see cref="Input.BindingFilters"/> 
+	/// These are filtered by <see cref="Input.BindingFilters"/>
 	/// </summary>
 	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 	public string[]? Masks { get; set; } = null;

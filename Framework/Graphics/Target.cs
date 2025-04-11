@@ -38,7 +38,7 @@ public class Target : IGraphicResource, IDrawableTarget
 	public readonly RectInt Bounds;
 
 	/// <summary>
-	/// The Texture attachments in the Target. 
+	/// The Texture attachments in the Target.
 	/// </summary>
 	public readonly Texture[] Attachments;
 

@@ -201,7 +201,7 @@ public struct RectInt(int x, int y, int w, int h) : IEquatable<RectInt>
 	public RectInt(in Point2 pos, in Point2 size)
 		: this(pos.X, pos.Y, size.X, size.Y)
 	{
-		
+
 	}
 
 	#region Collision

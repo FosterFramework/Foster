@@ -187,8 +187,8 @@ public sealed class KeyboardState
 	/// Returns the timestamp in ticks of the most recent Control press
 	/// </summary>
 	public TimeSpan CtrlTimestamp
-		=> Timestamp(Keys.LeftControl) > Timestamp(Keys.RightControl) 
-			? Timestamp(Keys.LeftControl) 
+		=> Timestamp(Keys.LeftControl) > Timestamp(Keys.RightControl)
+			? Timestamp(Keys.LeftControl)
 			: Timestamp(Keys.RightControl);
 
 	/// <summary>
@@ -230,8 +230,8 @@ public sealed class KeyboardState
 	/// Returns the timestamp in ticks of the most recent Alt press
 	/// </summary>
 	public TimeSpan AltTimestamp
-		=> Timestamp(Keys.LeftAlt) > Timestamp(Keys.RightAlt) 
-			? Timestamp(Keys.LeftAlt) 
+		=> Timestamp(Keys.LeftAlt) > Timestamp(Keys.RightAlt)
+			? Timestamp(Keys.LeftAlt)
 			: Timestamp(Keys.RightAlt);
 
 	/// <summary>
@@ -243,8 +243,8 @@ public sealed class KeyboardState
 	/// Returns the timestamp in ticks of the most recent Shift press
 	/// </summary>
 	public TimeSpan ShiftTimestamp
-		=> Timestamp(Keys.LeftShift) > Timestamp(Keys.RightShift) 
-			? Timestamp(Keys.LeftShift) 
+		=> Timestamp(Keys.LeftShift) > Timestamp(Keys.RightShift)
+			? Timestamp(Keys.LeftShift)
 			: Timestamp(Keys.RightShift);
 
 	/// <summary>

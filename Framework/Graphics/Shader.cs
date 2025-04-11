@@ -22,7 +22,7 @@ public class Shader : IGraphicResource
 	/// Optional Shader Name
 	/// </summary>
 	public string Name { get; }
-	
+
 	/// <summary>
 	/// If the Shader is disposed
 	/// </summary>
@@ -47,7 +47,7 @@ public class Shader : IGraphicResource
 	{
 		Dispose(false);
 	}
-	
+
 	public void Dispose()
 	{
 		Dispose(true);

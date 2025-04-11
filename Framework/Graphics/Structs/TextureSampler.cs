@@ -8,6 +8,6 @@ public readonly record struct TextureSampler(
 	TextureWrap WrapX,
 	TextureWrap WrapY)
 {
-	public TextureSampler(TextureFilter filter, TextureWrap wrapXY) 
+	public TextureSampler(TextureFilter filter, TextureWrap wrapXY)
 		: this(filter, wrapXY, wrapXY) {}
 }

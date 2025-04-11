@@ -27,7 +27,7 @@ public readonly record struct Time(
 
 	/// <summary>
 	/// Advances <see cref="Elapsed"/> by the given delta value, increments <see cref="Frame"/> and assigns <see cref="Delta"/>.<br/>
-	/// This does not advance <see cref="RenderFrame"/>. 
+	/// This does not advance <see cref="RenderFrame"/>.
 	/// </summary>
 	/// <returns>The new Time struct</returns>
 	public readonly Time Advance(TimeSpan delta)
@@ -56,13 +56,13 @@ public readonly record struct Time(
 	{
 		return OnInterval(Elapsed.TotalSeconds, Delta, interval, offset);
 	}
-	
+
 	/// <summary>
 	/// Returns true when the elapsed time passes a given interval based on the delta time
 	/// </summary>
 	public static bool OnInterval(in Time time, double interval, double offset)
 		=> OnInterval(time.Elapsed.TotalSeconds, time.Delta, interval, offset);
-	
+
 	/// <summary>
 	/// Returns true when the elapsed time passes a given interval based on the delta time
 	/// </summary>

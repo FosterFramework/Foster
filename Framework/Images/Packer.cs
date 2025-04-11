@@ -1,8 +1,8 @@
 namespace Foster.Framework;
 
 /// <summary>
-/// The Packer takes source image data and packs them into large texture 
-/// pages that can then be used for Atlases. This is useful for sprite fonts, 
+/// The Packer takes source image data and packs them into large texture
+/// pages that can then be used for Atlases. This is useful for sprite fonts,
 /// sprite sheets, etc.
 /// </summary>
 public class Packer
@@ -59,7 +59,7 @@ public class Packer
 	public bool PowerOfTwo = false;
 
 	/// <summary>
-	/// This will check each image to see if it's a duplicate of an already packed image. 
+	/// This will check each image to see if it's a duplicate of an already packed image.
 	/// It will still add the entry, but not the duplicate image data.
 	/// </summary>
 	public bool CombineDuplicates = false;

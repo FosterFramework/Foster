@@ -26,7 +26,7 @@ public readonly record struct UpdateMode(
 		/// The Application will update on a fixed time
 		/// </summary>
 		Fixed,
-		
+
 		/// <summary>
 		/// How the Application will update as fast as it can
 		/// </summary>

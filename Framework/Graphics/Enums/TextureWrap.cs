@@ -11,7 +11,7 @@ public enum TextureWrap
 
 	[Obsolete("Use Clamp")]
 	ClampToEdge = Clamp,
-	
+
 	[Obsolete("Use Clamp")]
 	ClampToBorder = Clamp,
 }

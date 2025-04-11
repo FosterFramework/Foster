@@ -6,7 +6,7 @@ namespace Foster.Framework;
 
 /// <summary>
 /// StackList is a simple stack-allocated list, useful for holding small arrays
-/// of data on the stack without allocating heap memory. They do not expand 
+/// of data on the stack without allocating heap memory. They do not expand
 /// past their specified capacity.
 /// TODO: each capacity could be code-generated instead of copy+pasted
 /// </summary>
@@ -149,7 +149,7 @@ public struct StackList8<T> : IEnumerable<T>, IList<T>
 	public readonly int Capacity => TypeCapacity;
 	public readonly bool IsReadOnly => false;
 
-	public ReadOnlySpan<T> Span 
+	public ReadOnlySpan<T> Span
 		=> MemoryMarshal.CreateReadOnlySpan(ref elements[0], Count);
 
 	public void Add(T value)
@@ -274,7 +274,7 @@ public struct StackList16<T> : IEnumerable<T>, IList<T>
 	public readonly int Capacity => TypeCapacity;
 	public readonly bool IsReadOnly => false;
 
-	public ReadOnlySpan<T> Span 
+	public ReadOnlySpan<T> Span
 		=> MemoryMarshal.CreateReadOnlySpan(ref elements[0], Count);
 
 	public void Add(T value)
@@ -399,7 +399,7 @@ public struct StackList32<T> : IEnumerable<T>, IList<T>
 	public readonly int Capacity => TypeCapacity;
 	public readonly bool IsReadOnly => false;
 
-	public ReadOnlySpan<T> Span 
+	public ReadOnlySpan<T> Span
 		=> MemoryMarshal.CreateReadOnlySpan(ref elements[0], Count);
 
 	public void Add(T value)
@@ -524,7 +524,7 @@ public struct StackList64<T> : IEnumerable<T>, IList<T>
 	public readonly int Capacity => TypeCapacity;
 	public readonly bool IsReadOnly => false;
 
-	public ReadOnlySpan<T> Span 
+	public ReadOnlySpan<T> Span
 		=> MemoryMarshal.CreateReadOnlySpan(ref elements[0], Count);
 
 	public void Add(T value)

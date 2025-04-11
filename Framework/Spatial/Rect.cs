@@ -214,7 +214,7 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 	public Rect(in Vector2 pos, in Vector2 size)
 		: this(pos.X, pos.Y, size.X, size.Y)
 	{
-		
+
 	}
 
 	#region Collision

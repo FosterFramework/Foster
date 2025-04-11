@@ -24,7 +24,7 @@ public sealed class InputState
 	/// <summary>
 	/// The Controllers state
 	/// </summary>
-	public readonly ControllerState[] Controllers = 
+	public readonly ControllerState[] Controllers =
 		[.. Enumerable.Range(0, MaxControllers).Select(it => new ControllerState(it))];
 
 	/// <summary>

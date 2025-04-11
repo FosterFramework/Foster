@@ -9,8 +9,8 @@ namespace Foster.Framework;
 /// <br/>
 /// By default the <see cref="SpriteFont"/> will prepare characters as they are
 /// requested, which means there can occasionally be a delay between trying
-/// to draw some text and it actually appearing on-screen. To remove this delay, 
-/// you can call <see cref="PrepareCharacters(ReadOnlySpan{char}, bool)"/> to 
+/// to draw some text and it actually appearing on-screen. To remove this delay,
+/// you can call <see cref="PrepareCharacters(ReadOnlySpan{char}, bool)"/> to
 /// pre-render all characters that you would like to use.
 /// </summary>
 public class SpriteFont : IDisposable
@@ -135,7 +135,7 @@ public class SpriteFont : IDisposable
 	public SpriteFont(GraphicsDevice graphicsDevice, Stream stream, float size, ReadOnlySpan<int> prebakedCodepoints = default, bool premultiplyAlpha = true)
 		: this(graphicsDevice, new Font(stream), size, prebakedCodepoints, premultiplyAlpha)
 	{
-		
+
 	}
 
 	public SpriteFont(GraphicsDevice graphicsDevice, float size = 16)
@@ -153,7 +153,7 @@ public class SpriteFont : IDisposable
 	public void Dispose()
 	{
 		GC.SuppressFinalize(this);
-		
+
 		if (blittingTask != null)
 		{
 			blittingQueue.CompleteAdding();
@@ -232,7 +232,7 @@ public class SpriteFont : IDisposable
 	{
 		float lineWidth = 0;
 		int lastCodepoint = 0;
-		
+
 		length = 0;
 		while (length < text.Length)
 		{
@@ -467,7 +467,7 @@ public class SpriteFont : IDisposable
 
 		if (justify.Y != 0)
 			at.Y -= justify.Y * HeightOf(text);
-		
+
 		// TODO:
 		// this is incorrect, this should only happen if the font is a pixel font.
 		// (otherwise using matrices and so on will not play nicely with this)
@@ -548,7 +548,7 @@ public class SpriteFont : IDisposable
 			var scale = Font.GetScale(Size);
 			var glyph = Font.GetGlyphIndex(codepoint);
 			var metrics = Font.GetCharacterOfGlyph(glyph, scale);
-			
+
 			characters[codepoint] = ch = new(
 				codepoint,
 				new Subtexture(null, default, new(0, 0, metrics.Width, metrics.Height)),
@@ -601,7 +601,7 @@ public class SpriteFont : IDisposable
 	}
 
 	/// <summary>
-	/// Blits the characters queued in <see cref="blittingQueue"/> and waits for them to finish, populating <see cref="blittingResults"/> 
+	/// Blits the characters queued in <see cref="blittingQueue"/> and waits for them to finish, populating <see cref="blittingResults"/>
 	/// </summary>
 	private void BlitQueued(ref Color[] blitBuffer)
 	{
@@ -610,7 +610,7 @@ public class SpriteFont : IDisposable
 	}
 
 	/// <summary>
-	/// Blits a single character and waits for it to finish, populating <see cref="blittingResults"/> 
+	/// Blits a single character and waits for it to finish, populating <see cref="blittingResults"/>
 	/// </summary>
 	private void BlitCharacter(ref Color[] blitBuffer, int codepoint, in Font.Character ch)
 	{
@@ -671,7 +671,7 @@ public class SpriteFont : IDisposable
 		{
 			var page = pages[result.Page];
 			characters[result.Codepoint] = characters[result.Codepoint] with
-			{ 
+			{
 				Subtexture = page.GetSubtexture(result.Source, result.Frame)
 			};
 		}
