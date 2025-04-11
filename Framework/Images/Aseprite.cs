@@ -183,6 +183,14 @@ public class Aseprite : Aseprite.IUserDataTarget
 		using var bin = new BinaryReader(stream);
 		Load(bin);
 	}
+
+	public Aseprite(byte[] data)
+	{
+		using var stream = new MemoryStream(data);
+		using var bin = new BinaryReader(stream);
+		Load(bin);
+	}
+
 	private void Load(BinaryReader bin)
 	{
 		// Shorthand methods to match Aseprite's naming convention
@@ -193,7 +201,7 @@ public class Aseprite : Aseprite.IUserDataTarget
 		int ReadLong() => bin.ReadInt32();
 		string ReadString() => Encoding.UTF8.GetString(bin.ReadBytes(ReadWord()));
 		void Skip(int count) => bin.BaseStream.Seek(count, SeekOrigin.Current);
-		void SkipTo(long chunkEnd) => bin.BaseStream.Seek(chunkEnd, SeekOrigin.Begin);
+		void SkipTo(long pos) => bin.BaseStream.Seek(pos, SeekOrigin.Begin);
 
 		// Parse the file header
 		uint fileSize;
@@ -602,7 +610,7 @@ public class Aseprite : Aseprite.IUserDataTarget
 	public Image[] RenderAllFrames(Predicate<Layer>? layerFilter = null)
 	{
 		if (Frames.Length == 0)
-			return Array.Empty<Image>();
+			return [];
 		return RenderFrames(0, Frames.Length - 1, layerFilter);
 	}
 
