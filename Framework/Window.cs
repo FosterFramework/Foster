@@ -353,6 +353,20 @@ public sealed class Window : IDrawableTarget
 		else
 			Log.Warning($"Failed to set Mouse Cursor: {SDL_GetError()}");
 	}
+	
+	/// <summary>
+	/// This will enable Text input in the Window, by populating keyboard 
+	/// text in <see cref="KeyboardState.Text"/>.<br/>
+	/// <br/>
+	/// On some platforms this function will show an on-screen keyboard.
+	/// </summary>
+	public void SetTextInput(bool enabled)
+	{
+		if (enabled)
+			StartTextInput();
+		else
+			StopTextInput();
+	}
 
 	/// <summary>
 	/// This will enable Text input in the Window, by populating keyboard 
@@ -363,9 +377,14 @@ public sealed class Window : IDrawableTarget
 	public void StartTextInput()
 	{
 		if (app.IsMainThread())
-			SDL_StartTextInput(Handle);
+		{
+			if (!SDL_TextInputActive(Handle))
+				SDL_StartTextInput(Handle);
+		}
 		else
-			app.RunOnMainThread(() => SDL_StartTextInput(Handle));
+		{
+			app.RunOnMainThread(StartTextInput);
+		}
 	}
 
 	/// <summary>
@@ -374,9 +393,14 @@ public sealed class Window : IDrawableTarget
 	public void StopTextInput()
 	{
 		if (app.IsMainThread())
-			SDL_StopTextInput(Handle);
+		{
+			if (SDL_TextInputActive(Handle))
+				SDL_StopTextInput(Handle);
+		}
 		else
-			app.RunOnMainThread(() => SDL_StopTextInput(Handle));
+		{
+			app.RunOnMainThread(StopTextInput);
+		}
 	}
 
 	internal void OnEvent(SDL_EventType ev)
