@@ -36,7 +36,14 @@ public abstract class StorageContainer : IDisposable
 	/// <summary>
 	/// Enumerates over a path and finds all files and directories that match the search pattern
 	/// </summary>
-	public abstract IEnumerable<string> EnumerateDirectory(string path, string? searchPattern = null);
+	/// <param name="path">The directory to enumerate</param>
+	/// <param name="searchPattern">The search pattern to filter with, which may contain wildcards '*' (match everything) and '?' (match one character).</param>
+	/// <param name="searchOption">Whether to search only the given directory, or to search recursively through all directories</param>
+	public abstract IEnumerable<string> EnumerateDirectory(
+		string? path = null,
+		string? searchPattern = null,
+		SearchOption searchOption = SearchOption.TopDirectoryOnly
+	);
 
 	/// <summary>
 	/// Creates a new Directory at the given Path in the Storage Container, if the Storage Container is Writable

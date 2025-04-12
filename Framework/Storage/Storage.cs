@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using static SDL3.SDL;
 
 namespace Foster.Framework;
@@ -46,37 +48,78 @@ public sealed class Storage : StorageContainer
 			info.type == SDL_PathType.SDL_PATHTYPE_DIRECTORY;
 	}
 
-	public override IEnumerable<string> EnumerateDirectory(string? path = null, string? searchPattern = null)
+	private class EnumerateDirectoryUserData(nint handle, string path, Regex? searchPattern, bool recursive)
 	{
+		public readonly List<string> Entries = [];
+		public readonly List<string> SubFolders = [];
+		public readonly nint StorageHandle = handle;
+		public readonly Regex? SearchPattern = searchPattern;
+		public string CurrentPath = path;
+		public bool Recursive = recursive;
+	}
+
+	public override unsafe IEnumerable<string> EnumerateDirectory(string? path = null, string? searchPattern = null, SearchOption searchOption = SearchOption.TopDirectoryOnly)
+	{
+		static bool IsDirectory(nint handle, string path)
+		{
+			return SDL_GetStoragePathInfo(handle, path, out var info) &&
+				info.type == SDL_PathType.SDL_PATHTYPE_DIRECTORY;
+		}
+
+		static unsafe void EnumerateSubfolder(string path, EnumerateDirectoryUserData data, nint userdata)
+		{
+			var start = data.SubFolders.Count;
+			data.CurrentPath = path;
+			if (!SDL_EnumerateStorageDirectory(data.StorageHandle, path, EnumerateCallback, userdata))
+				throw Platform.CreateExceptionFromSDL(nameof(SDL_EnumerateStorageDirectory));
+			var end = data.SubFolders.Count;
+
+			if (data.Recursive)
+			{
+				for (int i = start; i < end; i ++)
+					EnumerateSubfolder(data.SubFolders[i], data, userdata);
+			}
+		}
+
+		static unsafe SDL_EnumerationResult EnumerateCallback(nint userdata, byte* dirname, byte* fname)
+		{
+			var handle = GCHandle.FromIntPtr(userdata);
+			if (handle.Target is not EnumerateDirectoryUserData data)
+				return SDL_EnumerationResult.SDL_ENUM_FAILURE;
+
+			var path = Path.Combine(data.CurrentPath, Platform.ParseUTF8(new(fname)));
+			if (data.SearchPattern != null && !data.SearchPattern.IsMatch(path))
+			{
+				// doesn't match the pattern but we may want to find children that do match
+				if (data.Recursive && IsDirectory(data.StorageHandle, path))
+					data.SubFolders.Add(path);
+
+				return SDL_EnumerationResult.SDL_ENUM_CONTINUE;
+			}
+
+			if (IsDirectory(data.StorageHandle, path))
+				data.SubFolders.Add(path);
+
+			data.Entries.Add(path);
+			return SDL_EnumerationResult.SDL_ENUM_CONTINUE;
+		}
+
 		if (handle == nint.Zero)
-			yield break;
+			return [];
 
 		path ??= "";
 		path = Calc.NormalizePath(path);
 
-		var results = SDL_GlobStorageDirectory(handle, path, searchPattern!, (SDL_GlobFlags)0, out int count);
-		if (results == nint.Zero)
-			yield break;
+		Regex? pattern = null;
+		if (!string.IsNullOrEmpty(searchPattern))
+			pattern = new("^" + Regex.Escape(searchPattern).Replace("\\?", ".").Replace("\\*", ".*") + "$");
 
-		var list = new List<string>();
+		var userdata = new EnumerateDirectoryUserData(handle, path, pattern, searchOption == SearchOption.AllDirectories);
+		var userdataHandle = GCHandle.Alloc(userdata);
+		EnumerateSubfolder(path, userdata, GCHandle.ToIntPtr(userdataHandle));
+		userdataHandle.Free();
 
-		unsafe
-		{
-			for (int i = 0; i < count; i ++)
-			{
-				var ptr = new nint(((byte**)results)[i]);
-				if (ptr == nint.Zero)
-					break;
-
-				var filepath = Platform.ParseUTF8(ptr);
-				list.Add(filepath);
-			}
-		}
-
-		SDL_free(results);
-
-		foreach (var it in list)
-			yield return it;
+		return userdata.Entries;
 	}
 
 	public override bool FileExists(string path)
@@ -114,18 +157,24 @@ public sealed class Storage : StorageContainer
 
 	public override bool CreateDirectory(string path)
 	{
+		if (!writable)
+			throw new Exception($"{nameof(CreateDirectory)} Failed: the storage can not be written to");
 		path = Calc.NormalizePath(path);
 		return handle != nint.Zero && SDL_CreateStorageDirectory(handle, path);
 	}
 
 	public override bool Remove(string path)
 	{
+		if (!writable)
+			throw new Exception($"{nameof(CreateDirectory)} Failed: the storage can not be written to");
 		path = Calc.NormalizePath(path);
 		return handle != nint.Zero && SDL_RemoveStoragePath(handle, path);
 	}
 
 	public override Stream Create(string path)
 	{
+		if (!writable)
+			throw new Exception($"{nameof(CreateDirectory)} Failed: the storage can not be written to");
 		path = Calc.NormalizePath(path);
 		return new UserStream(path, handle);
 	}
@@ -160,7 +209,10 @@ public sealed class Storage : StorageContainer
 		public unsafe override void Flush()
 		{
 			fixed (byte* source = buffer.GetBuffer())
-				SDL_WriteStorageFile(Storage, Path, new nint(source), (ulong)buffer.Length);
+			{
+				if (!SDL_WriteStorageFile(Storage, Path, new nint(source), (ulong)buffer.Length))
+					throw Platform.CreateExceptionFromSDL(nameof(SDL_WriteStorageFile));
+			}
 		}
 
 		public override int Read(byte[] buffer, int offset, int count)
