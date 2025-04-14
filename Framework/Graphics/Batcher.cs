@@ -99,9 +99,6 @@ public class Batcher : IDisposable
 	private int currentBatchInsert;
 	private bool meshDirty;
 
-	private static readonly int[] TriangleIndices = [ 0, 1, 2 ];
-	private static readonly int[] QuadIndices = [ 0, 1, 2, 0, 2, 3 ];
-
 	private static readonly Color NormalMode = new(255, 0, 0, 0);
 	private static readonly Color WashMode = new(0, 255, 0, 0);
 	private static readonly Color FillMode = new(0, 0, 255, 0);
