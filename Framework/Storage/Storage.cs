@@ -87,18 +87,19 @@ public sealed class Storage : StorageContainer
 			if (handle.Target is not EnumerateDirectoryUserData data)
 				return SDL_EnumerationResult.SDL_ENUM_FAILURE;
 
-			var path = Path.Combine(data.CurrentPath, Platform.ParseUTF8(new(fname)));
-			if (data.SearchPattern != null && !data.SearchPattern.IsMatch(path))
-			{
-				// doesn't match the pattern but we may want to find children that do match
-				if (data.Recursive && IsDirectory(data.StorageHandle, path))
-					data.SubFolders.Add(path);
+			string path;
+			if (!string.IsNullOrEmpty(data.CurrentPath))
+				path = $"{data.CurrentPath}/{Platform.ParseUTF8(new(fname))}";
+			else
+				path = Platform.ParseUTF8(new(fname));
 
-				return SDL_EnumerationResult.SDL_ENUM_CONTINUE;
-			}
-
-			if (IsDirectory(data.StorageHandle, path))
+			// track subfolders if we're recursive
+			if (data.Recursive && IsDirectory(data.StorageHandle, path))
 				data.SubFolders.Add(path);
+
+			// doesn't pattern match
+			if (data.SearchPattern != null && !data.SearchPattern.IsMatch(path))
+				return SDL_EnumerationResult.SDL_ENUM_CONTINUE;
 
 			data.Entries.Add(path);
 			return SDL_EnumerationResult.SDL_ENUM_CONTINUE;
