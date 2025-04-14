@@ -644,56 +644,112 @@ public class Batcher : IDisposable
 
 	public void Quad(in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 v3, in Color color)
 	{
-		Append(
-			vertices: [
-				new(Vector2.Transform(v0, Matrix), color, FillMode),
-				new(Vector2.Transform(v1, Matrix), color, FillMode),
-				new(Vector2.Transform(v2, Matrix), color, FillMode),
-				new(Vector2.Transform(v3, Matrix), color, FillMode),
-			],
-			indices: QuadIndices
-		);
+		Request(4, 6, out var vertices, out var indices, out var offset);
+
+		vertices[0].Pos = Vector2.Transform(v0, Matrix);
+		vertices[1].Pos = Vector2.Transform(v1, Matrix);
+		vertices[2].Pos = Vector2.Transform(v2, Matrix);
+		vertices[3].Pos = Vector2.Transform(v3, Matrix);
+		vertices[0].Col = color;
+		vertices[1].Col = color;
+		vertices[2].Col = color;
+		vertices[3].Col = color;
+		vertices[0].Mode = FillMode;
+		vertices[1].Mode = FillMode;
+		vertices[2].Mode = FillMode;
+		vertices[3].Mode = FillMode;
+
+		indices[0] = offset + 0;
+		indices[1] = offset + 1;
+		indices[2] = offset + 2;
+		indices[3] = offset + 0;
+		indices[4] = offset + 2;
+		indices[5] = offset + 3;
 	}
 
 	public void Quad(Texture? texture, in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 v3, in Vector2 t0, in Vector2 t1, in Vector2 t2, in Vector2 t3, in Color color)
 	{
 		SetTexture(texture);
-		Append(
-			vertices: [
-				new(Vector2.Transform(v0, Matrix), t0, color, mode),
-				new(Vector2.Transform(v1, Matrix), t1, color, mode),
-				new(Vector2.Transform(v2, Matrix), t2, color, mode),
-				new(Vector2.Transform(v3, Matrix), t3, color, mode),
-			],
-			indices: QuadIndices
-		);
+		Request(4, 6, out var vertices, out var indices, out var offset);
+
+		vertices[0].Pos = Vector2.Transform(v0, Matrix);
+		vertices[1].Pos = Vector2.Transform(v1, Matrix);
+		vertices[2].Pos = Vector2.Transform(v2, Matrix);
+		vertices[3].Pos = Vector2.Transform(v3, Matrix);
+		vertices[0].Tex = t0;
+		vertices[1].Tex = t1;
+		vertices[2].Tex = t2;
+		vertices[3].Tex = t3;
+		vertices[0].Col = color;
+		vertices[1].Col = color;
+		vertices[2].Col = color;
+		vertices[3].Col = color;
+		vertices[0].Mode = mode;
+		vertices[1].Mode = mode;
+		vertices[2].Mode = mode;
+		vertices[3].Mode = mode;
+
+		indices[0] = offset + 0;
+		indices[1] = offset + 1;
+		indices[2] = offset + 2;
+		indices[3] = offset + 0;
+		indices[4] = offset + 2;
+		indices[5] = offset + 3;
 	}
 
 	public void Quad(in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 v3, in Color c0, in Color c1, in Color c2, in Color c3)
 	{
-		Append(
-			vertices: [
-				new(Vector2.Transform(v0, Matrix), c0, FillMode),
-				new(Vector2.Transform(v1, Matrix), c1, FillMode),
-				new(Vector2.Transform(v2, Matrix), c2, FillMode),
-				new(Vector2.Transform(v3, Matrix), c3, FillMode),
-			],
-			indices: QuadIndices
-		);
+		Request(4, 6, out var vertices, out var indices, out var offset);
+
+		vertices[0].Pos = Vector2.Transform(v0, Matrix);
+		vertices[1].Pos = Vector2.Transform(v1, Matrix);
+		vertices[2].Pos = Vector2.Transform(v2, Matrix);
+		vertices[3].Pos = Vector2.Transform(v3, Matrix);
+		vertices[0].Col = c0;
+		vertices[1].Col = c1;
+		vertices[2].Col = c2;
+		vertices[3].Col = c3;
+		vertices[0].Mode = FillMode;
+		vertices[1].Mode = FillMode;
+		vertices[2].Mode = FillMode;
+		vertices[3].Mode = FillMode;
+
+		indices[0] = offset + 0;
+		indices[1] = offset + 1;
+		indices[2] = offset + 2;
+		indices[3] = offset + 0;
+		indices[4] = offset + 2;
+		indices[5] = offset + 3;
 	}
 
 	public void Quad(Texture? texture, in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 v3, in Vector2 t0, in Vector2 t1, in Vector2 t2, in Vector2 t3, Color c0, Color c1, Color c2, Color c3)
 	{
 		SetTexture(texture);
-		Append(
-			vertices: [
-				new(Vector2.Transform(v0, Matrix), t0, c0, mode),
-				new(Vector2.Transform(v1, Matrix), t1, c1, mode),
-				new(Vector2.Transform(v2, Matrix), t2, c2, mode),
-				new(Vector2.Transform(v3, Matrix), t3, c3, mode),
-			],
-			indices: QuadIndices
-		);
+		Request(4, 6, out var vertices, out var indices, out var offset);
+
+		vertices[0].Pos = Vector2.Transform(v0, Matrix);
+		vertices[1].Pos = Vector2.Transform(v1, Matrix);
+		vertices[2].Pos = Vector2.Transform(v2, Matrix);
+		vertices[3].Pos = Vector2.Transform(v3, Matrix);
+		vertices[0].Tex = t0;
+		vertices[1].Tex = t1;
+		vertices[2].Tex = t2;
+		vertices[3].Tex = t3;
+		vertices[0].Col = c0;
+		vertices[1].Col = c1;
+		vertices[2].Col = c2;
+		vertices[3].Col = c3;
+		vertices[0].Mode = mode;
+		vertices[1].Mode = mode;
+		vertices[2].Mode = mode;
+		vertices[3].Mode = mode;
+
+		indices[0] = offset + 0;
+		indices[1] = offset + 1;
+		indices[2] = offset + 2;
+		indices[3] = offset + 0;
+		indices[4] = offset + 2;
+		indices[5] = offset + 3;
 	}
 
 	public void QuadLine(in Vector2 a, in Vector2 b, in Vector2 c, in Vector2 d, float lineWeight, in Color color)
@@ -727,39 +783,63 @@ public class Batcher : IDisposable
 
 	public void Triangle(in Vector2 v0, in Vector2 v1, in Vector2 v2, Color color)
 	{
-		Append(
-			vertices: [
-				new(Vector2.Transform(v0, Matrix), color, FillMode),
-				new(Vector2.Transform(v1, Matrix), color, FillMode),
-				new(Vector2.Transform(v2, Matrix), color, FillMode),
-			],
-			indices: TriangleIndices
-		);
+		Request(3, 3, out var vertices, out var indices, out var offset);
+
+		vertices[0].Pos = Vector2.Transform(v0, Matrix);
+		vertices[1].Pos = Vector2.Transform(v1, Matrix);
+		vertices[2].Pos = Vector2.Transform(v2, Matrix);
+		vertices[0].Col = color;
+		vertices[1].Col = color;
+		vertices[2].Col = color;
+		vertices[0].Mode = FillMode;
+		vertices[1].Mode = FillMode;
+		vertices[2].Mode = FillMode;
+
+		indices[0] = offset + 0;
+		indices[1] = offset + 1;
+		indices[2] = offset + 2;
 	}
 
 	public void Triangle(Texture? texture, in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 t0, in Vector2 t1, in Vector2 t2, Color color)
 	{
 		SetTexture(texture);
-		Append(
-			vertices: [
-				new(Vector2.Transform(v0, Matrix), color, mode),
-				new(Vector2.Transform(v1, Matrix), color, mode),
-				new(Vector2.Transform(v2, Matrix), color, mode),
-			],
-			indices: TriangleIndices
-		);
+		Request(3, 3, out var vertices, out var indices, out var offset);
+
+		vertices[0].Pos = Vector2.Transform(v0, Matrix);
+		vertices[1].Pos = Vector2.Transform(v1, Matrix);
+		vertices[2].Pos = Vector2.Transform(v2, Matrix);
+		vertices[0].Tex = t0;
+		vertices[1].Tex = t1;
+		vertices[2].Tex = t2;
+		vertices[0].Col = color;
+		vertices[1].Col = color;
+		vertices[2].Col = color;
+		vertices[0].Mode = mode;
+		vertices[1].Mode = mode;
+		vertices[2].Mode = mode;
+
+		indices[0] = offset + 0;
+		indices[1] = offset + 1;
+		indices[2] = offset + 2;
 	}
 
 	public void Triangle(in Vector2 v0, in Vector2 v1, in Vector2 v2, Color c0, Color c1, Color c2)
 	{
-		Append(
-			vertices: [
-				new(Vector2.Transform(v0, Matrix), c0, FillMode),
-				new(Vector2.Transform(v1, Matrix), c1, FillMode),
-				new(Vector2.Transform(v2, Matrix), c2, FillMode),
-			],
-			indices: TriangleIndices
-		);
+		Request(3, 3, out var vertices, out var indices, out var offset);
+
+		vertices[0].Pos = Vector2.Transform(v0, Matrix);
+		vertices[1].Pos = Vector2.Transform(v1, Matrix);
+		vertices[2].Pos = Vector2.Transform(v2, Matrix);
+		vertices[0].Col = c0;
+		vertices[1].Col = c1;
+		vertices[2].Col = c2;
+		vertices[0].Mode = FillMode;
+		vertices[1].Mode = FillMode;
+		vertices[2].Mode = FillMode;
+
+		indices[0] = offset + 0;
+		indices[1] = offset + 1;
+		indices[2] = offset + 2;
 	}
 
 	public void TriangleLine(in Vector2 a, in Vector2 b, in Vector2 c, float lineWeight, in Color color)
@@ -1094,9 +1174,7 @@ public class Batcher : IDisposable
 		if (steps < 3)
 			return;
 
-		var vertexStart = vertexCount;
-
-		Request(steps + 1, steps * 3, out var vertices, out var indices);
+		Request(steps + 1, steps * 3, out var vertices, out var indices, out var vertexStart);
 
 		// center vertex
 		vertices[0] = new(Vector2.Transform(center, Matrix), centerColor, FillMode);
@@ -1516,18 +1594,22 @@ public class Batcher : IDisposable
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	private void Append(in ReadOnlySpan<BatcherVertex> vertices, in ReadOnlySpan<int> indices)
 	{
-		var vertexStart = vertexCount;
+		// get spans to insert data
+		Request(vertices.Length, indices.Length, out var vertexDest, out var indexDest, out var vertexStart);
 
-		Request(vertices.Length, indices.Length, out var vertexDest, out var indexDest);
+		// copy vertices over
 		vertices.CopyTo(vertexDest);
 
+		// copy indices over but update them from relative offsets to the offsets in the buffer
 		for (int i = 0; i < indices.Length; i ++)
 			indexDest[i] = vertexStart + indices[i];
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-	private void Request(int vertexAppendCount, int indexAppendCount, out Span<BatcherVertex> vertices, out Span<int> indices)
+	private void Request(int vertexAppendCount, int indexAppendCount, out Span<BatcherVertex> vertices, out Span<int> indices, out int vertexOffset)
 	{
+		vertexOffset = vertexCount;
+
 		// make sure we have enough vertex space
 		if (vertexCount + vertexAppendCount >= vertexBuffer.Length)
 		{
@@ -1557,6 +1639,7 @@ public class Batcher : IDisposable
 		meshDirty = true;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	private static Vector2 Intersection(in Vector2 p0, in Vector2 p1, in Vector2 q0, in Vector2 q1)
 	{
 		var aa = p1 - p0;

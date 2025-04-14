@@ -21,7 +21,7 @@ public struct BatcherVertex : IVertex
 	public Color Mode;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public BatcherVertex(Vector2 position, Vector2 texcoord, Color color, Color mode)
+	public BatcherVertex(in Vector2 position, in Vector2 texcoord, Color color, Color mode)
 	{
 		Pos = position;
 		Tex = texcoord;
@@ -30,7 +30,7 @@ public struct BatcherVertex : IVertex
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public BatcherVertex(Vector2 position, Color color, Color mode)
+	public BatcherVertex(in Vector2 position, Color color, Color mode)
 	{
 		Pos = position;
 		Col = color;
