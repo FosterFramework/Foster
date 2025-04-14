@@ -4,8 +4,8 @@ using System.Runtime.InteropServices;
 namespace Foster.Framework;
 
 /// <summary>
-/// A 2D RGBA representation stored offline.
-/// To draw images to the screen use a <see cref="Texture"/>
+/// A 2D RGBA image representation stored offline.<br/>
+/// To draw images to the screen using the GPU, use a <see cref="Texture"/>.
 /// </summary>
 public class Image : IDisposable
 {
@@ -35,14 +35,15 @@ public class Image : IDisposable
 	public RectInt Bounds => new(0, 0, Width, Height);
 
 	/// <summary>
-	/// Gets a Span of the pixel data held by the Image.
+	/// Gets a Span of the pixel data held by the Image.<br/>
+	/// Note that this span is only valid as long as the Image has not been disposed.
 	/// </summary>
 	public unsafe Span<Color> Data
 	{
 		get
 		{
 			if (Width <= 0 || Height <= 0)
-				return Span<Color>.Empty;
+				return [];
 			return new Span<Color>(ptr.ToPointer(), Width * Height);
 		}
 	}
@@ -56,17 +57,20 @@ public class Image : IDisposable
 	private GCHandle handle;
 	private bool unmanaged = false;
 
-	public Image()
-	{
+	/// <summary>
+	/// Creates an empty Image with no width or height
+	/// </summary>
+	public Image() {}
 
-	}
-
+	/// <summary>
+	/// Creates an image of a given size filled with transparent pixels
+	/// </summary>
 	public Image(int width, int height)
-		: this(width, height, new Color[width * height])
-	{
+		: this(width, height, new Color[width * height]) {}
 
-	}
-
+	/// <summary>
+	/// Creates an image of a given size filled with the given color
+	/// </summary>
 	public Image(int width, int height, Color fill)
 		: this(width, height, new Color[width * height])
 	{
@@ -78,6 +82,9 @@ public class Image : IDisposable
 		}
 	}
 
+	/// <summary>
+	/// Creates an image of a given size with the given pixel data
+	/// </summary>
 	public Image(int width, int height, Color[] pixels)
 	{
 		Width = width;
@@ -87,14 +94,29 @@ public class Image : IDisposable
 		unmanaged = false;
 	}
 
+	/// <summary>
+	/// Creates an Image from a file.
+	/// </summary>
 	public Image(string file)
 	{
 		using var stream = File.OpenRead(file);
 		Load(stream);
 	}
 
+	/// <summary>
+	/// Creates an Image from a Stream. Expects a valid image format, not a stream of color values.
+	/// </summary>
 	public Image(Stream stream)
 	{
+		Load(stream);
+	}
+
+	/// <summary>
+	/// Creates an image from a byte array. Expects a valid image format, not an array of color values.
+	/// </summary>
+	public Image(byte[] data)
+	{
+		using var stream = new MemoryStream(data);
 		Load(stream);
 	}
 
@@ -354,9 +376,12 @@ public class Image : IDisposable
 	{
 		unsafe
 		{
-			Color* pixels = (Color*)ptr.ToPointer();
-			for (int i = 0, n = PixelCount; i < n; ++i)
-				pixels[i] = pixels[i].Premultiply();
+			if (ptr != nint.Zero)
+			{
+				Color* pixels = (Color*)ptr.ToPointer();
+				for (int i = 0, n = PixelCount; i < n; ++i)
+					pixels[i] = pixels[i].Premultiply();
+			}
 		}
 	}
 }
