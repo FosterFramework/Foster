@@ -17,6 +17,10 @@ public enum GraphicsDriver
 /// </summary>
 public static class GraphicsDriverExt
 {
+	/// <summary>
+	/// Gets the standard extension name for the shaders of the given driver type.<br/>
+	/// (For example, Vulkan is spv, Metal is msl, D3D12 is dxil, etc)
+	/// </summary>
 	public static string GetShaderExtension(this GraphicsDriver driver) => driver switch
 	{
 		GraphicsDriver.None => string.Empty,

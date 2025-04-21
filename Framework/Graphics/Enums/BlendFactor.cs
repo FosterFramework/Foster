@@ -17,11 +17,11 @@ public enum BlendFactor
 	OneMinusDstAlpha,
 	ConstantColor,
 	OneMinusConstantColor,
-	ConstantAlpha,
-	OneMinusConstantAlpha,
+	[Obsolete("No longer supported in SDL GPU")] ConstantAlpha,
+	[Obsolete("No longer supported in SDL GPU")] OneMinusConstantAlpha,
 	SrcAlphaSaturate,
-	Src1Color,
-	OneMinusSrc1Color,
-	Src1Alpha,
-	OneMinusSrc1Alpha
+	[Obsolete("No longer supported in SDL GPU")] Src1Color,
+	[Obsolete("No longer supported in SDL GPU")] OneMinusSrc1Color,
+	[Obsolete("No longer supported in SDL GPU")] Src1Alpha,
+	[Obsolete("No longer supported in SDL GPU")] OneMinusSrc1Alpha
 }
