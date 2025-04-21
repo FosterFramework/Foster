@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 namespace Foster.Framework;
 
 /// <summary>
@@ -210,14 +212,6 @@ public class Packer
 		return source.Index;
 	}
 
-	private struct PackingNode
-	{
-		public bool Used;
-		public RectInt Rect;
-		public unsafe PackingNode* Right;
-		public unsafe PackingNode* Down;
-	};
-
 	public unsafe Output Pack()
 	{
 		Output result = new();
@@ -226,6 +220,9 @@ public class Packer
 		if (sources.Count <= 0)
 			return result;
 
+		int packed = 0;
+		int page = 0;
+
 		// sort the sources by size
 		sources.Sort((a, b) => b.Packed.Width * b.Packed.Height - a.Packed.Width * a.Packed.Height);
 
@@ -233,41 +230,132 @@ public class Packer
 		if (sources[0].Packed.Width > MaxSize || sources[0].Packed.Height > MaxSize)
 			throw new Exception("Source image is larger than max atlas size");
 
-		// TODO: why do we sometimes need more than source images * 3?
-		// for safety I've just made it 4 ... but it should really only be 3?
-
-		int nodeCount = sources.Count * 4;
-		Span<PackingNode> buffer = (nodeCount <= 2000 ?
-			stackalloc PackingNode[nodeCount] :
-			new PackingNode[nodeCount]);
+		// move empty / duplicates to the start - we skip them during packing
+		for (int i = 0; i < sources.Count; i ++)
+		{
+			if (sources[i].Empty || sources[i].DuplicateOf.HasValue)
+			{
+				(sources[i], sources[packed]) = (sources[packed], sources[i]);
+				packed++;
+			}
+		}
 
 		var padding = Math.Max(0, Padding);
-		var halfPadding = padding / 2;
+		var algo = new DefaultAlgorithm();
 
-		// using pointer operations here was faster
-		fixed (PackingNode* nodes = buffer)
+		while (packed < sources.Count)
 		{
-			int packed = 0, page = 0;
-			while (packed < sources.Count)
-			{
-				if (sources[packed].Empty)
-				{
-					packed++;
-					continue;
-				}
+			var remaining = CollectionsMarshal.AsSpan(sources)[packed..];
+			var res = algo.Pack(remaining, padding, MaxSize);
 
-				var from = packed;
+			// get page size
+			int pageWidth = res.Width, 
+				pageHeight = res.Height;
+
+			if (PowerOfTwo)
+			{
+				pageWidth = pageHeight = 2;
+				while (pageWidth < res.Width) pageWidth *= 2;
+				while (pageHeight < res.Height) pageHeight *= 2;
+			}
+
+			// create page data
+			var bmp = new Image(pageWidth, pageHeight);
+			result.Pages.Add(bmp);
+
+			// create each entry for this page and copy its image data
+			for (int i = 0; i < res.Packed; i++)
+			{
+				var source = remaining[i];
+				result.Entries.Add(new(source.Index, source.Name, page, source.Packed, source.Frame));
+
+				var data = sourceBuffer.AsSpan(source.BufferIndex, source.BufferLength);
+				bmp.CopyPixels(data, source.Packed.Width, source.Packed.Height, source.Packed.Position);
+
+				if (DuplicateEdges && padding >= 2)
+				{
+					var p = source.Packed;
+					bmp.CopyPixels(bmp, new RectInt(p.Position, new Point2(1, p.Height)), p.Position + new Point2(-1, 0)); // L
+					bmp.CopyPixels(bmp, new RectInt(p.Position + new Point2(p.Width - 1, 0), new Point2(1, p.Height)), p.Position + new Point2(p.Width, 0)); // R
+					bmp.CopyPixels(bmp, new RectInt(p.Position + new Point2(-1, 0), new Point2(p.Width + 2, 1)), p.Position + new Point2(-1, -1)); // T
+					bmp.CopyPixels(bmp, new RectInt(p.Position + new Point2(-1, p.Height - 1), new Point2(p.Width + 2, 1)), p.Position + new Point2(-1, p.Height)); // B
+				}
+			}
+
+			packed += res.Packed;
+			page++;
+		}
+
+		// add empty sources
+		foreach (var source in sources)
+			if (source.Empty)
+				result.Entries.Add(new(source.Index, source.Name, page, source.Packed, source.Frame));
+
+		// make sure duplicates have entries
+		if (CombineDuplicates)
+		{
+			foreach (var source in sources)
+			{
+				if (!source.DuplicateOf.HasValue)
+					continue;
+
+				foreach (var entry in result.Entries)
+					if (entry.Index == source.DuplicateOf.Value)
+					{
+						result.Entries.Add(new(source.Index, source.Name, entry.Page, entry.Source, source.Frame));
+						break;
+					}
+			}
+		}
+
+		return result;
+	}
+
+	/// <summary>
+	/// Clears all source data
+	/// </summary>
+	public void Clear()
+	{
+		sources.Clear();
+		sourceBufferIndex = 0;
+	}
+
+	private abstract class PackingAlgorithm
+	{
+		public readonly record struct Result(int Packed, int Width, int Height);
+		public abstract Result Pack(Span<Source> entries, int padding, int maxSize);
+	}
+
+	private class DefaultAlgorithm : PackingAlgorithm
+	{
+		private struct PackingNode
+		{
+			public bool Used;
+			public RectInt Rect;
+			public unsafe PackingNode* Right;
+			public unsafe PackingNode* Down;
+		};
+
+		private PackingNode[] buffer = [];
+
+		public override unsafe Result Pack(Span<Source> sources, int padding, int maxSize)
+		{
+			int nodeCount = sources.Length * 4;
+			if (buffer.Length < nodeCount)
+				Array.Resize(ref buffer, nodeCount);
+
+			var packed = 0;
+			var from = packed;
+			var halfPadding = padding / 2;
+			int width = 0, height = 0;
+			
+			fixed (PackingNode* nodes = buffer)
+			{
 				var nodePtr = nodes;
 				var rootPtr = ResetNode(nodePtr++, 0, 0, sources[from].Packed.Width + padding, sources[from].Packed.Height + padding);
 
-				while (packed < sources.Count)
+				while (packed < sources.Length)
 				{
-					if (sources[packed].Empty || sources[packed].DuplicateOf.HasValue)
-					{
-						packed++;
-						continue;
-					}
-
 					int w = sources[packed].Packed.Width + padding;
 					int h = sources[packed].Packed.Height + padding;
 					var node = FindNode(rootPtr, w, h);
@@ -275,8 +363,8 @@ public class Packer
 					// try to expand
 					if (node == null)
 					{
-						bool canGrowDown = (w <= rootPtr->Rect.Width) && (rootPtr->Rect.Height + h < MaxSize);
-						bool canGrowRight = (h <= rootPtr->Rect.Height) && (rootPtr->Rect.Width + w < MaxSize);
+						bool canGrowDown = (w <= rootPtr->Rect.Width) && (rootPtr->Rect.Height + h < maxSize);
+						bool canGrowRight = (h <= rootPtr->Rect.Height) && (rootPtr->Rect.Width + w < maxSize);
 						bool shouldGrowRight = canGrowRight && (rootPtr->Rect.Height >= (rootPtr->Rect.Width + w));
 						bool shouldGrowDown = canGrowDown && (rootPtr->Rect.Width >= (rootPtr->Rect.Height + h));
 
@@ -321,80 +409,14 @@ public class Packer
 				}
 
 				// get page size
-				int pageWidth, pageHeight;
-				if (PowerOfTwo)
-				{
-					pageWidth = 2;
-					pageHeight = 2;
-					while (pageWidth < rootPtr->Rect.Width)
-						pageWidth *= 2;
-					while (pageHeight < rootPtr->Rect.Height)
-						pageHeight *= 2;
-				}
-				else
-				{
-					pageWidth = rootPtr->Rect.Width;
-					pageHeight = rootPtr->Rect.Height;
-				}
-
-				// create each page
-				{
-					var bmp = new Image(pageWidth, pageHeight);
-					result.Pages.Add(bmp);
-
-					// create each entry for this page and copy its image data
-					for (int i = from; i < packed; i++)
-					{
-						var source = sources[i];
-
-						// do not pack duplicate entries yet
-						if (source.DuplicateOf.HasValue)
-							continue;
-
-						result.Entries.Add(new(source.Index, source.Name, page, source.Packed, source.Frame));
-
-						if (source.Empty || source.BufferLength <= 0)
-							continue;
-
-						var data = sourceBuffer.AsSpan(source.BufferIndex, source.BufferLength);
-						bmp.CopyPixels(data, source.Packed.Width, source.Packed.Height, source.Packed.Position);
-
-						if (DuplicateEdges && padding >= 2)
-						{
-							var p = source.Packed;
-							bmp.CopyPixels(bmp, new RectInt(p.Position, new Point2(1, p.Height)), p.Position + new Point2(-1, 0)); // L
-							bmp.CopyPixels(bmp, new RectInt(p.Position + new Point2(p.Width - 1, 0), new Point2(1, p.Height)), p.Position + new Point2(p.Width, 0)); // R
-							bmp.CopyPixels(bmp, new RectInt(p.Position + new Point2(-1, 0), new Point2(p.Width + 2, 1)), p.Position + new Point2(-1, -1)); // T
-							bmp.CopyPixels(bmp, new RectInt(p.Position + new Point2(-1, p.Height - 1), new Point2(p.Width + 2, 1)), p.Position + new Point2(-1, p.Height)); // B
-						}
-					}
-				}
-
-				page++;
+				width = rootPtr->Rect.Width;
+				height = rootPtr->Rect.Height;
 			}
 
+			return new (packed, width, height);
 		}
 
-		// make sure duplicates have entries
-		if (CombineDuplicates)
-		{
-			foreach (var source in sources)
-			{
-				if (!source.DuplicateOf.HasValue)
-					continue;
-
-				foreach (var entry in result.Entries)
-					if (entry.Index == source.DuplicateOf.Value)
-					{
-						result.Entries.Add(new(source.Index, source.Name, entry.Page, entry.Source, source.Frame));
-						break;
-					}
-			}
-		}
-
-		return result;
-
-		static unsafe PackingNode* FindNode(PackingNode* root, int w, int h)
+		private static unsafe PackingNode* FindNode(PackingNode* root, int w, int h)
 		{
 			if (root->Used)
 			{
@@ -409,7 +431,7 @@ public class Packer
 			return null;
 		}
 
-		static unsafe PackingNode* ResetNode(PackingNode* node, int x, int y, int w, int h)
+		private static unsafe PackingNode* ResetNode(PackingNode* node, int x, int y, int w, int h)
 		{
 			node->Used = false;
 			node->Rect = new RectInt(x, y, w, h);
@@ -417,14 +439,5 @@ public class Packer
 			node->Down = null;
 			return node;
 		}
-	}
-
-	/// <summary>
-	/// Removes all source data and removes the Packed Output
-	/// </summary>
-	public void Clear()
-	{
-		sources.Clear();
-		sourceBufferIndex = 0;
 	}
 }
