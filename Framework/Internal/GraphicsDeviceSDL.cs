@@ -46,11 +46,12 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		public readonly ConcurrentDictionary<int, nint> Pipelines = [];
 	}
 
-	private record struct ClearInfo(StackList4<Color>? Color, float? Depth, int? Stencil);
+	private record struct ClearInfo(StackList8<Color>? Color, float? Depth, int? Stencil);
 
 	private const int MaxFramesInFlight = 3;
 	private const uint TransferBufferSize = 16 * 1024 * 1024; // 16MB
 	private const uint MaxUploadCycleCount = 4;
+	private const int MaxColorAttachments = 8;
 
 	// object pointers
 	private nint device;
@@ -75,10 +76,9 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	private GraphicsDriver driver;
 	private bool vsyncEnabled;
 
-	// swapchain state
-	private nint? swapchainTexture; // null means not yet requested, nint.Zero means not available
-	private Point2 swapchainSize;
-	private SDL_GPUTextureFormat swapchainFormat;
+	// render buffer, drawn to before being applied to the swapchain
+	private Target? backbuffer;
+	private Point2 backbufferSize;
 
 	// tracked / allocated resources
 	private readonly HashSet<IHandle> resources = [];
@@ -226,8 +226,9 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			SetTextureData(emptyDefaultTexture, new nint(data), 4);
 		}
 
-		// get swapchain texture format
-		swapchainFormat = SDL_GetGPUSwapchainTextureFormat(device, window);
+		// get backbuffer
+		SDL_GetWindowSizeInPixels(window, out backbufferSize.X, out backbufferSize.Y);
+		backbuffer = new(this, backbufferSize.X, backbufferSize.Y, [ TextureFormat.Color ]);
 
 		// default to 3 frames in flight
 		SDL_SetGPUAllowedFramesInFlight(device, 3);
@@ -290,6 +291,67 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 	internal override void Present()
 	{
+		EndCopyPass();
+		EndRenderPass();
+
+		// copy buffer to swap chain
+		if (SDL_WaitAndAcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
+		{
+			if (scTex != nint.Zero && backbuffer != null && scW > 0 && scH > 0 && backbufferSize.X > 0 && backbufferSize.Y > 0)
+			{
+				SDL_GPUBlitInfo blit = new()
+				{
+					source = new()
+					{
+						texture = ((TextureResource)backbuffer.Attachments[0].Resource).Texture,
+						mip_level = 0,
+						layer_or_depth_plane = 0,
+						x = 0,
+						y = 0,
+						w = Math.Min(scW, (uint)backbuffer.Width),
+						h = Math.Min(scH, (uint)backbuffer.Height)
+					},
+					destination = new()
+					{
+						texture = scTex,
+						mip_level = 0,
+						layer_or_depth_plane = 0,
+						x = 0,
+						y = 0,
+						w = Math.Min(scW, (uint)backbuffer.Width),
+						h = Math.Min(scH, (uint)backbuffer.Height)
+					},
+					load_op = SDL_GPULoadOp.SDL_GPU_LOADOP_DONT_CARE,
+					flip_mode = SDL_FlipMode.SDL_FLIP_NONE,
+					filter = SDL_GPUFilter.SDL_GPU_FILTER_NEAREST,
+					cycle = false
+				};
+
+				SDL_BlitGPUTexture(cmdRender, blit);
+			}
+
+			// update buffer size
+			backbufferSize = new Point2((int)scW, (int)scH);
+
+			// intentionally resizing the buffer a bit larger so we're not
+			// constantly recreating buffers as the window is dragged/scaled
+			if (backbuffer == null || backbuffer.Width < backbufferSize.X || backbuffer.Height < backbufferSize.Y)
+			{
+				backbuffer?.Dispose();
+				backbuffer = new(this, backbufferSize.X + 64, backbufferSize.Y + 64, [ TextureFormat.Color ]);
+			}
+			// resize buffer if it's too large
+			else if (backbuffer.Width > backbufferSize.X + 128 || backbuffer.Height > backbufferSize.Y + 128)
+			{
+				backbuffer?.Dispose();
+				backbuffer = new(this, backbufferSize.X, backbufferSize.Y, [ TextureFormat.Color ]);
+			}
+		}
+		else
+		{
+			throw Platform.CreateExceptionFromSDL(nameof(SDL_WaitAndAcquireGPUSwapchainTexture));
+		}
+
 		FlushCommands(stall: false);
 	}
 
@@ -374,15 +436,14 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (res.GraphicsDevice != this)
 			throw deviceWasDestroyed;
 
-		bool transferCycle = textureUploadBufferOffset == 0;
 		bool usingTemporaryTransferBuffer = false;
 		nint transferBuffer = textureUploadBuffer;
 		uint transferOffset;
+		bool transferCycle;
 
 		textureUploadBufferOffset = RoundToAlignment(textureUploadBufferOffset, SDL_GPUTextureFormatTexelBlockSize(res.Format));
-		transferOffset = textureUploadBufferOffset;
 
-		// acquire transfer buffer
+		// uploading more data than our transfer buffer, so create a temporary one
 		if (length >= TransferBufferSize)
 		{
 			transferBuffer = SDL_CreateGPUTransferBuffer(device, new()
@@ -395,8 +456,10 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			transferCycle = false;
 			transferOffset = 0;
 		}
+		// cycle transfer buffer because we're going to run out of space in the current one
 		else if (textureUploadBufferOffset + length >= TransferBufferSize)
 		{
+			// only allow MaxUploadCycleCount cycles before flushing
 			if (textureUploadCycleCount < MaxUploadCycleCount)
 			{
 				transferCycle = true;
@@ -404,12 +467,19 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				textureUploadBufferOffset = 0;
 				transferOffset = 0;
 			}
+			// otherwise flush
 			else
 			{
 				FlushCommands(stall: true);
 				transferCycle = true;
 				transferOffset = 0;
 			}
+		}
+		// normal transfer using existing buffer, only cycle if we're at the start
+		else
+		{
+			transferCycle = textureUploadBufferOffset == 0;
+			transferOffset = textureUploadBufferOffset;
 		}
 
 		// copy data
@@ -687,13 +757,12 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (data == nint.Zero)
 			return;
 
-		bool cycle = true; // TODO: this is controlled by hints/logic in FNA3D, where it can lead to a potential flush
-		bool transferCycle = bufferUploadBufferOffset == 0;
 		bool usingTemporaryTransferBuffer = false;
 		nint transferBuffer = bufferUploadBuffer;
-		uint transferOffset = bufferUploadBufferOffset;
+		uint transferOffset;
+		bool transferCycle;
 
-		// acquire transfer buffer
+		// uploading more data than our transfer buffer, so create a temporary one
 		if (dataSize >= TransferBufferSize)
 		{
 			transferBuffer = SDL_CreateGPUTransferBuffer(device, new()
@@ -706,21 +775,30 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			transferCycle = false;
 			transferOffset = 0;
 		}
+		// cycle transfer buffer because we're going to run out of space in the current one
 		else if (bufferUploadBufferOffset + dataSize >= TransferBufferSize)
 		{
+			// only allow MaxUploadCycleCount cycles before flushing
 			if (bufferUploadCycleCount < MaxUploadCycleCount)
 			{
 				transferCycle = true;
+				transferOffset = 0;
 				bufferUploadCycleCount += 1;
 				bufferUploadBufferOffset = 0;
-				transferOffset = 0;
 			}
+			// otherwise flush
 			else
 			{
 				FlushCommands(stall: true);
 				transferCycle = true;
 				transferOffset = 0;
 			}
+		}
+		// normal transfer using existing buffer, only cycle if we're at the start
+		else
+		{
+			transferCycle = bufferUploadBufferOffset == 0;
+			transferOffset = bufferUploadBufferOffset;
 		}
 
 		// copy data
@@ -745,7 +823,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 					offset = (uint)dataDestOffset,
 					size = (uint)dataSize
 				},
-				cycle
+				cycle: true
 			);
 		}
 
@@ -1032,9 +1110,13 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		if (mask != ClearMask.None)
 		{
+			StackList8<Color>? colors = null;
+			if (mask.Has(ClearMask.Color))
+				colors = [..color[..Math.Min(MaxColorAttachments, color.Length)]];
+
 			BeginRenderPass(target, new()
 			{
-				Color = mask.Has(ClearMask.Color) ? [..color] : null,
+				Color = colors,
 				Depth = mask.Has(ClearMask.Depth) ? depth : null,
 				Stencil = mask.Has(ClearMask.Stencil) ? stencil : null
 			});
@@ -1095,10 +1177,6 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		textureUploadCycleCount = 0;
 		bufferUploadBufferOffset = 0;
 		bufferUploadCycleCount = 0;
-
-		// swapchain will need to be requested again now that we have a new
-		// render command buffer
-		swapchainTexture = null;
 	}
 
 	private void BeginCopyPass()
@@ -1129,9 +1207,24 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		// configure lists of textures used
 		renderPassTarget = drawableTarget;
-		if (!GetDrawTargetAttachments(drawableTarget, out var colorTargets, out var depthStencilTarget, out var size))
-			return false;
-		renderPassTargetSize = size;
+
+		var target = GetDrawTarget(drawableTarget, out renderPassTargetSize);
+		var colorTargets = new StackList8<nint>();
+		var depthStencilTarget = nint.Zero;
+
+		foreach (var it in target.Attachments)
+		{
+			var res = ((TextureResource)it.Resource).Texture;
+
+			// drawing to an invalid target
+			if (it.IsDisposed || !it.IsTargetAttachment || res == nint.Zero)
+				throw new Exception("Drawing to a Disposed or Invalid Texture");
+
+			if (it.Format.IsDepthStencilFormat())
+				depthStencilTarget = res;
+			else
+				colorTargets.Add(res);
+		}
 
 		Span<SDL_GPUColorTargetInfo> colorInfo = stackalloc SDL_GPUColorTargetInfo[colorTargets.Count];
 
@@ -1232,7 +1325,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			var vertexFormat = command.Mesh.VertexFormat;
 
 			var colorBlendState = GetBlendState(command.BlendMode);
-			var colorAttachments = stackalloc SDL_GPUColorTargetDescription[4];
+			var colorAttachments = stackalloc SDL_GPUColorTargetDescription[MaxColorAttachments];
 			var colorAttachmentCount = 0;
 			var depthStencilAttachment = SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_INVALID;
 			var vertexBindings = stackalloc SDL_GPUVertexBufferDescription[1];
@@ -1348,94 +1441,31 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		return pipeline;
 	}
 
-	private StackList8<SDL_GPUTextureFormat> GetDrawTargetFormats(IDrawableTarget drawableTarget)
+	private Target GetDrawTarget(IDrawableTarget drawableTarget, out Point2 size)
 	{
-		StackList8<SDL_GPUTextureFormat> formats = new();
-
-		// get specific target attachment formats
+		// get specific target
 		if (drawableTarget.Surface is Target target)
 		{
-			foreach (var it in target.Attachments)
-				formats.Add(GetTextureFormat(it.Format));
-		}
-		// get swapchain formats
-		else if (drawableTarget.Surface is Window)
-		{
-			formats.Add(swapchainFormat);
-		}
-		else
-		{
-			throw new Exception("Invalid Draw Target");
+			size = target.SizeInPixels();
+			return target;
 		}
 
-		return formats;
+		// get backbuffer target
+		if (drawableTarget.Surface is Window && backbuffer != null)
+		{
+			size = backbufferSize;
+			return backbuffer;
+		}
+
+		throw new Exception("Invalid Target");
 	}
 
-	private bool GetDrawTargetAttachments(IDrawableTarget drawableTarget, out StackList4<nint> colorTargets, out nint depthTarget, out Point2 size)
+	private StackList32<SDL_GPUTextureFormat> GetDrawTargetFormats(IDrawableTarget drawableTarget)
 	{
-		colorTargets = default;
-		depthTarget = nint.Zero;
-
-		// drawing to a specific target
-		if (drawableTarget.Surface is Target target)
-		{
-			size = target.Bounds.Size;
-
-			foreach (var it in target.Attachments)
-			{
-				var res = ((TextureResource)it.Resource).Texture;
-
-				// drawing to an invalid target
-				if (it.IsDisposed || !it.IsTargetAttachment || res == nint.Zero)
-					throw new Exception("Drawing to a Disposed or Invalid Texture");
-
-				if (it.Format.IsDepthStencilFormat())
-					depthTarget = res;
-				else
-					colorTargets.Add(res);
-			}
-		}
-		// draw to the swapchain
-		else if (drawableTarget.Surface is Window)
-		{
-			// request swapchain if we don't have it yet
-			if (swapchainTexture == null)
-			{
-				swapchainTexture = nint.Zero;
-
-				if (SDL_WaitAndAcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
-				{
-					if (scTex != nint.Zero)
-					{
-						swapchainTexture = scTex;
-						swapchainSize = new Point2((int)scW, (int)scH);
-					}
-				}
-				else
-				{
-					Log.Warning($"{nameof(SDL_WaitAndAcquireGPUSwapchainTexture)} failed: {SDL_GetError()}");
-				}
-			}
-
-			// draw to the swapchain
-			if (swapchainTexture != nint.Zero)
-			{
-				size = swapchainSize;
-				colorTargets.Add(swapchainTexture.Value);
-			}
-			// don't have a swapchain
-			else
-			{
-				size = default;
-				return false;
-			}
-		}
-		else
-		{
-			throw new Exception("Invalid Draw Target");
-		}
-
-		return true;
+		StackList32<SDL_GPUTextureFormat> formats = new();
+		foreach (var it in GetDrawTarget(drawableTarget, out _).Attachments)
+			formats.Add(GetTextureFormat(it.Format));
+		return formats;
 	}
 
 	private void ReleaseGraphicsPipelinesAssociatedWith(ShaderResource shader)
@@ -1468,12 +1498,6 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			BlendFactor.ConstantColor => SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_CONSTANT_COLOR,
 			BlendFactor.OneMinusConstantColor => SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_ONE_MINUS_CONSTANT_COLOR,
 			BlendFactor.SrcAlphaSaturate => SDL_GPUBlendFactor.SDL_GPU_BLENDFACTOR_SRC_ALPHA_SATURATE,
-			BlendFactor.ConstantAlpha => throw new NotImplementedException(),
-			BlendFactor.OneMinusConstantAlpha => throw new NotImplementedException(),
-			BlendFactor.Src1Color => throw new NotImplementedException(),
-			BlendFactor.OneMinusSrc1Color => throw new NotImplementedException(),
-			BlendFactor.Src1Alpha => throw new NotImplementedException(),
-			BlendFactor.OneMinusSrc1Alpha => throw new NotImplementedException(),
 			_ => throw new NotImplementedException()
 		};
 
@@ -1518,7 +1542,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			TextureWrap.Repeat => SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
 			TextureWrap.MirroredRepeat => SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_MIRRORED_REPEAT,
 			TextureWrap.Clamp => SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
-			_ => throw new NotImplementedException()
+			_ => throw new ArgumentException("Invalid Texture Wrap", nameof(wrap)),
 		};
 
 		if (!samplers.TryGetValue(sampler, out var result))
@@ -1527,7 +1551,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			{
 				TextureFilter.Nearest => SDL_GPUFilter.SDL_GPU_FILTER_NEAREST,
 				TextureFilter.Linear => SDL_GPUFilter.SDL_GPU_FILTER_LINEAR,
-				_ => throw new NotImplementedException()
+				_ => throw new ArgumentException("Invalid Texture Filter", nameof(sampler)),
 			};
 
 			SDL_GPUSamplerCreateInfo info = new()
@@ -1570,7 +1594,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			(VertexType.UShort4, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT4,
 			(VertexType.UShort4, true)  => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT4_NORM,
 
-			_ => throw new NotImplementedException(),
+			_ => throw new ArgumentException("Invalid Vertex Format", nameof(type)),
 		};
 	}
 
@@ -1578,12 +1602,13 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	{
 		TextureFormat.R8G8B8A8 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
 		TextureFormat.R8 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_R8_UNORM,
+		TextureFormat.R8G8 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_R8G8_UNORM,
 		TextureFormat.Depth24Stencil8 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
 		TextureFormat.Depth32Stencil8 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT,
 		TextureFormat.Depth16 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D16_UNORM,
 		TextureFormat.Depth24 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D24_UNORM,
 		TextureFormat.Depth32 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D32_FLOAT,
-		_ => throw new System.ComponentModel.InvalidEnumArgumentException(nameof(format), (int)format, typeof(TextureFormat)),
+		_ => throw new ArgumentException("Invalid Texture Format", nameof(format)),
 	};
 
 	private static bool IsDepthTextureFormat(SDL_GPUTextureFormat format) => format switch
