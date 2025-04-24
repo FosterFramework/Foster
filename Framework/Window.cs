@@ -9,9 +9,8 @@ public sealed class Window : IDrawableTarget
 	internal nint Handle { get; private set; }
 	internal readonly uint ID;
 
-	private string title = string.Empty;
+	private string title;
 	private readonly App app;
-	private readonly GraphicsDevice graphicsDevice;
 	private readonly Exception closedWindowException = new("The Window has been Closed");
 	object? IDrawableTarget.Surface => this;
 
@@ -23,7 +22,7 @@ public sealed class Window : IDrawableTarget
 	/// <summary>
 	/// The Renderer associated with this Window
 	/// </summary>
-	public GraphicsDevice GraphicsDevice => graphicsDevice;
+	public GraphicsDevice GraphicsDevice { get; }
 
 	/// <summary>
 	/// The Window Title
@@ -137,7 +136,7 @@ public sealed class Window : IDrawableTarget
 			if (scale <= 0)
 			{
 				Log.Warning($"SDL_GetWindowDisplayScale failed: {SDL_GetError()}");
-				return new(WidthInPixels / Width, HeightInPixels / Height);
+				return new(WidthInPixels / (float)Width, HeightInPixels / (float)Height);
 			}
 			return Vector2.One * scale;
 		}
@@ -268,7 +267,7 @@ public sealed class Window : IDrawableTarget
 	public event Action? OnFullscreenExit = null;
 
 	/// <summary>
-	/// What action to perform when the user requests for the Window to close.
+	/// What action(s) to perform when the user requests for the Window to close.
 	/// If not assigned, the default behavior will call <see cref="App.Exit"/>.
 	/// </summary>
 	public Action? OnCloseRequested;
@@ -276,8 +275,8 @@ public sealed class Window : IDrawableTarget
 	internal Window(App app, GraphicsDevice graphicsDevice, string title, int width, int height, bool fullscreen, bool resizable)
 	{
 		this.app = app;
-		this.graphicsDevice = graphicsDevice;
 		this.title = title;
+		GraphicsDevice = graphicsDevice;
 
 		var windowFlags =
 			SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY |
@@ -307,11 +306,7 @@ public sealed class Window : IDrawableTarget
 		// Should this method be here? It seems like it's maybe application-specific
 		// instead of unique to a given window.
 
-		bool result;
-		if (enabled)
-			result = SDL_ShowCursor();
-		else
-			result = SDL_HideCursor();
+		var result = enabled ? SDL_ShowCursor() : SDL_HideCursor();
 		if (!result)
 			Log.Warning($"Failed to set Mouse visibility: {SDL_GetError()}");
 	}
@@ -355,9 +350,9 @@ public sealed class Window : IDrawableTarget
 		else
 			Log.Warning($"Failed to set Mouse Cursor: {SDL_GetError()}");
 	}
-	
+
 	/// <summary>
-	/// This will enable Text input in the Window, by populating keyboard 
+	/// This will enable Text input in the Window, by populating keyboard
 	/// text in <see cref="KeyboardState.Text"/>.<br/>
 	/// <br/>
 	/// On some platforms this function will show an on-screen keyboard.

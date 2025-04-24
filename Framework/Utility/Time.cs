@@ -23,20 +23,20 @@ public readonly record struct Time(
 	/// <summary>
 	/// Total time in Seconds (shorthand to Elapsed.TotalSeconds)
 	/// </summary>
-	public readonly double Seconds => Elapsed.TotalSeconds;
+	public double Seconds => Elapsed.TotalSeconds;
 
 	/// <summary>
 	/// Advances <see cref="Elapsed"/> by the given delta value, increments <see cref="Frame"/> and assigns <see cref="Delta"/>.<br/>
 	/// This does not advance <see cref="RenderFrame"/>.
 	/// </summary>
 	/// <returns>The new Time struct</returns>
-	public readonly Time Advance(TimeSpan delta)
+	public Time Advance(TimeSpan delta)
 	{
 		return new Time(
 			Elapsed + delta,
 			Elapsed,
 			Frame + 1,
-			RenderFrame	
+			RenderFrame
 		);
 	}
 
@@ -44,7 +44,7 @@ public readonly record struct Time(
 	/// Advances the Render Frame
 	/// </summary>
 	/// <returns>The new Time struct</returns>
-	public readonly Time AdvanceRenderFrame()
+	public Time AdvanceRenderFrame()
 	{
 		return this with { RenderFrame = RenderFrame + 1 };
 	}

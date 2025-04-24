@@ -250,7 +250,7 @@ public abstract class App : IDisposable
 	/// <summary>
 	/// Runs the Application
 	/// </summary>
-	public unsafe void Run()
+	public void Run()
 	{
 		if (Disposed)
 			throw DisposedException;
@@ -389,7 +389,7 @@ public abstract class App : IDisposable
 		}
 	}
 
-	private unsafe void PollEvents()
+	private void PollEvents()
 	{
 		// we shouldn't need to pump events here, but we've found that if we don't,
 		// there are issues on MacOS with it not receiving mouse clicks correctly
