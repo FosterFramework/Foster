@@ -105,8 +105,7 @@ public struct Quad : IConvexShape
 		}
 	}
 
-	public Vector2 Center => (a + b + c + d) / 4f;
-
+	public readonly Vector2 Center => (a + b + c + d) / 4f;
 
 	public Quad(Vector2 a, Vector2 b, Vector2 c, Vector2 d)
 	{
@@ -117,6 +116,9 @@ public struct Quad : IConvexShape
 		normalAB = normalBC = normalCD = normalDA = Vector2.Zero;
 		normalsDirty = true;
 	}
+
+	public Quad(in Rect rect)
+		: this(rect.TopLeft, rect.TopRight, rect.BottomRight, rect.BottomLeft) {}
 
 	private void UpdateNormals()
 	{

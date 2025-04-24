@@ -458,6 +458,12 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 			Vector2.Transform(BottomLeft, matrix)
 			);
 
+	/// <summary>
+	/// Gets the bounding rectangle that contains both this and another rectangle
+	/// </summary>
+	public readonly Rect Conflate(in Rect other)
+		=> new(Vector2.Min(TopLeft, other.TopLeft), Vector2.Max(BottomRight, other.BottomRight));
+
 	#endregion
 
 	/// <summary>
