@@ -462,7 +462,7 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 	/// Gets the bounding rectangle that contains both this and another rectangle
 	/// </summary>
 	public readonly Rect Conflate(in Rect other)
-		=> new(Vector2.Min(TopLeft, other.TopLeft), Vector2.Max(BottomRight, other.BottomRight));
+		=> Between(Vector2.Min(TopLeft, other.TopLeft), Vector2.Max(BottomRight, other.BottomRight));
 
 	#endregion
 
