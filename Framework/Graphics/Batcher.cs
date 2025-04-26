@@ -135,6 +135,7 @@ public class Batcher : IDisposable
 	{
 		if (meshDirty && indexCount > 0 && vertexCount > 0)
 		{
+			mesh.Clear();
 			mesh.SetIndices(indexBuffer.AsSpan(0, indexCount));
 			mesh.SetVertices(vertexBuffer.AsSpan(0, vertexCount));
 			meshDirty = false;
@@ -262,8 +263,8 @@ public class Batcher : IDisposable
 			Viewport = viewport,
 			Scissor = trimmed,
 			BlendMode = batch.Blend,
-			MeshIndexStart = batch.Offset * 3,
-			MeshIndexCount = batch.Elements * 3,
+			IndexOffset = batch.Offset * 3,
+			IndexCount = batch.Elements * 3,
 			DepthWriteEnabled = false,
 			DepthTestEnabled = false,
 			CullMode = CullMode.None

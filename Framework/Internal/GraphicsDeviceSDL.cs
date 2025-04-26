@@ -27,16 +27,14 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		public readonly List<TextureResource> Attachments = [];
 	}
 
-	private class MeshResource(GraphicsDevice graphicsDevice, string? name, VertexFormat vertexFormat, IndexFormat indexFormat) : Resource(graphicsDevice)
+	private class BufferResource(GraphicsDevice graphicsDevice, string? name, SDL_GPUBufferUsageFlags usage, IndexFormat indexFormat) : Resource(graphicsDevice)
 	{
-		public record struct Buffer(nint Handle, int Capacity, bool Dirty);
-
-		public Buffer Index = new();
-		public Buffer Vertex = new();
-		public Buffer Instance = new();
 		public readonly string? Name = name;
-		public readonly VertexFormat VertexFormat = vertexFormat;
 		public readonly IndexFormat IndexFormat = indexFormat;
+		public readonly SDL_GPUBufferUsageFlags Usage = usage;
+		public nint Handle;
+		public int Capacity;
+		public bool Dirty;
 	}
 
 	private class ShaderResource(GraphicsDevice graphicsDevice) : Resource(graphicsDevice)
@@ -65,7 +63,8 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	private IDrawableTarget? renderPassTarget;
 	private Point2 renderPassTargetSize;
 	private nint renderPassPipeline;
-	private IHandle? renderPassMesh;
+	private StackList4<IHandle> renderPassVertexBuffers;
+	private IHandle? renderPassIndexBuffer;
 	private RectInt? renderPassScissor;
 	private RectInt? renderPassViewport;
 
@@ -639,78 +638,31 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 	}
 
-	internal override IHandle CreateMesh(string? name, in VertexFormat vertexFormat, IndexFormat indexFormat)
+	internal override IHandle CreateIndexBuffer(string? name, IndexFormat format)
 	{
-		if (device == nint.Zero)
-			throw deviceNotCreated;
-
-		var res = new MeshResource(this, name, vertexFormat, indexFormat);
-
+		var res = new BufferResource(this, name, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_INDEX, format);
 		lock (resources)
 			resources.Add(res);
-
 		return res;
 	}
 
-	internal override void SetMeshVertexData(IHandle mesh, nint data, int dataSize, int dataDestOffset)
+	internal override IHandle CreateVertexBuffer(string? name)
 	{
-		if (device == nint.Zero)
-			throw deviceNotCreated;
-
-		var res = (MeshResource)mesh;
-		if (res.GraphicsDevice != this)
-			throw deviceWasDestroyed;
-
-		string? name = null;
-		if (!string.IsNullOrEmpty(res.Name))
-			name = $"{res.Name}-VertexBuffer";
-
-		res.Vertex.Dirty = true;
-		UploadMeshBuffer(ref res.Vertex, name, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_VERTEX);
+		var res = new BufferResource(this, name, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_VERTEX, default);
+		lock (resources)
+			resources.Add(res);
+		return res;
 	}
 
-	internal override void SetMeshIndexData(IHandle mesh, nint data, int dataSize, int dataDestOffset)
+	internal override void UploadBufferData(IHandle buffer, nint data, int dataSize, int dataDestOffset)
 	{
-		if (device == nint.Zero)
-			throw deviceNotCreated;
+		var res = (BufferResource)buffer;
 
-		var res = (MeshResource)mesh;
-		if (res.GraphicsDevice != this)
-			throw deviceWasDestroyed;
-
-		string? name = null;
-		if (!string.IsNullOrEmpty(res.Name))
-			name = $"{res.Name}-IndexBuffer";
-
-		res.Index.Dirty = true;
-		UploadMeshBuffer(ref res.Index, name, data, dataSize, dataDestOffset, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_INDEX);
-	}
-
-	public void DestroyMesh(IHandle mesh)
-	{
-		if (!mesh.Disposed)
-		{
-			var res = (MeshResource)mesh;
-
-			lock (resources)
-			{
-				resources.Remove(mesh);
-				res.Destroyed = true;
-			}
-
-			DestroyMeshBuffer(ref res.Vertex);
-			DestroyMeshBuffer(ref res.Index);
-			DestroyMeshBuffer(ref res.Instance);
-		}
-	}
-
-	private void UploadMeshBuffer(ref MeshResource.Buffer res, string? name, nint data, int dataSize, int dataDestOffset, SDL_GPUBufferUsageFlags usage)
-	{
 		// (re)create buffer if needed
 		var required = dataSize + dataDestOffset;
 		if (required > res.Capacity || res.Handle == nint.Zero)
 		{
-			// TODO: A resize wipes all contents, not particularly ideal
+			// TODO: A resize wipes all contents but the Buffer API doesn't expect this
 			if (res.Handle != nint.Zero)
 			{
 				SDL_ReleaseGPUBuffer(device, res.Handle);
@@ -732,15 +684,15 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			}
 
 			uint props = 0;
-			if (!string.IsNullOrEmpty(name))
+			if (!string.IsNullOrEmpty(res.Name))
 			{
 				props = SDL_CreateProperties();
-				SDL_SetStringProperty(props, SDL_PROP_GPU_BUFFER_CREATE_NAME_STRING, name);
+				SDL_SetStringProperty(props, SDL_PROP_GPU_BUFFER_CREATE_NAME_STRING, res.Name);
 			}
 
 			res.Handle = SDL_CreateGPUBuffer(device, new()
 			{
-				usage = usage,
+				usage = res.Usage,
 				size = (uint)size,
 				props = props
 			});
@@ -838,11 +790,20 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 	}
 
-	private void DestroyMeshBuffer(ref MeshResource.Buffer res)
+	public void DestroyBuffer(IHandle buffer)
 	{
-		if (res.Handle != nint.Zero)
+		if (!buffer.Disposed)
+		{
+			var res = (BufferResource)buffer;
+
+			lock (resources)
+			{
+				resources.Remove(buffer);
+				res.Destroyed = true;
+			}
+
 			SDL_ReleaseGPUBuffer(device, res.Handle);
-		res = default;
+		}
 	}
 
 	internal override IHandle CreateShader(string? name, in ShaderCreateInfo shaderInfo)
@@ -944,8 +905,8 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				DestroyTexture(resource);
 			else if (resource is TargetResource)
 				DestroyTarget(resource);
-			else if (resource is MeshResource)
-				DestroyMesh(resource);
+			else if (resource is BufferResource)
+				DestroyBuffer(resource);
 			else if (resource is ShaderResource)
 				DestroyShader(resource);
 		}
@@ -959,7 +920,6 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		var mat = command.Material;
 		var shader = mat.Shader!;
 		var target = command.Target;
-		var mesh = command.Mesh;
 
 		// try to start a render pass
 		if (!BeginRenderPass(target, default))
@@ -998,41 +958,60 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			SDL_BindGPUGraphicsPipeline(renderPass, pipeline);
 		}
 
-		// bind mesh buffers
-		var meshResource = (MeshResource)mesh.Resource!;
-		if (meshResource.GraphicsDevice != this)
-			throw deviceWasDestroyed;
-
-		if (renderPassMesh != mesh.Resource
-			|| meshResource.Vertex.Dirty
-			|| meshResource.Index.Dirty
-			|| meshResource.Instance.Dirty)
+		// bind index buffer
+		if (renderPassIndexBuffer != command.IndexBuffer?.Resource ||
+			(command.IndexBuffer != null && ((BufferResource)command.IndexBuffer.Resource).Dirty))
 		{
-			renderPassMesh = mesh.Resource;
-			meshResource.Vertex.Dirty = false;
-			meshResource.Index.Dirty = false;
-			meshResource.Instance.Dirty = false;
+			renderPassIndexBuffer = command.IndexBuffer?.Resource;
+			if (renderPassIndexBuffer != null)
+			{
+				var it = (BufferResource)renderPassIndexBuffer;
+				it.Dirty = false;
 
-			// bind index buffer
-			SDL_GPUBufferBinding indexBinding = new()
-			{
-				buffer = meshResource.Index.Handle,
-				offset = 0
-			};
-			SDL_BindGPUIndexBuffer(renderPass, indexBinding, meshResource.IndexFormat switch
-			{
-				IndexFormat.Sixteen => SDL_GPUIndexElementSize.SDL_GPU_INDEXELEMENTSIZE_16BIT,
-				IndexFormat.ThirtyTwo => SDL_GPUIndexElementSize.SDL_GPU_INDEXELEMENTSIZE_32BIT,
-				_ => throw new NotImplementedException()
-			});
+				SDL_GPUBufferBinding indexBinding = new()
+				{
+					buffer = it.Handle,
+					offset = 0
+				};
+				SDL_BindGPUIndexBuffer(renderPass, indexBinding, it.IndexFormat switch
+				{
+					IndexFormat.Sixteen => SDL_GPUIndexElementSize.SDL_GPU_INDEXELEMENTSIZE_16BIT,
+					IndexFormat.ThirtyTwo => SDL_GPUIndexElementSize.SDL_GPU_INDEXELEMENTSIZE_32BIT,
+					_ => throw new NotImplementedException()
+				});
+			}
+		}
 
-			// bind vertex buffer
-			SDL_GPUBufferBinding vertexBinding = new()
+		bool rebindVertexBuffers = renderPassVertexBuffers.Count != command.VertexBuffers.Count;
+		if (!rebindVertexBuffers)
+		{
+			for (int i = 0; i < command.VertexBuffers.Count; i ++)
+				if (renderPassVertexBuffers[i] != command.VertexBuffers[i].Buffer.Resource ||
+					((BufferResource)command.VertexBuffers[i].Buffer.Resource).Dirty)
+				{
+					rebindVertexBuffers = true;
+					break;
+				}
+		}
+
+		// bind buffers
+		if (rebindVertexBuffers)
+		{
+			Span<SDL_GPUBufferBinding> vertexBinding = stackalloc SDL_GPUBufferBinding[command.VertexBuffers.Count];
+
+			for (int i = 0; i < command.VertexBuffers.Count; i ++)
 			{
-				buffer = meshResource.Vertex.Handle,
-				offset = 0
-			};
-			SDL_BindGPUVertexBuffers(renderPass, 0, [vertexBinding], 1);
+				var res = (BufferResource)command.VertexBuffers[i].Buffer.Resource;
+				res.Dirty = false;
+
+				vertexBinding[i] = new()
+				{
+					buffer = res.Handle,
+					offset = 0
+				};
+			}
+			
+			SDL_BindGPUVertexBuffers(renderPass, 0, vertexBinding, (uint)command.VertexBuffers.Count);
 		}
 
 		var fragmentInfo = shader.CreateInfo.Fragment;
@@ -1093,14 +1072,27 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 
 		// perform draw
-		SDL_DrawGPUIndexedPrimitives(
-			render_pass: renderPass,
-			num_indices: (uint)command.MeshIndexCount,
-			num_instances: 1,
-			first_index: (uint)command.MeshIndexStart,
-			vertex_offset: command.MeshVertexOffset,
-			first_instance: 0
-		);
+		if (command.IndexBuffer != null)
+		{
+			SDL_DrawGPUIndexedPrimitives(
+				render_pass: renderPass,
+				num_indices: (uint)command.IndexCount,
+				num_instances: (uint)Math.Max(1, command.InstanceCount),
+				first_index: (uint)command.IndexOffset,
+				vertex_offset: command.VertexOffset,
+				first_instance: 0
+			);
+		}
+		else
+		{
+			SDL_DrawGPUPrimitives(
+				render_pass: renderPass,
+				num_vertices: (uint)command.VertexCount,
+				num_instances: (uint)Math.Max(1, command.InstanceCount),
+				first_vertex: (uint)command.VertexOffset,
+				first_instance: 0
+			);
+		}
 	}
 
 	internal override void Clear(IDrawableTarget target, ReadOnlySpan<Color> color, float depth, int stencil, ClearMask mask)
@@ -1289,9 +1281,10 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		renderPass = nint.Zero;
 		renderPassTarget = null;
 		renderPassPipeline = nint.Zero;
-		renderPassMesh = null;
 		renderPassViewport = null;
 		renderPassScissor = null;
+		renderPassIndexBuffer = null;
+		renderPassVertexBuffers.Clear();
 	}
 
 	private nint GetGraphicsPipeline(in DrawCommand command)
@@ -1304,13 +1297,18 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		// build a big hashcode of everything in use
 		var hash = HashCode.Combine(
 			shader.Resource,
-			command.Mesh.VertexFormat,
 			command.CullMode,
 			command.DepthCompare,
 			command.DepthTestEnabled,
 			command.DepthWriteEnabled,
 			command.BlendMode
 		);
+
+		if (command.IndexBuffer != null)
+			hash = HashCode.Combine(hash, command.IndexBuffer.Format);
+
+		foreach (var vb in command.VertexBuffers)
+			hash = HashCode.Combine(hash, vb.Buffer.Format, vb.InstanceInputRate);
 
 		// combine with target attachment formats
 		foreach (var format in GetDrawTargetFormats(command.Target))
@@ -1322,15 +1320,16 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			var self = args.Item1;
 			var command = args.Item2;
 			var shaderRes = (ShaderResource)command.Material.Shader!.Resource;
-			var vertexFormat = command.Mesh.VertexFormat;
+			var vertexAttributeCount = 0;
+			foreach (var vb in command.VertexBuffers)
+				vertexAttributeCount += vb.Buffer.Format.Elements.Count;
 
 			var colorBlendState = GetBlendState(command.BlendMode);
 			var colorAttachments = stackalloc SDL_GPUColorTargetDescription[MaxColorAttachments];
 			var colorAttachmentCount = 0;
 			var depthStencilAttachment = SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_INVALID;
-			var vertexBindings = stackalloc SDL_GPUVertexBufferDescription[1];
-			var vertexAttributes = stackalloc SDL_GPUVertexAttribute[vertexFormat.Elements.Count];
-			var vertexOffset = 0;
+			var vertexBindings = stackalloc SDL_GPUVertexBufferDescription[command.VertexBuffers.Count];
+			var vertexAttributes = stackalloc SDL_GPUVertexAttribute[vertexAttributeCount];
 
 			foreach (var format in self.GetDrawTargetFormats(command.Target))
 			{
@@ -1349,25 +1348,35 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				}
 			}
 
-			vertexBindings[0] = new()
+			var attrbIndex = 0;
+			for (int slot = 0; slot < command.VertexBuffers.Count; slot ++)
 			{
-				slot = 0,
-				pitch = (uint)vertexFormat.Stride,
-				input_rate = SDL_GPUVertexInputRate.SDL_GPU_VERTEXINPUTRATE_VERTEX,
-				instance_step_rate = 0
-			};
+				var it = command.VertexBuffers[slot].Buffer;
+				var instanceRate = command.VertexBuffers[slot].InstanceInputRate;
+				var vertexOffset = 0;
 
-			for (int i = 0; i < vertexFormat.Elements.Count; i++)
-			{
-				var it = vertexFormat.Elements[i];
-				vertexAttributes[i] = new()
+				vertexBindings[slot] = new()
 				{
-					location = (uint)it.Index,
-					buffer_slot = 0,
-					format = GetVertexFormat(it.Type, it.Normalized),
-					offset = (uint)vertexOffset
+					slot = (uint)slot,
+					pitch = (uint)it.Format.Stride,
+					input_rate = instanceRate
+						? SDL_GPUVertexInputRate.SDL_GPU_VERTEXINPUTRATE_INSTANCE
+						: SDL_GPUVertexInputRate.SDL_GPU_VERTEXINPUTRATE_VERTEX,
+					instance_step_rate = 0
 				};
-				vertexOffset += it.Type.SizeInBytes();
+
+				foreach (var el in it.Format.Elements)
+				{
+					vertexAttributes[attrbIndex] = new()
+					{
+						location = (uint)el.Index,
+						buffer_slot = (uint)slot,
+						format = GetVertexFormat(el.Type, el.Normalized),
+						offset = (uint)vertexOffset
+					};
+					vertexOffset += el.Type.SizeInBytes();
+					attrbIndex++;
+				}
 			}
 
 			SDL_GPUGraphicsPipelineCreateInfo info = new()
@@ -1377,9 +1386,9 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				vertex_input_state = new()
 				{
 					vertex_buffer_descriptions = vertexBindings,
-					num_vertex_buffers = 1,
+					num_vertex_buffers = (uint)command.VertexBuffers.Count,
 					vertex_attributes = vertexAttributes,
-					num_vertex_attributes = (uint)vertexFormat.Elements.Count
+					num_vertex_attributes = (uint)vertexAttributeCount
 				},
 				primitive_type = SDL_GPUPrimitiveType.SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
 				rasterizer_state = new()

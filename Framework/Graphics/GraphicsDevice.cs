@@ -48,10 +48,10 @@ public abstract class GraphicsDevice
 	internal abstract void SetTextureData(IHandle texture, nint data, int length);
 	internal abstract void GetTextureData(IHandle texture, nint data, int length);
 	internal abstract IHandle CreateTarget(int width, int height);
-	internal abstract IHandle CreateMesh(string? name, in VertexFormat vertexFormat, IndexFormat indexFormat);
-	internal abstract void SetMeshVertexData(IHandle mesh, nint data, int dataSize, int dataDestOffset);
-	internal abstract void SetMeshIndexData(IHandle mesh, nint data, int dataSize, int dataDestOffset);
 	internal abstract IHandle CreateShader(string? name, in ShaderCreateInfo shaderInfo);
+	internal abstract IHandle CreateIndexBuffer(string? name, IndexFormat format);
+	internal abstract IHandle CreateVertexBuffer(string? name);
+	internal abstract void UploadBufferData(IHandle buffer, nint data, int dataSize, int dataDestOffset);
 	internal abstract void DestroyResource(IHandle resource);
 	internal abstract void PerformDraw(DrawCommand command);
 	internal abstract void Clear(IDrawableTarget target, ReadOnlySpan<Color> color, float depth, int stencil, ClearMask mask);
@@ -69,7 +69,6 @@ public abstract class GraphicsDevice
 		var mat = command.Material ?? throw new Exception("Attempting to render with a null Material");
 		var shader = mat.Shader;
 		var target = command.Target;
-		var mesh = command.Mesh;
 
 		if (shader == null || shader.IsDisposed)
 			throw new Exception("Attempting to render a null or disposed Shader");
@@ -77,18 +76,41 @@ public abstract class GraphicsDevice
 		if (target == null || (target is Target t && t.IsDisposed))
 			throw new Exception("Attempting to render a null or disposed Target");
 
-		if (mesh == null || mesh.IsDisposed)
-			throw new Exception("Attempting to render a null or disposed Mesh");
+		if (command.VertexBuffers.Count <= 0)
+			throw new Exception("Attempting to render without a Vertex Buffer");
 
-		if (mesh.Resource == null || mesh.VertexCount <= 0 || mesh.IndexCount <= 0)
+		if (command.IndexBuffer != null && command.VertexCount > 0)
+			throw new Exception("Attempting to render using a Vertex Count with an Index Buffer. Use IndexCount instead.");
+
+		for (int i = 0; i < command.VertexBuffers.Count; i ++)
 		{
-			Log.Warning("Attempting to render an empty Mesh");
+			var it = command.VertexBuffers[i].Buffer;
+
+			if (it == null || it.IsDisposed)
+				throw new Exception("Attempting to render a null or disposed Vertex Buffer");
+
+			if (it.Resource == null || it.Count <= 0)
+			{
+				Log.Warning("Attempting to render an empty Vertex Buffer");
+				return;
+			}
+		}
+
+		if (command.IndexBuffer != null && command.IndexBuffer.Count <= 0)
+		{
+			Log.Warning("Attempting to render an empty Index Buffer");
 			return;
 		}
 
-		if (command.MeshIndexCount <= 0)
+		if (command.IndexBuffer != null && command.IndexCount <= 0)
 		{
-			Log.Warning("Attempting to render 0 indices");
+			Log.Warning("Attempting to render 0 indices from an Index Buffer");
+			return;
+		}
+
+		if (command.IndexBuffer == null && command.VertexCount <= 0)
+		{
+			Log.Warning("Attempting to render without any vertices");
 			return;
 		}
 

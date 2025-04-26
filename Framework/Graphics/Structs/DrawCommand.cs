@@ -17,24 +17,65 @@ public struct DrawCommand
 	public Material Material;
 
 	/// <summary>
-	/// Mesh to use
+	/// Vertex Buffers to use and their associated input rate.
 	/// </summary>
-	public Mesh Mesh;
+	public StackList4<(VertexBuffer Buffer, bool InstanceInputRate)> VertexBuffers;
 
 	/// <summary>
-	/// The Index to begin rendering from the Mesh
+	/// Index Buffer to use. Set <see cref="IndexCount"/> for the number of indices to draw.
 	/// </summary>
-	public int MeshIndexStart = 0;
+	public IndexBuffer? IndexBuffer;
 
 	/// <summary>
-	/// The total number of Indices to draw from the Mesh
+	/// The offset into the <see cref="IndexBuffer"/> to draw from.
+	/// Ignored if the <see cref="IndexBuffer"/> is null.
 	/// </summary>
-	public int MeshIndexCount;
+	public int IndexOffset = 0;
 
 	/// <summary>
-	/// The Offset into the Vertex Buffer
+	/// The Vertex Offset.
+	/// When using an Index Buffer, this offsets the value of each index.
 	/// </summary>
-	public int MeshVertexOffset;
+	public int VertexOffset = 0;
+
+	/// <summary>
+	/// The number of indices from the <see cref="IndexBuffer"/> to draw from
+	/// per instance.
+	/// This should be 0 when not using an <see cref="IndexBuffer"/>.
+	/// </summary>
+	public int IndexCount = 0;
+
+	/// <summary>
+	/// Number of vertices to draw per instance.
+	/// This should be 0 when using an <see cref="IndexBuffer"/>.
+	/// </summary>
+	public int VertexCount = 0;
+
+	/// <summary>
+	/// The number of instances to draw. Should always be at least 1
+	/// </summary>
+	public int InstanceCount = 1;
+
+	[Obsolete("Use IndexOffset")]
+	public int MeshIndexStart
+	{
+		readonly get => IndexOffset;
+		set => IndexOffset = value;
+	}
+
+	[Obsolete("Use IndexCount")]
+	public int MeshIndexCount
+	{
+		readonly get => IndexCount;
+		set => IndexCount = value;
+	}
+
+	[Obsolete("Use VertexOffset")]
+	public int MeshVertexOffset
+	{
+		readonly get => VertexOffset;
+		set => VertexOffset = value;
+	}
 
 	/// <summary>
 	/// The Render State Blend Mode
@@ -78,10 +119,41 @@ public struct DrawCommand
 		: this()
 	{
 		Target = target;
-		Mesh = mesh;
 		Material = material;
-		MeshIndexStart = 0;
-		MeshIndexCount = mesh.IndexCount;
+
+		if (mesh.InstanceBuffer != null)
+		{
+			VertexBuffers = [
+				(mesh.VertexBuffer, false),
+				(mesh.InstanceBuffer, true)
+			];
+
+			InstanceCount = mesh.InstanceBuffer.Count;
+		}
+		else
+		{
+			VertexBuffers = [ (mesh.VertexBuffer, false) ];
+			InstanceCount = 1;
+		}
+
+		if (mesh.IndexBuffer != null)
+		{
+			IndexBuffer = mesh.IndexBuffer;
+			IndexCount = mesh.IndexBuffer.Count;
+		}
+		else
+		{
+			VertexCount = VertexBuffers[0].Buffer.Count;
+		}
+	}
+
+	public DrawCommand(IDrawableTarget target, VertexBuffer vertexBuffer, Material material)
+		: this()
+	{
+		Target = target;
+		Material = material;
+		VertexBuffers = [ (vertexBuffer, false) ];
+		VertexCount = vertexBuffer.Count;
 	}
 
 	public readonly void Submit(GraphicsDevice graphicsDevice)
