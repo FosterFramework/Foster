@@ -272,22 +272,22 @@ public sealed class Window : IDrawableTarget
 	/// </summary>
 	public Action? OnCloseRequested;
 
-	internal Window(App app, GraphicsDevice graphicsDevice, string title, int width, int height, bool fullscreen, bool resizable)
+	internal Window(App app, GraphicsDevice graphicsDevice, in AppConfig config)
 	{
 		this.app = app;
-		this.title = title;
+		title = config.WindowTitle;
 		GraphicsDevice = graphicsDevice;
 
 		var windowFlags =
 			SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY |
 			SDL_WindowFlags.SDL_WINDOW_HIDDEN;
 
-		if (fullscreen)
+		if (config.Fullscreen)
 			windowFlags |= SDL_WindowFlags.SDL_WINDOW_FULLSCREEN;
-		if (resizable)
+		if (config.Resizable)
 			windowFlags |= SDL_WindowFlags.SDL_WINDOW_RESIZABLE;
 
-		Handle = SDL_CreateWindow(title, width, height, windowFlags);
+		Handle = SDL_CreateWindow(title, config.Width, config.Height, windowFlags);
 		if (Handle == IntPtr.Zero)
 			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateWindow));
 

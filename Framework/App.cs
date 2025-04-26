@@ -126,7 +126,17 @@ public abstract class App : IDisposable
 	/// If you intend to target non-desktop platforms, you should implement user data
 	/// through the <see cref="FileSystem.OpenUserStorage(Action{Storage})"/> API via <see cref="FileSystem"/>
 	/// </summary>
-	public string UserPath { get; private set; }
+	public string UserPath
+	{
+		get
+		{
+			// only assign the user path if requested - calling this method may
+			// create a directory and we only want to do that if the user
+			// actually intends to use it.
+			userPath ??= SDL_GetPrefPath(string.Empty, config.ApplicationName);
+			return userPath;
+		}
+	}
 
 	/// <summary>
 	/// What action to perform when the user requests for the Application to exit.<br/>
@@ -142,6 +152,7 @@ public abstract class App : IDisposable
 	private readonly int mainThreadID;
 	private readonly ConcurrentQueue<Action> mainThreadQueue = [];
 	private readonly InputProviderSDL inputProvider;
+	private string? userPath = null;
 
 	internal readonly Exception NotRunningException = new("The Application is not Running");
 	internal readonly Exception DisposedException = new("The Application is Disposed");
@@ -186,9 +197,6 @@ public abstract class App : IDisposable
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_Init));
 		}
 
-		// get the UserPath
-		UserPath = SDL_GetPrefPath(string.Empty, config.ApplicationName);
-
 		// Create Modules
 		UpdateMode = config.UpdateMode ?? UpdateMode.FixedStep(60);
 		inputProvider = new(this);
@@ -196,7 +204,7 @@ public abstract class App : IDisposable
 		FileSystem = new(this);
 		GraphicsDevice = Platform.CreateGraphicsDevice(this, config.PreferredGraphicsDriver);
 		GraphicsDevice.CreateDevice(config.Flags);
-		Window = new Window(this, GraphicsDevice, config.WindowTitle, config.Width, config.Height, config.Fullscreen, config.Resizable);
+		Window = new Window(this, GraphicsDevice, config);
 		GraphicsDevice.Startup(Window.Handle);
 
 		// try to load default SDL gamepad mappings
