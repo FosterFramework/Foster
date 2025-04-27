@@ -66,22 +66,43 @@ public abstract class GraphicsDevice
 	/// </summary>
 	public void Draw(DrawCommand command)
 	{
+		// some of the following checks are exceptions, and others are warnings, depending on the
+		// context. Opting to throw exceptions for more obvious user-errors, where as invalid state
+		// that is more dynamic is just a warning.
+
 		var mat = command.Material ?? throw new Exception("Attempting to render with a null Material");
 		var shader = mat.Shader;
 		var target = command.Target;
 
+		// invalid shader state
 		if (shader == null || shader.IsDisposed)
 			throw new Exception("Attempting to render a null or disposed Shader");
 
+		// invalid target state
 		if (target == null || (target is Target t && t.IsDisposed))
 			throw new Exception("Attempting to render a null or disposed Target");
 
+		// no vertex buffer
 		if (command.VertexBuffers.Count <= 0)
 			throw new Exception("Attempting to render without a Vertex Buffer");
 
-		if (command.IndexBuffer != null && command.VertexCount > 0)
+		// invalid index buffer state
+		if (command.IndexBuffer != null && command.IndexBuffer.IsDisposed)
+			throw new Exception("Attempting to render with a disposed Index Buffer");
+
+		// using vertex count with an index buffer
+		if (command.IndexBuffer != null && command.VertexCount != 0)
 			throw new Exception("Attempting to render using a Vertex Count with an Index Buffer. Use IndexCount instead.");
 
+		// using index offset without a vertex buffer
+		if (command.IndexBuffer == null && command.IndexOffset != 0)
+			throw new Exception("Attempting to render using an Index Offset without an Index Buffer.");
+
+		// using index count without a vertex buffer
+		if (command.IndexBuffer == null && command.IndexCount != 0)
+			throw new Exception("Attempting to render using an Index Count without an Index Buffer.");
+
+		// validate vertex buffers
 		for (int i = 0; i < command.VertexBuffers.Count; i ++)
 		{
 			var it = command.VertexBuffers[i].Buffer;
@@ -91,38 +112,43 @@ public abstract class GraphicsDevice
 
 			if (it.Resource == null || it.Count <= 0)
 			{
-				Log.Warning("Attempting to render an empty Vertex Buffer");
+				Log.Warning("Attempting to render an empty Vertex Buffer; Nothing will be drawn");
 				return;
 			}
 		}
 
+		// using an index buffer that is empty
 		if (command.IndexBuffer != null && command.IndexBuffer.Count <= 0)
 		{
-			Log.Warning("Attempting to render an empty Index Buffer");
+			Log.Warning("Attempting to render an empty Index Buffer; Nothing will be drawn");
 			return;
 		}
 
+		// using an index buffer without an index count
 		if (command.IndexBuffer != null && command.IndexCount <= 0)
 		{
-			Log.Warning("Attempting to render 0 indices from an Index Buffer");
+			Log.Warning("Attempting to render from an Index Buffer while using an IndexCount of 0; Nothing will be drawn");
 			return;
 		}
 
+		// not using an index buffer and no vertex count
 		if (command.IndexBuffer == null && command.VertexCount <= 0)
 		{
-			Log.Warning("Attempting to render without any vertices");
+			Log.Warning("Attempting to render with a VertexCount of 0; Nothing will be drawn");
 			return;
 		}
 
+		// invalid viewport
 		if (command.Viewport is {} viewport && (viewport.Width <= 0 || viewport.Height <= 0))
 		{
-			Log.Warning("Attempting to render with an empty Viewport");
+			Log.Warning("Attempting to render with an empty Viewport; Nothing will be drawn");
 			return;
 		}
 
+		// invalid scissor
 		if (command.Scissor is {} scissor && (scissor.Width <= 0 || scissor.Height <= 0))
 		{
-			Log.Warning("Attempting to render with an empty Scissor");
+			Log.Warning("Attempting to render with an empty Scissor; Nothing will be drawn");
 			return;
 		}
 

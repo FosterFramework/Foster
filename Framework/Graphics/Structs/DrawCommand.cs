@@ -27,32 +27,29 @@ public struct DrawCommand
 	public IndexBuffer? IndexBuffer;
 
 	/// <summary>
-	/// The offset into the <see cref="IndexBuffer"/> to draw from.
-	/// Ignored if the <see cref="IndexBuffer"/> is null.
+	/// The offset into the <see cref="IndexBuffer"/> when using an <see cref="IndexBuffer"/> 
 	/// </summary>
 	public int IndexOffset = 0;
 
 	/// <summary>
-	/// The Vertex Offset.
-	/// When using an Index Buffer, this offsets the value of each index.
-	/// </summary>
-	public int VertexOffset = 0;
-
-	/// <summary>
-	/// The number of indices from the <see cref="IndexBuffer"/> to draw from
-	/// per instance.
-	/// This should be 0 when not using an <see cref="IndexBuffer"/>.
+	/// The number of indices to draw per instance when using an <see cref="IndexBuffer"/> 
 	/// </summary>
 	public int IndexCount = 0;
 
 	/// <summary>
-	/// Number of vertices to draw per instance.
-	/// This should be 0 when using an <see cref="IndexBuffer"/>.
+	/// When using an <see cref="IndexBuffer"/>, this offsets the value of each index.
+	/// Otherwise, this is an offset into the Vertex Buffer.
+	/// </summary>
+	public int VertexOffset = 0;
+
+	/// <summary>
+	/// Number of vertices to draw per instance when not using an <see cref="IndexBuffer"/>.
+	/// Use <see cref="IndexCount"/> when using an <see cref="IndexBuffer"/>.
 	/// </summary>
 	public int VertexCount = 0;
 
 	/// <summary>
-	/// The number of instances to draw. Should always be at least 1
+	/// The number of instances to draw. Should always be at least 1.
 	/// </summary>
 	public int InstanceCount = 1;
 
