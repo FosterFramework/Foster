@@ -65,6 +65,46 @@ public readonly struct Facing(int val) : IEquatable<Facing>
 	public static Vector2 operator *(Vector2 vec, Facing facing) => new(vec.X * facing.Sign, vec.Y);
 	public static Vector2 operator *(Facing facing, Vector2 vec) => new(vec.X * facing.Sign, vec.Y);
 
+	/// <summary>
+	/// Check if the facing equals the sign of the number. If the number is zero, true is always returned
+	/// </summary>
+	public static bool operator ==(Facing a, int b) => b == 0 || a.Sign == Math.Sign(b);
+
+	/// <summary>
+	/// Check if the facing does not equal the sign of the number. If the number is zero, false is always returned
+	/// </summary>
+	public static bool operator !=(Facing a, int b) => b != 0 && a.Sign != Math.Sign(b);
+
+	/// <summary>
+	/// Check if the facing equals the sign of the number. If the number is zero, true is always returned
+	/// </summary>
+	public static bool operator ==(int a, Facing b) => a == 0 || b.Sign == Math.Sign(a);
+
+	/// <summary>
+	/// Check if the facing does not equal the sign of the number. If the number is zero, false is always returned
+	/// </summary>
+	public static bool operator !=(int a, Facing b) => a != 0 && b.Sign != Math.Sign(a);
+
+	/// <summary>
+	/// Check if the facing equals the sign of the number. If the number is zero, true is always returned
+	/// </summary>
+	public static bool operator ==(Facing a, float b) => b == 0 || a.Sign == Math.Sign(b);
+
+	/// <summary>
+	/// Check if the facing does not equal the sign of the number. If the number is zero, false is always returned
+	/// </summary>
+	public static bool operator !=(Facing a, float b) => b != 0 && a.Sign != Math.Sign(b);
+
+	/// <summary>
+	/// Check if the facing equals the sign of the number. If the number is zero, true is always returned
+	/// </summary>
+	public static bool operator ==(float a, Facing b) => a == 0 || b.Sign == Math.Sign(a);
+
+	/// <summary>
+	/// Check if the facing does not equal the sign of the number. If the number is zero, false is always returned
+	/// </summary>
+	public static bool operator !=(float a, Facing b) => a != 0 && b.Sign != Math.Sign(a);
+
 	public override int GetHashCode() => Sign;
 	public override bool Equals(object? obj) =>
 		obj is Facing f && f == this;
