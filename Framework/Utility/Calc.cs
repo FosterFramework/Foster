@@ -84,6 +84,12 @@ public static class Calc
 
 	#region Math
 
+	public static bool HasAllFlags(this uint flags, uint check)
+		=> (flags & check) == check;
+
+	public static bool HasAnyFlags(this uint flags, uint check)
+		=> (flags & check) != 0;
+
 	public static float Avg(float a, float b)
 		=> a + (b - a) * .5f;
 
