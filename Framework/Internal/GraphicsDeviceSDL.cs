@@ -657,6 +657,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	internal override void UploadBufferData(IHandle buffer, nint data, int dataSize, int dataDestOffset)
 	{
 		var res = (BufferResource)buffer;
+		res.Dirty = true;
 
 		// (re)create buffer if needed
 		var required = dataSize + dataDestOffset;
@@ -1010,7 +1011,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 					offset = 0
 				};
 			}
-			
+
 			SDL_BindGPUVertexBuffers(renderPass, 0, vertexBinding, (uint)command.VertexBuffers.Count);
 		}
 
