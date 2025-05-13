@@ -635,15 +635,16 @@ public struct RectInt(int x, int y, int w, int h) : IEquatable<RectInt>
 	}
 
 	public readonly bool Equals(RectInt other) => this == other;
-	public override readonly bool Equals(object? obj) => (obj is RectInt other) && (this == other);	
-	public override readonly int GetHashCode() => HashCode.Combine(X, Y, Width, Height);
-	public override readonly string ToString() => $"[{X}, {Y}, {Width}, {Height}]";
+	public readonly override bool Equals(object? obj) => (obj is RectInt other) && (this == other);
+	public readonly override int GetHashCode() => HashCode.Combine(X, Y, Width, Height);
+	public readonly override string ToString() => $"[{X}, {Y}, {Width}, {Height}]";
 
 	public static implicit operator RectInt((int X, int Y, int Width, int Height) tuple) => new(tuple.X, tuple.Y, tuple.Width, tuple.Height);
 	public static implicit operator Rect(in RectInt rect) => new(rect.X, rect.Y, rect.Width, rect.Height);
 
 	public static bool operator ==(RectInt a, RectInt b) => a.X == b.X && a.Y == b.Y && a.Width == b.Width && a.Height == b.Height;
 	public static bool operator !=(RectInt a, RectInt b) => !(a == b);
+
 	public static RectInt operator +(in RectInt a, in Point2 b) => new(a.X + b.X, a.Y + b.Y, a.Width, a.Height);
 	public static RectInt operator -(in RectInt a, in Point2 b) => new(a.X - b.X, a.Y - b.Y, a.Width, a.Height);
 	public static RectInt operator +(in Point2 a, in RectInt b) => new(b.X + a.X, b.Y + a.Y, b.Width, b.Height);
@@ -654,12 +655,16 @@ public struct RectInt(int x, int y, int w, int h) : IEquatable<RectInt>
 	public static RectInt operator *(in RectInt rect, in Point2 scaler) => rect.Scale(scaler);
 	public static RectInt operator /(in RectInt rect, in Point2 scaler)
 		=> new RectInt(rect.X / scaler.X, rect.Y / scaler.Y, rect.Width / scaler.X, rect.Height / scaler.Y).ValidateSize();
-	public static Rect operator *(in RectInt rect, float scaler) => rect.Scale(scaler);
-	public static Rect operator /(in RectInt rect, float scaler)
-		=> new Rect(rect.X / scaler, rect.Y / scaler, rect.Width / scaler, rect.Height / scaler).ValidateSize();
-	public static Rect operator *(in RectInt rect, in Vector2 scaler) => rect.Scale(scaler);
-	public static Rect operator /(in RectInt rect, in Vector2 scaler)
-		=> new Rect(rect.X / scaler.X, rect.Y / scaler.Y, rect.Width / scaler.X, rect.Height / scaler.Y).ValidateSize();
 	public static RectInt operator *(in RectInt rect, Facing flipX) => flipX == Facing.Right ? rect : rect.ScaleX(-1);
 	public static RectInt operator *(in RectInt rect, Cardinal rotation) => rect.Rotate(rotation);
+
+	public static Rect operator +(in RectInt a, in Vector2 b) => new(a.X + b.X, a.Y + b.Y, a.Width, a.Height);
+	public static Rect operator -(in RectInt a, in Vector2 b) => new(a.X - b.X, a.Y - b.Y, a.Width, a.Height);
+	public static Rect operator +(in Vector2 a, in RectInt b) => new(b.X + a.X, b.Y + a.Y, b.Width, b.Height);
+	public static Rect operator -(in Vector2 a, in RectInt b) => new(b.X - a.X, b.Y - a.Y, b.Width, b.Height);
+	public static Rect operator *(in RectInt rect, float scaler) => rect.Scale(scaler);
+	public static Rect operator /(in RectInt rect, float scaler) => new Rect(rect.X / scaler, rect.Y / scaler, rect.Width / scaler, rect.Height / scaler).ValidateSize();
+	public static Rect operator *(in RectInt rect, in Vector2 scaler) => rect.Scale(scaler);
+	public static Rect operator /(in RectInt rect, in Vector2 scaler) => new Rect(rect.X / scaler.X, rect.Y / scaler.Y, rect.Width / scaler.X, rect.Height / scaler.Y).ValidateSize();
+
 }
