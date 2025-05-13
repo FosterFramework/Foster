@@ -85,7 +85,7 @@ public sealed class Input
 	internal readonly InputProvider Provider;
 
 	/// <summary>
-	/// 
+	///
 	/// </summary>
 	internal Input(InputProvider provider)
 	{
@@ -98,6 +98,12 @@ public sealed class Input
 	public Input CreateEcho()
 	{
 		var input = new Input(Provider);
+
+		// copy state to this input
+		input.State.Copy(State);
+		input.LastState.Copy(LastState);
+		input.NextState.Copy(NextState);
+
 		Provider.AddEcho(input);
 		return input;
 	}
