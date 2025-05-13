@@ -5,7 +5,7 @@ namespace Foster.Framework;
 /// <summary>
 /// A virtual 2D Axis/Stick input, which detects user input mapped through a <see cref="StickBinding"/>.
 /// </summary>
-public sealed class VirtualStick(Input input, StickBinding binding, int controllerIndex = 0) : VirtualInput(input)
+public sealed class VirtualStick(Input input, string name, StickBinding binding, int controllerIndex = 0) : VirtualInput(input, name)
 {
 	/// <summary>
 	/// The Binding Action
@@ -35,8 +35,8 @@ public sealed class VirtualStick(Input input, StickBinding binding, int controll
 
 	public bool PressedDown { get; private set; }
 
-	public VirtualStick(Input input, int controllerIndex = 0)
-		: this(input, new(), controllerIndex) {}
+	public VirtualStick(Input input, string name, int controllerIndex = 0)
+		: this(input, name, new(), controllerIndex) {}
 
 	internal override void Update(in Time time)
 	{

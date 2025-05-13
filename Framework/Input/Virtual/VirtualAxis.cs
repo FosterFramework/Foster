@@ -5,7 +5,7 @@ namespace Foster.Framework;
 /// <summary>
 /// A virtual Axis input, which detects user input mapped through a <see cref="AxisBinding"/>.
 /// </summary>
-public sealed class VirtualAxis(Input input, AxisBinding binding, int controllerIndex = 0) : VirtualInput(input)
+public sealed class VirtualAxis(Input input, string name, AxisBinding binding, int controllerIndex = 0) : VirtualInput(input, name)
 {
 	/// <summary>
 	/// The Binding Action
@@ -37,8 +37,8 @@ public sealed class VirtualAxis(Input input, AxisBinding binding, int controller
 	/// </summary>
 	public int PressedSign { get; private set; }
 
-	public VirtualAxis(Input input, int controllerIndex = 0)
-		: this(input, new(), controllerIndex) {}
+	public VirtualAxis(Input input, string name, int controllerIndex = 0)
+		: this(input, name, new(), controllerIndex) {}
 
 	internal override void Update(in Time time)
 	{

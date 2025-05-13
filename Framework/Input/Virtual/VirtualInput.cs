@@ -6,11 +6,14 @@ namespace Foster.Framework;
 public abstract class VirtualInput : IDisposable
 {
 	public readonly Input Input;
+	public readonly string Name;
+
 	public bool IsDisposed { get; private set; }
 
-	internal VirtualInput(Input input)
+	internal VirtualInput(Input input, string name)
 	{
 		Input = input;
+		Name = name;
 		Input.AddVirtualInput(this);
 	}
 

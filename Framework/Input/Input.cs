@@ -78,7 +78,7 @@ public sealed class Input
 	public bool ReceiveEvents = true;
 
 	/// <summary>
-	/// Holds references to all Virtual Buttons so they can be updated.
+	/// Holds references to all VirtualInputs so they can be updated.
 	/// </summary>
 	private readonly List<WeakReference<VirtualInput>> virtualInputs = [];
 
@@ -107,6 +107,11 @@ public sealed class Input
 		Provider.AddEcho(input);
 		return input;
 	}
+
+	/// <summary>
+	/// All created VirtualInputs. These are weak references so be sure to check if they have been disposed
+	/// </summary>
+	public IReadOnlyList<WeakReference<VirtualInput>> VirtualInputs => virtualInputs;
 
 	/// <summary>
 	/// Finds a Connected Controller by the given ID.
