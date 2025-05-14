@@ -16,4 +16,9 @@ public abstract class Binding
 	/// Gets the current state of the Binding from the provided Input
 	/// </summary>
 	public abstract BindingState GetState(Input input, int device);
+
+	/// <summary>
+	/// Gets a string descriptor of the binding
+	/// </summary>
+	public abstract string Descriptor { get; }
 }

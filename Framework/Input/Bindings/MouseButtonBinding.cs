@@ -21,4 +21,6 @@ public sealed class MouseButtonBinding : Binding
 		Value: input.Mouse.Down(Button) ? 1 : 0,
 		Timestamp: input.Mouse.PressedTimestamp(Button)
 	);
+
+	public override string Descriptor => $"Mouse Button {Button}";
 }

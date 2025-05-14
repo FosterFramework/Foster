@@ -22,4 +22,6 @@ public sealed class KeyboardKeyBinding : Binding
 		Value: input.Keyboard.Down(Key) ? 1 : 0,
 		Timestamp: input.Keyboard.Timestamp(Key)
 	);
+
+	public override string Descriptor => $"Key {Key}";
 }

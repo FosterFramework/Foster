@@ -40,4 +40,6 @@ public sealed class ControllerAxisBinding : Binding
 		var value = state.Controllers[device].Axis(Axis);
 		return Calc.ClampedMap(value, Sign * deadzone, Sign);
 	}
+
+	public override string Descriptor => $"Axis {Axis}{(Sign > 0 ? '+' : '-')}, >={Deadzone}";
 }

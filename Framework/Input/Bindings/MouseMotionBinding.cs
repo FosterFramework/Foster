@@ -52,4 +52,6 @@ public sealed class MouseMotionBinding : Binding
 		var value = Vector2.Dot(Axis, state.Mouse.Delta);
 		return Calc.ClampedMap(value, Sign * Min, Sign * Max, 0, 1);
 	}
+
+	public override string Descriptor => $"Mouse Motion {Axis}{(Sign > 0 ? '+' : '-')}, {Min}-{Max}";
 }
