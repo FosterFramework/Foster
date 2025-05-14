@@ -7,6 +7,7 @@ namespace Foster.Framework;
 /// </summary>
 public sealed class ControllerAxisBinding : Binding
 {
+	[JsonConverter(typeof(JsonStringEnumConverter<Axes>))]
 	public Axes Axis { get; set; }
 	public int Sign { get; set; }
 	public float Deadzone { get; set; }
@@ -19,9 +20,6 @@ public sealed class ControllerAxisBinding : Binding
 		Sign = sign;
 		Deadzone = deadzone;
 	}
-
-	public ControllerAxisBinding(Axes axis, int sign, float deadzone, in ReadOnlySpan<string> masks) : this(axis, sign, deadzone)
-		=> Masks = [..masks];
 
 	public override BindingState GetState(Input input, int device)
 	{

@@ -1,14 +1,19 @@
 namespace Foster.Framework;
 
 /// <summary>
-/// A virtual Action/Button input, which detects user input mapped through a <see cref="ActionBinding"/>.
+/// A virtual Action/Button input, which detects user input mapped through a <see cref="ActionBindingSet"/>.
 /// </summary>
-public sealed class VirtualAction(Input input, string name, ActionBinding action, int controllerIndex = 0, float buffer = 0) : VirtualInput(input, name)
+public sealed class VirtualAction(Input input, string name, ActionBindingSet set, int controllerIndex = 0, float buffer = 0) : VirtualInput(input, name)
 {
 	/// <summary>
 	/// The Binding Action
 	/// </summary>
-	public readonly ActionBinding Binding = action;
+	public readonly ActionBindingSet Set = set;
+
+	/// <summary>
+	/// The Binding Action Entries
+	/// </summary>
+	public List<ActionBindingSet.ActionEntry> Entries => Set.Entries;
 
 	/// <summary>
 	/// The Device Index
@@ -80,7 +85,7 @@ public sealed class VirtualAction(Input input, string name, ActionBinding action
 
 	internal override void Update(in Time time)
 	{
-		var state = Binding.GetState(Input, Device, Input.BindingFilters);
+		var state = Set.GetState(Input, Device);
 
 		Pressed = state.Pressed;
 		Released = state.Released;

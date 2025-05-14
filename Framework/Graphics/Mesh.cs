@@ -76,7 +76,7 @@ public class Mesh : IGraphicResource
 	}
 
 	public Mesh(GraphicsDevice graphicsDevice, VertexFormat vertexFormat, IndexFormat indexFormat, string? name = null)
-		: this(graphicsDevice, 
+		: this(graphicsDevice,
 			new VertexBuffer(graphicsDevice, vertexFormat, name != null ? $"{name}-Vertices" : null),
 			null,
 			new IndexBuffer(graphicsDevice, indexFormat, name != null ? $"{name}-Indices" : null),
@@ -84,10 +84,10 @@ public class Mesh : IGraphicResource
 		) {}
 
 	public Mesh(GraphicsDevice graphicsDevice, VertexFormat vertexFormat, VertexFormat instanceFormat, IndexFormat indexFormat, string? name = null)
-		: this(graphicsDevice, 
+		: this(graphicsDevice,
 			new VertexBuffer(graphicsDevice, vertexFormat, name != null ? $"{name}-Vertices" : null),
 			new VertexBuffer(graphicsDevice, instanceFormat, name != null ? $"{name}-Instances" : null),
-			new IndexBuffer(graphicsDevice, indexFormat, name != null ? $"{name}-Indices" : null), 
+			new IndexBuffer(graphicsDevice, indexFormat, name != null ? $"{name}-Indices" : null),
 			name
 		) {}
 
@@ -182,7 +182,7 @@ public class Mesh : IGraphicResource
 /// <typeparam name="TVertex">The Vertex Buffer Element Type</typeparam>
 /// <typeparam name="TIndex">The Index Buffer Element Type, which must be either <see cref="int"/>, <see cref="uint"/>, <see cref="short"/>, or <see cref="ushort"/></typeparam>
 public class Mesh<TVertex, TIndex>(GraphicsDevice graphicsDevice, string? name = null)
-	: Mesh(graphicsDevice, 
+	: Mesh(graphicsDevice,
 		default(TVertex).Format,
 		IndexFormatExt.GetFormatOf<TIndex>(),
 		name
@@ -215,7 +215,7 @@ public class Mesh<TVertex, TIndex>(GraphicsDevice graphicsDevice, string? name =
 /// <typeparam name="TInstance">The Instance Buffer Element Type</typeparam>
 /// <typeparam name="TIndex">The Index Buffer Element Type, which must be either <see cref="int"/>, <see cref="uint"/>, <see cref="short"/>, or <see cref="ushort"/></typeparam>
 public class Mesh<TVertex, TInstance, TIndex>(GraphicsDevice graphicsDevice, string? name = null)
-	: Mesh(graphicsDevice, 
+	: Mesh(graphicsDevice,
 		default(TVertex).Format,
 		default(TInstance).Format,
 		IndexFormatExt.GetFormatOf<TIndex>(),

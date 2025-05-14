@@ -3,14 +3,19 @@ using System.Numerics;
 namespace Foster.Framework;
 
 /// <summary>
-/// A virtual Axis input, which detects user input mapped through a <see cref="AxisBinding"/>.
+/// A virtual Axis input, which detects user input mapped through a <see cref="AxisBindingSet"/>.
 /// </summary>
-public sealed class VirtualAxis(Input input, string name, AxisBinding binding, int controllerIndex = 0) : VirtualInput(input, name)
+public sealed class VirtualAxis(Input input, string name, AxisBindingSet set, int controllerIndex = 0) : VirtualInput(input, name)
 {
 	/// <summary>
 	/// The Binding Action
 	/// </summary>
-	public readonly AxisBinding Binding = binding;
+	public readonly AxisBindingSet Set = set;
+
+	/// <summary>
+	/// The Binding Axis Entries
+	/// </summary>
+	public List<AxisBindingSet.AxisEntry> Entries => Set.Entries;
 
 	/// <summary>
 	/// The Device Index
@@ -28,12 +33,22 @@ public sealed class VirtualAxis(Input input, string name, AxisBinding binding, i
 	public int IntValue { get; private set; }
 
 	/// <summary>
-	///
+	/// If the Axis was pressed this frame (ie. was 0, now non-zero)
 	/// </summary>
-	public bool Pressed { get; private set; }
+	public bool Pressed => PressedSign != 0;
 
 	/// <summary>
-	///
+	/// If a Negative binding was pressed this frame
+	/// </summary>
+	public bool PressedNegative => PressedSign < 0;
+
+	/// <summary>
+	/// If a Positive binding was pressed this frame
+	/// </summary>
+	public bool PressedPositive => PressedSign > 0;
+
+	/// <summary>
+	/// The Sign of the press this frame (or 0 if not pressed this frame)
 	/// </summary>
 	public int PressedSign { get; private set; }
 
@@ -42,29 +57,15 @@ public sealed class VirtualAxis(Input input, string name, AxisBinding binding, i
 
 	internal override void Update(in Time time)
 	{
-		Value = Binding.Value(Input, Device, Input.BindingFilters);
+		Value = Set.Value(Input, Device);
 		IntValue = MathF.Sign(Value);
-
-		Pressed = Value switch
-		{
-			> 0 => Binding.Positive.GetState(Input, Device, Input.BindingFilters).Pressed,
-			< 0 => Binding.Negative.GetState(Input, Device, Input.BindingFilters).Pressed,
-			_ => false,
-		};
-
-		PressedSign = Value switch
-		{
-			> 0 => (Binding.Positive.GetState(Input, Device, Input.BindingFilters).Pressed ? 1 : 0),
-			< 0 => (Binding.Negative.GetState(Input, Device, Input.BindingFilters).Pressed ? -1 : 0),
-			_ => 0,
-		};
+		PressedSign = Set.PressedSign(Input, Device);
 	}
 
 	public void Clear()
 	{
 		Value = 0;
 		IntValue = 0;
-		Pressed = false;
 		PressedSign = 0;
 	}
 }

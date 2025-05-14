@@ -41,7 +41,7 @@ public unsafe struct ConvexPolygon : IConvexShape, IEnumerable<Vector2>
 
 				if (Vertices[i].Y > bounds.Bottom)
 					bounds.Height = Vertices[i].Y - bounds.Y;
-			}	
+			}
 
 			return bounds;
 		}

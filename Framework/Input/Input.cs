@@ -67,7 +67,7 @@ public sealed class Input
 
 	/// <summary>
 	/// Input Binding Filters.
-	/// These filter the <see cref="Binding.Masks"/> used by <see cref="VirtualInput"/>s.
+	/// These filter the Bindings used by <see cref="VirtualInput"/>s.
 	/// </summary>
 	public readonly HashSet<string> BindingFilters = [];
 
@@ -293,5 +293,20 @@ public sealed class Input
 	{
 		foreach (var mapping in mappings)
 			SDL3.SDL.SDL_AddGamepadMapping(mapping);
+	}
+
+	/// <summary>
+	/// If this binding should be included given the proveded Filters
+	/// </summary>
+	public bool IsIncluded(string[]? masks)
+	{
+		if (BindingFilters == null || masks == null || masks.Length <= 0)
+			return true;
+
+		foreach (var it in masks)
+			if (BindingFilters.Contains(it))
+				return true;
+
+		return false;
 	}
 }

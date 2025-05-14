@@ -1,7 +1,7 @@
 namespace Foster.Framework;
 
 /// <summary>
-/// A single-frame of state for an Input Binding
+/// A single-frame of state of a <see cref="Binding"/>
 /// </summary>
 /// <param name="Pressed">Value is > 0 after being 0 on the last frame</param>
 /// <param name="Released">Value is 0 after being > 0 on the last frame</param>

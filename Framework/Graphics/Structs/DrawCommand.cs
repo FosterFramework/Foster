@@ -27,12 +27,12 @@ public struct DrawCommand
 	public IndexBuffer? IndexBuffer;
 
 	/// <summary>
-	/// The offset into the <see cref="IndexBuffer"/> when using an <see cref="IndexBuffer"/> 
+	/// The offset into the <see cref="IndexBuffer"/> when using an <see cref="IndexBuffer"/>
 	/// </summary>
 	public int IndexOffset = 0;
 
 	/// <summary>
-	/// The number of indices to draw per instance when using an <see cref="IndexBuffer"/> 
+	/// The number of indices to draw per instance when using an <see cref="IndexBuffer"/>
 	/// </summary>
 	public int IndexCount = 0;
 

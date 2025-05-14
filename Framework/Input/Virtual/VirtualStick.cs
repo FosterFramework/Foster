@@ -3,14 +3,19 @@ using System.Numerics;
 namespace Foster.Framework;
 
 /// <summary>
-/// A virtual 2D Axis/Stick input, which detects user input mapped through a <see cref="StickBinding"/>.
+/// A virtual 2D Axis/Stick input, which detects user input mapped through a <see cref="StickBindingSet"/>.
 /// </summary>
-public sealed class VirtualStick(Input input, string name, StickBinding binding, int controllerIndex = 0) : VirtualInput(input, name)
+public sealed class VirtualStick(Input input, string name, StickBindingSet set, int controllerIndex = 0) : VirtualInput(input, name)
 {
 	/// <summary>
 	/// The Binding Action
 	/// </summary>
-	public readonly StickBinding Binding = binding;
+	public readonly StickBindingSet Set = set;
+
+	/// <summary>
+	/// The Binding Stick Entries
+	/// </summary>
+	public List<StickBindingSet.StickEntry> Entries => Set.Entries;
 
 	/// <summary>
 	/// The Device Index
@@ -40,12 +45,20 @@ public sealed class VirtualStick(Input input, string name, StickBinding binding,
 
 	internal override void Update(in Time time)
 	{
-		Value = Binding.Value(Input, Device, Input.BindingFilters);
+		Value = Set.Value(Input, Device);
 		IntValue = new(MathF.Sign(Value.X), MathF.Sign(Value.Y));
-		PressedLeft = Binding.X.Negative.GetState(Input, Device, Input.BindingFilters).Pressed;
-		PressedRight = Binding.X.Positive.GetState(Input, Device, Input.BindingFilters).Pressed;
-		PressedUp = Binding.Y.Negative.GetState(Input, Device, Input.BindingFilters).Pressed;
-		PressedDown = Binding.Y.Positive.GetState(Input, Device, Input.BindingFilters).Pressed;
+		PressedLeft = PressedRight = PressedDown = PressedUp = false;
+
+		foreach (var it in Set.Entries)
+		{
+			if (!Input.IsIncluded(it.Masks))
+				continue;
+
+			PressedLeft |= it.Left.GetState(Input, Device).Pressed;
+			PressedRight |= it.Right.GetState(Input, Device).Pressed;
+			PressedUp |= it.Up.GetState(Input, Device).Pressed;
+			PressedDown |= it.Down.GetState(Input, Device).Pressed;
+		}
 	}
 
 	public void Clear()

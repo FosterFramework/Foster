@@ -249,7 +249,7 @@ public class Packer
 			var res = algo.Pack(remaining, padding, MaxSize);
 
 			// get page size
-			int pageWidth = res.Width, 
+			int pageWidth = res.Width,
 				pageHeight = res.Height;
 
 			if (PowerOfTwo)
@@ -348,7 +348,7 @@ public class Packer
 			var from = packed;
 			var halfPadding = padding / 2;
 			int width = 0, height = 0;
-			
+
 			fixed (PackingNode* nodes = buffer)
 			{
 				var nodePtr = nodes;

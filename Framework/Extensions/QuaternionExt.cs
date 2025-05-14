@@ -25,20 +25,5 @@ public static class QuaternionExt
 	{
 		return Quaternion.CreateFromRotationMatrix(Matrix4x4.CreateLookAt(Vector3.Zero, direction, up));
 	}
-
-	public static Vector3 Forward(this Quaternion q)
-	{
-		return Vector3.Transform(new Vector3(0, 0, -1), q.Conjugated());
-	}
-
-	public static Vector3 Left(this Quaternion q)
-	{
-		return Vector3.Transform(new Vector3(-1, 0, 0), q.Conjugated());
-	}
-
-	public static Vector3 Up(this Quaternion q)
-	{
-		return Vector3.Transform(new Vector3(0, 1, 0), q.Conjugated());
-	}
 }
 

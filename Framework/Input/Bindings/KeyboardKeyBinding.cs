@@ -7,15 +7,13 @@ namespace Foster.Framework;
 /// </summary>
 public sealed class KeyboardKeyBinding : Binding
 {
+	[JsonConverter(typeof(JsonStringEnumConverter<Keys>))]
 	public Keys Key { get; set; }
 
 	public KeyboardKeyBinding() {}
 
 	public KeyboardKeyBinding(Keys key)
 		=> Key = key;
-
-	public KeyboardKeyBinding(Keys key, in ReadOnlySpan<string> masks) : this(key)
-		=> Masks = [..masks];
 
 	public override BindingState GetState(Input input, int device) => new(
 		Pressed: input.Keyboard.Pressed(Key),
