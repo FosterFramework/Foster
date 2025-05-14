@@ -12,14 +12,14 @@ public sealed class AxisBindingSet
 	/// <summary>
 	/// Holds a singular axis binding pair
 	/// </summary>
-	public class AxisEntry(Binding negative, Binding positive, string[]? masks = null)
+	public class AxisEntry(Binding negative, Binding positive, BindingAxisOverlap overlap = default, string[]? masks = null)
 	{
 		/// <summary>
 		/// How to handle overlapping inputs between negative and positive bindings
 		/// </summary>
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 		[JsonConverter(typeof(JsonStringEnumConverter<BindingAxisOverlap>))]
-		public BindingAxisOverlap Overlap { get; set; }
+		public BindingAxisOverlap Overlap { get; set; } = overlap;
 
 		/// <summary>
 		/// Negative Axis Binding
@@ -61,11 +61,12 @@ public sealed class AxisBindingSet
 	/// <summary>
 	/// Adds a Keyboard Key mapping
 	/// </summary>
-	public AxisBindingSet Add(Keys negative, Keys positive)
+	public AxisBindingSet Add(Keys negative, Keys positive, BindingAxisOverlap overlap = default)
 	{
 		Entries.Add(new(
 			new KeyboardKeyBinding(negative),
-			new KeyboardKeyBinding(positive)
+			new KeyboardKeyBinding(positive),
+			overlap
 		));
 		return this;
 	}
@@ -73,11 +74,12 @@ public sealed class AxisBindingSet
 	/// <summary>
 	/// Adds a Keyboard Key mapping
 	/// </summary>
-	public AxisBindingSet Add(in ReadOnlySpan<string> masks, Keys negative, Keys positive)
+	public AxisBindingSet Add(in ReadOnlySpan<string> masks, Keys negative, Keys positive, BindingAxisOverlap overlap = default)
 	{
 		Entries.Add(new(
 			new KeyboardKeyBinding(negative),
 			new KeyboardKeyBinding(positive),
+			overlap,
 			[..masks]
 		));
 		return this;
@@ -86,11 +88,12 @@ public sealed class AxisBindingSet
 	/// <summary>
 	/// Adds a GamePad Button mapping
 	/// </summary>
-	public AxisBindingSet Add(Buttons negative, Buttons positive)
+	public AxisBindingSet Add(Buttons negative, Buttons positive, BindingAxisOverlap overlap = default)
 	{
 		Entries.Add(new(
 			new ControllerButtonBinding(negative),
-			new ControllerButtonBinding(positive)
+			new ControllerButtonBinding(positive),
+			overlap
 		));
 		return this;
 	}
@@ -98,11 +101,12 @@ public sealed class AxisBindingSet
 	/// <summary>
 	/// Adds a GamePad Button mapping
 	/// </summary>
-	public AxisBindingSet Add(in ReadOnlySpan<string> masks, Buttons negative, Buttons positive)
+	public AxisBindingSet Add(in ReadOnlySpan<string> masks, Buttons negative, Buttons positive, BindingAxisOverlap overlap = default)
 	{
 		Entries.Add(new(
 			new ControllerButtonBinding(negative),
 			new ControllerButtonBinding(positive),
+			overlap,
 			[..masks]
 		));
 		return this;
@@ -128,7 +132,7 @@ public sealed class AxisBindingSet
 		Entries.Add(new(
 			new ControllerAxisBinding(axis, -1, deadzone),
 			new ControllerAxisBinding(axis, 1, deadzone),
-			[..masks]
+			masks: [..masks]
 		));
 		return this;
 	}

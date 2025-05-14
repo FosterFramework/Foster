@@ -222,13 +222,13 @@ public sealed class StickBindingSet
 		return this;
 	}
 
-	public StickBindingSet AddArrowKeys(BindingAxisOverlap overlap)
+	public StickBindingSet AddArrowKeys(BindingAxisOverlap overlap = default)
 		=> Add(Keys.Left, Keys.Right, Keys.Up, Keys.Down, overlap);
 
 	public StickBindingSet AddArrowKeys(in ReadOnlySpan<string> masks, BindingAxisOverlap overlap = default)
 		=> Add(masks, Keys.Left, Keys.Right, Keys.Up, Keys.Down, overlap);
 
-	public StickBindingSet AddWasd(BindingAxisOverlap overlap)
+	public StickBindingSet AddWasd(BindingAxisOverlap overlap = default)
 		=> Add(Keys.A, Keys.D, Keys.W, Keys.S, overlap);
 
 	public StickBindingSet AddWasd(in ReadOnlySpan<string> masks, BindingAxisOverlap overlap = default)
