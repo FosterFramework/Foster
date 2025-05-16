@@ -36,6 +36,7 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 	public bool Horizontal => Value % 2 == 0;
 	public bool Vertical => Value % 2 == 1;
 	public Point2 Point => new(X, Y);
+	public Vector2 Normal => new(X, Y);
 
 	public int X => Value switch
 		{
@@ -63,6 +64,7 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 			_ => throw new Exception()
 		};
 
+	public static implicit operator Cardinal(int val) => new(val);
 	public static implicit operator Cardinal(Facing f) => f.Sign > 0 ? Right : Left;
 	public static implicit operator Point2(Cardinal c) => c.Point;
 	public static bool operator ==(Cardinal a, Cardinal b) => a.Value == b.Value;
