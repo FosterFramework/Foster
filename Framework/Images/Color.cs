@@ -2,13 +2,15 @@ using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Foster.Framework;
 
 /// <summary>
 /// 8-bit RGBA Color struct
 /// </summary>
-[StructLayout(LayoutKind.Sequential, Pack = 4, Size = 4)]
+[StructLayout(LayoutKind.Sequential, Pack = 4, Size = 4), JsonConverter(typeof(JsonConverter))]
 public struct Color : IEquatable<Color>
 {
 	public static readonly Color Transparent = new(0, 0, 0, 0);
@@ -316,4 +318,17 @@ public struct Color : IEquatable<Color>
 	public static implicit operator Color(Vector3 vec) => new Color(vec.X, vec.Y, vec.Z, 1.0f);
 	public static implicit operator Vector4(Color col) => col.ToVector4();
 	public static implicit operator Vector3(Color col) => col.ToVector3();
+
+	public class JsonConverter : JsonConverter<Color>
+	{
+		public override Color Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		{
+			if (reader.TokenType == JsonTokenType.String)
+				return FromHexStringRGBA(reader.GetString() ?? string.Empty);
+			return new();
+		}
+
+		public override void Write(Utf8JsonWriter writer, Color value, JsonSerializerOptions options)
+			=> writer.WriteStringValue(value.ToHexStringRGBA());
+	}
 }
