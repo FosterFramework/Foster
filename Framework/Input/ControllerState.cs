@@ -48,6 +48,11 @@ public sealed class ControllerState(int index)
 	public bool IsGamepad { get; private set; } = false;
 
 	/// <summary>
+	/// The most recent time the Controller was sent an event (button press, axis move, etc)
+	/// </summary>
+	public TimeSpan InputTimestamp { get; private set; } = TimeSpan.Zero;
+
+	/// <summary>
 	/// The Type of Gamepad
 	/// </summary>
 	public GamepadTypes GamepadType { get; private set; } = GamepadTypes.Unknown;
@@ -189,6 +194,7 @@ public sealed class ControllerState(int index)
 		Vendor = 0;
 		Product = 0;
 		Version = 0;
+		InputTimestamp = TimeSpan.Zero;
 
 		Array.Fill(pressed, false);
 		Array.Fill(down, false);
@@ -218,6 +224,7 @@ public sealed class ControllerState(int index)
 		Vendor = other.Vendor;
 		Version = other.Version;
 		time = other.time;
+		InputTimestamp = other.InputTimestamp;
 		CopyState(other);
 	}
 
@@ -240,6 +247,7 @@ public sealed class ControllerState(int index)
 			down[buttonIndex] = true;
 			pressed[buttonIndex] = true;
 			timestamp[buttonIndex] = time;
+			InputTimestamp = time;
 		}
 		else
 		{
@@ -254,5 +262,10 @@ public sealed class ControllerState(int index)
 
 		axis[axisIndex] = axisValue;
 		axisTimestamp[axisIndex] = time;
+
+		// require a full axis value to consider updating the timestamp ...
+		// todo: is this acceptable?
+		if (MathF.Abs(axisValue) > 0.50f)
+			InputTimestamp = time;
 	}
 }

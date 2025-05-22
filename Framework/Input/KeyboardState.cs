@@ -21,6 +21,11 @@ public sealed class KeyboardState
 	public readonly StringBuilder Text = new();
 
 	/// <summary>
+	/// The last time a key was pressed or held
+	/// </summary>
+	public TimeSpan InputTimestamp { get; private set; }
+
+	/// <summary>
 	/// Checks if the given key was pressed
 	/// </summary>
 	public bool Pressed(Keys key) => pressed[(int)key];
@@ -252,6 +257,7 @@ public sealed class KeyboardState
 	/// </summary>
 	public void Clear()
 	{
+		InputTimestamp = TimeSpan.Zero;
 		Array.Clear(pressed, 0, MaxKeys);
 		Array.Clear(down, 0, MaxKeys);
 		Array.Clear(released, 0, MaxKeys);
@@ -299,6 +305,7 @@ public sealed class KeyboardState
 		Text.Append(other.Text);
 
 		time = other.time;
+		InputTimestamp = other.InputTimestamp;
 	}
 
 	internal void Step(in Time time)
@@ -318,6 +325,7 @@ public sealed class KeyboardState
 				down[keyIndex] = true;
 				pressed[keyIndex] = true;
 				timestamp[keyIndex] = time;
+				InputTimestamp = time;
 			}
 			else
 			{

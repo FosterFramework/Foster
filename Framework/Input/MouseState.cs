@@ -11,6 +11,11 @@ public sealed class MouseState
 	internal static readonly MouseState ClearedState = new();
 
 	/// <summary>
+	/// The last time a mouse button was pressed or held, or when the mouse was moved
+	/// </summary>
+	public TimeSpan InputTimestamp { get; private set; }
+
+	/// <summary>
 	/// Mouse position, relative to the window, in Pixel Coordinates.
 	/// </summary>
 	public Vector2 Position;
@@ -139,6 +144,7 @@ public sealed class MouseState
 		wheelValue = other.wheelValue;
 		time = other.time;
 		motionTimestamp = other.motionTimestamp;
+		InputTimestamp = other.InputTimestamp;
 	}
 
 	internal void Step(in Time time)
@@ -159,6 +165,7 @@ public sealed class MouseState
 				down[buttonIndex] = true;
 				pressed[buttonIndex] = true;
 				timestamp[buttonIndex] = time;
+				InputTimestamp = time;
 			}
 			else
 			{
@@ -173,6 +180,7 @@ public sealed class MouseState
 		Position = position;
 		Delta = delta;
 		motionTimestamp = time;
+		InputTimestamp = time;
 	}
 
 	internal void OnWheel(in Vector2 value)
