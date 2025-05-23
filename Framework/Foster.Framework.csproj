@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFramework>net9.0</TargetFramework>
+	<RuntimeIdentifiers>win-x64;osx-x64;linux-x64</RuntimeIdentifiers>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -27,45 +28,33 @@
     <NativeLibsDir>$(ProjectDir)..\Platform\libs\</NativeLibsDir>
   </PropertyGroup>
 
-  <PropertyGroup Condition="$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) == 'X64'">
-    <IsX64>true</IsX64>
+  <PropertyGroup Condition="($(RuntimeIdentifier) == '' and $([MSBuild]::IsOSPlatform('Linux'))) or $(RuntimeIdentifier) == 'linux-x64'">
+    <IsLinux>true</IsLinux>
   </PropertyGroup>
 
-  <PropertyGroup Condition="$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) == 'Arm64'">
-    <IsArm64>true</IsArm64>
+  <PropertyGroup Condition="($(RuntimeIdentifier) == '' and $([MSBuild]::IsOSPlatform('Windows'))) or $(RuntimeIdentifier) == 'win-x64'">
+    <IsWindows>true</IsWindows>
   </PropertyGroup>
 
-  <PropertyGroup Condition="$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) == 'Arm32'">
-    <IsArm32>true</IsArm32>
+  <PropertyGroup Condition="($(RuntimeIdentifier) == '' and $([MSBuild]::IsOSPlatform('OSX'))) or $(RuntimeIdentifier) == 'osx-x64'">
+    <IsMacOS>true</IsMacOS>
   </PropertyGroup>
 
   <ItemGroup>
     <Content Include="$(NativeLibsDir)win-x64\**" Visible="false">
-      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Windows'))">PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="'$(IsWindows)' == 'true'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\win-x64\native</PackagePath>
       <Pack>True</Pack>
       <Link>%(Filename)%(Extension)</Link>
     </Content>
     <Content Include="$(NativeLibsDir)linux-x64\**" Visible="false">
-      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND $(IsX64) == 'true'">PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="'$(IsLinux)' == 'true'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\linux-x64\native</PackagePath>
       <Pack>True</Pack>
       <Link>%(Filename)%(Extension)</Link>
     </Content>
-    <Content Include="$(NativeLibsDir)linux-arm64\**" Visible="false">
-      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND $(IsArm64) == 'true'">PreserveNewest</CopyToOutputDirectory>
-      <PackagePath>runtimes\linux-arm64\native</PackagePath>
-      <Pack>True</Pack>
-      <Link>%(Filename)%(Extension)</Link>
-    </Content>
-    <Content Include="$(NativeLibsDir)linux-arm32\**" Visible="false">
-      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('Linux')) AND $(IsArm32) == 'true'">PreserveNewest</CopyToOutputDirectory>
-      <PackagePath>runtimes\linux-arm\native</PackagePath>
-      <Pack>True</Pack>
-      <Link>%(Filename)%(Extension)</Link>
-    </Content>
     <Content Include="$(NativeLibsDir)osx\**" Visible="false">
-      <CopyToOutputDirectory Condition="$([MSBuild]::IsOSPlatform('OSX'))">PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="'$(IsMacOS)' == 'true'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\osx\native</PackagePath>
       <Pack>True</Pack>
       <Link>%(Filename)%(Extension)</Link>
