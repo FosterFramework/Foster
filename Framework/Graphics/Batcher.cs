@@ -1147,19 +1147,17 @@ public class Batcher : IDisposable
 		}
 		else
 		{
-			var add = Calc.AngleDiff(startRadians, endRadians);
-			var lastInner = Calc.AngleToVector(startRadians, radius - t);
-			var lastOuter = Calc.AngleToVector(startRadians, radius);
+			var last = Calc.AngleToVector(startRadians);
+			var r0 = radius - t;
+			var r1 = radius;
 
 			for (int i = 1; i <= steps; i++)
 			{
-				var nextInner = Calc.AngleToVector(startRadians + add * (i / (float)steps), radius - t);
-				var nextOuter = Calc.AngleToVector(startRadians + add * (i / (float)steps), radius);
+				var next = Calc.AngleToVector(startRadians + (endRadians - startRadians) * (i / (float)steps));
 
-				Quad(center + lastInner, center + lastOuter, center + nextOuter, center + nextInner, color);
+				Quad(center + last * r0, center + last * r1, center + next * r1, center + next * r0, color);
 
-				lastInner = nextInner;
-				lastOuter = nextOuter;
+				last = next;
 			}
 		}
 	}
