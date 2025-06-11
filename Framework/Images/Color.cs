@@ -274,6 +274,61 @@ public struct Color : IEquatable<Color>
 	}
 
 	/// <summary>
+	/// Converts the Color to HSV values, where each resulting component is a value from 0 to 1
+	/// </summary>
+	public readonly (float H, float S, float V) ToHSV()
+	{
+		var value = ToVector4();
+		var min = MathF.Min(value.X, MathF.Min(value.Y, value.Z));
+		var max = MathF.Max(value.X, MathF.Max(value.Y, value.Z));
+		var delta = max - min;
+
+		(float H, float S, float V) result = (0f, 0f, max);
+
+		if (delta <= 0 || max <= 0)
+			return result;
+
+		result.S = delta / max;
+
+		if (value.X >= max)
+			result.H = (value.Y - value.Z) / delta;
+		else if (value.Y >= max)
+			result.H = 2.0f + (value.Z - value.X) / delta;
+		else
+			result.H = 4.0f + (value.X - value.Y) / delta;
+
+		result.H /= 6.0f;
+		if (result.H < 0)
+			result.H += 1.0f;
+
+		return result;
+	}
+
+	/// <summary>
+	/// Creates a Color value from HSV, where each component is a value from 0 to 1
+	/// </summary>
+	public static Color FromHSV(float h, float s, float v)
+	{
+		var hueSection = Math.Clamp(h, 0, 1) * 6;
+		var hueIndex = (int)hueSection;
+		var hueRemainder = hueSection - hueIndex;
+
+		var a = v * (1f - s);
+		var b = v * (1f - (s * hueRemainder));
+		var c = v * (1f - (s * (1f - hueRemainder)));
+
+		return hueIndex switch
+		{
+			0 => new(v, c, a, 1.0f),
+			1 => new(b, v, c, 1.0f),
+			2 => new(a, v, c, 1.0f),
+			3 => new(a, b, v, 1.0f),
+			4 => new(c, a, v, 1.0f),
+			_ => new(v, a, b, 1.0f)
+		};
+	}
+
+	/// <summary>
 	/// Linearly interpolates between two colors
 	/// </summary>
 	public static Color Lerp(Color a, Color b, float amount)
