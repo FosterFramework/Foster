@@ -5,7 +5,7 @@ namespace Foster.Framework;
 /// <summary>
 /// A 2D Quad
 /// </summary>
-public struct Quad : IConvexShape
+public struct Quad : IConvexShape, IEquatable<Quad>
 {
 	private Vector2 a;
 	private Vector2 b;
@@ -19,7 +19,7 @@ public struct Quad : IConvexShape
 
 	public Vector2 A
 	{
-		get => a;
+		readonly get => a;
 		set
 		{
 			if (a != value)
@@ -32,7 +32,7 @@ public struct Quad : IConvexShape
 
 	public Vector2 B
 	{
-		get => b;
+		readonly get => b;
 		set
 		{
 			if (b != value)
@@ -45,7 +45,7 @@ public struct Quad : IConvexShape
 
 	public Vector2 C
 	{
-		get => c;
+		readonly get => c;
 		set
 		{
 			if (c != value)
@@ -58,7 +58,7 @@ public struct Quad : IConvexShape
 
 	public Vector2 D
 	{
-		get => d;
+		readonly get => d;
 		set
 		{
 			if (d != value)
@@ -144,7 +144,7 @@ public struct Quad : IConvexShape
 		return this;
 	}
 
-	public void Project(in Vector2 axis, out float min, out float max)
+	public readonly void Project(in Vector2 axis, out float min, out float max)
 	{
 		min = float.MaxValue;
 		max = float.MinValue;
@@ -163,9 +163,9 @@ public struct Quad : IConvexShape
 		max = Math.Max(dot, max);
 	}
 
-	public int Points => 4;
+	public readonly int Points => 4;
 
-	public Vector2 GetPoint(int index)
+	public readonly Vector2 GetPoint(int index)
 	{
 		return index switch
 		{
@@ -177,7 +177,7 @@ public struct Quad : IConvexShape
 		};
 	}
 
-	public int Axes => 4;
+	public readonly int Axes => 4;
 
 	public Vector2 GetAxis(int index)
 	{
@@ -192,7 +192,7 @@ public struct Quad : IConvexShape
 		};
 	}
 
-	public Rect BoundingRect()
+	public readonly Rect BoundingRect()
 	{
 		var bounds = new Rect
 		{
@@ -204,16 +204,11 @@ public struct Quad : IConvexShape
 		return bounds;
 	}
 
-	public override bool Equals(object? obj)
-		=> (obj is Quad other) && (this == other);
-
-	public override int GetHashCode()
-		=> HashCode.Combine(a, b, c, d);
+	public readonly override bool Equals(object? obj) => obj is Quad other && this == other;
+	public readonly override int GetHashCode() => HashCode.Combine(a, b, c, d);
 
 	public static Quad Transform(Vector2 a, Vector2 b, Vector2 c, Vector2 d, Matrix3x2 matrix, bool maintainWinding = false)
-	{
-		return Transform(new Quad(a, b, c, d), matrix, maintainWinding);
-	}
+		=> Transform(new Quad(a, b, c, d), matrix, maintainWinding);
 
 	public static Quad Transform(Quad quad, Matrix3x2 matrix, bool maintainWinding = false)
 	{
@@ -239,13 +234,8 @@ public struct Quad : IConvexShape
 		}
 	}
 
-	public static bool operator ==(Quad a, Quad b)
-	{
-		return a.a == b.a && a.b == b.b && a.c == b.c && a.d == b.d;
-	}
+	public static bool operator ==(Quad a, Quad b) => a.a == b.a && a.b == b.b && a.c == b.c && a.d == b.d;
+	public static bool operator !=(Quad a, Quad b) => a.a != b.a || a.b != b.b || a.c != b.c || a.d != b.d;
 
-	public static bool operator !=(Quad a, Quad b)
-	{
-		return a.a != b.a || a.b != b.b || a.c != b.c || a.d != b.d;
-	}
+	public bool Equals(Quad other) => a.Equals(other.a) && b.Equals(other.b) && c.Equals(other.c) && d.Equals(other.d);
 }
