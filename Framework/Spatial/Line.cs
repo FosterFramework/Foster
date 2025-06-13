@@ -88,11 +88,11 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 
 		Vector2 c = other.From - From;
 		float t = (c.X * d.Y - c.Y * d.X) / bDotDPerp;
-		if (t < 0 || t > 1)
+		if (t is < 0 or > 1)
 			return false;
 
 		float u = (c.X * b.Y - c.Y * b.X) / bDotDPerp;
-		if (u < 0 || u > 1)
+		if (u is < 0 or > 1)
 			return false;
 
 		return true;
@@ -102,6 +102,9 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 	public static Line operator -(Line a, Vector2 b) => new(a.From - b, a.To - b);
 	public static bool operator ==(Line left, Line right) => left.Equals(right);
 	public static bool operator !=(Line left, Line right) => !(left == right);
+
+	public static implicit operator Line(LineInt l) => new(l.From, l.To);
+	public static explicit operator LineInt(Line l) => new((Point2)l.From, (Point2)l.To);
 
 	public bool Equals(Line other) => From.Equals(other.From) && To.Equals(other.To);
 	public override bool Equals(object? obj) => obj is Line other && Equals(other);
