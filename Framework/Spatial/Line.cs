@@ -7,7 +7,7 @@ namespace Foster.Framework;
 /// A 2D Floating-Point Line
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
-public struct Line(Vector2 from, Vector2 to) : IConvexShape
+public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 {
 	public Vector2 From = from;
 	public Vector2 To = to;
@@ -17,6 +17,7 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape
 
 	public readonly Rect Bounds => Rect.Between(From, To);
 	public readonly float Length => (To - From).Length();
+	public readonly float LengthSquared => (To - From).LengthSquared();
 	public readonly Vector2 Normal => (To - From).Normalized();
 
 	public readonly Vector2 GetAxis(int index)
@@ -49,7 +50,7 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape
 	public readonly Vector2 ClosestPoint(in Vector2 to)
 	{
 		var diff = To - From;
-		if (diff.X == 0 && diff.Y == 0)
+		if (diff == Vector2.Zero)
 			return From;
 
 		var w = to - From;
@@ -97,7 +98,13 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape
 		return true;
 	}
 
-	static public Line operator +(Line a, Vector2 b) => new(a.From + b, a.To + b);
-	static public Line operator -(Line a, Vector2 b) => new(a.From - b, a.To - b);
+	public static Line operator +(Line a, Vector2 b) => new(a.From + b, a.To + b);
+	public static Line operator -(Line a, Vector2 b) => new(a.From - b, a.To - b);
+	public static bool operator ==(Line left, Line right) => left.Equals(right);
+	public static bool operator !=(Line left, Line right) => !(left == right);
+
+	public bool Equals(Line other) => From.Equals(other.From) && To.Equals(other.To);
+	public override bool Equals(object? obj) => obj is Line other && Equals(other);
+	public override int GetHashCode() => HashCode.Combine(From, To);
 }
 
