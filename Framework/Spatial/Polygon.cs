@@ -10,7 +10,7 @@ namespace Foster.Framework;
 /// A 2D Polygon
 /// </summary>
 [JsonConverter(typeof(JsonConverter))]
-public class Polygon : IEnumerable<Vector2>
+public class Polygon : IList<Vector2>, IList
 {
 	private readonly List<Vector2> vertices = [];
 	private readonly List<int> triangles = [];
@@ -19,7 +19,8 @@ public class Polygon : IEnumerable<Vector2>
 	private Rect bounds;
 
 	/// <summary>
-	/// Unsafe Indices - modifying the Polygon will invalidate this Span
+	/// Triangle Indices.
+	/// Note: Modifying the Polygon will invalidate this Span
 	/// </summary>
 	public ReadOnlySpan<int> Indices
 	{
@@ -57,32 +58,41 @@ public class Polygon : IEnumerable<Vector2>
 
 	public int Count => vertices.Count;
 
-	public void Add(in Vector2 pt)
+	public int IndexOf(Vector2 item)
+		=> vertices.IndexOf(item);
+
+	public void Insert(int index, Vector2 item)
 	{
-		vertices.Add(pt);
-		trianglesDirty = true;
-		boundsDirty = true;
+		vertices.Insert(index, item);
+		trianglesDirty = boundsDirty = true;
 	}
 
-	public void Add()
-	{
-		vertices.Add(new());
-		trianglesDirty = true;
-		boundsDirty = true;
-	}
-
-	public void Insert(int index, in Vector2 pt)
-	{
-		vertices.Insert(index, pt);
-		trianglesDirty = true;
-		boundsDirty = true;
-	}
-
-	public void Remove(int index)
+	public void RemoveAt(int index)
 	{
 		vertices.RemoveAt(index);
-		trianglesDirty = true;
-		boundsDirty = true;
+		trianglesDirty = boundsDirty = true;
+	}
+
+	public void Add(Vector2 item)
+	{
+		vertices.Add(item);
+		trianglesDirty = boundsDirty = true;
+	}
+
+	public bool Contains(Vector2 item)
+		=> vertices.Contains(item);
+
+	public void CopyTo(Vector2[] array, int arrayIndex)
+		=> vertices.CopyTo(array, arrayIndex);
+
+	public bool Remove(Vector2 item)
+	{
+		if (vertices.Remove(item))
+		{
+			trianglesDirty = boundsDirty = true;
+			return true;
+		}
+		return false;
 	}
 
 	public void Clear()
@@ -102,8 +112,7 @@ public class Polygon : IEnumerable<Vector2>
 			if (value != vertices[index])
 			{
 				vertices[index] = value;
-				trianglesDirty = true;
-				boundsDirty = true;
+				boundsDirty = trianglesDirty = true;
 			}
 		}
 	}
@@ -130,8 +139,7 @@ public class Polygon : IEnumerable<Vector2>
 			{
 				for (int i = 0; i < vertices.Count; i++)
 					vertices[i] += diff;
-				trianglesDirty = true;
-				boundsDirty = true;
+				boundsDirty = trianglesDirty = true;
 			}
 		}
 	}
@@ -229,12 +237,11 @@ public class Polygon : IEnumerable<Vector2>
 
 	private void Triangulate()
 	{
-		if (trianglesDirty)
-		{
-			triangles.Clear();
-			Calc.Triangulate(vertices, triangles);
-			trianglesDirty = false;
-		}
+		if (!trianglesDirty)
+			return;
+		trianglesDirty = false;
+		triangles.Clear();
+		Calc.Triangulate(vertices, triangles);
 	}
 
 	private void CalculateBounds()
@@ -258,8 +265,85 @@ public class Polygon : IEnumerable<Vector2>
 		bounds = Rect.Between(min, max);
 	}
 
-	IEnumerator<Vector2> IEnumerable<Vector2>.GetEnumerator() => vertices.GetEnumerator();
-	IEnumerator IEnumerable.GetEnumerator() => vertices.GetEnumerator();
+	public void Render(Batcher batch, Color color)
+	{
+		if (Count < 3)
+			return;
+		
+		var indices = Indices;
+		for (int i = 0; i < indices.Length; i ++)
+		{
+			var a = indices[i];
+			var b = indices[(i + 1) % indices.Length];
+			var c = indices[(i + 2) % indices.Length];
+			batch.Triangle(vertices[a], vertices[b], vertices[c], color);
+		}
+	}
+
+	public void RenderLine(Batcher batch, float lineWeight, Color color)
+	{
+		if (Count < 2)
+			return;
+		
+		for (int i = 0; i < vertices.Count - 1; i ++)
+			batch.Line(vertices[i], vertices[i + 1], lineWeight, color);
+		batch.Line(vertices[^1], vertices[0], lineWeight, color);
+	}
+
+	#region Interfaces
+
+	IEnumerator<Vector2> IEnumerable<Vector2>.GetEnumerator()
+		=> vertices.GetEnumerator();
+
+	IEnumerator IEnumerable.GetEnumerator()
+		=> vertices.GetEnumerator();
+
+	int IList.Add(object? value)
+	{
+		int result = ((IList)vertices).Add(value);
+		if (result >= 0)
+			boundsDirty = trianglesDirty = true;
+		return -1;
+	}
+
+	bool IList.Contains(object? value)
+		=> ((IList)vertices).Contains(value);
+
+	int IList.IndexOf(object? value)
+		=> ((IList)vertices).IndexOf(value);
+
+	void IList.Insert(int index, object? value)
+	{
+		((IList)vertices).Insert(index, value);
+		boundsDirty = trianglesDirty = true;
+	}
+
+	void IList.Remove(object? value)
+	{
+		if (value is Vector2 v)
+			Remove(v);
+	}
+
+	void ICollection.CopyTo(Array array, int index) => ((IList)vertices).CopyTo(array, index);
+	bool ICollection<Vector2>.IsReadOnly => ((IList<Vector2>)vertices).IsReadOnly;
+	bool IList.IsReadOnly => ((IList)vertices).IsReadOnly;
+	bool IList.IsFixedSize => ((IList)vertices).IsFixedSize;
+	bool ICollection.IsSynchronized => ((IList)vertices).IsSynchronized;
+	object ICollection.SyncRoot => ((IList)vertices).SyncRoot;
+
+	object? IList.this[int index]
+	{
+		get => ((IList)vertices)[index];
+		set
+		{
+			if (value is Vector2 v)
+				this[index] = v;
+		}
+	}
+
+	#endregion
+
+	#region Json Converter
 
 	public class JsonConverter : JsonConverter<Polygon>
 	{
@@ -274,6 +358,8 @@ public class Polygon : IEnumerable<Vector2>
 				writer.WriteNullValue();
 		}
 	}
+
+	#endregion
 }
 
 [JsonSerializable(typeof(List<Vector2>))]

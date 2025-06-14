@@ -498,8 +498,6 @@ public static class Calc
 				count = 2 * nv;
 			}
 		}
-
-		populate.Reverse();
 	}
 
 	public static List<int> Triangulate(IList<Vector2> points)
