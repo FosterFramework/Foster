@@ -1,17 +1,22 @@
 ﻿using System.Collections;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Foster.Framework;
 
 /// <summary>
 /// A 2D Polygon
 /// </summary>
+[JsonConverter(typeof(JsonConverter))]
 public class Polygon : IEnumerable<Vector2>
 {
 	private readonly List<Vector2> vertices = [];
 	private readonly List<int> triangles = [];
-	private bool trianglesDirty;
+	private bool boundsDirty = true;
+	private bool trianglesDirty = true;
+	private Rect bounds;
 
 	/// <summary>
 	/// Unsafe Indices - modifying the Polygon will invalidate this Span
@@ -28,22 +33,26 @@ public class Polygon : IEnumerable<Vector2>
 	/// <summary>
 	/// Polygon Bounds
 	/// </summary>
-	public Rect Bounds { get; private set; }
-
-	public Polygon()
+	public Rect Bounds
 	{
-		vertices.Add(new(-32, -32));
-		vertices.Add(new(32, -32));
-		vertices.Add(new(32, 32));
-		vertices.Add(new(-32, 32));
-		trianglesDirty = true;
-		CalculateBounds();
+		get
+		{
+			CalculateBounds();
+			return bounds;
+		}
 	}
 
-	public Polygon(IEnumerable<Vector2> vertices)
+	public Polygon() {}
+
+	public Polygon(in Rect rect)
+		: this(rect.TopLeft, rect.TopRight, rect.BottomRight, rect.BottomLeft) {}
+
+	public Polygon(params ReadOnlySpan<Vector2> vertices)
 	{
-		this.vertices.AddRange(vertices);
+		foreach (var it in vertices)
+			this.vertices.Add(it);
 		trianglesDirty = true;
+		boundsDirty = true;
 	}
 
 	public int Count => vertices.Count;
@@ -52,28 +61,28 @@ public class Polygon : IEnumerable<Vector2>
 	{
 		vertices.Add(pt);
 		trianglesDirty = true;
-		CalculateBounds();
+		boundsDirty = true;
 	}
 
 	public void Add()
 	{
 		vertices.Add(new());
 		trianglesDirty = true;
-		CalculateBounds();
+		boundsDirty = true;
 	}
 
 	public void Insert(int index, in Vector2 pt)
 	{
 		vertices.Insert(index, pt);
 		trianglesDirty = true;
-		CalculateBounds();
+		boundsDirty = true;
 	}
 
 	public void Remove(int index)
 	{
 		vertices.RemoveAt(index);
 		trianglesDirty = true;
-		CalculateBounds();
+		boundsDirty = true;
 	}
 
 	public void Clear()
@@ -81,7 +90,8 @@ public class Polygon : IEnumerable<Vector2>
 		vertices.Clear();
 		triangles.Clear();
 		trianglesDirty = false;
-		Bounds = new();
+		boundsDirty = false;
+		bounds = default;
 	}
 
 	public Vector2 this[int index]
@@ -93,7 +103,7 @@ public class Polygon : IEnumerable<Vector2>
 			{
 				vertices[index] = value;
 				trianglesDirty = true;
-				CalculateBounds();
+				boundsDirty = true;
 			}
 		}
 	}
@@ -105,9 +115,8 @@ public class Polygon : IEnumerable<Vector2>
 			for (int i = 0; i < vertices.Count; i++)
 				vertices[i] += offset;
 			trianglesDirty = true;
-			CalculateBounds();
+			boundsDirty = true;
 		}
-
 		return this;
 	}
 
@@ -122,7 +131,7 @@ public class Polygon : IEnumerable<Vector2>
 				for (int i = 0; i < vertices.Count; i++)
 					vertices[i] += diff;
 				trianglesDirty = true;
-				CalculateBounds();
+				boundsDirty = true;
 			}
 		}
 	}
@@ -230,18 +239,43 @@ public class Polygon : IEnumerable<Vector2>
 
 	private void CalculateBounds()
 	{
+		if (!boundsDirty)
+			return;
+
+		boundsDirty = false;
 		if (vertices.Count == 0)
-			Bounds = new();
-		else
-			Bounds = new()
-			{
-				X = vertices.Min(v => v.X),
-				Y = vertices.Min(v => v.Y),
-				Right = vertices.Max(v => v.X),
-				Bottom = vertices.Max(v => v.Y),
-			};
+		{
+			bounds = new();
+			return;
+		}
+
+		Vector2 min = vertices[0], max = vertices[0];
+		for (int i = 1; i < vertices.Count; i ++)
+		{
+			min = Vector2.Min(min, vertices[i]);
+			max = Vector2.Max(max, vertices[i]);
+		}
+		bounds = Rect.Between(min, max);
 	}
 
 	IEnumerator<Vector2> IEnumerable<Vector2>.GetEnumerator() => vertices.GetEnumerator();
 	IEnumerator IEnumerable.GetEnumerator() => vertices.GetEnumerator();
+
+	public class JsonConverter : JsonConverter<Polygon>
+	{
+		public override Polygon Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+			=> [.. JsonSerializer.Deserialize(ref reader, PolygonVerticesJsonContext.Default.ListVector2) ?? []];
+
+		public override void Write(Utf8JsonWriter writer, Polygon value, JsonSerializerOptions options)
+		{
+			if (value != null)
+				JsonSerializer.Serialize(writer, value.vertices, PolygonVerticesJsonContext.Default.ListVector2);
+			else
+				writer.WriteNullValue();
+		}
+	}
 }
+
+[JsonSerializable(typeof(List<Vector2>))]
+[JsonSourceGenerationOptions(Converters = [typeof(JsonConverters.Vector2)])]
+internal partial class PolygonVerticesJsonContext : JsonSerializerContext {}
