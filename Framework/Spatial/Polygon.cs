@@ -221,7 +221,7 @@ public class Polygon : IList<Vector2>, IList
 	/// <summary>
 	/// Enumerate all edges of the polygon
 	/// </summary>
-	public IEnumerable<(Vector2 a, Vector2 b)> Edges
+	public IEnumerable<(Vector2 A, Vector2 B)> Edges
 	{
 		get
 		{
@@ -269,7 +269,7 @@ public class Polygon : IList<Vector2>, IList
 	{
 		if (Count < 3)
 			return;
-		
+
 		var indices = Indices;
 		for (int i = 0; i < indices.Length; i ++)
 		{
@@ -284,7 +284,7 @@ public class Polygon : IList<Vector2>, IList
 	{
 		if (Count < 2)
 			return;
-		
+
 		for (int i = 0; i < vertices.Count - 1; i ++)
 			batch.Line(vertices[i], vertices[i + 1], lineWeight, color);
 		batch.Line(vertices[^1], vertices[0], lineWeight, color);
