@@ -464,6 +464,12 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 	public readonly Rect Conflate(in Rect other)
 		=> Between(Vector2.Min(TopLeft, other.TopLeft), Vector2.Max(BottomRight, other.BottomRight));
 
+	/// <summary>
+	/// Gets the rectangle larger than or equal to this one that also contains the point
+	/// </summary>
+	public readonly Rect Conflate(in Vector2 other)
+		=> Between(Vector2.Min(TopLeft, other), Vector2.Max(BottomRight, other));
+
 	#endregion
 
 	/// <summary>
