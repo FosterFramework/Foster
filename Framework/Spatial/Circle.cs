@@ -9,7 +9,7 @@ namespace Foster.Framework;
 /// A 2D Circle
 /// </summary>
 [StructLayout(LayoutKind.Sequential), JsonConverter(typeof(JsonConverter))]
-public struct Circle : IProjectable
+public struct Circle : IProjectable, IEquatable<Circle>
 {
 	/// <summary>
 	/// The Position of the Circle
@@ -43,6 +43,11 @@ public struct Circle : IProjectable
 	/// Calculate the area of the circle
 	/// </summary>
 	public readonly float Area => MathF.PI * Radius * Radius;
+
+	/// <summary>
+	/// Gets the smallest rectangle that contains this circle
+	/// </summary>
+	public readonly Rect Bounds => Rect.Centered(Position, Radius * 2, Radius * 2);
 
 	/// <summary>
 	/// Checks if the Vector2 is in the Circle
@@ -84,13 +89,13 @@ public struct Circle : IProjectable
 	}
 
 	/// <summary>
-	/// Checks whether we overlap the given line segment
+	/// Checks whether we overlap a line segment
 	/// </summary>
 	public readonly bool Overlaps(in Line line)
 		=> Vector2.DistanceSquared(Position, line.ClosestPoint(Position)) < Radius * Radius;
 
 	/// <summary>
-	/// Checkers whether we overlap the given triangle
+	/// Checkers whether we overlap a triangle
 	/// </summary>
 	public readonly bool Overlaps(in Triangle tri)
 		=> tri.Contains(Position) || Overlaps(tri.AB) || Overlaps(tri.BC) || Overlaps(tri.CA);
@@ -122,10 +127,9 @@ public struct Circle : IProjectable
 	}
 
 	/// <summary>
-	/// Return a new circle with the radius inflated by the given amount
+	/// Return a new circle with the radius increased by the given amount
 	/// </summary>
-	public readonly Circle Inflate(float addRadius)
-		=> new(Position, Radius + addRadius);
+	public readonly Circle Inflate(float addRadius) => new(Position, Radius + addRadius);
 
 	public static bool operator ==(in Circle a, in Circle b) => a.Position == b.Position && a.Radius == b.Radius;
 	public static bool operator !=(in Circle a, in Circle b) => !(a == b);
@@ -133,6 +137,7 @@ public struct Circle : IProjectable
 	public static Circle operator +(in Circle a, in Vector2 b) => new(a.Position + b, a.Radius);
 	public static Circle operator -(in Circle a, in Vector2 b) => new(a.Position - b, a.Radius);
 
+	public bool Equals(Circle other) => this == other;
 	public readonly override bool Equals(object? obj) => obj is Circle circle && circle == this;
 	public readonly override int GetHashCode() => HashCode.Combine(Position, Radius);
 
