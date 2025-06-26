@@ -45,6 +45,9 @@ public struct Triangle(Vector2 a, Vector2 b, Vector2 c) : IConvexShape
 	public static implicit operator Triangle((Vector2 a, Vector2 b, Vector2 c) tuple)
 		=> new(tuple.a, tuple.b, tuple.c);
 
+	public static Triangle operator +(Triangle a, Vector2 b) => new(a.A + b, a.B + b, a.C + b);
+	public static Triangle operator -(Triangle a, Vector2 b) => new(a.A - b, a.B - b, a.C - b);
+
 	#region IConvexShape
 
 	public readonly int Points => 3;
