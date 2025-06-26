@@ -226,6 +226,9 @@ public struct RectInt(int x, int y, int w, int h) : IEquatable<RectInt>
 	public readonly bool Overlaps(in Rect against)
 		=> X + Width > against.X && Y + Height > against.Y && X < against.X + against.Width && Y < against.Y + against.Height;
 
+	/// <summary>
+	/// Gets the smallest rectangle that contains both this and the other rectangle
+	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly RectInt Conflate(in RectInt other)
 	{
@@ -233,6 +236,12 @@ public struct RectInt(int x, int y, int w, int h) : IEquatable<RectInt>
 		var max = Point2.Max(Max, other.Max);
 		return new(min.X, min.Y, max.X - min.X, max.Y - min.Y);
 	}
+
+	/// <summary>
+	/// Gets the smallest rectangle that contains both this and the point
+	/// </summary>
+	public readonly RectInt Conflate(in Point2 other)
+		=> Between(Point2.Min(TopLeft, other), Point2.Max(BottomRight, other));
 
 	/// <summary>
 	/// Get the rectangle intersection of two rectangles

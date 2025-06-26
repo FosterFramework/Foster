@@ -459,13 +459,13 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 			);
 
 	/// <summary>
-	/// Gets the bounding rectangle that contains both this and another rectangle
+	/// Gets the smallest rectangle that contains both this and another rectangle
 	/// </summary>
 	public readonly Rect Conflate(in Rect other)
 		=> Between(Vector2.Min(TopLeft, other.TopLeft), Vector2.Max(BottomRight, other.BottomRight));
 
 	/// <summary>
-	/// Gets the rectangle larger than or equal to this one that also contains the point
+	/// Gets the smallest rectangle that contains both this and the point
 	/// </summary>
 	public readonly Rect Conflate(in Vector2 other)
 		=> Between(Vector2.Min(TopLeft, other), Vector2.Max(BottomRight, other));
