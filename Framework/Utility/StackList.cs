@@ -69,9 +69,10 @@ public struct StackList4<T> : IEnumerable<T>, IList<T>
 	{
 		if (count >= Capacity)
 			throw new Exception("Exceeding Capacity of StackList");
-		for (int i = count - 1; i > index; i--)
+		for (int i = count; i > index; i--)
 			elements[i] = elements[i - 1];
 		elements[index] = item;
+		count++;
 	}
 
 	public readonly bool Contains(T item)
@@ -194,9 +195,10 @@ public struct StackList8<T> : IEnumerable<T>, IList<T>
 	{
 		if (count >= Capacity)
 			throw new Exception("Exceeding Capacity of StackList");
-		for (int i = count - 1; i > index; i --)
+		for (int i = count; i > index; i --)
 			elements[i] = elements[i - 1];
 		elements[index] = item;
+		count++;
 	}
 
 	public readonly bool Contains(T item)
@@ -319,9 +321,10 @@ public struct StackList16<T> : IEnumerable<T>, IList<T>
 	{
 		if (count >= Capacity)
 			throw new Exception("Exceeding Capacity of StackList");
-		for (int i = count - 1; i > index; i --)
+		for (int i = count; i > index; i --)
 			elements[i] = elements[i - 1];
 		elements[index] = item;
+		count++;
 	}
 
 	public readonly bool Contains(T item)
@@ -444,9 +447,10 @@ public struct StackList32<T> : IEnumerable<T>, IList<T>
 	{
 		if (count >= Capacity)
 			throw new Exception("Exceeding Capacity of StackList");
-		for (int i = count - 1; i > index; i --)
+		for (int i = count; i > index; i --)
 			elements[i] = elements[i - 1];
 		elements[index] = item;
+		count++;
 	}
 
 	public readonly bool Contains(T item)
@@ -569,9 +573,10 @@ public struct StackList64<T> : IEnumerable<T>, IList<T>
 	{
 		if (count >= Capacity)
 			throw new Exception("Exceeding Capacity of StackList");
-		for (int i = count - 1; i > index; i --)
+		for (int i = count; i > index; i --)
 			elements[i] = elements[i - 1];
 		elements[index] = item;
+		count++;
 	}
 
 	public readonly bool Contains(T item)
