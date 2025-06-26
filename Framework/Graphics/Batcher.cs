@@ -609,6 +609,14 @@ public class Batcher : IDisposable
 		Quad(from + perp, from - perp, to - perp, to + perp, fromColor, fromColor, toColor, toColor);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void Line(in Line line, float lineWeight, in Color color)
+		=> Line(line.From, line.To, lineWeight, color);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void Line(in Line line, float lineWeight, in Color fromColor, in Color toColor)
+		=> Line(line.From, line.To, lineWeight, fromColor, toColor);
+
 	#endregion
 
 	#region Dashed Line
@@ -798,6 +806,33 @@ public class Batcher : IDisposable
 		indices[2] = offset + 2;
 	}
 
+	public void Triangle(in Vector2 v0, in Vector2 v1, in Vector2 v2, Color c0, Color c1, Color c2)
+	{
+		Request(3, 3, out var vertices, out var indices, out var offset);
+
+		vertices[0].Pos = Vector2.Transform(v0, Matrix);
+		vertices[1].Pos = Vector2.Transform(v1, Matrix);
+		vertices[2].Pos = Vector2.Transform(v2, Matrix);
+		vertices[0].Col = c0;
+		vertices[1].Col = c1;
+		vertices[2].Col = c2;
+		vertices[0].Mode = FillMode;
+		vertices[1].Mode = FillMode;
+		vertices[2].Mode = FillMode;
+
+		indices[0] = offset + 0;
+		indices[1] = offset + 1;
+		indices[2] = offset + 2;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void Triangle(in Triangle tri, Color color)
+		=> Triangle(tri.A, tri.B, tri.C, color);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void Triangle(in Triangle tri, Color c0, Color c1, Color c2)
+		=> Triangle(tri.A, tri.B, tri.C, c0, c1, c2);
+
 	public void Triangle(Texture? texture, in Vector2 v0, in Vector2 v1, in Vector2 v2, in Vector2 t0, in Vector2 t1, in Vector2 t2, Color color)
 	{
 		SetTexture(texture);
@@ -815,25 +850,6 @@ public class Batcher : IDisposable
 		vertices[0].Mode = mode;
 		vertices[1].Mode = mode;
 		vertices[2].Mode = mode;
-
-		indices[0] = offset + 0;
-		indices[1] = offset + 1;
-		indices[2] = offset + 2;
-	}
-
-	public void Triangle(in Vector2 v0, in Vector2 v1, in Vector2 v2, Color c0, Color c1, Color c2)
-	{
-		Request(3, 3, out var vertices, out var indices, out var offset);
-
-		vertices[0].Pos = Vector2.Transform(v0, Matrix);
-		vertices[1].Pos = Vector2.Transform(v1, Matrix);
-		vertices[2].Pos = Vector2.Transform(v2, Matrix);
-		vertices[0].Col = c0;
-		vertices[1].Col = c1;
-		vertices[2].Col = c2;
-		vertices[0].Mode = FillMode;
-		vertices[1].Mode = FillMode;
-		vertices[2].Mode = FillMode;
 
 		indices[0] = offset + 0;
 		indices[1] = offset + 1;
@@ -865,6 +881,10 @@ public class Batcher : IDisposable
 		Quad(bb, b, c, cc, color);
 		Quad(cc, c, a, aa, color);
 	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void TriangleLine(in Triangle tri, float lineWeight, in Color color)
+		=> TriangleLine(tri.A, tri.B, tri.C, lineWeight, color);
 
 	#endregion
 
