@@ -9,7 +9,7 @@ namespace Foster.Framework;
 /// A 2D Integer Rectangle
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
-public struct RectInt(int x, int y, int w, int h) : IEquatable<RectInt>
+public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<RectInt>
 {
 	public int X = x;
 	public int Y = y;
@@ -644,6 +644,51 @@ public struct RectInt(int x, int y, int w, int h) : IEquatable<RectInt>
 		else
 			return new(X, Y - distance, Width, distance);
 	}
+
+	#endregion
+
+	#region IConvexShape
+
+	public readonly void Project(in Vector2 axis, out float min, out float max)
+	{
+		min = float.MaxValue;
+		max = float.MinValue;
+
+		var dot = Vector2.Dot(new(X, Y), axis);
+		min = Math.Min(dot, min);
+		max = Math.Max(dot, max);
+		dot = Vector2.Dot(new(X + Width, Y), axis);
+		min = Math.Min(dot, min);
+		max = Math.Max(dot, max);
+		dot = Vector2.Dot(new(X + Width, Y + Height), axis);
+		min = Math.Min(dot, min);
+		max = Math.Max(dot, max);
+		dot = Vector2.Dot(new(X, Y + Height), axis);
+		min = Math.Min(dot, min);
+		max = Math.Max(dot, max);
+	}
+
+	public readonly int Points => 4;
+
+	public readonly Vector2 GetPoint(int index)
+		=> index switch
+		{
+			0 => TopLeft,
+			1 => TopRight,
+			2 => BottomRight,
+			3 => BottomLeft,
+			_ => throw new IndexOutOfRangeException(),
+		};
+
+	public readonly int Axes => 2;
+
+	public readonly Vector2 GetAxis(int index)
+		=> index switch
+		{
+			0 => Vector2.UnitX,
+			1 => Vector2.UnitY,
+			_ => throw new IndexOutOfRangeException(),
+		};
 
 	#endregion
 

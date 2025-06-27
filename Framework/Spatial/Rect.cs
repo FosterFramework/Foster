@@ -351,47 +351,6 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 			_ => pt,
 		};
 
-	public readonly void Project(in Vector2 axis, out float min, out float max)
-	{
-		min = float.MaxValue;
-		max = float.MinValue;
-
-		var dot = Vector2.Dot(new(X, Y), axis);
-		min = Math.Min(dot, min);
-		max = Math.Max(dot, max);
-		dot = Vector2.Dot(new(X + Width, Y), axis);
-		min = Math.Min(dot, min);
-		max = Math.Max(dot, max);
-		dot = Vector2.Dot(new(X + Width, Y + Height), axis);
-		min = Math.Min(dot, min);
-		max = Math.Max(dot, max);
-		dot = Vector2.Dot(new(X, Y + Height), axis);
-		min = Math.Min(dot, min);
-		max = Math.Max(dot, max);
-	}
-
-	public readonly int Points => 4;
-
-	public readonly Vector2 GetPoint(int index)
-		=> index switch
-		{
-			0 => TopLeft,
-			1 => TopRight,
-			2 => BottomRight,
-			3 => BottomLeft,
-			_ => throw new IndexOutOfRangeException(),
-		};
-
-	public readonly int Axes => 2;
-
-	public readonly Vector2 GetAxis(int index)
-		=> index switch
-		{
-			0 => Vector2.UnitX,
-			1 => Vector2.UnitY,
-			_ => throw new IndexOutOfRangeException(),
-		};
-
 	#endregion
 
 	#region Transform
@@ -513,6 +472,51 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 	/// </summary>
 	public readonly Rect Conflate(in Vector2 other)
 		=> Between(Vector2.Min(TopLeft, other), Vector2.Max(BottomRight, other));
+
+	#endregion
+
+	#region IConvexShape
+
+	public readonly void Project(in Vector2 axis, out float min, out float max)
+	{
+		min = float.MaxValue;
+		max = float.MinValue;
+
+		var dot = Vector2.Dot(new(X, Y), axis);
+		min = Math.Min(dot, min);
+		max = Math.Max(dot, max);
+		dot = Vector2.Dot(new(X + Width, Y), axis);
+		min = Math.Min(dot, min);
+		max = Math.Max(dot, max);
+		dot = Vector2.Dot(new(X + Width, Y + Height), axis);
+		min = Math.Min(dot, min);
+		max = Math.Max(dot, max);
+		dot = Vector2.Dot(new(X, Y + Height), axis);
+		min = Math.Min(dot, min);
+		max = Math.Max(dot, max);
+	}
+
+	public readonly int Points => 4;
+
+	public readonly Vector2 GetPoint(int index)
+		=> index switch
+		{
+			0 => TopLeft,
+			1 => TopRight,
+			2 => BottomRight,
+			3 => BottomLeft,
+			_ => throw new IndexOutOfRangeException(),
+		};
+
+	public readonly int Axes => 2;
+
+	public readonly Vector2 GetAxis(int index)
+		=> index switch
+		{
+			0 => Vector2.UnitX,
+			1 => Vector2.UnitY,
+			_ => throw new IndexOutOfRangeException(),
+		};
 
 	#endregion
 
