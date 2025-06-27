@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Collections;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -81,6 +82,49 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 	public readonly Line RightLine => new(TopRight, BottomRight);
 	public readonly Line TopLine => new(TopLeft, TopRight);
 	public readonly Line BottomLine => new(BottomRight, BottomLeft);
+
+	public EdgeEnumerable Edges => new(this);
+
+	public readonly struct EdgeEnumerable(Rect rect) : IEnumerable<Line>
+	{
+		public EdgeEnumerator GetEnumerator() => new(rect);
+		IEnumerator<Line> IEnumerable<Line>.GetEnumerator() => new EdgeEnumerator(rect);
+		IEnumerator IEnumerable.GetEnumerator() => new EdgeEnumerator(rect);
+	}
+
+	public struct EdgeEnumerator(Rect rect) : IEnumerator<Line>
+	{
+		private int index = -1;
+		private Line current;
+
+		public bool MoveNext()
+		{
+			index++;
+			if (index < 4)
+			{
+				current = index switch
+				{
+					0 => rect.RightLine,
+					1 => rect.BottomLine,
+					2 => rect.LeftLine,
+					_ => rect.TopLine,
+				};
+				return true;
+			}
+			else
+				return false;
+		}
+
+		public void Reset()
+		{
+			index = -1;
+		}
+
+		public Line Current => current;
+		Line IEnumerator<Line>.Current => current;
+		object IEnumerator.Current => current;
+		public void Dispose() { }
+	}
 
 	#endregion
 
@@ -194,7 +238,7 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 	/// <summary>
 	/// Get a random point that lies inside the rectangle
 	/// </summary>
-	public readonly Vector2 RandomPoint(in Rng rng)
+	public readonly Vector2 RandomPoint(ref Rng rng)
 		=> On(rng.Float(), rng.Float());
 
 	#endregion

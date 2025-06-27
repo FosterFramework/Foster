@@ -221,16 +221,16 @@ public class Polygon : IList<Vector2>, IList
 	/// <summary>
 	/// Enumerate all edges of the polygon
 	/// </summary>
-	public IEnumerable<(Vector2 A, Vector2 B)> Edges
+	public IEnumerable<Line> Edges
 	{
 		get
 		{
 			if (vertices.Count > 1)
 			{
 				for (int i = 1; i < vertices.Count; i++)
-					yield return (vertices[i - 1], vertices[i]);
+					yield return new(vertices[i - 1], vertices[i]);
 				if (vertices.Count > 2)
-					yield return (vertices[^1], vertices[0]);
+					yield return new(vertices[^1], vertices[0]);
 			}
 		}
 	}

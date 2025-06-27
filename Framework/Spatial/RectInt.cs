@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Collections;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -73,6 +74,54 @@ public struct RectInt(int x, int y, int w, int h) : IEquatable<RectInt>
 	{
 		readonly get => Y + Height / 2;
 		set => Y = value - Height / 2;
+	}
+
+	public readonly LineInt LeftLine => new(BottomLeft, TopLeft);
+	public readonly LineInt RightLine => new(TopRight, BottomRight);
+	public readonly LineInt TopLine => new(TopLeft, TopRight);
+	public readonly LineInt BottomLine => new(BottomRight, BottomLeft);
+
+	public EdgeEnumerable Edges => new(this);
+
+	public readonly struct EdgeEnumerable(RectInt rect) : IEnumerable<LineInt>
+	{
+		public EdgeEnumerator GetEnumerator() => new(rect);
+		IEnumerator<LineInt> IEnumerable<LineInt>.GetEnumerator() => new EdgeEnumerator(rect);
+		IEnumerator IEnumerable.GetEnumerator() => new EdgeEnumerator(rect);
+	}
+
+	public struct EdgeEnumerator(RectInt rect) : IEnumerator<LineInt>
+	{
+		private int index = -1;
+		private LineInt current;
+
+		public bool MoveNext()
+		{
+			index++;
+			if (index < 4)
+			{
+				current = index switch
+				{
+					0 => rect.RightLine,
+					1 => rect.BottomLine,
+					2 => rect.LeftLine,
+					_ => rect.TopLine,
+				};
+				return true;
+			}
+			else
+				return false;
+		}
+
+		public void Reset()
+		{
+			index = -1;
+		}
+
+		public LineInt Current => current;
+		LineInt IEnumerator<LineInt>.Current => current;
+		object IEnumerator.Current => current;
+		public void Dispose() { }
 	}
 
 	#endregion

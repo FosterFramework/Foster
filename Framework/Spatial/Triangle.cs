@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Collections;
+using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
@@ -73,6 +74,52 @@ public struct Triangle(Vector2 a, Vector2 b, Vector2 c) : IConvexShape
 
 		min = Calc.Min(dotA, dotB, dotC);
 		max = Calc.Max(dotA, dotB, dotC);
+	}
+
+	#endregion
+
+	#region Edge Enumeration
+
+	public readonly EdgeEnumerable Edges => new(this);
+
+	public readonly struct EdgeEnumerable(Triangle tri) : IEnumerable<Line>
+	{
+		public EdgeEnumerator GetEnumerator() => new(tri);
+		IEnumerator<Line> IEnumerable<Line>.GetEnumerator() => new EdgeEnumerator(tri);
+		IEnumerator IEnumerable.GetEnumerator() => new EdgeEnumerator(tri);
+	}
+
+	public struct EdgeEnumerator(Triangle tri) : IEnumerator<Line>
+	{
+		private int index = -1;
+		private Line current;
+
+		public bool MoveNext()
+		{
+			index++;
+			if (index < 3)
+			{
+				current = index switch
+				{
+					0 => tri.AB,
+					1 => tri.BC,
+					_ => tri.CA
+				};
+				return true;
+			}
+			else
+				return false;
+		}
+
+		public void Reset()
+		{
+			index = -1;
+		}
+
+		public Line Current => current;
+		Line IEnumerator<Line>.Current => current;
+		object IEnumerator.Current => current;
+		public void Dispose() { }
 	}
 
 	#endregion
