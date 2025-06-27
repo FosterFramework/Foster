@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 namespace Foster.Framework;
 
 /// <summary>
-/// A 2D Polygon
+/// Am arbitrary 2D Polygon (which may be concave)
 /// </summary>
 [JsonConverter(typeof(JsonConverter))]
 public class Polygon : IList<Vector2>, IList
