@@ -7,7 +7,7 @@ namespace Foster.Framework;
 /// A 2D Integer Line
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
-public struct LineInt(Point2 from, Point2 to) : IConvexShape
+public struct LineInt(Point2 from, Point2 to) : IConvexShape, IEquatable<LineInt>
 {
 	public Point2 From = from;
 	public Point2 To = to;
@@ -75,6 +75,9 @@ public struct LineInt(Point2 from, Point2 to) : IConvexShape
 		return true;
 	}
 
-	static public LineInt operator +(LineInt a, Point2 b) => new(a.From + b, a.To + b);
-	static public LineInt operator -(LineInt a, Point2 b) => new(a.From - b, a.To - b);
+	public readonly bool Equals(LineInt other)
+		=> From == other.From && To == other.To;
+
+	public static LineInt operator +(LineInt a, Point2 b) => new(a.From + b, a.To + b);
+	public static LineInt operator -(LineInt a, Point2 b) => new(a.From - b, a.To - b);
 }
