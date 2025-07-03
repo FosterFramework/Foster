@@ -430,54 +430,6 @@ public static class Calc
 	}
 
 	/// <summary>
-	/// Find the two closest points in the list to a given point
-	/// </summary>
-	/// <param name="first">The index of the closest point, or -1 if the list is empty</param>
-	/// <param name="second">The index of the second closest point, or -1 of the list has fewer than two elements</param>
-	public static void GetTwoClosestPointsIndices(this IList<Vector2> points, in Vector2 to, out int first, out int second)
-	{
-		if (points.Count < 2)
-		{
-			first = points.Count - 1;
-			second = -1;
-			return;
-		}
-
-		Span<int> closestIndices = stackalloc int[2];
-		closestIndices[0] = closestIndices[1] = -1;
-		Span<float> closestDistSqs = stackalloc float[2];
-
-		for (int i = 0; i < points.Count; i++)
-		{
-			var distSq = Vector2.DistanceSquared(points[i], to);
-
-			for (int j = 0; j < 2; j++)
-			{
-				if (closestIndices[j] == -1)
-				{
-					closestIndices[j] = i;
-					closestDistSqs[j] = distSq;
-					break;
-				}
-				else if (distSq < closestIndices[j])
-				{
-					for (int k = j + 1; k < 2; k++)
-					{
-						closestIndices[k] = closestIndices[k - 1];
-						closestDistSqs[k] = closestDistSqs[k - 1];
-					}
-					closestIndices[j] = i;
-					closestDistSqs[j] = distSq;
-					break;
-				}
-			}
-		}
-
-		first = closestIndices[0];
-		second = closestIndices[1];
-	}
-
-	/// <summary>
 	/// Find the closest point in the list to a given point
 	/// </summary>
 	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
@@ -498,6 +450,12 @@ public static class Calc
 
 		return closestIndex;
 	}
+
+	/// <summary>
+	/// Check if our magnitude is smaller than Vector b's
+	/// </summary>
+	public static bool IsSmallerThan(this Vector2 a, in Vector2 b)
+		=> a.LengthSquared() < b.LengthSquared();
 
 	#endregion
 

@@ -196,29 +196,6 @@ public class Polygon : IList<Vector2>, IList
 	}
 
 	/// <summary>
-	/// Enumerate all triangles formed by this polygon. If the polygon's edges cross themselves these may be incorrect. The polygon must triangulate to find these triangles, which is expensive, but it will cache triangles so long as no vertices are changed.
-	/// </summary>
-	public IEnumerable<Triangle> Triangles
-	{
-		get
-		{
-			Triangulate();
-			for (int i = 0; i < triangles.Count - 2; i += 3)
-				yield return new(vertices[triangles[i]], vertices[triangles[i + 1]], vertices[triangles[i + 2]]);
-		}
-	}
-
-	/// <summary>
-	/// Get the triangles. Do not edit the given lists
-	/// </summary>
-	public void GetTriangles(out List<Vector2> verts, out List<int> indices)
-	{
-		Triangulate();
-		verts = vertices;
-		indices = triangles;
-	}
-
-	/// <summary>
 	/// Enumerate all edges of the polygon
 	/// </summary>
 	public IEnumerable<Line> Edges
@@ -233,15 +210,6 @@ public class Polygon : IList<Vector2>, IList
 					yield return new(vertices[^1], vertices[0]);
 			}
 		}
-	}
-
-	private void Triangulate()
-	{
-		if (!trianglesDirty)
-			return;
-		trianglesDirty = false;
-		triangles.Clear();
-		Calc.Triangulate(vertices, triangles);
 	}
 
 	private void CalculateBounds()
@@ -267,17 +235,9 @@ public class Polygon : IList<Vector2>, IList
 
 	public void Render(Batcher batch, Color color)
 	{
-		if (Count < 3)
-			return;
-
-		var indices = Indices;
-		for (int i = 0; i < indices.Length; i ++)
-		{
-			var a = indices[i];
-			var b = indices[(i + 1) % indices.Length];
-			var c = indices[(i + 2) % indices.Length];
-			batch.Triangle(vertices[a], vertices[b], vertices[c], color);
-		}
+		Triangulate();
+		foreach (var tri in Triangles)
+			batch.Triangle(tri, color);
 	}
 
 	public void RenderLine(Batcher batch, float lineWeight, Color color)
@@ -357,6 +317,64 @@ public class Polygon : IList<Vector2>, IList
 			else
 				writer.WriteNullValue();
 		}
+	}
+
+	#endregion
+
+	#region Triangles
+
+	private void Triangulate()
+	{
+		if (!trianglesDirty)
+			return;
+		trianglesDirty = false;
+		triangles.Clear();
+		Calc.Triangulate(vertices, triangles);
+	}
+
+	/// <summary>
+	/// Get the triangles
+	/// </summary>
+	public void GetTriangles(out IReadOnlyList<Vector2> verts, out IReadOnlyList<int> indices)
+	{
+		Triangulate();
+		verts = vertices;
+		indices = triangles;
+	}
+
+	/// <summary>
+	/// Enumerate all triangles formed by this polygon. If the polygon's edges cross themselves these may be incorrect. The polygon must triangulate to find these triangles, which is expensive, but it will cache triangles so long as no vertices are changed.
+	/// </summary>
+	public TriangleEnumerable Triangles
+	{
+		get
+		{
+			Triangulate();
+			return new(this);
+		}
+	}
+
+	public readonly struct TriangleEnumerable(Polygon polygon) : IEnumerable<Triangle>
+	{
+		public TriangleEnumerator GetEnumerator() => new(polygon);
+		IEnumerator<Triangle> IEnumerable<Triangle>.GetEnumerator() => GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+	}
+
+	public struct TriangleEnumerator(Polygon polygon) : IEnumerator<Triangle>
+	{
+		private int index = -1;
+
+		public bool MoveNext() => ++index < polygon.triangles.Count - 2;
+		public void Reset() => index = -1;
+		public void Dispose() { }
+		object? IEnumerator.Current => Current;
+
+		public Triangle Current => new(
+			polygon.vertices[polygon.triangles[index]],
+			polygon.vertices[polygon.triangles[index + 1]],
+			polygon.vertices[polygon.triangles[index + 2]]
+		);
 	}
 
 	#endregion
