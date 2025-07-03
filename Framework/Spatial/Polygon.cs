@@ -168,50 +168,6 @@ public class Polygon : IList<Vector2>, IList
 		return false;
 	}
 
-	/// <summary>
-	/// Find the edge closest to the given point
-	/// </summary>
-	/// <returns>The index of the first vertex of the edge, the second being the next vertex in the list - or the first vertex if this is the last</returns>
-	public int GetClosestEdge(in Vector2 to)
-	{
-		if (Count <= 2)
-			return 0;
-		else
-		{
-			int closestIndex = 0;
-			float closestDistSq = new Line(vertices[0], vertices[1]).DistanceSquared(to);
-
-			for (int i = 1; i < Count; i++)
-			{
-				float distSq = new Line(vertices[i], vertices[(i + 1) % Count]).DistanceSquared(to);
-				if (distSq < closestDistSq)
-				{
-					closestDistSq = distSq;
-					closestIndex = i;
-				}
-			}
-
-			return closestIndex;
-		}
-	}
-
-	/// <summary>
-	/// Enumerate all edges of the polygon
-	/// </summary>
-	public IEnumerable<Line> Edges
-	{
-		get
-		{
-			if (vertices.Count > 1)
-			{
-				for (int i = 1; i < vertices.Count; i++)
-					yield return new(vertices[i - 1], vertices[i]);
-				if (vertices.Count > 2)
-					yield return new(vertices[^1], vertices[0]);
-			}
-		}
-	}
-
 	private void CalculateBounds()
 	{
 		if (!boundsDirty)
@@ -317,6 +273,61 @@ public class Polygon : IList<Vector2>, IList
 			else
 				writer.WriteNullValue();
 		}
+	}
+
+	#endregion
+
+	#region Edges
+
+	/// <summary>
+	/// Find the edge closest to the given point
+	/// </summary>
+	/// <returns>The index of the first vertex of the edge, the second being the next vertex in the list (or the first vertex in the list if this index is the last)</returns>
+	public int GetClosestEdge(in Vector2 to)
+	{
+		if (Count <= 2)
+			return 0;
+		else
+		{
+			int closestIndex = 0;
+			float closestDistSq = new Line(vertices[0], vertices[1]).DistanceSquared(to);
+
+			for (int i = 1; i < Count; i++)
+			{
+				float distSq = new Line(vertices[i], vertices[(i + 1) % Count]).DistanceSquared(to);
+				if (distSq < closestDistSq)
+				{
+					closestDistSq = distSq;
+					closestIndex = i;
+				}
+			}
+
+			return closestIndex;
+		}
+	}
+
+	/// <summary>
+	/// Enumerate all edges of the polygon
+	/// </summary>
+	public LineEnumerable Edges => new(this);
+
+	public readonly struct LineEnumerable(Polygon polygon) : IEnumerable<Line>
+	{
+		public LineEnumerator GetEnumerator() => new(polygon);
+		IEnumerator<Line> IEnumerable<Line>.GetEnumerator() => GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+	}
+
+	public struct LineEnumerator(Polygon polygon) : IEnumerator<Line>
+	{
+		private int index;
+
+		public bool MoveNext() => ++index < polygon.Count + 1;
+		public void Reset() => index = 0;
+		public void Dispose() { }
+		object? IEnumerator.Current => Current;
+
+		public Line Current => new(polygon[index - 1], polygon[index % polygon.Count]);
 	}
 
 	#endregion
