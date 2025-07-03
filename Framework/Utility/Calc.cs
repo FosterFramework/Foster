@@ -161,6 +161,48 @@ public static class Calc
 		=> Max(Max(Max(a, b), c), d);
 
 	/// <summary>
+	/// Get the index of the element in the list that is smallest. If multiple entries are equal, the one that appears first is chosen. Returns -1 if the list is empty.
+	/// </summary>
+	public static int Smallest<T>(params ReadOnlySpan<T> list) where T : IComparable<T>
+	{
+		if (list.Length == 0)
+			return -1;
+
+		int index = 0;
+		T val = list[0];
+
+		for (int i = 1; i < list.Length; i++)
+			if (list[i].CompareTo(val) < 0)
+			{
+				index = i;
+				val = list[i];
+			}
+
+		return index;
+	}
+
+	/// <summary>
+	/// Get the index of the element in the list that is largest. If multiple entries are equal, the one that appears first is chosen. Returns -1 if the list is empty.
+	/// </summary>
+	public static int Largest<T>(params ReadOnlySpan<T> list) where T : IComparable<T>
+	{
+		if (list.Length == 0)
+			return -1;
+
+		int index = 0;
+		T val = list[0];
+
+		for (int i = 1; i < list.Length; i++)
+			if (list[i].CompareTo(val) < 0)
+			{
+				index = i;
+				val = list[i];
+			}
+
+		return index;
+	}
+
+	/// <summary>
 	/// Move toward a target value without passing it
 	/// </summary>
 	public static float Approach(float from, float target, float amount)
