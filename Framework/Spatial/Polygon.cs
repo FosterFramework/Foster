@@ -363,10 +363,10 @@ public class Polygon : IList<Vector2>, IList
 
 	public struct TriangleEnumerator(Polygon polygon) : IEnumerator<Triangle>
 	{
-		private int index = -1;
+		private int index = -3;
 
-		public bool MoveNext() => ++index < polygon.triangles.Count - 2;
-		public void Reset() => index = -1;
+		public bool MoveNext() => (index += 3) < polygon.triangles.Count - 2;
+		public void Reset() => index = -3;
 		public void Dispose() { }
 		object? IEnumerator.Current => Current;
 
