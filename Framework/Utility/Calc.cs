@@ -139,8 +139,26 @@ public static class Calc
 			+ Orient(triB, triC, point)
 			+ Orient(triC, triA, point)) == 3;
 
+	/// <summary>
+	/// Shorthand for the absolute value of the dot product of two <seealso cref="Vector2"/>s
+	/// </summary>
 	public static float AbsDot(Vector2 a, Vector2 b)
 		=> MathF.Abs(Vector2.Dot(a, b));
+
+	/// <summary>
+	/// Shorthand for the square of the dot product of two <seealso cref="Vector2"/>s, but preserving the sign of the dot product. When you square a dot product, it normalizes it so that, for example, 0.5 = a 45 degree angle difference
+	/// </summary>
+	public static float DotSq(Vector2 a, Vector2 b)
+	{
+		float dot = Vector2.Dot(a, b);
+		return MathF.Sign(dot) * dot * dot;
+	}
+
+	/// <summary>
+	/// Shorthand for the square of the dot product of two <seealso cref="Vector2"/>s. The sign of the dot product is not preserved, so this will always be positive.
+	/// </summary>
+	public static float AbsDotSq(Vector2 a, Vector2 b)
+		=> Squared(Vector2.Dot(a, b));
 
 	public static T Min<T>(T a, T b) where T : IComparable<T>
 		=> a.CompareTo(b) < 0 ? a : b;
