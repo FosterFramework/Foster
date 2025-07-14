@@ -179,6 +179,18 @@ public static class Calc
 		=> Max(Max(Max(a, b), c), d);
 
 	/// <summary>
+	/// Returns a vector whose X and Y are the minimums of the three Xs and Ys of the given vectors
+	/// </summary>
+	public static Vector2 Min(Vector2 a, Vector2 b, Vector2 c)
+		=> Vector2.Min(Vector2.Min(a, b), c);
+
+	/// <summary>
+	/// Returns a vector whose X and Y are the maximums of the three Xs and Ys of the given vectors
+	/// </summary>
+	public static Vector2 Max(Vector2 a, Vector2 b, Vector2 c)
+		=> Vector2.Max(Vector2.Max(a, b), c);
+
+	/// <summary>
 	/// Get the index of the element in the list that is smallest. If multiple entries are equal, the one that appears first is chosen. Returns -1 if the list is empty.
 	/// </summary>
 	public static int Smallest<T>(params ReadOnlySpan<T> list) where T : IComparable<T>

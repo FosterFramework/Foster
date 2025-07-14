@@ -46,6 +46,9 @@ public struct Triangle(Vector2 a, Vector2 b, Vector2 c) : IConvexShape
 	public float Area
 		=> MathF.Abs(A.X * (B.Y - C.Y) + B.X * (C.Y - A.Y) + C.X * (A.Y - B.Y)) / 2;
 
+	public Rect Bounds
+		=> Rect.Between(Calc.Min(A, B, C), Calc.Max(A, B, C));
+
 	public static implicit operator Triangle((Vector2 a, Vector2 b, Vector2 c) tuple)
 		=> new(tuple.a, tuple.b, tuple.c);
 
