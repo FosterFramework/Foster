@@ -189,6 +189,20 @@ public class Polygon : IList<Vector2>, IList
 		bounds = Rect.Between(min, max);
 	}
 
+	/// <summary>
+	/// Calculate the area of the Polygon. The Polygon will be triangulated to calculate this.
+	/// </summary>
+	public float Area
+	{
+		get
+		{
+			float area = 0;
+			foreach (var tri in Triangles)
+				area += tri.Area;
+			return area;
+		}
+	}
+
 	public void Render(Batcher batch, Color color)
 	{
 		Triangulate();
