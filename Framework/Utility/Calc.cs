@@ -96,8 +96,21 @@ public static class Calc
 	public static bool HasAnyFlags(this ulong flags, ulong check)
 		=> (flags & check) != 0;
 
-	public static float Avg(float a, float b)
-		=> a + (b - a) * .5f;
+	public static float Avg(params ReadOnlySpan<float> vals)
+	{
+		float sum = 0;
+		foreach (var t in vals)
+			sum += t;
+		return sum / vals.Length;
+	}
+
+	public static Vector2 Avg(params ReadOnlySpan<Vector2> vals)
+	{
+		Vector2 sum = default;
+		foreach (var t in vals)
+			sum += t;
+		return sum / vals.Length;
+	}
 
 	public static bool SignsMatch(float a, float b)
 		=> Math.Sign(a) == Math.Sign(b);
