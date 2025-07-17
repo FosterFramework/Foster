@@ -107,32 +107,24 @@ public static class VectorExt
 	public static float Angle(this Vector2 vector) => MathF.Atan2(vector.Y, vector.X);
 
 	/// <summary>
-	/// Normalizes a Vector2 safely (a zero-length Vector2 returns 0)
+	/// Normalizes a Vector2 safely (a zero-length Vector2 returns the <paramref name="fallbackValue"/>)
 	/// </summary>
-	public static Vector2 Normalized(this Vector2 vector)
-	{
-		if (vector.X == 0 && vector.Y == 0)
-			return Vector2.Zero;
-		return Vector2.Normalize(vector);
-	}
+	public static Vector2 Normalized(this Vector2 vector, Vector2 fallbackValue = default)
+		=> vector == Vector2.Zero ? fallbackValue : Vector2.Normalize(vector);
 
 	/// <summary>
-	/// Normalizes a Vector3 safely (a zero-length Vector3 returns 0)
+	/// Normalizes a Vector3 safely (a zero-length Vector2 returns the <paramref name="fallbackValue"/>)
 	/// </summary>
-	public static Vector3 Normalized(this Vector3 vector)
-	{
-		if (vector.X == 0 && vector.Y == 0 && vector.Z == 0)
-			return Vector3.Zero;
-		return Vector3.Normalize(vector);
-	}
+	public static Vector3 Normalized(this Vector3 vector, Vector3 fallbackValue = default)
+		=> vector == Vector3.Zero ? fallbackValue : Vector3.Normalize(vector);
 
 	/// <summary>
-	/// Normalizes a Vector2 and snaps it to the closest of the 4 cardinal directions (a zero-length Vector2 returns 0)
+	/// Normalizes a Vector2 and snaps it to the closest of the 4 cardinal directions (a zero-length Vector2 returns the <paramref name="fallbackValue"/>)
 	/// </summary>
-	public static Vector2 FourWayNormal(this Vector2 vector)
+	public static Vector2 FourWayNormal(this Vector2 vector, Vector2 fallbackValue = default)
 	{
 		if (vector == Vector2.Zero)
-			return vector;
+			return fallbackValue;
 
 		vector = Calc.AngleToVector(Calc.Snap(vector.Angle(), Calc.HalfPI));
 		if (MathF.Abs(vector.X) < .1f)
@@ -150,12 +142,12 @@ public static class VectorExt
 	}
 
 	/// <summary>
-	/// Normalizes a Vector2 and snaps it to the closest of the 8 cardinal or diagonal directions (a zero-length Vector2 returns 0)
+	/// Normalizes a Vector2 and snaps it to the closest of the 8 cardinal or diagonal directions (a zero-length Vector2 returns the <paramref name="fallbackValue"/>)
 	/// </summary>
-	public static Vector2 EightWayNormal(this Vector2 vector)
+	public static Vector2 EightWayNormal(this Vector2 vector, Vector2 fallbackValue = default)
 	{
 		if (vector == Vector2.Zero)
-			return vector;
+			return fallbackValue;
 
 		vector = Calc.AngleToVector(Calc.Snap(vector.Angle(), Calc.PI / 4));
 		if (MathF.Abs(vector.X) < .1f)
