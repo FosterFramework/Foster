@@ -73,7 +73,11 @@ if (NOT DEFINED FOSTER_SDL3_LIBS)
 		GIT_PROGRESS TRUE
 	)
 	FetchContent_MakeAvailable(SDL3)
-	set(FOSTER_SDL3_LIBS SDL3-shared)
+	if (FOSTER_TARGET STREQUAL "browser-wasm")
+		set(FOSTER_SDL3_LIBS SDL3-static)
+	else()
+		set(FOSTER_SDL3_LIBS SDL3-shared)
+	endif()
 	set(FOSTER_SDL3_INCLUDE ${SDL3_SOURCE_DIRS}/include)
 endif()
 
