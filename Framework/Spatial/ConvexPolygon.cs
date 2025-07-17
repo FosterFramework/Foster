@@ -16,6 +16,16 @@ public unsafe struct ConvexPolygon : IConvexShape, IEnumerable<Vector2>
 	public readonly int Points => Vertices.Count;
 	public readonly int Axes => Vertices.Count;
 
+	public ConvexPolygon()
+	{
+
+	}
+
+	public ConvexPolygon(params ReadOnlySpan<Vector2> vertices)
+	{
+		Vertices = [..vertices];
+	}
+
 	public readonly Rect Bounds
 	{
 		get
