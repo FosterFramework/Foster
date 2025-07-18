@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(FosterPlatform C)
 
-# Set flag for building a universal binary on macOS 
+# Set flag for building a universal binary on macOS
 if(APPLE)
 	set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64")
 endif()
@@ -58,8 +58,13 @@ if (NOT DEFINED FOSTER_SDL3_LIBS)
 	include(FetchContent)
 	set(FETCHCONTENT_QUIET FALSE)
 	set(SDL_TEST_LIBRARY OFF)
-	set(SDL_SHARED ON)
-	set(SDL_STATIC OFF)
+	if (FOSTER_TARGET STREQUAL "browser-wasm")
+		set(SDL_SHARED OFF)
+		set(SDL_STATIC ON)
+	else()
+		set(SDL_SHARED ON)
+		set(SDL_STATIC OFF)
+	endif()
 
 	FetchContent_Declare(
 		SDL3
@@ -68,7 +73,11 @@ if (NOT DEFINED FOSTER_SDL3_LIBS)
 		GIT_PROGRESS TRUE
 	)
 	FetchContent_MakeAvailable(SDL3)
-	set(FOSTER_SDL3_LIBS SDL3-shared)
+	if (FOSTER_TARGET STREQUAL "browser-wasm")
+		set(FOSTER_SDL3_LIBS SDL3-static)
+	else()
+		set(FOSTER_SDL3_LIBS SDL3-shared)
+	endif()
 	set(FOSTER_SDL3_INCLUDE ${SDL3_SOURCE_DIRS}/include)
 endif()
 
