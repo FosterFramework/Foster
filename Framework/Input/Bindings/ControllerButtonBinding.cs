@@ -15,7 +15,7 @@ public sealed class ControllerButtonBinding : Binding
 
 	public override BindingState GetState(Input input, int device) => new(
 		Pressed: input.Controllers[device].Pressed(Button),
-		Released: input.Controllers[device].Pressed(Button),
+		Released: input.Controllers[device].Released(Button),
 		Down: input.Controllers[device].Down(Button),
 		Value: input.Controllers[device].Down(Button) ? 1 : 0,
 		Timestamp: input.Controllers[device].Timestamp(Button)

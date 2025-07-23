@@ -16,7 +16,7 @@ public sealed class MouseButtonBinding : Binding
 
 	public override BindingState GetState(Input input, int device) => new(
 		Pressed: input.Mouse.Pressed(Button),
-		Released: input.Mouse.Pressed(Button),
+		Released: input.Mouse.Released(Button),
 		Down: input.Mouse.Down(Button),
 		Value: input.Mouse.Down(Button) ? 1 : 0,
 		Timestamp: input.Mouse.PressedTimestamp(Button)
