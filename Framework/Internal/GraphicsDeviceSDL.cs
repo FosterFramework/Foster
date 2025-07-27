@@ -227,6 +227,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		// get backbuffer
 		SDL_GetWindowSizeInPixels(window, out backbufferSize.X, out backbufferSize.Y);
+		backbufferSize = Point2.Max(Point2.One, backbufferSize);
 		backbuffer = new(this, backbufferSize.X, backbufferSize.Y, [ TextureFormat.Color ]);
 
 		// default to 3 frames in flight
@@ -329,21 +330,24 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				SDL_BlitGPUTexture(cmdRender, blit);
 			}
 
-			// update buffer size
-			backbufferSize = new Point2((int)scW, (int)scH);
+			// update buffer size (if non-zero)
+			if (scW > 0 && scH > 0)
+			{
+				backbufferSize = new Point2((int)scW, (int)scH);
 
-			// intentionally resizing the buffer a bit larger so we're not
-			// constantly recreating buffers as the window is dragged/scaled
-			if (backbuffer == null || backbuffer.Width < backbufferSize.X || backbuffer.Height < backbufferSize.Y)
-			{
-				backbuffer?.Dispose();
-				backbuffer = new(this, backbufferSize.X + 64, backbufferSize.Y + 64, [ TextureFormat.Color ]);
-			}
-			// resize buffer if it's too large
-			else if (backbuffer.Width > backbufferSize.X + 128 || backbuffer.Height > backbufferSize.Y + 128)
-			{
-				backbuffer?.Dispose();
-				backbuffer = new(this, backbufferSize.X, backbufferSize.Y, [ TextureFormat.Color ]);
+				// intentionally resizing the buffer a bit larger so we're not
+				// constantly recreating buffers as the window is dragged/scaled
+				if (backbuffer == null || backbuffer.Width < backbufferSize.X || backbuffer.Height < backbufferSize.Y)
+				{
+					backbuffer?.Dispose();
+					backbuffer = new(this, backbufferSize.X + 64, backbufferSize.Y + 64, [ TextureFormat.Color ]);
+				}
+				// resize buffer if it's too large
+				else if (backbuffer.Width > backbufferSize.X + 128 || backbuffer.Height > backbufferSize.Y + 128)
+				{
+					backbuffer?.Dispose();
+					backbuffer = new(this, backbufferSize.X, backbufferSize.Y, [ TextureFormat.Color ]);
+				}
 			}
 		}
 		else
@@ -1198,10 +1202,14 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		EndRenderPass();
 
+		// make sure we have something to draw to
+		var target = GetDrawTarget(drawableTarget, out renderPassTargetSize);
+		if (target == null)
+			return false;
+
 		// configure lists of textures used
 		renderPassTarget = drawableTarget;
 
-		var target = GetDrawTarget(drawableTarget, out renderPassTargetSize);
 		var colorTargets = new StackList8<nint>();
 		var depthStencilTarget = nint.Zero;
 
@@ -1451,7 +1459,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		return pipeline;
 	}
 
-	private Target GetDrawTarget(IDrawableTarget drawableTarget, out Point2 size)
+	private Target? GetDrawTarget(IDrawableTarget drawableTarget, out Point2 size)
 	{
 		// get specific target
 		if (drawableTarget.Surface is Target target)
@@ -1467,14 +1475,17 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			return backbuffer;
 		}
 
-		throw new Exception("Invalid Target");
+		size = Point2.Zero;
+		return null;
 	}
 
 	private StackList32<SDL_GPUTextureFormat> GetDrawTargetFormats(IDrawableTarget drawableTarget)
 	{
-		StackList32<SDL_GPUTextureFormat> formats = new();
-		foreach (var it in GetDrawTarget(drawableTarget, out _).Attachments)
-			formats.Add(GetTextureFormat(it.Format));
+		var formats = new StackList32<SDL_GPUTextureFormat>();
+		var target = GetDrawTarget(drawableTarget, out _);
+		if (target != null)
+			foreach (var it in target.Attachments)
+				formats.Add(GetTextureFormat(it.Format));
 		return formats;
 	}
 
