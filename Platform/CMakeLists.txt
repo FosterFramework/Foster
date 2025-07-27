@@ -64,7 +64,7 @@ if (NOT DEFINED FOSTER_SDL3_LIBS)
 	FetchContent_Declare(
 		SDL3
 		GIT_REPOSITORY https://github.com/libsdl-org/sdl
-		GIT_TAG release-3.2.14
+		GIT_TAG release-3.2.18
 		GIT_PROGRESS TRUE
 	)
 	FetchContent_MakeAvailable(SDL3)
