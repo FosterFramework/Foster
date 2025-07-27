@@ -526,10 +526,6 @@ public struct Color : IEquatable<Color>
 	/// </summary>
 	public static readonly Color DarkGreen = new(0x006400);
 	/// <summary>
-	/// DarkGrey Color with a Hex value of #A9A9A9
-	/// </summary>
-	public static readonly Color DarkGrey = new(0xA9A9A9);
-	/// <summary>
 	/// DarkKhaki Color with a Hex value of #BDB76B
 	/// </summary>
 	public static readonly Color DarkKhaki = new(0xBDB76B);
@@ -628,7 +624,7 @@ public struct Color : IEquatable<Color>
 	/// <summary>
 	/// Greenyellow Color with a Hex value of #ADFF2F
 	/// </summary>
-	public static readonly Color Greenyellow = new(0xADFF2F);
+	public static readonly Color GreenYellow = new(0xADFF2F);
 	/// <summary>
 	/// Honeydew Color with a Hex value of #F0FFF0
 	/// </summary>
