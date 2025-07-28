@@ -399,6 +399,14 @@ public sealed class Window : IDrawableTarget
 			app.RunOnMainThread(StopTextInput);
 		}
 	}
+	
+	/// <summary>
+	/// Brings focus to the Window
+	/// </summary>
+	public void Focus()
+	{
+		SDL_RaiseWindow(Handle);
+	}
 
 	internal void OnEvent(SDL_EventType ev)
 	{
@@ -448,6 +456,7 @@ public sealed class Window : IDrawableTarget
 		SDL_ShowWindow(Handle);
 		SDL_SetWindowFullscreenMode(Handle, ref Unsafe.NullRef<SDL_DisplayMode>());
 		SDL_SetWindowBordered(Handle, true);
+		SDL_RaiseWindow(Handle);
 		SDL_ShowCursor();
 	}
 
