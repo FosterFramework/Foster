@@ -710,6 +710,18 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 		=> new(center.X - size.X / 2, center.Y - size.Y / 2, size.X, size.Y);
 
 	/// <summary>
+	/// Get a rect centered around (0, 0)
+	/// </summary>
+	public static RectInt Centered(in Point2 size)
+		=> new(-size.X / 2, -size.Y / 2, size.X, size.Y);
+
+	/// <summary>
+	/// Get a rect centered around (0, 0)
+	/// </summary>
+	public static RectInt Centered(int width, int height)
+		=> new(-width / 2, -height / 2, width, height);
+
+	/// <summary>
 	/// Get the rect with positive width and height that stretches from point a to point b
 	/// </summary>
 	public static RectInt Between(in Point2 a, in Point2 b)

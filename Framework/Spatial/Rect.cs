@@ -538,6 +538,18 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 		=> new(center.X - size.X / 2, center.Y - size.Y / 2, size.X, size.Y);
 
 	/// <summary>
+	/// Get a rect centered around (0, 0)
+	/// </summary>
+	public static Rect Centered(in Vector2 size)
+		=> new(-size.X/2, -size.Y/2, size.X, size.Y);
+
+	/// <summary>
+	/// Get a rect centered around (0, 0)
+	/// </summary>
+	public static Rect Centered(float width, float height)
+		=> new(-width/2, -height/2, width, height);
+
+	/// <summary>
 	/// Get a rect justified around the origin point
 	/// </summary>
 	public static Rect Justified(in Vector2 origin, float width, float height, float justifyX, float justifyY)
