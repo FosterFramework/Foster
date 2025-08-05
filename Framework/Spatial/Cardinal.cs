@@ -71,6 +71,7 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 	public static bool operator !=(Cardinal a, Cardinal b) => a.Value != b.Value;
 	public static Point2 operator *(Cardinal a, int b) => a.Point * b;
 	public static Vector2 operator *(Cardinal a, float b) => a.Point * b;
+	public static Cardinal operator *(Cardinal a, Facing b) => b == Facing.Left ? a.Reverse : a;
 	public static Cardinal operator -(Cardinal a) => a.Reverse;
 
 	public override int GetHashCode() => Value;
