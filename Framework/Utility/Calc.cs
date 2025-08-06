@@ -334,26 +334,17 @@ public static class Calc
 	/// <summary>
 	/// Clamps a number between two values
 	/// </summary>
-	public static int Clamp(int value, int min, int max)
-	{
-		return Math.Min(Math.Max(value, min), max);
-	}
+	public static int Clamp(int value, int min, int max) => Math.Min(Math.Max(value, min), max);
 
 	/// <summary>
 	/// Clamps a number between two values
 	/// </summary>
-	public static float Clamp(float value, float min, float max)
-	{
-		return Math.Min(Math.Max(value, min), max);
-	}
+	public static float Clamp(float value, float min, float max) => Math.Min(Math.Max(value, min), max);
 
 	/// <summary>
 	/// Clamps a number between 0 and 1
 	/// </summary>
-	public static float Clamp(float value)
-	{
-		return Math.Min(Math.Max(value, 0), 1);
-	}
+	public static float Clamp(float value) => Math.Min(Math.Max(value, 0), 1);
 
 	/// <summary>
 	/// Shorthand to MathF.Round but returns an Integer
@@ -493,6 +484,16 @@ public static class Calc
 	}
 
 	/// <summary>
+	/// Check if our magnitude is smaller than Vector b's
+	/// </summary>
+	public static bool IsSmallerThan(this Vector2 a, in Vector2 b)
+		=> a.LengthSquared() < b.LengthSquared();
+
+	#endregion
+
+	#region Closest
+
+	/// <summary>
 	/// Find the closest point in the list to a given point
 	/// </summary>
 	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
@@ -537,10 +538,161 @@ public static class Calc
 	}
 
 	/// <summary>
-	/// Check if our magnitude is smaller than Vector b's
+	/// Find the closest point in the list to a given point
 	/// </summary>
-	public static bool IsSmallerThan(this Vector2 a, in Vector2 b)
-		=> a.LengthSquared() < b.LengthSquared();
+	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
+	public static int GetClosestPointIndex(this ReadOnlySpan<Vector2> points, in Vector2 to)
+	{
+		int closestIndex = -1;
+		float closestDistSq = 0;
+
+		for (int i = 0; i < points.Length; i++)
+		{
+			var distSq = Vector2.DistanceSquared(points[i], to);
+			if (closestIndex == -1 || distSq < closestDistSq)
+			{
+				closestIndex = i;
+				closestDistSq = distSq;
+			}
+		}
+
+		return closestIndex;
+	}
+
+	/// <summary>
+	/// Find the closest point in the list to a given point
+	/// </summary>
+	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
+	public static int GetClosestPointIndex(this ReadOnlySpan<Point2> points, in Vector2 to)
+	{
+		int closestIndex = -1;
+		float closestDistSq = 0;
+
+		for (int i = 0; i < points.Length; i++)
+		{
+			var distSq = Vector2.DistanceSquared(points[i], to);
+			if (closestIndex == -1 || distSq < closestDistSq)
+			{
+				closestIndex = i;
+				closestDistSq = distSq;
+			}
+		}
+
+		return closestIndex;
+	}
+
+	/// <summary>
+	/// Find the closest point in the list to a given point
+	/// </summary>
+	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
+	public static int GetClosestPointIndex(this Span<Vector2> points, in Vector2 to)
+	{
+		int closestIndex = -1;
+		float closestDistSq = 0;
+
+		for (int i = 0; i < points.Length; i++)
+		{
+			var distSq = Vector2.DistanceSquared(points[i], to);
+			if (closestIndex == -1 || distSq < closestDistSq)
+			{
+				closestIndex = i;
+				closestDistSq = distSq;
+			}
+		}
+
+		return closestIndex;
+	}
+
+	/// <summary>
+	/// Find the closest point in the list to a given point
+	/// </summary>
+	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
+	public static int GetClosestPointIndex(this Span<Point2> points, in Vector2 to)
+	{
+		int closestIndex = -1;
+		float closestDistSq = 0;
+
+		for (int i = 0; i < points.Length; i++)
+		{
+			var distSq = Vector2.DistanceSquared(points[i], to);
+			if (closestIndex == -1 || distSq < closestDistSq)
+			{
+				closestIndex = i;
+				closestDistSq = distSq;
+			}
+		}
+
+		return closestIndex;
+	}
+
+	/// <summary>
+	/// Find the closest in the list to a value
+	/// </summary>
+	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
+	public static int GetClosestValueIndex<T>(this IList<T> points, in T to)
+		where T : struct, ISubtractionOperators<T, T, T>, IComparisonOperators<T, T, bool>
+	{
+		int closestIndex = -1;
+		T closestDiff = default;
+
+		for (int i = 0; i < points.Count; i++)
+		{
+			T diff = points[i] - to;
+			if (closestIndex == -1 || diff < closestDiff)
+			{
+				closestIndex = i;
+				closestDiff = diff;
+			}
+		}
+
+		return closestIndex;
+	}
+
+	/// <summary>
+	/// Find the closest in the list to a value
+	/// </summary>
+	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
+	public static int GetClosestValueIndex<T>(this ReadOnlySpan<T> points, in T to)
+		where T : struct, ISubtractionOperators<T, T, T>, IComparisonOperators<T, T, bool>
+	{
+		int closestIndex = -1;
+		T closestDiff = default;
+
+		for (int i = 0; i < points.Length; i++)
+		{
+			T diff = points[i] - to;
+			if (closestIndex == -1 || diff < closestDiff)
+			{
+				closestIndex = i;
+				closestDiff = diff;
+			}
+		}
+
+		return closestIndex;
+	}
+
+	/// <summary>
+	/// Find the closest in the list to a value
+	/// </summary>
+	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
+	public static int GetClosestValueIndex<T>(this Span<T> points, in T to)
+		where T : struct, ISubtractionOperators<T, T, T>, IComparisonOperators<T, T, bool>
+	{
+		int closestIndex = -1;
+		T closestDiff = default;
+
+		for (int i = 0; i < points.Length; i++)
+		{
+			T diff = points[i] - to;
+			if (closestIndex == -1 || diff < closestDiff)
+			{
+				closestIndex = i;
+				closestDiff = diff;
+			}
+		}
+
+		return closestIndex;
+	}
 
 	#endregion
 
