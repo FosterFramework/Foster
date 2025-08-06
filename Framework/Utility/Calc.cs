@@ -629,15 +629,14 @@ public static class Calc
 	/// Find the closest in the list to a value
 	/// </summary>
 	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
-	public static int GetClosestValueIndex<T>(this IList<T> points, in T to)
-		where T : struct, ISubtractionOperators<T, T, T>, IComparisonOperators<T, T, bool>
+	public static int GetClosestValueIndex(this IList<float> points, float to)
 	{
 		int closestIndex = -1;
-		T closestDiff = default;
+		float closestDiff = 0;
 
 		for (int i = 0; i < points.Count; i++)
 		{
-			T diff = points[i] - to;
+			var diff = MathF.Abs(points[i] - to);
 			if (closestIndex == -1 || diff < closestDiff)
 			{
 				closestIndex = i;
@@ -652,15 +651,14 @@ public static class Calc
 	/// Find the closest in the list to a value
 	/// </summary>
 	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
-	public static int GetClosestValueIndex<T>(this ReadOnlySpan<T> points, in T to)
-		where T : struct, ISubtractionOperators<T, T, T>, IComparisonOperators<T, T, bool>
+	public static int GetClosestValueIndex(this ReadOnlySpan<float> points, float to)
 	{
 		int closestIndex = -1;
-		T closestDiff = default;
+		float closestDiff = 0;
 
 		for (int i = 0; i < points.Length; i++)
 		{
-			T diff = points[i] - to;
+			var diff = MathF.Abs(points[i] - to);
 			if (closestIndex == -1 || diff < closestDiff)
 			{
 				closestIndex = i;
@@ -675,15 +673,80 @@ public static class Calc
 	/// Find the closest in the list to a value
 	/// </summary>
 	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
-	public static int GetClosestValueIndex<T>(this Span<T> points, in T to)
-		where T : struct, ISubtractionOperators<T, T, T>, IComparisonOperators<T, T, bool>
+	public static int GetClosestValueIndex(this Span<float> points, float to)
 	{
 		int closestIndex = -1;
-		T closestDiff = default;
+		float closestDiff = 0;
 
 		for (int i = 0; i < points.Length; i++)
 		{
-			T diff = points[i] - to;
+			var diff = MathF.Abs(points[i] - to);
+			if (closestIndex == -1 || diff < closestDiff)
+			{
+				closestIndex = i;
+				closestDiff = diff;
+			}
+		}
+
+		return closestIndex;
+	}
+
+	/// <summary>
+	/// Find the closest in the list to a value
+	/// </summary>
+	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
+	public static int GetClosestValueIndex(this IList<int> points, int to)
+	{
+		int closestIndex = -1;
+		float closestDiff = 0;
+
+		for (int i = 0; i < points.Count; i++)
+		{
+			var diff = Math.Abs(points[i] - to);
+			if (closestIndex == -1 || diff < closestDiff)
+			{
+				closestIndex = i;
+				closestDiff = diff;
+			}
+		}
+
+		return closestIndex;
+	}
+
+	/// <summary>
+	/// Find the closest in the list to a value
+	/// </summary>
+	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
+	public static int GetClosestValueIndex(this ReadOnlySpan<int> points, int to)
+	{
+		int closestIndex = -1;
+		float closestDiff = 0;
+
+		for (int i = 0; i < points.Length; i++)
+		{
+			var diff = Math.Abs(points[i] - to);
+			if (closestIndex == -1 || diff < closestDiff)
+			{
+				closestIndex = i;
+				closestDiff = diff;
+			}
+		}
+
+		return closestIndex;
+	}
+
+	/// <summary>
+	/// Find the closest in the list to a value
+	/// </summary>
+	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
+	public static int GetClosestValueIndex(this Span<int> points, int to)
+	{
+		int closestIndex = -1;
+		float closestDiff = 0;
+
+		for (int i = 0; i < points.Length; i++)
+		{
+			var diff = Math.Abs(points[i] - to);
 			if (closestIndex == -1 || diff < closestDiff)
 			{
 				closestIndex = i;
