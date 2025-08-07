@@ -85,4 +85,9 @@ public struct Rng
 
 	public Point2 Shake() => new(Choose(-1, 0, 1), Choose(-1, 0, 1));
 	public float Angle() => Float(Calc.TAU);
+
+	public System.Numerics.Vector2 PointInside(in Rect rect)
+		=> rect.On(Float(1), Float(1));
+
+	public static Rng Randomized() => new((ulong)DateTime.Now.Ticks);
 }
