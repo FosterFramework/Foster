@@ -700,6 +700,12 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 	/// <summary>
 	/// Get a rect centered around a position
 	/// </summary>
+	public static RectInt Centered(int centerX, int centerY, int width, int height)
+		=> new(centerX - width / 2, centerY - height / 2, width, height);
+
+	/// <summary>
+	/// Get a rect centered around a position
+	/// </summary>
 	public static RectInt Centered(in Point2 center, int width, int height)
 		=> new(center.X - width / 2, center.Y - height / 2, width, height);
 

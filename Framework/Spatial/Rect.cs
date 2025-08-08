@@ -528,6 +528,12 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 	/// <summary>
 	/// Get a rect centered around a position
 	/// </summary>
+	public static Rect Centered(float centerX, float centerY, float width, float height)
+		=> new(centerX - width / 2, centerY - height / 2, width, height);
+
+	/// <summary>
+	/// Get a rect centered around a position
+	/// </summary>
 	public static Rect Centered(in Vector2 center, float width, float height)
 		=> new(center.X - width / 2, center.Y - height / 2, width, height);
 
