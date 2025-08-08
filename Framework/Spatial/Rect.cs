@@ -283,7 +283,7 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 	public readonly bool Overlaps(in Line line) => this.Overlaps(line, out _);
 
 	/// <summary>
-	/// Get the rectangle intersection of two rectangles
+	/// Get the largest rectangle full contained by both rectangles
 	/// </summary>
 	public readonly Rect GetIntersection(in Rect against)
 	{
@@ -520,10 +520,7 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 
 	#endregion
 
-	/// <summary>
-	/// Get the rect as a tuple of floats
-	/// </summary>
-	public readonly (float X, float Y, float Width, float Height) Deconstruct() => (X, Y, Width, Height);
+	#region Static Constructors
 
 	/// <summary>
 	/// Get a rect centered around a position
@@ -581,6 +578,13 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 
 		return rect;
 	}
+
+	#endregion
+
+	/// <summary>
+	/// Get the rect as a tuple of floats
+	/// </summary>
+	public readonly (float X, float Y, float Width, float Height) Deconstruct() => (X, Y, Width, Height);
 
 	public readonly bool Equals(Rect other) => this == other;
 	public readonly override bool Equals(object? obj) => (obj is Rect other) && (this == other);

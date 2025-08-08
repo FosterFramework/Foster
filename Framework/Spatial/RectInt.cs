@@ -276,7 +276,7 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 		=> X + Width > against.X && Y + Height > against.Y && X < against.X + against.Width && Y < against.Y + against.Height;
 
 	/// <summary>
-	/// Gets the smallest rectangle that contains both this and the other rectangle
+	/// Gets the smallest rectangle that fully contains both this and the other rectangle
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly RectInt Conflate(in RectInt other)
@@ -287,13 +287,13 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 	}
 
 	/// <summary>
-	/// Gets the smallest rectangle that contains both this and the point
+	/// Gets the smallest rectangle that fully contains both this and the point
 	/// </summary>
 	public readonly RectInt Conflate(in Point2 other)
 		=> Between(Point2.Min(TopLeft, other), Point2.Max(BottomRight, other));
 
 	/// <summary>
-	/// Get the rectangle intersection of two rectangles
+	/// Get the largest rectangle full contained by both rectangles
 	/// </summary>
 	public readonly RectInt GetIntersection(in RectInt against)
 	{
@@ -692,10 +692,7 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 
 	#endregion
 
-	/// <summary>
-	/// Get the rect as a tuple of integers
-	/// </summary>
-	public readonly (int X, int Y, int Width, int Height) Deconstruct() => (X, Y, Width, Height);
+	#region Static Constructors
 
 	/// <summary>
 	/// Get a rect centered around a position
@@ -742,18 +739,57 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 		return rect;
 	}
 
+	#endregion
+
+	#region Enumerate Points
+
 	/// <summary>
 	/// Enumerate all integer positions within this rectangle
 	/// </summary>
-	public readonly IEnumerable<Point2> AllPoints
+	public readonly PointEnumerable EnumeratePoints => new(this);
+
+	public readonly struct PointEnumerable(RectInt rect) : IEnumerable<Point2>
 	{
-		get
-		{
-			for (int x = X; x < X + Width; x++)
-				for (int y = Y; y < Y + Height; y++)
-					yield return new(x, y);
-		}
+		public PointEnumerator GetEnumerator() => new(rect);
+		IEnumerator<Point2> IEnumerable<Point2>.GetEnumerator() => new PointEnumerator(rect);
+		IEnumerator IEnumerable.GetEnumerator() => new EdgeEnumerator(rect);
 	}
+
+	public struct PointEnumerator(RectInt rect) : IEnumerator<Point2>
+	{
+		private readonly int    total = rect.Area;
+		private          int    index = -1;
+		private          Point2 current;
+
+		public bool MoveNext()
+		{
+			index++;
+			if (index < total)
+			{
+				current = new(rect.X + index % rect.Width, rect.Y + index / rect.Width);
+				return true;
+			}
+			else
+				return false;
+		}
+
+		public void Reset()
+		{
+			index = -1;
+		}
+
+		public Point2 Current => current;
+		Point2 IEnumerator<Point2>.Current => current;
+		object IEnumerator.Current => current;
+		public void Dispose() { }
+	}
+
+	#endregion
+
+	/// <summary>
+	/// Get the rect as a tuple of integers
+	/// </summary>
+	public readonly (int X, int Y, int Width, int Height) Deconstruct() => (X, Y, Width, Height);
 
 	public readonly bool Equals(RectInt other) => this == other;
 	public readonly override bool Equals(object? obj) => (obj is RectInt other) && (this == other);
