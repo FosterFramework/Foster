@@ -117,12 +117,14 @@ public struct Point2(int x, int y) : IEquatable<Point2>
 	/// </summary>
 	public readonly (int X, int Y) Deconstruct() => (X, Y);
 
+	/// <summary>
+	/// Convert the point into a tuple of integers
+	/// </summary>
+	public readonly void Deconstruct(out int x, out int y) => (x, y) = (X, Y);
+
 	public readonly override bool Equals(object? obj) => (obj is Point2 other) && (other == this);
-
 	public readonly bool Equals(Point2 other) => (X == other.X && Y == other.Y);
-
 	public readonly override int GetHashCode() => HashCode.Combine(X, Y);
-
 	public readonly override string ToString() => $"[{X}, {Y}]";
 
 	public static Point2 Min(Point2 a, Point2 b) => new(Math.Min(a.X, b.X), Math.Min(a.Y, b.Y));

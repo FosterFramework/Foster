@@ -586,6 +586,11 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 	/// </summary>
 	public readonly (float X, float Y, float Width, float Height) Deconstruct() => (X, Y, Width, Height);
 
+	/// <summary>
+	/// Get the rect as a tuple of floats
+	/// </summary>
+	public readonly void Deconstruct(out float x, out float y, out float width, out float height) => (x, y, width, height) = (X, Y, Width, Height);
+
 	public readonly bool Equals(Rect other) => this == other;
 	public readonly override bool Equals(object? obj) => (obj is Rect other) && (this == other);
 	public readonly override int GetHashCode() => HashCode.Combine(X, Y, Width, Height);

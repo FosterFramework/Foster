@@ -791,6 +791,11 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 	/// </summary>
 	public readonly (int X, int Y, int Width, int Height) Deconstruct() => (X, Y, Width, Height);
 
+	/// <summary>
+	/// Get the rect as a tuple of floats
+	/// </summary>
+	public readonly void Deconstruct(out int x, out int y, out int width, out int height) => (x, y, width, height) = (X, Y, Width, Height);
+
 	public readonly bool Equals(RectInt other) => this == other;
 	public readonly override bool Equals(object? obj) => (obj is RectInt other) && (this == other);
 	public readonly override int GetHashCode() => HashCode.Combine(X, Y, Width, Height);
