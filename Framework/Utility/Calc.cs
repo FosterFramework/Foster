@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Numerics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -84,15 +85,19 @@ public static class Calc
 
 	#region Math
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool HasAllFlags(this uint flags, uint check)
 		=> (flags & check) == check;
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool HasAnyFlags(this uint flags, uint check)
 		=> (flags & check) != 0;
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool HasAllFlags(this ulong flags, ulong check)
 		=> (flags & check) == check;
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool HasAnyFlags(this ulong flags, ulong check)
 		=> (flags & check) != 0;
 
@@ -112,15 +117,18 @@ public static class Calc
 		return sum / vals.Length;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool SignsMatch(float a, float b)
 		=> Math.Sign(a) == Math.Sign(b);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Squared(this float v)
 		=> v * v;
 
 	/// <summary>
 	/// Get the area of a triangle
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float TriangleArea(in Vector2 triA, in Vector2 triB, in Vector2 triC)
 		=> MathF.Abs((triA.X * (triB.Y - triC.Y)
 					+ triB.X * (triC.Y - triA.Y)
@@ -129,24 +137,28 @@ public static class Calc
 	/// <summary>
 	/// Get the cross product of two Vector2s, ie. (a.X * b.Y) - (a.Y * b.X)
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Cross(in Vector2 a, in Vector2 b)
 		=> (a.X * b.Y) - (a.Y * b.X);
 
 	/// <summary>
 	/// Get the integral sign of the cross product of two Vector2s
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static int SignCross(in Vector2 a, in Vector2 b)
 		=> MathF.Sign(Cross(a, b));
 
 	/// <summary>
 	/// Get whether the sequence of points takes a right- or left-hand turn (-1 or 1 respectively, or 0 for no turn)
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static int Orient(in Vector2 pA, in Vector2 pB, in Vector2 pC)
 		=> SignCross(new(pB.X - pA.X, pB.Y - pA.Y), new(pC.X - pA.X, pC.Y - pA.Y));
 
 	/// <summary>
 	/// Gets whether the triangle contains the point
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool TriangleContainsPoint(in Vector2 triA, in Vector2 triB, in Vector2 triC, in Vector2 point)
 		=> Math.Abs(Orient(triA, triB, point)
 			+ Orient(triB, triC, point)
@@ -155,6 +167,7 @@ public static class Calc
 	/// <summary>
 	/// Shorthand for the absolute value of the dot product of two <seealso cref="Vector2"/>s
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float AbsDot(Vector2 a, Vector2 b)
 		=> MathF.Abs(Vector2.Dot(a, b));
 
@@ -170,36 +183,45 @@ public static class Calc
 	/// <summary>
 	/// Shorthand for the square of the dot product of two <seealso cref="Vector2"/>s. The sign of the dot product is not preserved, so this will always be positive.
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float AbsDotSq(Vector2 a, Vector2 b)
 		=> Squared(Vector2.Dot(a, b));
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static T Min<T>(T a, T b) where T : IComparable<T>
 		=> a.CompareTo(b) < 0 ? a : b;
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static T Min<T>(T a, T b, T c) where T : IComparable<T>
 		=> Min(Min(a, b), c);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static T Min<T>(T a, T b, T c, T d) where T : IComparable<T>
 		=> Min(Min(Min(a, b), c), d);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static T Max<T>(T a, T b) where T : IComparable<T>
 		=> a.CompareTo(b) > 0 ? a : b;
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static T Max<T>(T a, T b, T c) where T : IComparable<T>
 		=> Max(Max(a, b), c);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static T Max<T>(T a, T b, T c, T d) where T : IComparable<T>
 		=> Max(Max(Max(a, b), c), d);
 
 	/// <summary>
 	/// Returns a vector whose X and Y are the minimums of the three Xs and Ys of the given vectors
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 Min(Vector2 a, Vector2 b, Vector2 c)
 		=> Vector2.Min(Vector2.Min(a, b), c);
 
 	/// <summary>
 	/// Returns a vector whose X and Y are the maximums of the three Xs and Ys of the given vectors
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 Max(Vector2 a, Vector2 b, Vector2 c)
 		=> Vector2.Max(Vector2.Max(a, b), c);
 
@@ -248,24 +270,16 @@ public static class Calc
 	/// <summary>
 	/// Move toward a target value without passing it
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Approach(float from, float target, float amount)
-	{
-		if (from > target)
-			return Math.Max(from - amount, target);
-		else
-			return Math.Min(from + amount, target);
-	}
+		=> from > target ? Math.Max(from - amount, target) : Math.Min(from + amount, target);
 
 	/// <summary>
 	/// Move toward a target value without passing it
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Approach(ref float from, float target, float amount)
-	{
-		if (from > target)
-			return from = Math.Max(from - amount, target);
-		else
-			return from = Math.Min(from + amount, target);
-	}
+		=> from > target ? from = Math.Max(from - amount, target) : from = Math.Min(from + amount, target);
 
 	/// <summary>
 	/// Move toward a target value without passing it, and only if we have the opposite sign or lower magnitude
@@ -334,31 +348,37 @@ public static class Calc
 	/// <summary>
 	/// Clamps a number between two values
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static int Clamp(int value, int min, int max) => Math.Min(Math.Max(value, min), max);
 
 	/// <summary>
 	/// Clamps a number between two values
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Clamp(float value, float min, float max) => Math.Min(Math.Max(value, min), max);
 
 	/// <summary>
 	/// Clamps a number between 0 and 1
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Clamp(float value) => Math.Min(Math.Max(value, 0), 1);
 
 	/// <summary>
 	/// Shorthand to MathF.Round but returns an Integer
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static int Round(float v) => (int)MathF.Round(v);
 
 	/// <summary>
 	/// Shorthand to MathF.Floor but returns an Integer
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static int Floor(float v) => (int)MathF.Floor(v);
 
 	/// <summary>
 	/// Shorthand to MathF.Ceiling but returns an Integer
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static int Ceil(float v) => (int)MathF.Ceiling(v);
 
 	/// <summary>
@@ -375,27 +395,33 @@ public static class Calc
 	/// <summary>
 	/// Remaps a value from min-max, to newMin-newMax
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Map(float val, float min, float max, float newMin = 0, float newMax = 1)
 		=> ((val - min) / (max - min)) * (newMax - newMin) + newMin;
 
 	/// <summary>
 	/// Remaps a value from min-max, to newMin-newMax, but clamps the value within the given range
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float ClampedMap(float val, float min, float max, float newMin = 0, float newMax = 1)
 		=> Clamp((val - min) / (max - min), 0, 1) * (newMax - newMin) + newMin;
 
 	/// <summary>
 	/// Remaps the given Sin(radians) value
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float SineMap(float radians, float newMin, float newMax)
 		=> Map(MathF.Sin(radians), -1, 1, newMin, newMax);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Angle(Vector2 vec)
 		=> MathF.Atan2(vec.Y, vec.X);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Angle(Vector2 from, Vector2 to)
 		=> MathF.Atan2(to.Y - from.Y, to.X - from.X);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 AngleToVector(float angle, float length = 1)
 		=> new (MathF.Cos(angle) * length, MathF.Sin(angle) * length);
 
@@ -407,21 +433,27 @@ public static class Calc
 		return val + Clamp(diff, -maxMove, maxMove);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float AngleLerp(float startAngle, float endAngle, float percent)
 		=> startAngle + AngleDiff(startAngle, endAngle) * percent;
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float AngleDiff(float radiansA, float radiansB)
 		=> ((radiansB - radiansA - PI) % TAU + TAU) % TAU - PI;
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float AbsAngleDiff(float radiansA, float radiansB)
 		=> MathF.Abs(AngleDiff(radiansA, radiansB));
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float AngleWrap(float radians)
 		=> (radians + TAU) % TAU;
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float AngleReflectOnX(float radians)
 		=> AngleWrap(-radians);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float AngleReflectOnY(float radians)
 		=> AngleWrap(HalfPI - (radians - HalfPI));
 
@@ -445,6 +477,7 @@ public static class Calc
 	}
 
 	// TODO: should this use float.Epsilon?
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool Approx(float a, float b)
 		=> MathF.Abs(a - b) <= 0.001f;
 
@@ -486,6 +519,7 @@ public static class Calc
 	/// <summary>
 	/// Check if our magnitude is smaller than Vector b's
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool IsSmallerThan(this Vector2 a, in Vector2 b)
 		=> a.LengthSquared() < b.LengthSquared();
 
