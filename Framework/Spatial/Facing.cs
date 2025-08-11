@@ -31,6 +31,11 @@ public readonly struct Facing(int val) : IEquatable<Facing>
 	public static implicit operator Facing(int v) => v < 0 ? Left : Right;
 
 	/// <summary>
+	/// Floats convert to Left if negative, otherwise Right
+	/// </summary>
+	public static implicit operator Facing(float f) => f < 0 ? Left : Right;
+
+	/// <summary>
 	/// -1 for Left, 1 for Right
 	/// </summary>
 	public static implicit operator int(Facing f) => f.Sign;
@@ -54,6 +59,15 @@ public readonly struct Facing(int val) : IEquatable<Facing>
 			return Left;
 		return Right;
 	}
+
+	/// <summary>
+	/// Convert the integer to a Facing value; if <paramref name="value"/> is zero, <paramref name="ifZero"/> is returned
+	/// </summary>
+	public static Facing FromInt(int value, Facing ifZero)
+		=> value == 0 ? ifZero : value;
+
+	public static Facing FromFloat(float value, Facing ifZero)
+		=> value == 0 ? ifZero : value;
 
 	public static bool operator ==(Facing a, Facing b) => a.Sign == b.Sign;
 	public static bool operator !=(Facing a, Facing b) => a.Sign != b.Sign;
