@@ -551,51 +551,9 @@ public static class Calc
 
 	#endregion
 
-	#region Closest
+	#region Closest & Furthest
 
-	/// <summary>
-	/// Find the closest point in the list to a given point
-	/// </summary>
-	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
-	public static int GetClosestPointIndex(this IList<Vector2> points, in Vector2 to)
-	{
-		int closestIndex = -1;
-		float closestDistSq = 0;
-
-		for (int i = 0; i < points.Count; i++)
-		{
-			var distSq = Vector2.DistanceSquared(points[i], to);
-			if (closestIndex == -1 || distSq < closestDistSq)
-			{
-				closestIndex = i;
-				closestDistSq = distSq;
-			}
-		}
-
-		return closestIndex;
-	}
-
-	/// <summary>
-	/// Find the closest point in the list to a given point
-	/// </summary>
-	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
-	public static int GetClosestPointIndex(this IList<Point2> points, in Vector2 to)
-	{
-		int closestIndex = -1;
-		float closestDistSq = 0;
-
-		for (int i = 0; i < points.Count; i++)
-		{
-			var distSq = Vector2.DistanceSquared(points[i], to);
-			if (closestIndex == -1 || distSq < closestDistSq)
-			{
-				closestIndex = i;
-				closestDistSq = distSq;
-			}
-		}
-
-		return closestIndex;
-	}
+	#region Vector2
 
 	/// <summary>
 	/// Find the closest point in the list to a given point
@@ -623,6 +581,80 @@ public static class Calc
 	/// Find the closest point in the list to a given point
 	/// </summary>
 	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetClosestPointIndex(this Span<Vector2> points, in Vector2 to)
+		=> GetClosestPointIndex((ReadOnlySpan<Vector2>)points, to);
+
+	/// <summary>
+	/// Find the closest point in the list to a given point
+	/// </summary>
+	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetClosestPointIndex(this Vector2[] points, in Vector2 to)
+		=> GetClosestPointIndex(points.AsSpan(), to);
+
+	/// <summary>
+	/// Find the closest point in the list to a given point
+	/// </summary>
+	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetClosestPointIndex(this List<Vector2> points, in Vector2 to)
+		=> GetClosestPointIndex(CollectionsMarshal.AsSpan(points), to);
+
+	/// <summary>
+	/// Find the furthest point in the list to a given point
+	/// </summary>
+	/// <returns>The index of the furthest point, or -1 if the list is empty</returns>
+	public static int GetFurthestPointIndex(this ReadOnlySpan<Vector2> points, in Vector2 to)
+	{
+		int closestIndex = -1;
+		float closestDistSq = 0;
+
+		for (int i = 0; i < points.Length; i++)
+		{
+			var distSq = Vector2.DistanceSquared(points[i], to);
+			if (closestIndex == -1 || distSq > closestDistSq)
+			{
+				closestIndex = i;
+				closestDistSq = distSq;
+			}
+		}
+
+		return closestIndex;
+	}
+
+	/// <summary>
+	/// Find the furthest point in the list to a given point
+	/// </summary>
+	/// <returns>The index of the furthest point, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetFurthestPointIndex(this Span<Vector2> points, in Vector2 to)
+		=> GetFurthestPointIndex((ReadOnlySpan<Vector2>)points, to);
+
+	/// <summary>
+	/// Find the furthest point in the list to a given point
+	/// </summary>
+	/// <returns>The index of the furthest point, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetFurthestPointIndex(this Vector2[] points, in Vector2 to)
+		=> GetFurthestPointIndex(points.AsSpan(), to);
+
+	/// <summary>
+	/// Find the furthest point in the list to a given point
+	/// </summary>
+	/// <returns>The index of the furthest point, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetFurthestPointIndex(this List<Vector2> points, in Vector2 to)
+		=> GetFurthestPointIndex(CollectionsMarshal.AsSpan(points), to);
+
+	#endregion
+
+	#region Point2
+
+	/// <summary>
+	/// Find the closest point in the list to a given point
+	/// </summary>
+	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
 	public static int GetClosestPointIndex(this ReadOnlySpan<Point2> points, in Vector2 to)
 	{
 		int closestIndex = -1;
@@ -645,29 +677,31 @@ public static class Calc
 	/// Find the closest point in the list to a given point
 	/// </summary>
 	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
-	public static int GetClosestPointIndex(this Span<Vector2> points, in Vector2 to)
-	{
-		int closestIndex = -1;
-		float closestDistSq = 0;
-
-		for (int i = 0; i < points.Length; i++)
-		{
-			var distSq = Vector2.DistanceSquared(points[i], to);
-			if (closestIndex == -1 || distSq < closestDistSq)
-			{
-				closestIndex = i;
-				closestDistSq = distSq;
-			}
-		}
-
-		return closestIndex;
-	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetClosestPointIndex(this Span<Point2> points, in Vector2 to)
+		=> GetClosestPointIndex((ReadOnlySpan<Point2>)points, to);
 
 	/// <summary>
 	/// Find the closest point in the list to a given point
 	/// </summary>
 	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
-	public static int GetClosestPointIndex(this Span<Point2> points, in Vector2 to)
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetClosestPointIndex(this Point2[] points, in Vector2 to)
+		=> GetClosestPointIndex(points.AsSpan(), to);
+
+	/// <summary>
+	/// Find the closest point in the list to a given point
+	/// </summary>
+	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetClosestPointIndex(this List<Point2> points, in Vector2 to)
+		=> GetClosestPointIndex(CollectionsMarshal.AsSpan(points), to);
+
+	/// <summary>
+	/// Find the furthest point in the list to a given point
+	/// </summary>
+	/// <returns>The index of the furthest point, or -1 if the list is empty</returns>
+	public static int GetFurthestPointIndex(this ReadOnlySpan<Point2> points, in Vector2 to)
 	{
 		int closestIndex = -1;
 		float closestDistSq = 0;
@@ -675,7 +709,7 @@ public static class Calc
 		for (int i = 0; i < points.Length; i++)
 		{
 			var distSq = Vector2.DistanceSquared(points[i], to);
-			if (closestIndex == -1 || distSq < closestDistSq)
+			if (closestIndex == -1 || distSq > closestDistSq)
 			{
 				closestIndex = i;
 				closestDistSq = distSq;
@@ -686,17 +720,45 @@ public static class Calc
 	}
 
 	/// <summary>
+	/// Find the furthest point in the list to a given point
+	/// </summary>
+	/// <returns>The index of the furthest point, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetFurthestPointIndex(this Span<Point2> points, in Vector2 to)
+		=> GetFurthestPointIndex((ReadOnlySpan<Point2>)points, to);
+
+	/// <summary>
+	/// Find the furthest point in the list to a given point
+	/// </summary>
+	/// <returns>The index of the furthest point, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetFurthestPointIndex(this Point2[] points, in Vector2 to)
+		=> GetFurthestPointIndex(points.AsSpan(), to);
+
+	/// <summary>
+	/// Find the furthest point in the list to a given point
+	/// </summary>
+	/// <returns>The index of the furthest point, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetFurthestPointIndex(this List<Point2> points, in Vector2 to)
+		=> GetFurthestPointIndex(CollectionsMarshal.AsSpan(points), to);
+
+	#endregion
+
+	#region float
+
+	/// <summary>
 	/// Find the closest in the list to a value
 	/// </summary>
-	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
-	public static int GetClosestValueIndex(this IList<float> points, float to)
+	/// <returns>The index of the closest value, or -1 if the list is empty</returns>
+	public static int GetClosestValueIndex(this ReadOnlySpan<float> values, float to)
 	{
 		int closestIndex = -1;
 		float closestDiff = 0;
 
-		for (int i = 0; i < points.Count; i++)
+		for (int i = 0; i < values.Length; i++)
 		{
-			var diff = MathF.Abs(points[i] - to);
+			var diff = MathF.Abs(values[i] - to);
 			if (closestIndex == -1 || diff < closestDiff)
 			{
 				closestIndex = i;
@@ -710,15 +772,89 @@ public static class Calc
 	/// <summary>
 	/// Find the closest in the list to a value
 	/// </summary>
-	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
-	public static int GetClosestValueIndex(this ReadOnlySpan<float> points, float to)
+	/// <returns>The index of the closest value, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetClosestValueIndex(this Span<float> values, float to)
+		=> GetClosestValueIndex((ReadOnlySpan<float>)values, to);
+
+	/// <summary>
+	/// Find the closest in the list to a value
+	/// </summary>
+	/// <returns>The index of the closest value, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetClosestValueIndex(this float[] values, float to)
+		=> GetClosestValueIndex((ReadOnlySpan<float>)values, to);
+
+	/// <summary>
+	/// Find the closest in the list to a value
+	/// </summary>
+	/// <returns>The index of the closest value, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetClosestValueIndex(this List<float> values, float to)
+		=> GetClosestValueIndex(CollectionsMarshal.AsSpan(values), to);
+
+	/// <summary>
+	/// Find the furthest in the list to a value
+	/// </summary>
+	/// <returns>The index of the furthest value, or -1 if the list is empty</returns>
+	public static int GetFurthestValueIndex(this ReadOnlySpan<float> values, float to)
+	{
+		int furthestIndex = -1;
+		float furthestDiff = 0;
+
+		for (int i = 0; i < values.Length; i++)
+		{
+			var diff = MathF.Abs(values[i] - to);
+			if (furthestIndex == -1 || diff > furthestDiff)
+			{
+				furthestIndex = i;
+				furthestDiff = diff;
+			}
+		}
+
+		return furthestIndex;
+	}
+
+	/// <summary>
+	/// Find the furthest in the list to a value
+	/// </summary>
+	/// <returns>The index of the furthest value, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetFurthestValueIndex(this Span<float> values, float to)
+		=> GetFurthestValueIndex((ReadOnlySpan<float>)values, to);
+
+	/// <summary>
+	/// Find the furthest in the list to a value
+	/// </summary>
+	/// <returns>The index of the furthest value, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetFurthestValueIndex(this float[] values, float to)
+		=> GetFurthestValueIndex((ReadOnlySpan<float>)values, to);
+
+	/// <summary>
+	/// Find the furthest in the list to a value
+	/// </summary>
+	/// <returns>The index of the furthest value, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetFurthestValueIndex(this List<float> values, float to)
+		=> GetFurthestValueIndex(CollectionsMarshal.AsSpan(values), to);
+
+	#endregion
+
+	#region int
+
+	/// <summary>
+	/// Find the closest in the list to a value
+	/// </summary>
+	/// <returns>The index of the closest value, or -1 if the list is empty</returns>
+	public static int GetClosestValueIndex(this ReadOnlySpan<int> values, int to)
 	{
 		int closestIndex = -1;
 		float closestDiff = 0;
 
-		for (int i = 0; i < points.Length; i++)
+		for (int i = 0; i < values.Length; i++)
 		{
-			var diff = MathF.Abs(points[i] - to);
+			var diff = Math.Abs(values[i] - to);
 			if (closestIndex == -1 || diff < closestDiff)
 			{
 				closestIndex = i;
@@ -732,90 +868,74 @@ public static class Calc
 	/// <summary>
 	/// Find the closest in the list to a value
 	/// </summary>
-	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
-	public static int GetClosestValueIndex(this Span<float> points, float to)
-	{
-		int closestIndex = -1;
-		float closestDiff = 0;
-
-		for (int i = 0; i < points.Length; i++)
-		{
-			var diff = MathF.Abs(points[i] - to);
-			if (closestIndex == -1 || diff < closestDiff)
-			{
-				closestIndex = i;
-				closestDiff = diff;
-			}
-		}
-
-		return closestIndex;
-	}
+	/// <returns>The index of the closest value, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetClosestValueIndex(this Span<int> values, int to)
+		=> GetClosestValueIndex((ReadOnlySpan<int>)values, to);
 
 	/// <summary>
 	/// Find the closest in the list to a value
 	/// </summary>
-	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
-	public static int GetClosestValueIndex(this IList<int> points, int to)
-	{
-		int closestIndex = -1;
-		float closestDiff = 0;
-
-		for (int i = 0; i < points.Count; i++)
-		{
-			var diff = Math.Abs(points[i] - to);
-			if (closestIndex == -1 || diff < closestDiff)
-			{
-				closestIndex = i;
-				closestDiff = diff;
-			}
-		}
-
-		return closestIndex;
-	}
+	/// <returns>The index of the closest value, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetClosestValueIndex(this int[] values, int to)
+		=> GetClosestValueIndex((ReadOnlySpan<int>)values, to);
 
 	/// <summary>
 	/// Find the closest in the list to a value
 	/// </summary>
-	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
-	public static int GetClosestValueIndex(this ReadOnlySpan<int> points, int to)
-	{
-		int closestIndex = -1;
-		float closestDiff = 0;
+	/// <returns>The index of the closest value, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetClosestValueIndex(this List<int> values, int to)
+		=> GetClosestValueIndex(CollectionsMarshal.AsSpan(values), to);
 
-		for (int i = 0; i < points.Length; i++)
+	/// <summary>
+	/// Find the furthest in the list to a value
+	/// </summary>
+	/// <returns>The index of the furthest value, or -1 if the list is empty</returns>
+	public static int GetFurthestValueIndex(this ReadOnlySpan<int> values, int to)
+	{
+		int furthestIndex = -1;
+		float furthestDiff = 0;
+
+		for (int i = 0; i < values.Length; i++)
 		{
-			var diff = Math.Abs(points[i] - to);
-			if (closestIndex == -1 || diff < closestDiff)
+			var diff = Math.Abs(values[i] - to);
+			if (furthestIndex == -1 || diff > furthestDiff)
 			{
-				closestIndex = i;
-				closestDiff = diff;
+				furthestIndex = i;
+				furthestDiff = diff;
 			}
 		}
 
-		return closestIndex;
+		return furthestIndex;
 	}
 
 	/// <summary>
-	/// Find the closest in the list to a value
+	/// Find the furthest in the list to a value
 	/// </summary>
-	/// <returns>The index of the closest point, or -1 if the list is empty</returns>
-	public static int GetClosestValueIndex(this Span<int> points, int to)
-	{
-		int closestIndex = -1;
-		float closestDiff = 0;
+	/// <returns>The index of the furthest value, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetFurthestValueIndex(this Span<int> values, int to)
+		=> GetFurthestValueIndex((ReadOnlySpan<int>)values, to);
 
-		for (int i = 0; i < points.Length; i++)
-		{
-			var diff = Math.Abs(points[i] - to);
-			if (closestIndex == -1 || diff < closestDiff)
-			{
-				closestIndex = i;
-				closestDiff = diff;
-			}
-		}
+	/// <summary>
+	/// Find the furthest in the list to a value
+	/// </summary>
+	/// <returns>The index of the furthest value, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetFurthestValueIndex(this int[] values, int to)
+		=> GetFurthestValueIndex((ReadOnlySpan<int>)values, to);
 
-		return closestIndex;
-	}
+	/// <summary>
+	/// Find the furthest in the list to a value
+	/// </summary>
+	/// <returns>The index of the furthest value, or -1 if the list is empty</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetFurthestValueIndex(this List<int> values, int to)
+		=> GetFurthestValueIndex(CollectionsMarshal.AsSpan(values), to);
+
+	#endregion
 
 	#endregion
 
