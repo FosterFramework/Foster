@@ -80,8 +80,9 @@ public struct Rng
 	public int Sign() => Boolean() ? 1 : -1;
 	public bool Chance(float percent) => Float() <= percent;
 
-	public T Choose<T>(params ReadOnlySpan<T> choices)
-		=> choices[Int(choices.Length)];
+	public T Choose<T>(params ReadOnlySpan<T> choices) => choices[Int(choices.Length)];
+	public T Choose<T>(params T[] choices) => choices[Int(choices.Length)];
+	public T Choose<T>(params IList<T> choices) => choices[Int(choices.Count)];
 
 	public Point2 Shake() => new(Choose(-1, 0, 1), Choose(-1, 0, 1));
 	public float Angle() => Float(Calc.TAU);
