@@ -481,6 +481,9 @@ public static class Calc
 	public static bool Approx(float a, float b)
 		=> MathF.Abs(a - b) <= 0.001f;
 
+	/// <summary>
+	/// Get all points touched when traversing from <paramref name="a"/> to <paramref name="b"/>
+	/// </summary>
 	public static IReadOnlyList<Point2> GetBresenhamsLine(Point2 a, Point2 b)
 	{
 		var list = FramePool<List<Point2>>.Get();
@@ -522,6 +525,29 @@ public static class Calc
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool IsSmallerThan(this Vector2 a, in Vector2 b)
 		=> a.LengthSquared() < b.LengthSquared();
+
+	/// <summary>
+	/// Solve a quadratic equation, if possible
+	/// </summary>
+	public static (float, float)? SolveQuadratic(float a, float b, float c)
+	{
+		float discriminant = b * b - 4f * a * c;
+		switch (discriminant)
+		{
+		case > 0:
+			return (
+				(-b + (float)Math.Sqrt(discriminant)) / (2f * a),
+				(-b - (float)Math.Sqrt(discriminant)) / (2f * a)
+			);
+		case 0:
+		{
+			float r = -b / (2f * a);
+			return (r, r);
+		}
+		default:
+			return null;
+		}
+	}
 
 	#endregion
 
