@@ -25,7 +25,7 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 
 	public Cardinal(int val)
 	{
-		Debug.Assert(val >= 0 && val < 4);
+		Debug.Assert(val is >= 0 and < 4);
 		Value = val;
 	}
 
@@ -64,8 +64,8 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 			_ => throw new Exception()
 		};
 
-	public static implicit operator Cardinal(int val) => new(val);
 	public static implicit operator Cardinal(Facing f) => f.Sign > 0 ? Right : Left;
+	public static implicit operator Cardinal(int val) => new(val);
 	public static implicit operator Point2(Cardinal c) => c.Point;
 	public static bool operator ==(Cardinal a, Cardinal b) => a.Value == b.Value;
 	public static bool operator !=(Cardinal a, Cardinal b) => a.Value != b.Value;

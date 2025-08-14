@@ -69,6 +69,8 @@ public readonly struct Facing(int val) : IEquatable<Facing>
 	public static Facing FromFloat(float value, Facing ifZero)
 		=> value == 0 ? ifZero : (Facing)value;
 
+	public static Facing operator-(Facing a) => a.Reverse;
+	public static Facing operator+(Facing a) => a;
 	public static bool operator ==(Facing a, Facing b) => a.Sign == b.Sign;
 	public static bool operator !=(Facing a, Facing b) => a.Sign != b.Sign;
 	public static int operator *(Facing a, int b) => (int)a * b;
