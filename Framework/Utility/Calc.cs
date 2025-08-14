@@ -83,7 +83,7 @@ public static class Calc
 
 	#endregion
 
-	#region Math
+	#region Flags
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool HasAllFlags(this uint flags, uint check)
@@ -100,6 +100,26 @@ public static class Calc
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool HasAnyFlags(this ulong flags, ulong check)
 		=> (flags & check) != 0;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static uint WithFlags(this uint flags, uint with)
+		=> flags | with;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ulong WithFlags(this ulong flags, ulong with)
+		=> flags | with;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static uint WithoutFlags(this uint flags, uint without)
+		=> flags & ~without;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ulong WithoutFlags(this ulong flags, ulong without)
+		=> flags & ~without;
+
+	#endregion
+
+	#region Math
 
 	public static float Avg(params ReadOnlySpan<float> vals)
 	{
