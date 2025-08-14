@@ -85,12 +85,30 @@ public static class Calc
 
 	#region Flags
 
+	#region uint
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool HasAnyFlags(this uint flags, uint check)
+		=> (flags & check) != 0;
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool HasAllFlags(this uint flags, uint check)
 		=> (flags & check) == check;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool HasAnyFlags(this uint flags, uint check)
+	public static uint WithFlags(this uint flags, uint with)
+		=> flags | with;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static uint WithoutFlags(this uint flags, uint without)
+		=> flags & ~without;
+
+	#endregion
+
+	#region ulong
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool HasAnyFlags(this ulong flags, ulong check)
 		=> (flags & check) != 0;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -98,24 +116,36 @@ public static class Calc
 		=> (flags & check) == check;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool HasAnyFlags(this ulong flags, ulong check)
-		=> (flags & check) != 0;
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static uint WithFlags(this uint flags, uint with)
-		=> flags | with;
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ulong WithFlags(this ulong flags, ulong with)
 		=> flags | with;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static uint WithoutFlags(this uint flags, uint without)
-		=> flags & ~without;
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ulong WithoutFlags(this ulong flags, ulong without)
 		=> flags & ~without;
+
+	#endregion
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static unsafe bool HasAnyFlags<T>(this T lhs, T rhs) where T : unmanaged, Enum
+		=> sizeof(T) switch
+		{
+			1 => (*(byte*)&lhs & *(byte*)&rhs) > 0,
+			2 => (*(ushort*)&lhs & *(ushort*)&rhs) > 0,
+			4 => (*(uint*)&lhs & *(uint*)&rhs) > 0,
+			8 => (*(ulong*)&lhs & *(ulong*)&rhs) > 0,
+			_ => throw new Exception("Size does not match a known Enum backing type."),
+		};
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static unsafe bool HasAllFlags<T>(this T lhs, T rhs) where T : unmanaged, Enum
+		=> sizeof(T) switch
+		{
+			1 => (*(byte*)&lhs & *(byte*)&rhs) == *(byte*)&rhs,
+			2 => (*(ushort*)&lhs & *(ushort*)&rhs) == *(ushort*)&rhs,
+			4 => (*(uint*)&lhs & *(uint*)&rhs) == *(uint*)&rhs,
+			8 => (*(ulong*)&lhs & *(ulong*)&rhs) == *(ulong*)&rhs,
+			_ => throw new Exception("Size does not match a known Enum backing type."),
+		};
 
 	#endregion
 
