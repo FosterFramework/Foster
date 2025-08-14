@@ -113,13 +113,13 @@ public class Aseprite : Aseprite.IUserDataTarget
 		public int TilesetIndex;
 		public UserDataValues UserData { get; set; } = new();
 
-		public bool Visible => Flags.HasAnyFlags(LayerFlags.Visible);
-		public bool Editable => Flags.HasAnyFlags(LayerFlags.Editable);
-		public bool LockMovement => Flags.HasAnyFlags(LayerFlags.LockMovement);
-		public bool Background => Flags.HasAnyFlags(LayerFlags.Background);
-		public bool PreferLinkedCels => Flags.HasAnyFlags(LayerFlags.PreferLinkedCels);
-		public bool DisplayCollapsed => Flags.HasAnyFlags(LayerFlags.DisplayCollapsed);
-		public bool Reference => Flags.HasAnyFlags(LayerFlags.Reference);
+		public bool Visible => Flags.HasAny(LayerFlags.Visible);
+		public bool Editable => Flags.HasAny(LayerFlags.Editable);
+		public bool LockMovement => Flags.HasAny(LayerFlags.LockMovement);
+		public bool Background => Flags.HasAny(LayerFlags.Background);
+		public bool PreferLinkedCels => Flags.HasAny(LayerFlags.PreferLinkedCels);
+		public bool DisplayCollapsed => Flags.HasAny(LayerFlags.DisplayCollapsed);
+		public bool Reference => Flags.HasAny(LayerFlags.Reference);
 	}
 
 	public class Frame : IUserDataTarget

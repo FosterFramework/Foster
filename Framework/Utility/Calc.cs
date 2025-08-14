@@ -1,4 +1,3 @@
-using System.Buffers.Text;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -83,69 +82,193 @@ public static class Calc
 
 	#endregion
 
-	#region Flags
+	#region Bitwise Flags
+
+	#region byte
+
+	/// <summary>
+	/// Bitwise check if <paramref name="flags"/> has set any of the set bits in <paramref name="check"/>
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool HasAny(this byte flags, byte check)
+		=> (flags & check) != 0;
+
+	/// <summary>
+	/// Bitwise check if <paramref name="flags"/> has set all of the set bits in <paramref name="check"/>
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool HasAll(this byte flags, byte check)
+		=> (flags & check) == check;
+
+	/// <summary>
+	/// Return <paramref name="flags"/> after setting all the set bits in <paramref name="with"/>
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static byte With(this byte flags, byte with)
+		=> (byte)(flags | with);
+
+	/// <summary>
+	/// Return <paramref name="flags"/> after clearing all the set bits in <paramref name="without"/>
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static byte Without(this byte flags, byte without)
+		=> (byte)(flags & ~without);
+
+	#endregion
+
+	#region ushort
+
+	/// <summary>
+	/// Bitwise check if <paramref name="flags"/> has set any of the set bits in <paramref name="check"/>
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool HasAny(this ushort flags, ushort check)
+		=> (flags & check) != 0;
+
+	/// <summary>
+	/// Bitwise check if <paramref name="flags"/> has set all of the set bits in <paramref name="check"/>
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool HasAllFlags(this ushort flags, ushort check)
+		=> (flags & check) == check;
+
+	/// <summary>
+	/// Return <paramref name="flags"/> after setting all the set bits in <paramref name="with"/>
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ushort With(this ushort flags, ushort with)
+		=> (ushort)(flags | with);
+
+	/// <summary>
+	/// Return <paramref name="flags"/> after clearing all the set bits in <paramref name="without"/>
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ushort Without(this ushort flags, ushort without)
+		=> (ushort)(flags & ~without);
+
+	#endregion
 
 	#region uint
 
+	/// <summary>
+	/// Bitwise check if <paramref name="flags"/> has set any of the set bits in <paramref name="check"/>
+	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool HasAnyFlags(this uint flags, uint check)
+	public static bool HasAny(this uint flags, uint check)
 		=> (flags & check) != 0;
 
+	/// <summary>
+	/// Bitwise check if <paramref name="flags"/> has set all of the set bits in <paramref name="check"/>
+	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool HasAllFlags(this uint flags, uint check)
 		=> (flags & check) == check;
 
+	/// <summary>
+	/// Return <paramref name="flags"/> after setting all the set bits in <paramref name="with"/>
+	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static uint WithFlags(this uint flags, uint with)
+	public static uint With(this uint flags, uint with)
 		=> flags | with;
 
+	/// <summary>
+	/// Return <paramref name="flags"/> after clearing all the set bits in <paramref name="without"/>
+	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static uint WithoutFlags(this uint flags, uint without)
+	public static uint Without(this uint flags, uint without)
 		=> flags & ~without;
 
 	#endregion
 
 	#region ulong
 
+	/// <summary>
+	/// Bitwise check if <paramref name="flags"/> has set any of the set bits in <paramref name="check"/>
+	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool HasAnyFlags(this ulong flags, ulong check)
+	public static bool HasAny(this ulong flags, ulong check)
 		=> (flags & check) != 0;
 
+	/// <summary>
+	/// Bitwise check if <paramref name="flags"/> has set all of the set bits in <paramref name="check"/>
+	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool HasAllFlags(this ulong flags, ulong check)
 		=> (flags & check) == check;
 
+	/// <summary>
+	/// Return <paramref name="flags"/> after setting all the set bits in <paramref name="with"/>
+	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ulong WithFlags(this ulong flags, ulong with)
+	public static ulong With(this ulong flags, ulong with)
 		=> flags | with;
 
+	/// <summary>
+	/// Return <paramref name="flags"/> after clearing all the set bits in <paramref name="without"/>
+	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ulong WithoutFlags(this ulong flags, ulong without)
+	public static ulong Without(this ulong flags, ulong without)
 		=> flags & ~without;
 
 	#endregion
 
+	#region enum
+
+	/// <summary>
+	/// Bitwise check if <paramref name="flags"/> has set any of the set bits in <paramref name="check"/>
+	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static unsafe bool HasAnyFlags<T>(this T lhs, T rhs) where T : unmanaged, Enum
+	public static unsafe bool HasAny<T>(this T flags, T check) where T : unmanaged, Enum
 		=> sizeof(T) switch
 		{
-			1 => (*(byte*)&lhs & *(byte*)&rhs) > 0,
-			2 => (*(ushort*)&lhs & *(ushort*)&rhs) > 0,
-			4 => (*(uint*)&lhs & *(uint*)&rhs) > 0,
-			8 => (*(ulong*)&lhs & *(ulong*)&rhs) > 0,
+			1 => (Unsafe.BitCast<T, byte>(flags) & Unsafe.BitCast<T, byte>(check)) > 0,
+			2 => (Unsafe.BitCast<T, ushort>(flags) & Unsafe.BitCast<T, ushort>(check)) > 0,
+			4 => (Unsafe.BitCast<T, uint>(flags) & Unsafe.BitCast<T, uint>(check)) > 0,
+			8 => (Unsafe.BitCast<T, ulong>(flags) & Unsafe.BitCast<T, ulong>(check)) > 0,
 			_ => throw new Exception("Size does not match a known Enum backing type."),
 		};
 
+	/// <summary>
+	/// Bitwise check if <paramref name="flags"/> has set all of the set bits in <paramref name="check"/>
+	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static unsafe bool HasAllFlags<T>(this T lhs, T rhs) where T : unmanaged, Enum
+	public static unsafe bool HasAllFlags<T>(this T flags, T check) where T : unmanaged, Enum
 		=> sizeof(T) switch
 		{
-			1 => (*(byte*)&lhs & *(byte*)&rhs) == *(byte*)&rhs,
-			2 => (*(ushort*)&lhs & *(ushort*)&rhs) == *(ushort*)&rhs,
-			4 => (*(uint*)&lhs & *(uint*)&rhs) == *(uint*)&rhs,
-			8 => (*(ulong*)&lhs & *(ulong*)&rhs) == *(ulong*)&rhs,
+			1 => (Unsafe.BitCast<T, byte>(flags) & Unsafe.BitCast<T, byte>(check)) == Unsafe.BitCast<T, byte>(check),
+			2 => (Unsafe.BitCast<T, ushort>(flags) & Unsafe.BitCast<T, ushort>(check)) == Unsafe.BitCast<T, ushort>(check),
+			4 => (Unsafe.BitCast<T, uint>(flags) & Unsafe.BitCast<T, uint>(check)) == Unsafe.BitCast<T, uint>(check),
+			8 => (Unsafe.BitCast<T, ulong>(flags) & Unsafe.BitCast<T, ulong>(check)) == Unsafe.BitCast<T, ulong>(check),
 			_ => throw new Exception("Size does not match a known Enum backing type."),
 		};
+
+	/// <summary>
+	/// Return <paramref name="flags"/> after setting all the set bits in <paramref name="with"/>
+	/// </summary>
+	public static unsafe T With<T>(this T flags, T with) where T : unmanaged, Enum
+		=> sizeof(T) switch
+		{
+			1 => Unsafe.BitCast<byte, T>((byte)(Unsafe.BitCast<T, byte>(flags) | Unsafe.BitCast<T, byte>(with))),
+			2 => Unsafe.BitCast<ushort, T>((ushort)(Unsafe.BitCast<T, ushort>(flags) | Unsafe.BitCast<T, ushort>(with))),
+			4 => Unsafe.BitCast<uint, T>(Unsafe.BitCast<T, uint>(flags) | Unsafe.BitCast<T, uint>(with)),
+			8 => Unsafe.BitCast<ulong, T>(Unsafe.BitCast<T, ulong>(flags) | Unsafe.BitCast<T, ulong>(with)),
+			_ => throw new Exception("Size does not match a known Enum backing type."),
+		};
+
+	/// <summary>
+	/// Return <paramref name="flags"/> after clearing all the set bits in <paramref name="without"/>
+	/// </summary>
+	public static unsafe T Without<T>(this T flags, T without) where T : unmanaged, Enum
+		=> sizeof(T) switch
+		{
+			1 => Unsafe.BitCast<byte, T>((byte)(Unsafe.BitCast<T, byte>(flags) & ~Unsafe.BitCast<T, byte>(without))),
+			2 => Unsafe.BitCast<ushort, T>((ushort)(Unsafe.BitCast<T, ushort>(flags) & ~Unsafe.BitCast<T, ushort>(without))),
+			4 => Unsafe.BitCast<uint, T>(Unsafe.BitCast<T, uint>(flags) & ~Unsafe.BitCast<T, uint>(without)),
+			8 => Unsafe.BitCast<ulong, T>(Unsafe.BitCast<T, ulong>(flags) & ~Unsafe.BitCast<T, ulong>(without)),
+			_ => throw new Exception("Size does not match a known Enum backing type."),
+		};
+
+	#endregion
 
 	#endregion
 
