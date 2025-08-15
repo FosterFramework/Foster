@@ -290,6 +290,18 @@ public static class Calc
 		return sum / vals.Length;
 	}
 
+	public static void Offset(this List<Point2> points, in Point2 offset)
+	{
+		for (int i = 0; i < points.Count; i++)
+			points[i] += offset;
+	}
+
+	public static void Offset(this Point2[] points, in Point2 offset)
+	{
+		for (int i = 0; i < points.Length; i++)
+			points[i] += offset;
+	}
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool SignsMatch(float a, float b)
 		=> Math.Sign(a) == Math.Sign(b);
