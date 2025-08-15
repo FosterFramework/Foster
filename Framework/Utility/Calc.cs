@@ -90,7 +90,7 @@ public static class Calc
 	/// Bitwise check if <paramref name="flags"/> has set any of the set bits in <paramref name="check"/>
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool HasAny(this byte flags, byte check)
+	public static bool Has(this byte flags, byte check)
 		=> (flags & check) != 0;
 
 	/// <summary>
@@ -122,7 +122,7 @@ public static class Calc
 	/// Bitwise check if <paramref name="flags"/> has set any of the set bits in <paramref name="check"/>
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool HasAny(this ushort flags, ushort check)
+	public static bool Has(this ushort flags, ushort check)
 		=> (flags & check) != 0;
 
 	/// <summary>
@@ -154,7 +154,7 @@ public static class Calc
 	/// Bitwise check if <paramref name="flags"/> has set any of the set bits in <paramref name="check"/>
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool HasAny(this uint flags, uint check)
+	public static bool Has(this uint flags, uint check)
 		=> (flags & check) != 0;
 
 	/// <summary>
@@ -186,7 +186,7 @@ public static class Calc
 	/// Bitwise check if <paramref name="flags"/> has set any of the set bits in <paramref name="check"/>
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool HasAny(this ulong flags, ulong check)
+	public static bool Has(this ulong flags, ulong check)
 		=> (flags & check) != 0;
 
 	/// <summary>
@@ -218,7 +218,7 @@ public static class Calc
 	/// Bitwise check if <paramref name="flags"/> has set any of the set bits in <paramref name="check"/>
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static unsafe bool HasAny<T>(this T flags, T check) where T : unmanaged, Enum
+	public static unsafe bool Has<T>(this T flags, T check) where T : unmanaged, Enum
 		=> sizeof(T) switch
 		{
 			1 => (Unsafe.BitCast<T, byte>(flags) & Unsafe.BitCast<T, byte>(check)) > 0,

@@ -157,7 +157,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV |
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL |
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_MSL,
-			debug_mode: flags.HasAny(AppFlags.EnableGraphicsDebugging),
+			debug_mode: Calc.Has(flags, AppFlags.EnableGraphicsDebugging),
 			name: driverName!);
 
 		if (device == IntPtr.Zero)
@@ -1108,14 +1108,14 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (mask != ClearMask.None)
 		{
 			StackList8<Color>? colors = null;
-			if (mask.HasAny(ClearMask.Color))
+			if (Calc.Has(mask, ClearMask.Color))
 				colors = [..color[..Math.Min(MaxColorAttachments, color.Length)]];
 
 			BeginRenderPass(target, new()
 			{
 				Color = colors,
-				Depth = mask.HasAny(ClearMask.Depth) ? depth : null,
-				Stencil = mask.HasAny(ClearMask.Stencil) ? stencil : null
+				Depth = Calc.Has(mask, ClearMask.Depth) ? depth : null,
+				Stencil = Calc.Has(mask, ClearMask.Stencil) ? stencil : null
 			});
 		}
 	}
@@ -1535,10 +1535,10 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		SDL_GPUColorComponentFlags GetFlags(BlendMask mask)
 		{
 			SDL_GPUColorComponentFlags flags = default;
-			if (mask.HasAny(BlendMask.Red)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_R;
-			if (mask.HasAny(BlendMask.Green)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_G;
-			if (mask.HasAny(BlendMask.Blue)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_B;
-			if (mask.HasAny(BlendMask.Alpha)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_A;
+			if (Calc.Has(mask, BlendMask.Red)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_R;
+			if (Calc.Has(mask, BlendMask.Green)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_G;
+			if (Calc.Has(mask, BlendMask.Blue)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_B;
+			if (Calc.Has(mask, BlendMask.Alpha)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_A;
 			return flags;
 		}
 
