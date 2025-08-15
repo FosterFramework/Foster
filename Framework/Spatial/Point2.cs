@@ -177,6 +177,7 @@ public struct Point2(int x, int y) : IEquatable<Point2>
 	public static Vector2 operator -(Vector2 a, Point2 b) => new(a.X - b.X, a.Y - b.Y);
 
 	public static Rect operator +(Rect a, Point2 b) => new(b.X + a.X, b.Y + a.Y, a.Width, a.Height);
+	public static Rect operator +(Point2 a, Rect b) => new(b.X + a.X, b.Y + a.Y, b.Width, b.Height);
 	public static Rect operator -(Rect a, Point2 b) => new(a.X - b.X, a.Y - b.Y, a.Width, a.Height);
 
 	public static bool operator ==(Point2 a, Point2 b) => a.X == b.X && a.Y == b.Y;
