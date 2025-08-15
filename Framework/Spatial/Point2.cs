@@ -151,6 +151,7 @@ public struct Point2(int x, int y) : IEquatable<Point2>
 	public static implicit operator Point2((int X, int Y) tuple) => new(tuple.X, tuple.Y);
 
 	public static Point2 operator -(Point2 point) => new(-point.X, -point.Y);
+	public static Point2 operator +(Point2 point) => point;
 	public static Point2 operator /(Point2 point, int scaler) => new(point.X / scaler, point.Y / scaler);
 	public static Point2 operator *(Point2 point, int scaler) => new(point.X * scaler, point.Y * scaler);
 	public static Point2 operator %(Point2 point, int scaler) => new(point.X % scaler, point.Y % scaler);
@@ -170,9 +171,12 @@ public struct Point2(int x, int y) : IEquatable<Point2>
 	public static Point2 operator +(Point2 a, Point2 b) => new(a.X + b.X, a.Y + b.Y);
 	public static Point2 operator -(Point2 a, Point2 b) => new(a.X - b.X, a.Y - b.Y);
 
-	public static Rect operator +(Point2 a, Rect b) => new(a.X + b.X, a.Y + b.Y, b.Width, b.Height);
-	public static Rect operator +(Rect a, Point2 b) => new(b.X + a.X, b.Y + a.Y, a.Width, a.Height);
+	public static Vector2 operator +(Point2 a, Vector2 b) => new(a.X + b.X, a.Y + b.Y);
+	public static Vector2 operator -(Point2 a, Vector2 b) => new(a.X - b.X, a.Y - b.Y);
+	public static Vector2 operator +(Vector2 a, Point2 b) => new(a.X + b.X, a.Y + b.Y);
+	public static Vector2 operator -(Vector2 a, Point2 b) => new(a.X - b.X, a.Y - b.Y);
 
+	public static Rect operator +(Rect a, Point2 b) => new(b.X + a.X, b.Y + a.Y, a.Width, a.Height);
 	public static Rect operator -(Rect a, Point2 b) => new(a.X - b.X, a.Y - b.Y, a.Width, a.Height);
 
 	public static bool operator ==(Point2 a, Point2 b) => a.X == b.X && a.Y == b.Y;
