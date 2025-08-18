@@ -114,44 +114,44 @@ public readonly struct Signs(bool positive) : IEquatable<Signs>
 	public static Vector2 operator*(Signs facing, Vector2 vec) => vec * facing.AsInt;
 
 	/// <summary>
-	/// Check if the facing equals the sign of the number. If the number is zero, true is always returned
+	/// Check if the facing equals the sign of the number. If the number is zero, false is always returned
 	/// </summary>
-	public static bool operator ==(Signs a, int b) => b == 0 || a.AsInt == Math.Sign(b);
+	public static bool operator ==(Signs a, int b) => a.AsInt == Math.Sign(b);
 
 	/// <summary>
-	/// Check if the facing does not equal the sign of the number. If the number is zero, false is always returned
+	/// Check if the facing does not equal the sign of the number. If the number is zero, true is always returned
 	/// </summary>
-	public static bool operator !=(Signs a, int b) => b != 0 && a.AsInt != Math.Sign(b);
+	public static bool operator !=(Signs a, int b) => a.AsInt != Math.Sign(b);
 
 	/// <summary>
-	/// Check if the facing equals the sign of the number. If the number is zero, true is always returned
+	/// Check if the facing equals the sign of the number. If the number is zero, false is always returned
 	/// </summary>
-	public static bool operator ==(int a, Signs b) => a == 0 || b.AsInt == Math.Sign(a);
+	public static bool operator ==(int a, Signs b) => b.AsInt == Math.Sign(a);
 
 	/// <summary>
-	/// Check if the facing does not equal the sign of the number. If the number is zero, false is always returned
+	/// Check if the facing does not equal the sign of the number. If the number is zero, true is always returned
 	/// </summary>
-	public static bool operator !=(int a, Signs b) => a != 0 && b.AsInt != Math.Sign(a);
+	public static bool operator !=(int a, Signs b) => b.AsInt != Math.Sign(a);
 
 	/// <summary>
-	/// Check if the facing equals the sign of the number. If the number is zero, true is always returned
+	/// Check if the facing equals the sign of the number. If the number is zero, false is always returned
 	/// </summary>
-	public static bool operator ==(Signs a, float b) => b == 0 || a.AsInt == Math.Sign(b);
+	public static bool operator ==(Signs a, float b) => a.AsInt == Math.Sign(b);
 
 	/// <summary>
-	/// Check if the facing does not equal the sign of the number. If the number is zero, false is always returned
+	/// Check if the facing does not equal the sign of the number. If the number is zero, true is always returned
 	/// </summary>
-	public static bool operator !=(Signs a, float b) => b != 0 && a.AsInt != Math.Sign(b);
+	public static bool operator !=(Signs a, float b) => a.AsInt != Math.Sign(b);
 
 	/// <summary>
-	/// Check if the facing equals the sign of the number. If the number is zero, true is always returned
+	/// Check if the facing equals the sign of the number. If the number is zero, false is always returned
 	/// </summary>
-	public static bool operator ==(float a, Signs b) => a == 0 || b.AsInt == Math.Sign(a);
+	public static bool operator ==(float a, Signs b) => b.AsInt == Math.Sign(a);
 
 	/// <summary>
-	/// Check if the facing does not equal the sign of the number. If the number is zero, false is always returned
+	/// Check if the facing does not equal the sign of the number. If the number is zero, true is always returned
 	/// </summary>
-	public static bool operator !=(float a, Signs b) => a != 0 && b.AsInt != Math.Sign(a);
+	public static bool operator !=(float a, Signs b) => b.AsInt != Math.Sign(a);
 
 	public override int GetHashCode() => AsInt;
 	public override bool Equals(object? obj) => obj is Signs f && f == this;
