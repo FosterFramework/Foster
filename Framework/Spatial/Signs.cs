@@ -87,6 +87,16 @@ public readonly struct Signs(bool positive) : IEquatable<Signs>
 	/// </summary>
 	public Point2 SignY => new(1, AsInt);
 
+	/// <summary>
+	/// Get the <see cref="Signs"/> as a <see cref="Cardinal"/> on the x-axis (positive = right, negative = left)
+	/// </summary>
+	public Cardinal CardinalX => Cardinal.Right * this;
+
+	/// <summary>
+	/// Get the <see cref="Signs"/> as a <see cref="Cardinal"/> on the y-axis (positive = down, negative = up)
+	/// </summary>
+	public Cardinal CardinalY => Cardinal.Down * this;
+
 	public static implicit operator Facing(Signs sign) => new(sign.AsInt);
 	public static implicit operator Signs(Facing facing) => new(facing.Sign >= 0);
 
