@@ -7,6 +7,7 @@ namespace Foster.Framework;
 /// <summary>
 /// A binary struct, where Left is any negative value and Right is zero or any positive number
 /// </summary>
+[Obsolete($"Use {nameof(Signs)} instead")]
 [JsonConverter(typeof(JsonConverter))]
 public readonly struct Facing(int val) : IEquatable<Facing>
 {
