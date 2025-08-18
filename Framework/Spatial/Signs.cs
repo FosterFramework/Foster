@@ -76,24 +76,19 @@ public readonly struct Signs(bool positive) : IEquatable<Signs>
 		=> value == 0 ? ifZero : (Signs)value;
 
 	/// <summary>
-	/// Get the point with its X multiplied by the sign, and its Y untouched
+	/// Get the <see cref="Signs"/> as a <see cref="Point2"/> where X is the sign and Y is 1.
+	/// This is useful for multiplying by a <see cref="Point2"/> or <see cref="Vector2"/> to apply the sign to only its x-axis
 	/// </summary>
-	public Point2 SignX(Point2 point) => point with { X = point.X * AsInt };
+	public Point2 SignX => new(AsInt, 1);
 
 	/// <summary>
-	/// Get the point with its Y multiplied by the sign, and its X untouched
+	/// Get the <see cref="Signs"/> as a <see cref="Point2"/> where Y is the sign and X is 1.
+	/// This is useful for multiplying by a <see cref="Point2"/> or <see cref="Vector2"/> to apply the sign to only its y-axis
 	/// </summary>
-	public Point2 SignY(Point2 point) => point with { X = point.Y * AsInt };
+	public Point2 SignY => new(1, AsInt);
 
-	/// <summary>
-	/// Get the vector with its X multiplied by the sign, and its Y untouched
-	/// </summary>
-	public Vector2 SignX(Vector2 vec) => vec with { X = vec.X * AsInt };
-
-	/// <summary>
-	/// Get the vector with its Y multiplied by the sign, and its X untouched
-	/// </summary>
-	public Vector2 SignY(Vector2 vec) => vec with { Y = vec.Y * AsInt };
+	public static implicit operator Facing(Signs sign) => new(sign.AsInt);
+	public static implicit operator Signs(Facing facing) => new(facing.Sign >= 0);
 
 	public static Signs operator-(Signs a) => a.Negate;
 	public static Signs operator+(Signs a) => a;
