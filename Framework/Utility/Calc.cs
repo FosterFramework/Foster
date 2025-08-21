@@ -325,16 +325,24 @@ public static class Calc
 		return sum / vals.Length;
 	}
 
-	public static void Offset(this List<Point2> points, in Point2 offset)
+	/// <summary>
+	/// Offset all points in the list by the offset, then return the same list instance
+	/// </summary>
+	public static List<Point2> Offset(this List<Point2> points, in Point2 offset)
 	{
 		for (int i = 0; i < points.Count; i++)
 			points[i] += offset;
+		return points;
 	}
 
-	public static void Offset(this Point2[] points, in Point2 offset)
+	/// <summary>
+	/// Offset all points in the array by the offset, then return the same array instance
+	/// </summary>
+	public static Point2[] Offset(this Point2[] points, in Point2 offset)
 	{
 		for (int i = 0; i < points.Length; i++)
 			points[i] += offset;
+		return points;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
