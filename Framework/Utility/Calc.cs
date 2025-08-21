@@ -114,6 +114,13 @@ public static class Calc
 	public static byte Without(this byte flags, byte without)
 		=> (byte)(flags & ~without);
 
+	/// <summary>
+	/// Return <paramref name="flags"/> after setting or clearing all the set bits in <paramref name="mask"/>, depending on the value of <paramref name="condition"/> (set if true, clear if false)
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static byte Mask(this byte flags, byte mask, bool condition)
+		=> condition ? flags.With(mask) : flags.Without(mask);
+
 	#endregion
 
 	#region ushort
@@ -145,6 +152,13 @@ public static class Calc
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ushort Without(this ushort flags, ushort without)
 		=> (ushort)(flags & ~without);
+
+	/// <summary>
+	/// Return <paramref name="flags"/> after setting or clearing all the set bits in <paramref name="mask"/>, depending on the value of <paramref name="condition"/> (set if true, clear if false)
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ushort Mask(this ushort flags, ushort mask, bool condition)
+		=> condition ? flags.With(mask) : flags.Without(mask);
 
 	#endregion
 
@@ -178,6 +192,13 @@ public static class Calc
 	public static uint Without(this uint flags, uint without)
 		=> flags & ~without;
 
+	/// <summary>
+	/// Return <paramref name="flags"/> after setting or clearing all the set bits in <paramref name="mask"/>, depending on the value of <paramref name="condition"/> (set if true, clear if false)
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static uint Mask(this uint flags, uint mask, bool condition)
+		=> condition ? flags.With(mask) : flags.Without(mask);
+
 	#endregion
 
 	#region ulong
@@ -209,6 +230,13 @@ public static class Calc
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ulong Without(this ulong flags, ulong without)
 		=> flags & ~without;
+
+	/// <summary>
+	/// Return <paramref name="flags"/> after setting or clearing all the set bits in <paramref name="mask"/>, depending on the value of <paramref name="condition"/> (set if true, clear if false)
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ulong Mask(this ulong flags, ulong mask, bool condition)
+		=> condition ? flags.With(mask) : flags.Without(mask);
 
 	#endregion
 
@@ -267,6 +295,13 @@ public static class Calc
 			8 => Unsafe.BitCast<ulong, T>(Unsafe.BitCast<T, ulong>(flags) & ~Unsafe.BitCast<T, ulong>(without)),
 			_ => throw new Exception("Size does not match a known Enum backing type."),
 		};
+
+	/// <summary>
+	/// Return <paramref name="flags"/> after setting or clearing all the set bits in <paramref name="mask"/>, depending on the value of <paramref name="condition"/> (set if true, clear if false)
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Mask<T>(this T flags, T mask, bool condition) where T : unmanaged, Enum
+		=> condition ? flags.With(mask) : flags.Without(mask);
 
 	#endregion
 
