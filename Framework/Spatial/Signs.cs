@@ -76,6 +76,16 @@ public readonly struct Signs(bool positive) : IEquatable<Signs>
 		=> value == 0 ? ifZero : (Signs)value;
 
 	/// <summary>
+	/// Get the <see cref="Signs"/> as a normalized <see cref="Point2"/> where the sign is represented as the x-axis
+	/// </summary>
+	public Point2 NormalX => new(AsInt, 0);
+
+	/// <summary>
+	/// Get the <see cref="Signs"/> as a normalized <see cref="Point2"/> where the sign is represented as the y-axis
+	/// </summary>
+	public Point2 NormalY => new(0, AsInt);
+
+	/// <summary>
 	/// Get the <see cref="Signs"/> as a <see cref="Point2"/> where X is the sign and Y is 1.
 	/// This is useful for multiplying by a <see cref="Point2"/> or <see cref="Vector2"/> to apply the sign to only its x-axis
 	/// </summary>
