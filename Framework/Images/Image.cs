@@ -133,8 +133,7 @@ public class Image : IDisposable
 	private unsafe void Load(Stream stream)
 	{
 		// get all the bytes
-		var data = new byte[stream.Length - stream.Position];
-		stream.ReadExactly(data);
+		var data = Calc.ReadAllBytes(stream);
 
 		// load image from byte data
 		nint mem;

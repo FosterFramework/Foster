@@ -51,8 +51,7 @@ public class Font : IDisposable
 	private void Load(Stream stream)
 	{
 		// allocate enough room for the buffer
-		byte[] buffer = new byte[stream.Length];
-		stream.ReadExactly(buffer);
+		byte[] buffer = Calc.ReadAllBytes(stream);
 
 		// pin the buffer
 		dataHandle =  GCHandle.Alloc(buffer, GCHandleType.Pinned);

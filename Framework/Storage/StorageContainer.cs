@@ -69,9 +69,7 @@ public abstract class StorageContainer : IDisposable
 	public byte[] ReadAllBytes(string path)
 	{
 		using var stream = OpenRead(path);
-		byte[] buffer = new byte[stream.Length];
-		stream.ReadExactly(buffer);
-		return buffer;
+		return Calc.ReadAllBytes(stream);
 	}
 
 	/// <summary>

@@ -2081,6 +2081,49 @@ public static class Calc
 		return ReadEmbeddedBytes(Assembly.GetCallingAssembly(), name);
 	}
 
+	public static byte[] ReadAllBytes(Stream stream)
+	{
+		byte[] buffer;
+
+		// we can seek, so just read directly
+		// (If CanSeek is false, stream.Length/stream.Position can throw)
+		if (stream.CanSeek)
+		{
+			buffer = new byte[stream.Length - stream.Position];
+			stream.ReadExactly(buffer);
+		}
+		// we can't seek, so read in chunks until we can't
+		// (Some streams can't tell their length, ie. ZipArchive streams)
+		else
+		{
+			const int ReadChunk = 4096;
+
+			buffer = [];
+			int length = 0;
+			int capacity = 0;
+
+			while (true)
+			{
+				if (length + ReadChunk >= capacity)
+				{
+					while (length + ReadChunk >= capacity)
+						capacity = Math.Max(8, capacity * 2);
+					Array.Resize(ref buffer, capacity);
+				}
+
+				var read = stream.Read(buffer.AsSpan(length, ReadChunk));
+				length += read;
+
+				if (read < ReadChunk)
+					break;
+			}
+
+			Array.Resize(ref buffer, length);
+		}
+
+		return buffer;
+	}
+
 	#endregion
 
 }
