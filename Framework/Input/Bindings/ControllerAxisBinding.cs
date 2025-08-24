@@ -41,5 +41,6 @@ public sealed class ControllerAxisBinding : Binding
 		return Calc.ClampedMap(value, Sign * deadzone, Sign);
 	}
 
+	[JsonIgnore]
 	public override string Descriptor => $"Axis {Axis}{(Sign > 0 ? '+' : '-')}, >={Deadzone}";
 }

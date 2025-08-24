@@ -53,5 +53,6 @@ public sealed class MouseMotionBinding : Binding
 		return Calc.ClampedMap(value, Sign * Min, Sign * Max, 0, 1);
 	}
 
+	[JsonIgnore]
 	public override string Descriptor => $"Mouse Motion {Axis}{(Sign > 0 ? '+' : '-')}, {Min}-{Max}";
 }

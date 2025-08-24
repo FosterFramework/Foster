@@ -22,5 +22,6 @@ public sealed class MouseButtonBinding : Binding
 		Timestamp: input.Mouse.PressedTimestamp(Button)
 	);
 
+	[JsonIgnore]
 	public override string Descriptor => $"Mouse Button {Button}";
 }

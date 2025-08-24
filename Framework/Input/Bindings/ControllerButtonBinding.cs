@@ -21,5 +21,6 @@ public sealed class ControllerButtonBinding : Binding
 		Timestamp: input.Controllers[device].Timestamp(Button)
 	);
 
+	[JsonIgnore]
 	public override string Descriptor => $"Gamepad Button {Button}";
 }

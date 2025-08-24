@@ -23,5 +23,6 @@ public sealed class KeyboardKeyBinding : Binding
 		Timestamp: input.Keyboard.Timestamp(Key)
 	);
 
+	[JsonIgnore]
 	public override string Descriptor => $"Key {Key}";
 }
