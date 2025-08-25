@@ -5,7 +5,8 @@ namespace Foster.Framework;
 /// <summary>
 /// A virtual 2D Axis/Stick input, which detects user input mapped through a <see cref="StickBindingSet"/>.
 /// </summary>
-public sealed class VirtualStick(Input input, string name, StickBindingSet set, int controllerIndex = 0) : VirtualInput(input, name)
+public sealed class VirtualStick(Input input, string name, StickBindingSet set, int controllerIndex = 0)
+	: VirtualInput(input, name, controllerIndex)
 {
 	/// <summary>
 	/// The Binding Action
@@ -20,7 +21,8 @@ public sealed class VirtualStick(Input input, string name, StickBindingSet set, 
 	/// <summary>
 	/// The Device Index
 	/// </summary>
-	public int Device = controllerIndex;
+	[Obsolete("use ControllerIndex instead")]
+	public int Device { get => ControllerIndex; set => ControllerIndex = value; }
 
 	/// <summary>
 	/// Current Value of the Virtual Stick
@@ -40,12 +42,14 @@ public sealed class VirtualStick(Input input, string name, StickBindingSet set, 
 
 	public bool PressedDown { get; private set; }
 
+	public override int ControllerIndex { get; set; }
+
 	public VirtualStick(Input input, string name, int controllerIndex = 0)
 		: this(input, name, new(), controllerIndex) {}
 
 	internal override void Update(in Time time)
 	{
-		Value = Set.Value(Input, Device);
+		Value = Set.Value(Input, ControllerIndex);
 		IntValue = new(MathF.Sign(Value.X), MathF.Sign(Value.Y));
 		PressedLeft = PressedRight = PressedDown = PressedUp = false;
 
@@ -54,10 +58,10 @@ public sealed class VirtualStick(Input input, string name, StickBindingSet set, 
 			if (!Input.IsIncluded(it.Masks))
 				continue;
 
-			PressedLeft |= it.Left.GetState(Input, Device).Pressed;
-			PressedRight |= it.Right.GetState(Input, Device).Pressed;
-			PressedUp |= it.Up.GetState(Input, Device).Pressed;
-			PressedDown |= it.Down.GetState(Input, Device).Pressed;
+			PressedLeft |= it.Left.GetState(Input, ControllerIndex).Pressed;
+			PressedRight |= it.Right.GetState(Input, ControllerIndex).Pressed;
+			PressedUp |= it.Up.GetState(Input, ControllerIndex).Pressed;
+			PressedDown |= it.Down.GetState(Input, ControllerIndex).Pressed;
 		}
 	}
 

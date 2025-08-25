@@ -5,7 +5,7 @@ namespace Foster.Framework;
 /// <summary>
 /// A virtual Axis input, which detects user input mapped through a <see cref="AxisBindingSet"/>.
 /// </summary>
-public sealed class VirtualAxis(Input input, string name, AxisBindingSet set, int controllerIndex = 0) : VirtualInput(input, name)
+public sealed class VirtualAxis(Input input, string name, AxisBindingSet set, int controllerIndex = 0) : VirtualInput(input, name, controllerIndex)
 {
 	/// <summary>
 	/// The Binding Action
@@ -20,7 +20,8 @@ public sealed class VirtualAxis(Input input, string name, AxisBindingSet set, in
 	/// <summary>
 	/// The Device Index
 	/// </summary>
-	public int Device = controllerIndex;
+	[Obsolete("use ControllerIndex instead")]
+	public int Device { get => ControllerIndex; set => ControllerIndex = value; }
 
 	/// <summary>
 	/// Current Value of the Virtual Axis
@@ -51,15 +52,17 @@ public sealed class VirtualAxis(Input input, string name, AxisBindingSet set, in
 	/// The Sign of the press this frame (or 0 if not pressed this frame)
 	/// </summary>
 	public int PressedSign { get; private set; }
+	
+	public override int ControllerIndex { get; set; }
 
 	public VirtualAxis(Input input, string name, int controllerIndex = 0)
 		: this(input, name, new(), controllerIndex) {}
 
 	internal override void Update(in Time time)
 	{
-		Value = Set.Value(Input, Device);
+		Value = Set.Value(Input, ControllerIndex);
 		IntValue = MathF.Sign(Value);
-		PressedSign = Set.PressedSign(Input, Device);
+		PressedSign = Set.PressedSign(Input, ControllerIndex);
 	}
 
 	public void Clear()

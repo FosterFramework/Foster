@@ -5,15 +5,28 @@ namespace Foster.Framework;
 /// </summary>
 public abstract class VirtualInput : IDisposable
 {
+	/// <summary>
+	/// The Input Manager we belong to
+	/// </summary>
 	public readonly Input Input;
+
+	/// <summary>
+	/// Name of the virtual Input
+	/// </summary>
 	public readonly string Name;
+
+	/// <summary>
+	/// Which Controller Index we are subscribed to
+	/// </summary>
+	public abstract int ControllerIndex { get; set; }
 
 	public bool IsDisposed { get; private set; }
 
-	internal VirtualInput(Input input, string name)
+	internal VirtualInput(Input input, string name, int controllerIndex)
 	{
 		Input = input;
 		Name = name;
+		ControllerIndex = controllerIndex;
 		Input.AddVirtualInput(this);
 	}
 
@@ -26,7 +39,7 @@ public abstract class VirtualInput : IDisposable
 	/// Disposes of the Virtual Input.
 	/// Once disposed, no values will be updated.
 	/// </summary>
-	public void Dispose()
+	public virtual void Dispose()
 	{
 		GC.SuppressFinalize(this);
 

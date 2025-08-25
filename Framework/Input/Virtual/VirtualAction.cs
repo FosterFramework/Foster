@@ -3,7 +3,8 @@ namespace Foster.Framework;
 /// <summary>
 /// A virtual Action/Button input, which detects user input mapped through a <see cref="ActionBindingSet"/>.
 /// </summary>
-public sealed class VirtualAction(Input input, string name, ActionBindingSet set, int controllerIndex = 0, float buffer = 0) : VirtualInput(input, name)
+public sealed class VirtualAction(Input input, string name, ActionBindingSet set, int controllerIndex = 0, float buffer = 0)
+	: VirtualInput(input, name, controllerIndex)
 {
 	/// <summary>
 	/// The Binding Action
@@ -18,7 +19,8 @@ public sealed class VirtualAction(Input input, string name, ActionBindingSet set
 	/// <summary>
 	/// The Device Index
 	/// </summary>
-	public int Device = controllerIndex;
+	[Obsolete("use ControllerIndex instead")]
+	public int Device { get => ControllerIndex; set => ControllerIndex = value; }
 
 	/// <summary>
 	/// How long before invoking the first Repeated signal
@@ -80,12 +82,14 @@ public sealed class VirtualAction(Input input, string name, ActionBindingSet set
 	/// </summary>
 	public TimeSpan Timestamp { get; private set; }
 
+	public override int ControllerIndex { get; set; }
+
 	public VirtualAction(Input input, string name, int controllerIndex = 0, float buffer = 0)
 		: this(input, name, new(), controllerIndex, buffer) {}
 
 	internal override void Update(in Time time)
 	{
-		var state = Set.GetState(Input, Device);
+		var state = Set.GetState(Input, ControllerIndex);
 
 		Pressed = state.Pressed;
 		Released = state.Released;
