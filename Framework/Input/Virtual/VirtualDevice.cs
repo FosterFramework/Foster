@@ -28,8 +28,27 @@ public class VirtualDevice : VirtualInput, IDisposable
 		AutomaticLatest
 	}
 
+	/// <summary>
+	/// How the Device should select a Controller Index
+	/// </summary>
+	public IndexModes IndexMode = IndexModes.Manual;
+
+	/// <summary>
+	/// Inputs registered to this device
+	/// </summary>
+	public readonly ReadOnlyCollection<VirtualInput> Inputs;
+
 	private int controllerIndex;
 	private readonly List<VirtualInput> inputs = [];
+
+	/// <summary>
+	/// Detects if the current Controller the device is assigned to is more recently
+	/// used than the Keyboard. This can be useful to detect whether you should show
+	/// keyboard prompts or controller prompts
+	/// </summary>
+	public bool IsGamepadLatest => 
+		Input.Controllers[ControllerIndex].IsGamepad && 
+		Input.Controllers[ControllerIndex].InputTimestamp > Input.Keyboard.InputTimestamp;
 
 	public override int ControllerIndex
 	{
@@ -42,30 +61,14 @@ public class VirtualDevice : VirtualInput, IDisposable
 		}
 	}
 
-	/// <summary>
-	/// How the Device should select a Controller Index
-	/// </summary>
-	public IndexModes IndexMode = IndexModes.Manual;
-
-	/// <summary>
-	/// Inputs registered to this device
-	/// </summary>
-	public readonly ReadOnlyCollection<VirtualInput> Inputs;
-
-	/// <summary>
-	/// Detects if the current Controller the device is assigned to is more recently
-	/// used than the Keyboard. This can be useful to detect whether you should show
-	/// keyboard prompts or controller prompts
-	/// </summary>
-	public bool IsGamepadLatest => 
-		Input.Controllers[ControllerIndex].IsGamepad && 
-		Input.Controllers[ControllerIndex].InputTimestamp > Input.Keyboard.InputTimestamp;
-
 	public VirtualDevice(Input input, string name, int controllerIndex = 0)
 		: base(input, name, controllerIndex)
 	{
 		Inputs = new(inputs);
 	}
+
+	~VirtualDevice()
+		=> Dispose();
 
 	/// <summary>
 	/// Adds a Virtual Action to this Device
@@ -159,12 +162,14 @@ public class VirtualDevice : VirtualInput, IDisposable
 	}
 
 	/// <summary>
-	/// called when the Controller Index is modified
+	/// Called when the Controller Index is modified
 	/// </summary>
 	protected virtual void ControllerIndexChanged() {}
 
 	public override void Dispose()
 	{
+		foreach (var it in inputs)
+			it.Dispose();
 		inputs.Clear();
 		base.Dispose();
 	}
