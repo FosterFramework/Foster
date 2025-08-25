@@ -52,6 +52,15 @@ public class VirtualDevice : VirtualInput, IDisposable
 	/// </summary>
 	public readonly ReadOnlyCollection<VirtualInput> Inputs;
 
+	/// <summary>
+	/// Detects if the current Controller the device is assigned to is more recently
+	/// used than the Keyboard. This can be useful to detect whether you should show
+	/// keyboard prompts or controller prompts
+	/// </summary>
+	public bool IsGamepadLatest => 
+		Input.Controllers[ControllerIndex].IsGamepad && 
+		Input.Controllers[ControllerIndex].InputTimestamp > Input.Keyboard.InputTimestamp;
+
 	public VirtualDevice(Input input, string name, int controllerIndex = 0)
 		: base(input, name, controllerIndex)
 	{
