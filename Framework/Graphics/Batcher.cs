@@ -873,7 +873,7 @@ public class Batcher : IDisposable
 		var off_bc = ((c - b) / len_bc).TurnLeft() * lineWeight;
 		var off_ca = ((a - c) / len_ca).TurnLeft() * lineWeight;
 
-		var aa = Intersection(a + off_ca, a + off_ca, a + off_ab, b + off_ab);
+		var aa = Intersection(c + off_ca, a + off_ca, a + off_ab, b + off_ab);
 		var bb = Intersection(a + off_ab, b + off_ab, b + off_bc, c + off_bc);
 		var cc = Intersection(b + off_bc, c + off_bc, c + off_ca, a + off_ca);
 
