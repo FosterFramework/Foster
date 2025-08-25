@@ -2053,7 +2053,7 @@ public static class Calc
 
 	#endregion
 
-	#region Embedded Streams
+	#region Streams
 
 	/// <summary>
 	/// Returns a byte array for an embedded file.
@@ -2081,6 +2081,9 @@ public static class Calc
 		return ReadEmbeddedBytes(Assembly.GetCallingAssembly(), name);
 	}
 
+	/// <summary>
+	/// Reads all remaining bytes in a stream
+	/// </summary>
 	public static byte[] ReadAllBytes(Stream stream)
 	{
 		byte[] buffer;
@@ -2092,29 +2095,33 @@ public static class Calc
 			buffer = new byte[stream.Length - stream.Position];
 			stream.ReadExactly(buffer);
 		}
-		// we can't seek, so read in chunks until we can't
+		// we can't seek, so read in chunks until there's nothing left to read.
 		// (Some streams can't tell their length, ie. ZipArchive streams)
 		else
 		{
-			const int ReadChunk = 4096;
+			const int ChunkSize = 4096;
 
-			buffer = [];
+			buffer = new byte[ChunkSize];
+			int capacity = buffer.Length;
 			int length = 0;
-			int capacity = 0;
 
 			while (true)
 			{
-				if (length + ReadChunk >= capacity)
+				if (length + ChunkSize > capacity)
 				{
-					while (length + ReadChunk >= capacity)
+					while (length + ChunkSize > capacity)
 						capacity = Math.Max(8, capacity * 2);
 					Array.Resize(ref buffer, capacity);
 				}
 
-				var read = stream.Read(buffer.AsSpan(length, ReadChunk));
+				var read = stream.ReadAtLeast(
+					buffer.AsSpan(length),
+					ChunkSize,
+					throwOnEndOfStream: false
+				);
 				length += read;
 
-				if (read < ReadChunk)
+				if (read < ChunkSize)
 					break;
 			}
 
