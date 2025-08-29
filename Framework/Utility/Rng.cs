@@ -90,5 +90,15 @@ public struct Rng
 	public System.Numerics.Vector2 PointInside(in Rect rect)
 		=> rect.On(Float(1), Float(1));
 
+	public void Shuffle<T>(List<T> list)
+	{
+		int n = list.Count;
+		while (n > 1) {
+			n--;
+			int k = Int(n + 1);
+			(list[k], list[n]) = (list[n], list[k]);
+		}
+	}
+
 	public static Rng Randomized() => new((ulong)DateTime.Now.Ticks);
 }
