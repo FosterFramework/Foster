@@ -100,5 +100,15 @@ public struct Rng
 		}
 	}
 
+	public void Shuffle<T>(T[] array)
+	{
+		int n = array.Length;
+		while (n > 1) {
+			n--;
+			int k = Int(n + 1);
+			(array[k], array[n]) = (array[n], array[k]);
+		}
+	}
+
 	public static Rng Randomized() => new((ulong)DateTime.Now.Ticks);
 }
