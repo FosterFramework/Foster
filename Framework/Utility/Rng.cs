@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
 
@@ -90,25 +91,17 @@ public struct Rng
 	public System.Numerics.Vector2 PointInside(in Rect rect)
 		=> rect.On(Float(1), Float(1));
 
-	public void Shuffle<T>(List<T> list)
+	public void Shuffle<T>(Span<T> span)
 	{
-		int n = list.Count;
+		int n = span.Length;
 		while (n > 1) {
 			n--;
 			int k = Int(n + 1);
-			(list[k], list[n]) = (list[n], list[k]);
+			(span[k], span[n]) = (span[n], span[k]);
 		}
 	}
-
-	public void Shuffle<T>(T[] array)
-	{
-		int n = array.Length;
-		while (n > 1) {
-			n--;
-			int k = Int(n + 1);
-			(array[k], array[n]) = (array[n], array[k]);
-		}
-	}
+	public void Shuffle<T>(T[] array) => Shuffle(array.AsSpan());
+	public void Shuffle<T>(List<T> list) => Shuffle(CollectionsMarshal.AsSpan(list));
 
 	public static Rng Randomized() => new((ulong)DateTime.Now.Ticks);
 }
