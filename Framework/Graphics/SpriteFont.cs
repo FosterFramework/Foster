@@ -792,4 +792,12 @@ public static class SpriteFontBatcherExt
 	{
 		font.RenderText(batch, text, maxLineWidth, position, justify, color);
 	}
+
+	public static void Text(this Batcher batch, SpriteFont font, ReadOnlySpan<char> text, Vector2 position,
+		Vector2 justify, float scale, Color color)
+	{
+		batch.PushMatrix(position, Vector2.Zero, Vector2.One * scale, 0);
+		batch.Text(font, text, Vector2.Zero, justify, color);
+		batch.PopMatrix();
+	}
 }
