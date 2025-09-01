@@ -46,6 +46,12 @@ public class Font : IDisposable
 		Load(stream);
 	}
 
+	public Font(byte[] bytes)
+	{
+		MemoryStream stream = new(bytes, false);
+		Load(stream);
+	}
+
 	~Font() => Dispose();
 
 	private void Load(Stream stream)
