@@ -30,32 +30,25 @@ public readonly record struct Time(
 	/// This does not advance <see cref="RenderFrame"/>.
 	/// </summary>
 	/// <returns>The new Time struct</returns>
-	public Time Advance(TimeSpan delta)
-	{
-		return new Time(
-			Elapsed + delta,
-			Elapsed,
-			Frame + 1,
-			RenderFrame
-		);
-	}
+	public Time Advance(TimeSpan delta) => new(
+		Elapsed + delta,
+		Elapsed,
+		Frame + 1,
+		RenderFrame
+	);
 
 	/// <summary>
 	/// Advances the Render Frame
 	/// </summary>
 	/// <returns>The new Time struct</returns>
 	public Time AdvanceRenderFrame()
-	{
-		return this with { RenderFrame = RenderFrame + 1 };
-	}
+		=> this with { RenderFrame = RenderFrame + 1 };
 
 	/// <summary>
 	/// Returns true when the elapsed time passes a given interval based on the delta time
 	/// </summary>
 	public bool OnInterval(double interval, double offset = 0.0)
-	{
-		return OnInterval(Elapsed.TotalSeconds, Delta, interval, offset);
-	}
+		=> OnInterval(Elapsed.TotalSeconds, Delta, interval, offset);
 
 	/// <summary>
 	/// Returns true when the elapsed time passes a given interval based on the delta time
@@ -67,25 +60,19 @@ public readonly record struct Time(
 	/// Returns true when the elapsed time passes a given interval based on the delta time
 	/// </summary>
 	public static bool OnInterval(double time, double delta, double interval, double offset)
-	{
-		return Math.Floor((time - offset - delta) / interval) < Math.Floor((time - offset) / interval);
-	}
+		=> Math.Floor((time - offset - delta) / interval) < Math.Floor((time - offset) / interval);
 
 	/// <summary>
 	/// Returns true when the elapsed time is between the given interval. Ex: an interval of 0.1 will be false for 0.1 seconds, then true for 0.1 seconds, and then repeat.
 	/// </summary>
 	public bool BetweenInterval(double interval, double offset = 0.0)
-	{
-		return BetweenInterval(Elapsed.TotalSeconds, interval, offset);
-	}
+		=> BetweenInterval(Elapsed.TotalSeconds, interval, offset);
 
 	/// <summary>
 	/// Returns true when the elapsed time is between the given interval. Ex: an interval of 0.1 will be false for 0.1 seconds, then true for 0.1 seconds, and then repeat.
 	/// </summary>
 	public static bool BetweenInterval(double time, double interval, double offset)
-	{
-		return (time - offset) % (interval * 2) >= interval;
-	}
+		=> (time - offset) % (interval * 2) >= interval;
 
 	/// <summary>
 	/// Sine-wave a value between `from` and `to` with a period of `duration`.
