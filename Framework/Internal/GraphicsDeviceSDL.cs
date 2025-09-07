@@ -25,13 +25,13 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		/// <summary>
 		/// If we are multisampled, we need a resolve texture
 		/// </summary>
-		public TextureResource? Resolve;
+		public TextureResource? MultiSampleResolve;
 
 		/// <summary>
 		/// If we are multisampled, we should sample from the resolve texture,
 		/// NOT the texture that is being multisampled.
 		/// </summary>
-		public nint SamplerTexture => Resolve?.Texture ?? Texture;
+		public nint SamplerTexture => MultiSampleResolve?.Texture ?? Texture;
 	}
 
 	private class TargetResource(GraphicsDevice graphicsDevice) : Resource(graphicsDevice)
@@ -462,7 +462,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			Height = height,
 			Format = info.format,
 			SampleCount = GetSampleCount(sampleCount),
-			Resolve = resolve
+			MultiSampleResolve = resolve
 		};
 		lock (resources)
 			resources.Add(res);
@@ -483,9 +483,9 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			throw deviceWasDestroyed;
 		
 		// search up for resolve texture if we're multisampled
-		if (res.Resolve != null)
+		if (res.MultiSampleResolve != null)
 		{
-			SetTextureData(res.Resolve, data, length);
+			SetTextureData(res.MultiSampleResolve, data, length);
 			return;
 		}
 
@@ -589,9 +589,9 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			throw deviceWasDestroyed;
 
 		// search up for the resolve texture
-		if (res.Resolve != null)
+		if (res.MultiSampleResolve != null)
 		{
-			GetTextureData(res.Resolve, data, length);
+			GetTextureData(res.MultiSampleResolve, data, length);
 			return;
 		}
 
@@ -664,8 +664,8 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		{
 			var res = (TextureResource)texture;
 
-			if (res.Resolve != null)
-				DestroyTexture(res.Resolve);
+			if (res.MultiSampleResolve != null)
+				DestroyTexture(res.MultiSampleResolve);
 
 			lock (resources)
 			{
@@ -1277,7 +1277,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		{
 			var tex = (TextureResource)it.Resource;
 			var res = tex.Texture;
-			var resolve = tex.Resolve?.Texture ?? nint.Zero;
+			var resolve = tex.MultiSampleResolve?.Texture ?? nint.Zero;
 
 			// drawing to an invalid target
 			if (it.IsDisposed || !it.IsTargetAttachment || res == nint.Zero)
