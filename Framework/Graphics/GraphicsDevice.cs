@@ -44,7 +44,7 @@ public abstract class GraphicsDevice
 	internal abstract void Startup(nint window);
 	internal abstract void Shutdown();
 	internal abstract void Present();
-	internal abstract IHandle CreateTexture(string? name, int width, int height, TextureFormat format, IHandle? targetBinding);
+	internal abstract IHandle CreateTexture(string? name, int width, int height, TextureFormat format, SampleCount sampleCount, IHandle? targetBinding);
 	internal abstract void SetTextureData(IHandle texture, nint data, int length);
 	internal abstract void GetTextureData(IHandle texture, nint data, int length);
 	internal abstract IHandle CreateTarget(int width, int height);
@@ -60,6 +60,11 @@ public abstract class GraphicsDevice
 	/// Checks if a given Texture Format is supported
 	/// </summary>
 	public abstract bool IsTextureFormatSupported(TextureFormat format);
+
+	/// <summary>
+	/// Checks if a given Texture Format and Sample Count combination is supproted
+	/// </summary>
+	public abstract bool IsTextureMultiSampleSupported(TextureFormat format, SampleCount sampleCount);
 
 	/// <summary>
 	/// Performs a draw command

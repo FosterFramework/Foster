@@ -44,6 +44,11 @@ public class Texture : IGraphicResource
 	public readonly TextureFormat Format;
 
 	/// <summary>
+	/// The Texture Sample Count. This is always <see cref="SampleCount.One"/> unless created as a <see cref="Target"/> attachment.
+	/// </summary>
+	public readonly SampleCount SampleCount;
+
+	/// <summary>
 	/// If this Texture is an Attachment for a Render Target.
 	/// </summary>
 	public readonly bool IsTargetAttachment;
@@ -56,7 +61,7 @@ public class Texture : IGraphicResource
 	internal readonly GraphicsDevice.IHandle Resource;
 
 	public Texture(GraphicsDevice graphicsDevice, int width, int height, TextureFormat format = TextureFormat.Color, string? name = null)
-		: this(graphicsDevice, width, height, format, targetBinding: null, name) {}
+		: this(graphicsDevice, width, height, format, SampleCount.One, targetBinding: null, name) {}
 
 	public Texture(GraphicsDevice graphicsDevice, int width, int height, ReadOnlySpan<Color> pixels, string? name = null)
 		: this(graphicsDevice, width, height, TextureFormat.Color, name) => SetData<Color>(pixels);
@@ -67,18 +72,19 @@ public class Texture : IGraphicResource
 	public Texture(GraphicsDevice graphicsDevice, Image image, string? name = null)
 		: this(graphicsDevice, image.Width, image.Height, TextureFormat.Color, name) => SetData<Color>(image.Data);
 
-	internal Texture(GraphicsDevice graphicsDevice, int width, int height, TextureFormat format, Target? targetBinding, string? name)
+	internal Texture(GraphicsDevice graphicsDevice, int width, int height, TextureFormat format, SampleCount sampleCount, Target? targetBinding, string? name)
 	{
 		GraphicsDevice = graphicsDevice;
 
 		if (width <= 0 || height <= 0)
 			throw new Exception("Texture must have a size larger than 0");
 
-		Resource = graphicsDevice.CreateTexture(name, width, height, format, targetBinding?.Resource);
+		Resource = graphicsDevice.CreateTexture(name, width, height, format, sampleCount, targetBinding?.Resource);
 		Name = name ?? string.Empty;
 		Width = width;
 		Height = height;
 		Format = format;
+		SampleCount = sampleCount;
 		IsTargetAttachment = targetBinding != null;
 	}
 

@@ -20,6 +20,18 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		public int Width;
 		public int Height;
 		public SDL_GPUTextureFormat Format;
+		public SDL_GPUSampleCount SampleCount;
+
+		/// <summary>
+		/// If we are multisampled, we need a resolve texture
+		/// </summary>
+		public TextureResource? Resolve;
+
+		/// <summary>
+		/// If we are multisampled, we should sample from the resolve texture,
+		/// NOT the texture that is being multisampled.
+		/// </summary>
+		public nint SamplerTexture => Resolve?.Texture ?? Texture;
 	}
 
 	private class TargetResource(GraphicsDevice graphicsDevice) : Resource(graphicsDevice)
@@ -50,6 +62,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	private const uint TransferBufferSize = 16 * 1024 * 1024; // 16MB
 	private const uint MaxUploadCycleCount = 4;
 	private const int MaxColorAttachments = 8;
+	private (TextureFormat Format, SampleCount SampleCount)[] backbufferFormat;
 
 	// object pointers
 	private nint device;
@@ -135,6 +148,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		this.preferred = preferred;
 		var sdlv = SDL_GetVersion();
 		version = new(sdlv / 1000000, (sdlv / 1000) % 1000, sdlv % 1000);
+		backbufferFormat = [( TextureFormat.Color, SampleCount.One )];
 	}
 
 	internal override void CreateDevice(in AppFlags flags)
@@ -157,11 +171,21 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV |
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL |
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_MSL,
-			debug_mode: Calc.Has(flags, AppFlags.EnableGraphicsDebugging),
+			debug_mode: Calc.Has(flags, AppFlags.GraphicsDebugging),
 			name: driverName!);
 
 		if (device == IntPtr.Zero)
 			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUDevice));
+		
+		if (flags.Has(AppFlags.MultiSampledBackBuffer))
+		{
+			if (IsTextureMultiSampleSupported(TextureFormat.Color, SampleCount.Eight))
+				backbufferFormat = [( TextureFormat.Color, SampleCount.Eight )];
+			else if (IsTextureMultiSampleSupported(TextureFormat.Color, SampleCount.Four))
+				backbufferFormat = [( TextureFormat.Color, SampleCount.Four )];
+			else if (IsTextureMultiSampleSupported(TextureFormat.Color, SampleCount.Two))
+				backbufferFormat = [( TextureFormat.Color, SampleCount.Two )];
+		}
 	}
 
 	internal override void DestroyDevice()
@@ -220,7 +244,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		// default texture we fall back to rendering if passed a material with a missing texture
 		{
-			emptyDefaultTexture = CreateTexture("Fallback", 1, 1, TextureFormat.R8G8B8A8, null);
+			emptyDefaultTexture = CreateTexture("Fallback", 1, 1, TextureFormat.R8G8B8A8, SampleCount.One, null);
 			var data = stackalloc Color[1] { 0xe82979 };
 			SetTextureData(emptyDefaultTexture, new nint(data), 4);
 		}
@@ -228,7 +252,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		// get backbuffer
 		SDL_GetWindowSizeInPixels(window, out backbufferSize.X, out backbufferSize.Y);
 		backbufferSize = Point2.Max(Point2.One, backbufferSize);
-		backbuffer = new(this, backbufferSize.X, backbufferSize.Y, [ TextureFormat.Color ]);
+		backbuffer = new(this, backbufferSize.X, backbufferSize.Y, backbufferFormat);
 
 		// default to 3 frames in flight
 		SDL_SetGPUAllowedFramesInFlight(device, 3);
@@ -303,7 +327,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				{
 					source = new()
 					{
-						texture = ((TextureResource)backbuffer.Attachments[0].Resource).Texture,
+						texture = ((TextureResource)backbuffer.Attachments[0].Resource).SamplerTexture,
 						mip_level = 0,
 						layer_or_depth_plane = 0,
 						x = 0,
@@ -340,13 +364,13 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				if (backbuffer == null || backbuffer.Width < backbufferSize.X || backbuffer.Height < backbufferSize.Y)
 				{
 					backbuffer?.Dispose();
-					backbuffer = new(this, backbufferSize.X + 64, backbufferSize.Y + 64, [ TextureFormat.Color ]);
+					backbuffer = new(this, backbufferSize.X + 64, backbufferSize.Y + 64, backbufferFormat);
 				}
 				// resize buffer if it's too large
 				else if (backbuffer.Width > backbufferSize.X + 128 || backbuffer.Height > backbufferSize.Y + 128)
 				{
 					backbuffer?.Dispose();
-					backbuffer = new(this, backbufferSize.X, backbufferSize.Y, [ TextureFormat.Color ]);
+					backbuffer = new(this, backbufferSize.X, backbufferSize.Y, backbufferFormat);
 				}
 			}
 		}
@@ -371,7 +395,12 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		return SDL_GPUTextureSupportsFormat(device, GetTextureFormat(format), type, usage);
 	}
 
-	internal override IHandle CreateTexture(string? name, int width, int height, TextureFormat format, IHandle? targetBinding)
+	public override bool IsTextureMultiSampleSupported(TextureFormat format, SampleCount sampleCount)
+	{
+		return SDL_GPUTextureSupportsSampleCount(device, GetTextureFormat(format), GetSampleCount(sampleCount));
+	}
+
+	internal override IHandle CreateTexture(string? name, int width, int height, TextureFormat format, SampleCount sampleCount, IHandle? targetBinding)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
@@ -387,15 +416,21 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		{
 			type = SDL_GPUTextureType.SDL_GPU_TEXTURETYPE_2D,
 			format = GetTextureFormat(format),
-			usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER,
+			usage = 0,
 			width = (uint)width,
 			height = (uint)height,
 			layer_count_or_depth = 1,
 			num_levels = 1,
-			sample_count = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1,
+			sample_count = GetSampleCount(sampleCount),
 			props = props
 		};
 
+		// only a sampler if not multisampled
+		// (otherwise there's a resolve texture used for that, created later)
+		if (sampleCount == SampleCount.One)
+			info.usage |= SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER;
+
+		// we're a render target attachment
 		if (targetBinding != null)
 		{
 			if (format.IsDepthStencilFormat())
@@ -404,25 +439,33 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				info.usage |= SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
 		}
 
+		// try to create texture on GPU
 		nint texture = SDL_CreateGPUTexture(device, info);
-
 		if (props != 0)
 			SDL_DestroyProperties(props);
-
 		if (texture == nint.Zero)
 			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUTexture));
 
+		// create a resolve texture if we're multisampled
+		TextureResource? resolve = null;
+		if (sampleCount != SampleCount.One)
+		{
+			var resolveName = name != null ? $"Resolve-{name}" : null;
+			resolve = (TextureResource)CreateTexture(resolveName, width, height, format, SampleCount.One, targetBinding);
+		}
+
+		// create resulting texture resource
 		TextureResource res = new(this)
 		{
 			Texture = texture,
 			Width = width,
 			Height = height,
-			Format = info.format
+			Format = info.format,
+			SampleCount = GetSampleCount(sampleCount),
+			Resolve = resolve
 		};
-
 		lock (resources)
 			resources.Add(res);
-
 		return res;
 	}
 
@@ -438,6 +481,13 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		TextureResource res = (TextureResource)texture;
 		if (res.GraphicsDevice != this)
 			throw deviceWasDestroyed;
+		
+		// search up for resolve texture if we're multisampled
+		if (res.Resolve != null)
+		{
+			SetTextureData(res.Resolve, data, length);
+			return;
+		}
 
 		bool usingTemporaryTransferBuffer = false;
 		nint transferBuffer = textureUploadBuffer;
@@ -538,6 +588,13 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (res.GraphicsDevice != this)
 			throw deviceWasDestroyed;
 
+		// search up for the resolve texture
+		if (res.Resolve != null)
+		{
+			GetTextureData(res.Resolve, data, length);
+			return;
+		}
+
 		// we only allow one download at a time
 		lock (textureDownloadMutex)
 		{
@@ -606,6 +663,9 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (!texture.Disposed)
 		{
 			var res = (TextureResource)texture;
+
+			if (res.Resolve != null)
+				DestroyTexture(res.Resolve);
 
 			lock (resources)
 			{
@@ -1031,9 +1091,9 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			for (int i = 0; i < fragmentInfo.SamplerCount; i++)
 			{
 				if (mat.Fragment.Samplers[i].Texture is { } tex && !tex.IsDisposed)
-					samplers[i].texture = ((TextureResource)tex.Resource).Texture;
+					samplers[i].texture = ((TextureResource)tex.Resource).SamplerTexture;
 				else
-					samplers[i].texture = ((TextureResource)emptyDefaultTexture!).Texture;
+					samplers[i].texture = ((TextureResource)emptyDefaultTexture!).SamplerTexture;
 
 				samplers[i].sampler = GetSampler(mat.Fragment.Samplers[i].Sampler);
 			}
@@ -1050,9 +1110,9 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			for (int i = 0; i < vertexInfo.SamplerCount; i++)
 			{
 				if (mat.Vertex.Samplers[i].Texture is { } tex && !tex.IsDisposed)
-					samplers[i].texture = ((TextureResource)tex.Resource).Texture;
+					samplers[i].texture = ((TextureResource)tex.Resource).SamplerTexture;
 				else
-					samplers[i].texture = ((TextureResource)emptyDefaultTexture!).Texture;
+					samplers[i].texture = ((TextureResource)emptyDefaultTexture!).SamplerTexture;
 
 				samplers[i].sampler = GetSampler(mat.Vertex.Samplers[i].Sampler);
 			}
@@ -1210,12 +1270,14 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		// configure lists of textures used
 		renderPassTarget = drawableTarget;
 
-		var colorTargets = new StackList8<nint>();
+		var colorTargets = new StackList8<(nint Attachment, nint Resolve)>();
 		var depthStencilTarget = nint.Zero;
 
 		foreach (var it in target.Attachments)
 		{
-			var res = ((TextureResource)it.Resource).Texture;
+			var tex = (TextureResource)it.Resource;
+			var res = tex.Texture;
+			var resolve = tex.Resolve?.Texture ?? nint.Zero;
 
 			// drawing to an invalid target
 			if (it.IsDisposed || !it.IsTargetAttachment || res == nint.Zero)
@@ -1224,7 +1286,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			if (it.Format.IsDepthStencilFormat())
 				depthStencilTarget = res;
 			else
-				colorTargets.Add(res);
+				colorTargets.Add((res, resolve));
 		}
 
 		Span<SDL_GPUColorTargetInfo> colorInfo = stackalloc SDL_GPUColorTargetInfo[colorTargets.Count];
@@ -1235,15 +1297,18 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			var col = clear.Color.HasValue && clear.Color.Value.Count > i ? clear.Color.Value[i] : Color.Transparent;
 			colorInfo[i] = new()
 			{
-				texture = colorTargets[i],
+				texture = colorTargets[i].Attachment,
 				mip_level = 0,
 				layer_or_depth_plane = 0,
 				clear_color = GetColor(col),
 				load_op = clear.Color.HasValue ?
 					SDL_GPULoadOp.SDL_GPU_LOADOP_CLEAR :
 					SDL_GPULoadOp.SDL_GPU_LOADOP_LOAD,
-				store_op = SDL_GPUStoreOp.SDL_GPU_STOREOP_STORE,
-				cycle = clear.Color.HasValue
+				store_op = colorTargets[i].Resolve == nint.Zero ?
+					SDL_GPUStoreOp.SDL_GPU_STOREOP_STORE :
+					SDL_GPUStoreOp.SDL_GPU_STOREOP_RESOLVE,
+				cycle = clear.Color.HasValue,
+				resolve_texture = colorTargets[i].Resolve
 			};
 		}
 
@@ -1320,7 +1385,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			hash = HashCode.Combine(hash, vb.Buffer.Format, vb.InstanceInputRate);
 
 		// combine with target attachment formats
-		foreach (var format in GetDrawTargetFormats(command.Target))
+		foreach (var format in GetDrawTargetFormatsAndSampleCount(command.Target))
 			hash = HashCode.Combine(hash, format);
 
 		// try to find an existing pipeline
@@ -1340,21 +1405,28 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			var vertexBindings = stackalloc SDL_GPUVertexBufferDescription[command.VertexBuffers.Count];
 			var vertexAttributes = stackalloc SDL_GPUVertexAttribute[vertexAttributeCount];
 
-			foreach (var format in self.GetDrawTargetFormats(command.Target))
+			// get highest sampler count ...
+			var sampleCount = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1;
+
+			foreach (var it in self.GetDrawTargetFormatsAndSampleCount(command.Target))
 			{
-				if (IsDepthTextureFormat(format))
+				if (IsDepthTextureFormat(it.Format))
 				{
-					depthStencilAttachment = format;
+					depthStencilAttachment = it.Format;
 				}
 				else
 				{
 					colorAttachments[colorAttachmentCount] = new()
 					{
-						format = format,
+						format = it.Format,
 						blend_state = colorBlendState
 					};
+
 					colorAttachmentCount++;
 				}
+
+				if ((int)it.SampleCount > (int)sampleCount)
+					sampleCount = it.SampleCount;
 			}
 
 			var attrbIndex = 0;
@@ -1415,8 +1487,10 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				},
 				multisample_state = new()
 				{
-					sample_count = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1,
-					sample_mask = 0
+					sample_count = sampleCount,
+					sample_mask = 0,        // not actually used per SDL docs
+					enable_mask = false,    // not actually used per SDL docs
+					padding1 = 1,
 				},
 				depth_stencil_state = new()
 				{
@@ -1479,13 +1553,13 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		return null;
 	}
 
-	private StackList32<SDL_GPUTextureFormat> GetDrawTargetFormats(IDrawableTarget drawableTarget)
+	private StackList32<(SDL_GPUTextureFormat Format, SDL_GPUSampleCount SampleCount)> GetDrawTargetFormatsAndSampleCount(IDrawableTarget drawableTarget)
 	{
-		var formats = new StackList32<SDL_GPUTextureFormat>();
+		var formats = new StackList32<(SDL_GPUTextureFormat Format, SDL_GPUSampleCount SampleCount)>();
 		var target = GetDrawTarget(drawableTarget, out _);
 		if (target != null)
 			foreach (var it in target.Attachments)
-				formats.Add(GetTextureFormat(it.Format));
+				formats.Add((GetTextureFormat(it.Format), GetSampleCount(it.SampleCount)));
 		return formats;
 	}
 
@@ -1630,6 +1704,15 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		TextureFormat.Depth24 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D24_UNORM,
 		TextureFormat.Depth32 => SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D32_FLOAT,
 		_ => throw new ArgumentException("Invalid Texture Format", nameof(format)),
+	};
+
+	private static SDL_GPUSampleCount GetSampleCount(SampleCount sampleCount) => sampleCount switch
+	{
+		SampleCount.One => SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1,
+		SampleCount.Two => SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_2,
+		SampleCount.Four => SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_4,
+		SampleCount.Eight => SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_8,
+		_ => throw new ArgumentException("Invalid Sample Count", nameof(sampleCount)),
 	};
 
 	private static bool IsDepthTextureFormat(SDL_GPUTextureFormat format) => format switch
