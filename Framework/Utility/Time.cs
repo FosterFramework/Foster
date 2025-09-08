@@ -16,9 +16,14 @@ public readonly record struct Time(
 )
 {
 	/// <summary>
-	/// Time, in seconds, since the previous Update
+	/// The Time, in seconds, since the previous Update
 	/// </summary>
 	public readonly float Delta = (float)(Elapsed - Previous).TotalSeconds;
+
+	/// <summary>
+	/// The Time, in a TimeSpan format, since the previous Update
+	/// </summary>
+	public readonly TimeSpan DeltaTimeSpan => Elapsed - Previous;
 
 	/// <summary>
 	/// Total time in Seconds (shorthand to Elapsed.TotalSeconds)
