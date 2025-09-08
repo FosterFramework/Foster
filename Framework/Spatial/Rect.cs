@@ -611,7 +611,11 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 	public static Rect operator /(in Rect a, int scaler) => new Rect(a.X / scaler, a.Y / scaler, a.Width / scaler, a.Height / scaler).ValidateSize();
 	public static Rect operator *(in Rect a, in Vector2 scaler) => a.Scale(scaler);
 	public static Rect operator /(in Rect a, in Vector2 scaler) => new Rect(a.X / scaler.X, a.Y / scaler.Y, a.Width / scaler.X, a.Height / scaler.Y).ValidateSize();
+
+	// TODO: remove once Facing is deleted
+#pragma warning disable 0618
 	public static Rect operator *(in Rect rect, Facing flipX) => flipX == Facing.Right ? rect : rect.ScaleX(-1);
+#pragma warning restore 0618
 
 	public class JsonConverter : JsonConverter<Rect>
 	{
