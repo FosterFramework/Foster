@@ -19,12 +19,12 @@ public static class TimeSpanExt
 	/// wrapping the input value by <see cref="MathF.Tau"/> at the given <paramref name="rate"/>
 	/// </summary>
 	public static float Sin(this TimeSpan timespan, float rate = 1, float offset = 0)
-		=> MathF.Sin((float)(timespan + TimeSpan.FromSeconds(offset)).Modulo(MathF.Tau).TotalSeconds * rate);
+		=> MathF.Sin((float)(timespan * rate + TimeSpan.FromSeconds(offset)).Modulo(MathF.Tau).TotalSeconds);
 
 	/// <summary>
 	/// Returns a <see cref="MathF.Cos"/> value using TimeSpan by gracefully
 	/// wrapping the input value by <see cref="MathF.Tau"/> at the given <paramref name="rate"/>
 	/// </summary>
 	public static float Cos(this TimeSpan timespan, float rate = 1, float offset = 0)
-		=> MathF.Cos((float)(timespan + TimeSpan.FromSeconds(offset)).Modulo(MathF.Tau).TotalSeconds * rate);
+		=> MathF.Cos((float)(timespan * rate + TimeSpan.FromSeconds(offset)).Modulo(MathF.Tau).TotalSeconds);
 }
