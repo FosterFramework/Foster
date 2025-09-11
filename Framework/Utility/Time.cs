@@ -83,10 +83,14 @@ public readonly record struct Time(
 	/// Sine-wave a value between `from` and `to` with a period of `duration`.
 	/// You can use `offsetPercent` to offset the sine wave.
 	/// </summary>
-	public float SineWave(float from, float to, float duration, float offsetPercent)
+	/// <param name="from">Sine wave from</param>
+	/// <param name="to">Sine wave to</param>
+	/// <param name="duration">Duration, in seconds, of the period of the SineWave</param>
+	/// <param name="offsetPercent">Offset time by a percentage of the Duration</param>
+	public float SineWave(float from, float to, float duration, float offsetPercent = 0)
 	{
-		float total = (float)Elapsed.TotalSeconds;
-		float range = (to - from) * 0.5f;
-		return from + range + MathF.Sin(((total + duration * offsetPercent) / duration) * MathF.Tau) * range;
+		var dur = TimeSpan.FromSeconds(duration);
+		var input = (Elapsed + dur * offsetPercent).Modulo(dur).TotalSeconds / duration;
+		return Calc.ClampedMap((float)Math.Sin(input * MathF.Tau), -1, 1, from, to);
 	}
 }
