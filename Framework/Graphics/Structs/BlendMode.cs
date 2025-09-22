@@ -45,7 +45,7 @@ public struct BlendMode : IEquatable<BlendMode>
 	public static readonly BlendMode Add
 		= new (BlendOp.Add, BlendFactor.One, BlendFactor.DstAlpha);
 	public static readonly BlendMode Subtract
-		= new (BlendOp.ReverseSubtract, BlendFactor.One, BlendFactor.One);
+		= new (BlendOp.ReverseSubtract, BlendFactor.One, BlendFactor.One, BlendOp.Add, BlendFactor.One, BlendFactor.One, BlendMask.RGBA, Color.White);
 	public static readonly BlendMode Multiply
 		= new (BlendOp.Add, BlendFactor.DstColor, BlendFactor.OneMinusSrcAlpha);
 	public static readonly BlendMode Screen
