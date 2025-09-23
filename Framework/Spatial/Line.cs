@@ -20,6 +20,12 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 	public readonly float LengthSquared => (To - From).LengthSquared();
 	public readonly Vector2 Normal => (To - From).Normalized();
 
+	public Line(float x1, float y1, float x2, float y2)
+		: this(new(x1, y1), new Vector2(x2, y2))
+	{
+
+	}
+
 	public readonly Vector2 GetAxis(int index)
 	{
 		var axis = (To - From).Normalized();
