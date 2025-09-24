@@ -336,13 +336,12 @@ public static class Calc
 	}
 
 	/// <summary>
-	/// Offset all points in the array by the offset, then return the same array instance
+	/// Offset all points in the array by the offset
 	/// </summary>
-	public static Point2[] Offset(this Point2[] points, in Point2 offset)
+	public static void Offset(this Point2[] points, in Point2 offset)
 	{
 		for (int i = 0; i < points.Length; i++)
 			points[i] += offset;
-		return points;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
