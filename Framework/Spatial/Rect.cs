@@ -249,6 +249,12 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 
 	}
 
+	public Rect(in Vector2 size)
+		: this(0, 0, size.X, size.Y)
+	{
+
+	}
+
 	public Rect(in Vector2 pos, float w, float h)
 		: this(pos.X, pos.Y, w, h)
 	{

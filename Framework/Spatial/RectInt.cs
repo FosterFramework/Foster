@@ -241,6 +241,12 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 
 	}
 
+	public RectInt(in Point2 size)
+		: this(0, 0, size.X, size.Y)
+	{
+
+	}
+
 	public RectInt(in Point2 pos, int w, int h)
 		: this(pos.X, pos.Y, w, h)
 	{
@@ -818,7 +824,7 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 	public static RectInt operator /(in RectInt rect, in Point2 scaler)
 		=> new RectInt(rect.X / scaler.X, rect.Y / scaler.Y, rect.Width / scaler.X, rect.Height / scaler.Y).ValidateSize();
 	public static RectInt operator *(in RectInt rect, Cardinal rotation) => rect.Rotate(rotation);
-	
+
 	// TODO: remove once Facing is deleted
 #pragma warning disable 0618
 	public static RectInt operator *(in RectInt rect, Facing flipX) => flipX == Facing.Right ? rect : rect.ScaleX(-1);
