@@ -239,6 +239,16 @@ public sealed class Input
 				version
 			);
 
+			// notify virtual devices
+			foreach (var virtualInput in virtualInputs)
+			{
+				if (virtualInput.TryGetTarget(out var target) &&
+					target is VirtualDevice device &&
+					device.ControllerIndex == i)
+					device.ControllerConnected();
+			}
+
+			// notify general consumers
 			OnControllerConnected?.Invoke(id);
 			break;
 		}
@@ -246,12 +256,26 @@ public sealed class Input
 
 	internal void DisconnectController(ControllerID id)
 	{
-		foreach (var it in NextState.Controllers)
-			if (it.ID == id)
+		for (int i = 0; i < InputState.MaxControllers; i++)
+		{
+			var it = NextState.Controllers[i];
+			if (it.ID != id)
+				continue;
+
+			it.Disconnect();
+
+			// notify virtual devices
+			foreach (var virtualInput in virtualInputs)
 			{
-				it.Disconnect();
-				OnControllerDisconnected?.Invoke(id);
+				if (virtualInput.TryGetTarget(out var target) &&
+					target is VirtualDevice device &&
+					device.ControllerIndex == i)
+					device.ControllerDisconnected();
 			}
+
+			// notify general consumers
+			OnControllerDisconnected?.Invoke(id);
+		}
 	}
 
 	internal void Step(in Time time)

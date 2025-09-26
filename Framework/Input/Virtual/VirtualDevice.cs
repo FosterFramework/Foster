@@ -166,6 +166,16 @@ public class VirtualDevice : VirtualInput, IDisposable
 	/// </summary>
 	protected virtual void ControllerIndexChanged() {}
 
+	/// <summary>
+	/// Called when the Controller at our Index is disconnected
+	/// </summary>
+	protected internal virtual void ControllerConnected() {}
+
+	/// <summary>
+	/// Called when the Controller at our Index is disconnected
+	/// </summary>
+	protected internal virtual void ControllerDisconnected() {}
+
 	public override void Dispose()
 	{
 		foreach (var it in inputs)
