@@ -77,20 +77,66 @@ public struct Rng
 	public double Double(double max) => Double() * max;
 	public double Double(double min, double max) => min + Double(max - min);
 
+	/// <summary>
+	/// Randomly return either true or false
+	/// </summary>
 	public bool Boolean() => (U64() & 1) == 1;
-	public int Sign() => Boolean() ? 1 : -1;
+
+	/// <summary>
+	/// Return either a positive or a negative sign
+	/// </summary>
+	public Signs Sign()
+		=> Boolean() ? Signs.Positive : Signs.Negative;
+
+	/// <summary>
+	/// Returns true a certain percentage of the time, where 0 = 0% and 1 = 100%
+	/// </summary>
 	public bool Chance(float percent) => Float() <= percent;
 
-	public T Choose<T>(params ReadOnlySpan<T> choices) => choices[Int(choices.Length)];
-	public T Choose<T>(params T[] choices) => choices[Int(choices.Length)];
-	public T Choose<T>(params IList<T> choices) => choices[Int(choices.Count)];
+	/// <summary>
+	/// Returns true a certain percentage of the time, where 0 = 0% and 1 = 100%
+	/// </summary>
+	public bool Chance(double percent) => Double() <= percent;
 
-	public Point2 Shake() => new(Choose(-1, 0, 1), Choose(-1, 0, 1));
+	/// <summary>
+	/// Get a random shake value where both X and Y are randomly -1, 0, or 1. Useful for shaking visual elements
+	/// </summary>
+	public Point2 Shake()
+		=> new(Choose(-1, 0, 1), Choose(-1, 0, 1));
+
+	/// <summary>
+	/// Get a random angle from zero to 2-pi
+	/// </summary>
+	/// <returns></returns>
 	public float Angle() => Float(Calc.TAU);
 
+	/// <summary>
+	/// Get a random point inside a rectangle
+	/// </summary>
 	public System.Numerics.Vector2 PointInside(in Rect rect)
 		=> rect.On(Float(1), Float(1));
 
+	/// <summary>
+	/// Randomly choose and return an element of the span
+	/// </summary>
+	public T Choose<T>(params ReadOnlySpan<T> choices)
+		=> choices[Int(choices.Length)];
+
+	/// <summary>
+	/// Randomly choose and return an element of the array
+	/// </summary>
+	public T Choose<T>(params T[] choices)
+		=> choices[Int(choices.Length)];
+
+	/// <summary>
+	/// Randomly choose and return an element of the list
+	/// </summary>
+	public T Choose<T>(params IList<T> choices)
+		=> choices[Int(choices.Count)];
+
+	/// <summary>
+	/// Randomly shuffle a span in-place
+	/// </summary>
 	public void Shuffle<T>(Span<T> span)
 	{
 		int n = span.Length;
@@ -100,8 +146,22 @@ public struct Rng
 			(span[k], span[n]) = (span[n], span[k]);
 		}
 	}
-	public void Shuffle<T>(T[] array) => Shuffle(array.AsSpan());
-	public void Shuffle<T>(List<T> list) => Shuffle(CollectionsMarshal.AsSpan(list));
 
-	public static Rng Randomized() => new((ulong)DateTime.Now.Ticks);
+	/// <summary>
+	/// Randomly shuffle an array in-place
+	/// </summary>
+	public void Shuffle<T>(T[] array)
+		=> Shuffle(array.AsSpan());
+
+	/// <summary>
+	/// Randomly shuffle a List in-place
+	/// </summary>
+	public void Shuffle<T>(List<T> list)
+		=> Shuffle(CollectionsMarshal.AsSpan(list));
+
+	/// <summary>
+	/// Get an <see cref="Rng"/> instance seeded by the current <see cref="DateTime"/>
+	/// </summary>
+	public static Rng Randomized()
+		=> new((ulong)DateTime.Now.Ticks);
 }

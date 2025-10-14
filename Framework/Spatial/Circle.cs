@@ -89,6 +89,12 @@ public struct Circle : IProjectable, IEquatable<Circle>
 	}
 
 	/// <summary>
+	/// Checks whether we overlap a circle (as defined by its center and radius)
+	/// </summary>
+	public readonly bool Overlaps(in Vector2 center, float radius)
+		=> Vector2.DistanceSquared(Position, center) < Calc.Squared(radius + Radius);
+
+	/// <summary>
 	/// Checks whether we overlap a line segment
 	/// </summary>
 	public readonly bool Overlaps(in Line line)
