@@ -93,7 +93,7 @@ public sealed class Input
 	}
 
 	/// <summary>
-	/// Creates an Input Module that recieves the same events as this one.
+	/// Creates an Input Module that receives the same events as this one.
 	/// </summary>
 	public Input CreateEcho()
 	{
