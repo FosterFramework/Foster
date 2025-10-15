@@ -84,25 +84,50 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 
 	public readonly bool Intersects(in Line other)
 	{
-		Vector2 b = To - From;
-		Vector2 d = other.To - other.From;
-		float bDotDPerp = b.X * d.Y - b.Y * d.X;
+		var b = To - From;
+		var d = other.To - other.From;
+		var bDotDPerp = b.X * d.Y - b.Y * d.X;
 
 		// if b dot d == 0, it means the lines are parallel so have infinite intersection points
 		if (bDotDPerp == 0)
 			return false;
 
-		Vector2 c = other.From - From;
-		float t = (c.X * d.Y - c.Y * d.X) / bDotDPerp;
+		var c = other.From - From;
+		var t = (c.X * d.Y - c.Y * d.X) / bDotDPerp;
 		if (t is < 0 or > 1)
 			return false;
 
-		float u = (c.X * b.Y - c.Y * b.X) / bDotDPerp;
+		var u = (c.X * b.Y - c.Y * b.X) / bDotDPerp;
 		if (u is < 0 or > 1)
 			return false;
 
 		return true;
 	}
+
+    public readonly bool Intersects(in Line other, out Vector2 point)
+    {
+		point = default;
+
+		var b = To - From;
+		var d = other.To - other.From;
+		var bDotDPerp = b.X * d.Y - b.Y * d.X;
+
+		// if b dot d == 0, it means the lines are parallel so have infinite intersection points
+		if (bDotDPerp == 0)
+			return false;
+
+		var c = other.From - From;
+		var t = (c.X * d.Y - c.Y * d.X) / bDotDPerp;
+		if (t is < 0 or > 1)
+			return false;
+
+		var u = (c.X * b.Y - c.Y * b.X) / bDotDPerp;
+		if (u is < 0 or > 1)
+			return false;
+
+		point = From + b * t;
+		return true;
+    }
 
 	public static Line operator +(Line a, Vector2 b) => new(a.From + b, a.To + b);
 	public static Line operator -(Line a, Vector2 b) => new(a.From - b, a.To - b);
