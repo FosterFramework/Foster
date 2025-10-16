@@ -14,6 +14,15 @@ public struct Rng
 	public Rng(int seed) { Seed = (ulong)seed; }
 	public Rng(ulong seed) { Seed = seed; }
 
+	/// <summary>
+	/// Get an <see cref="Rng"/> instance seeded by the current <see cref="DateTime"/>
+	/// </summary>
+	public static Rng Randomized()
+		=> new((ulong)DateTime.Now.Ticks);
+
+	/// <summary>
+	/// Get a random <see cref="ulong"/> from all possible values
+	/// </summary>
 	public ulong U64()
 	{
 		Seed += 0x9e3779b97f4a7c15ul;
@@ -22,51 +31,129 @@ public struct Rng
 		n = (n ^ (n >> 27)) * 0x94d049bb133111ebul;
 		return n ^ (n >> 31);
 	}
+
+	/// <summary>
+	/// Get a random <see cref="ulong"/> between 0 (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
 	public ulong U64(ulong max) => max != 0 ? U64() % max : 0;
+
+	/// <summary>
+	/// Get a random <see cref="ulong"/> between <paramref name="min"/> (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
 	public ulong U64(ulong min, ulong max) => min + U64(max - min);
 
+	/// <summary>
+	/// Get a random <see cref="uint"/> from all possible values
+	/// </summary>
 	public uint U32() => (uint)U64();
+
+	/// <summary>
+	/// Get a random <see cref="uint"/> between 0 (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
 	public uint U32(uint max) => max != 0 ? U32() % max : 0;
+
+	/// <summary>
+	/// Get a random <see cref="uint"/> between <paramref name="min"/> (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
 	public uint U32(uint min, uint max) => min + U32(max - min);
 
+	/// <summary>
+	/// Get a random <see cref="ushort"/> from all possible values
+	/// </summary>
 	public ushort U16() => (ushort)U64();
+
+	/// <summary>
+	/// Get a random <see cref="ushort"/> between 0 (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
 	public ushort U16(ushort max) => (ushort)(max != 0 ? U16() % max : 0);
+
+	/// <summary>
+	/// Get a random <see cref="ushort"/> between <paramref name="min"/> (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
 	public ushort U16(ushort min, ushort max) => (ushort)(min + U16((ushort)(max - min)));
 
+	/// <summary>
+	/// Get a random <see cref="byte"/> from all possible values
+	/// </summary>
 	public byte U8() => (byte)U64();
+
+	/// <summary>
+	/// Get a random <see cref="byte"/> between 0 (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
 	public byte U8(byte max) => (byte)(max != 0 ? U8() % max : 0);
+
+	/// <summary>
+	/// Get a random <see cref="byte"/> between <paramref name="min"/> (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
 	public byte U8(byte min, byte max) => (byte)(min + U8((byte)(max - min)));
 
+	/// <summary>
+	/// Get a random <see cref="long"/> from all possible values
+	/// </summary>
 	public long Long() => (long)U64();
+
+	/// <summary>
+	/// Get a random <see cref="long"/> between 0 (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
 	public long Long(long max) => max != 0 ? Math.Abs(Long()) % max : 0;
+
+	/// <summary>
+	/// Get a random <see cref="long"/> between <paramref name="min"/> (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
 	public long Long(long min, long max) => min + Long(max - min);
 
+	/// <summary>
+	/// Get a random <see cref="int"/> from all possible values
+	/// </summary>
 	public int Int() => (int)U64();
+
+	/// <summary>
+	/// Get a random <see cref="int"/> between 0 (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
 	public int Int(int max) => max != 0 ? Math.Abs(Int()) % max : 0;
+
+	/// <summary>
+	/// Get a random <see cref="int"/> between <paramref name="min"/> (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
 	public int Int(int min, int max) => min + Int(max - min);
 
+	/// <summary>
+	/// Get a random <see cref="short"/> from all possible values
+	/// </summary>
 	public short Short() => (short)U64();
+
+	/// <summary>
+	/// Get a random <see cref="short"/> between 0 (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
 	public short Short(short max) => (short)(max != 0 ? Math.Abs(Short()) % max : 0);
+
+	/// <summary>
+	/// Get a random <see cref="short"/> between <paramref name="min"/> (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
 	public short Short(short min, short max) => (short)(min + Short((short)(max - min)));
 
 	[Obsolete("Use SByte or U8")] public sbyte Byte() => (sbyte)U64();
 	[Obsolete("Use SByte or U8")] public sbyte Byte(sbyte max) => (sbyte)(max != 0 ? Math.Abs(SByte()) % max : 0);
 	[Obsolete("Use SByte or U8")] public sbyte Byte(sbyte min, sbyte max) => (sbyte)(min + SByte((sbyte)(max - min)));
 
+	/// <summary>
+	/// Get a random <see cref="sbyte"/> from all possible values
+	/// </summary>
 	public sbyte SByte() => (sbyte)U64();
+
+	/// <summary>
+	/// Get a random <see cref="sbyte"/> between 0 (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
 	public sbyte SByte(sbyte max) => (sbyte)(max != 0 ? Math.Abs(SByte()) % max : 0);
+
+	/// <summary>
+	/// Get a random <see cref="sbyte"/> between <paramref name="min"/> (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
 	public sbyte SByte(sbyte min, sbyte max) => (sbyte)(min + SByte((sbyte)(max - min)));
 
-	public float Float()
-	{
-		uint bits = (uint)(0x3f800000ul | (U64() >> 40));
-		float val;
-		unsafe { Unsafe.WriteUnaligned(&val, bits); }
-		return val - (1.0f - float.Epsilon / 2.0f);
-	}
-	public float Float(float max) => Float() * max;
-	public float Float(float min, float max) => min + Float(max - min);
-
+	/// <summary>
+	/// Get a random <see cref="double"/> from all possible values
+	/// </summary>
 	public double Double()
 	{
 		ulong bits = 0x3ff0000000000000ul | (U64() >> 11);
@@ -74,8 +161,37 @@ public struct Rng
 		unsafe { Unsafe.WriteUnaligned(&val, bits); }
 		return val - (1.0 - double.Epsilon / 2.0);
 	}
+
+	/// <summary>
+	/// Get a random <see cref="double"/> between 0 (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
 	public double Double(double max) => Double() * max;
+
+	/// <summary>
+	/// Get a random <see cref="double"/> between <paramref name="min"/> (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
 	public double Double(double min, double max) => min + Double(max - min);
+
+	/// <summary>
+	/// Get a random <see cref="float"/> from all possible values
+	/// </summary>
+	public float Float()
+	{
+		uint bits = (uint)(0x3f800000ul | (U64() >> 40));
+		float val;
+		unsafe { Unsafe.WriteUnaligned(&val, bits); }
+		return val - (1.0f - float.Epsilon / 2.0f);
+	}
+
+	/// <summary>
+	/// Get a random <see cref="float"/> between 0 (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
+	public float Float(float max) => Float() * max;
+
+	/// <summary>
+	/// Get a random <see cref="float"/> between <paramref name="min"/> (inclusive) and <paramref name="max"/> (exclusive)
+	/// </summary>
+	public float Float(float min, float max) => min + Float(max - min);
 
 	/// <summary>
 	/// Randomly return either true or false
@@ -158,10 +274,4 @@ public struct Rng
 	/// </summary>
 	public void Shuffle<T>(List<T> list)
 		=> Shuffle(CollectionsMarshal.AsSpan(list));
-
-	/// <summary>
-	/// Get an <see cref="Rng"/> instance seeded by the current <see cref="DateTime"/>
-	/// </summary>
-	public static Rng Randomized()
-		=> new((ulong)DateTime.Now.Ticks);
 }
