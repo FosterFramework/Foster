@@ -179,4 +179,16 @@ public static class VectorExt
 	/// </summary>
 	public static Vector2 Abs(this Vector2 vector)
 		=> new(MathF.Abs(vector.X), MathF.Abs(vector.Y));
+
+	/// <summary>
+	/// Get a <see cref="Vector2"/> from the X- and Y-components of a <see cref="Vector3"/>
+	/// </summary>
+	public static Vector2 XY(this Vector3 vector)
+		=> new(vector.X, vector.Y);
+
+	/// <summary>
+	/// Apply the X- and Y-components of a <see cref="Vector2"/> to a <see cref="Vector3"/>
+	/// </summary>
+	public static Vector3 WithXY(this Vector3 vector, in Vector2 xy)
+		=> new(xy.X, xy.Y, vector.Z);
 }
