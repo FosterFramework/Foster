@@ -221,13 +221,13 @@ public struct Rng
 		=> new(Choose(-1, 0, 1), Choose(-1, 0, 1));
 
 	/// <summary>
-	/// Get a random angle from zero to 2-pi
+	/// Get a random angle from 0 (inclusive) to Tau (aka 2*pi, exclusive)
 	/// </summary>
 	/// <returns></returns>
 	public float Angle() => Float(Calc.TAU);
 
 	/// <summary>
-	/// Get a random point inside a rectangle
+	/// Get a random point inside a rectangle. The top and left rect bounds are inclusive, and the bottom and right rect bounds are exclusive
 	/// </summary>
 	public System.Numerics.Vector2 PointInside(in Rect rect)
 		=> rect.On(Float(1), Float(1));
