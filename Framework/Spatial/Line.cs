@@ -83,26 +83,7 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 		=> circle.Overlaps(this);
 
 	public readonly bool Intersects(in Line other)
-	{
-		var b = To - From;
-		var d = other.To - other.From;
-		var bDotDPerp = b.X * d.Y - b.Y * d.X;
-
-		// if b dot d == 0, it means the lines are parallel so have infinite intersection points
-		if (bDotDPerp == 0)
-			return false;
-
-		var c = other.From - From;
-		var t = (c.X * d.Y - c.Y * d.X) / bDotDPerp;
-		if (t is < 0 or > 1)
-			return false;
-
-		var u = (c.X * b.Y - c.Y * b.X) / bDotDPerp;
-		if (u is < 0 or > 1)
-			return false;
-
-		return true;
-	}
+		=> Intersects(other, out _);
 
     public readonly bool Intersects(in Line other, out Vector2 point)
     {
