@@ -8,118 +8,118 @@ namespace Foster.Framework;
 public static class VectorExt
 {
 	/// <summary>
-	/// Clamps the vector inside the provided range.
+	/// Clamps the <see cref="Vector2"/> inside the provided range
 	/// </summary>
 	public static Vector2 Clamp(this Vector2 vector, in Vector2 min, in Vector2 max)
 		=> new(Calc.Clamp(vector.X, min.X, max.X), Calc.Clamp(vector.Y, min.Y, max.Y));
 
 	/// <summary>
-	/// Clamps the vector inside the bounding rectangle.
+	/// Clamps the <see cref="Vector2"/> inside the bounding <see cref="Rect"/>
 	/// </summary>
 	public static Vector2 Clamp(this Vector2 vector, in Rect bounds)
 		=> vector.Clamp(bounds.TopLeft, bounds.BottomRight);
 
 	/// <summary>
-	/// Floors the individual components of a Vector2
+	/// Floors the individual components of a <see cref="Vector2"/>
 	/// </summary>
 	public static Vector2 Floor(this Vector2 vector)
 		=> new (MathF.Floor(vector.X), MathF.Floor(vector.Y));
 
 	/// <summary>
-	/// Floors the individual components of a Vector3
+	/// Floors the individual components of a <see cref="Vector4"/>
 	/// </summary>
 	public static Vector3 Floor(this Vector3 vector)
 		=> new(MathF.Floor(vector.X), MathF.Floor(vector.Y), MathF.Floor(vector.Z));
 
 	/// <summary>
-	/// Floors the individual components of a Vector4
+	/// Floors the individual components of a <see cref="Vector4"/>
 	/// </summary>
 	public static Vector4 Floor(this Vector4 vector)
 		=> new(MathF.Floor(vector.X), MathF.Floor(vector.Y), MathF.Floor(vector.Z), MathF.Floor(vector.W));
 
 	/// <summary>
-	/// Rounds the individual components of a Vector2
+	/// Rounds the individual components of a <see cref="Vector2"/>
 	/// </summary>
 	public static Vector2 Round(this Vector2 vector)
 		=> new(MathF.Round(vector.X), MathF.Round(vector.Y));
 
 	/// <summary>
-	/// Rounds the individual components of a Vector2
+	/// Rounds the individual components of a <see cref="Vector2"/>
 	/// </summary>
 	public static Point2 RoundToPoint2(this Vector2 vector)
 		=> new((int)MathF.Round(vector.X), (int)MathF.Round(vector.Y));
 
 	/// <summary>
-	/// Floors the individual components of a Vector2
+	/// Floors the individual components of a <see cref="Vector2"/>
 	/// </summary>
 	public static Point2 FloorToPoint2(this Vector2 vector)
 		=> new((int)MathF.Floor(vector.X), (int)MathF.Floor(vector.Y));
 
 	/// <summary>
-	/// Ceilings the individual components of a Vector2
+	/// Ceilings the individual components of a <see cref="Vector2"/>
 	/// </summary>
 	public static Point2 CeilingToPoint2(this Vector2 vector)
 		=> new((int)MathF.Ceiling(vector.X), (int)MathF.Ceiling(vector.Y));
 
 	/// <summary>
-	/// Rounds the individual components of a Vector3
+	/// Rounds the individual components of a <see cref="Vector3"/>
 	/// </summary>
 	public static Vector3 Round(this Vector3 vector)
 		=> new(MathF.Round(vector.X), MathF.Round(vector.Y), MathF.Round(vector.Z));
 
 	/// <summary>
-	/// Rounds the individual components of a Vector4
+	/// Rounds the individual components of a <see cref="Vector4"/>
 	/// </summary>
 	public static Vector4 Round(this Vector4 vector)
 		=> new(MathF.Round(vector.X), MathF.Round(vector.Y), MathF.Round(vector.Z), MathF.Round(vector.W));
 
 	/// <summary>
-	/// Ceilings the individual components of a Vector2
+	/// Ceilings the individual components of a <see cref="Vector2"/>
 	/// </summary>
 	public static Vector2 Ceiling(this Vector2 vector)
 		=> new(MathF.Ceiling(vector.X), MathF.Ceiling(vector.Y));
 
 	/// <summary>
-	/// Ceilings the individual components of a Vector3
+	/// Ceilings the individual components of a <see cref="Vector3"/>
 	/// </summary>
 	public static Vector3 Ceiling(this Vector3 vector)
 		=> new(MathF.Ceiling(vector.X), MathF.Ceiling(vector.Y), MathF.Ceiling(vector.Z));
 
 	/// <summary>
-	/// Ceilings the individual components of a Vector4
+	/// Ceilings the individual components of a <see cref="Vector4"/>
 	/// </summary>
 	public static Vector4 Ceiling(this Vector4 vector)
 		=> new(MathF.Ceiling(vector.X), MathF.Ceiling(vector.Y), MathF.Ceiling(vector.Z), MathF.Ceiling(vector.W));
 
 	/// <summary>
-	/// Turns a Vector2 to its right perpendicular
+	/// Turns a <see cref="Vector2"/> to its right perpendicular
 	/// </summary>
 	public static Vector2 TurnRight(this Vector2 vector) => new(-vector.Y, vector.X);
 
 	/// <summary>
-	/// Turns a Vector2 to its left perpendicular
+	/// Turns a <see cref="Vector2"/> to its left perpendicular
 	/// </summary>
 	public static Vector2 TurnLeft(this Vector2 vector) => new(vector.Y, -vector.X);
 
 	/// <summary>
-	/// Gets the Angle of a Vector in radians
+	/// Gets the angle of a <see cref="Vector2"/> in radians
 	/// </summary>
 	public static float Angle(this Vector2 vector) => MathF.Atan2(vector.Y, vector.X);
 
 	/// <summary>
-	/// Normalizes a Vector2 safely (a zero-length Vector2 returns the <paramref name="fallbackValue"/>)
+	/// Normalizes a <see cref="Vector2"/> safely (a zero-length <see cref="Vector2"/> returns the <paramref name="fallbackValue"/>)
 	/// </summary>
 	public static Vector2 Normalized(this Vector2 vector, Vector2 fallbackValue = default)
 		=> vector == Vector2.Zero ? fallbackValue : Vector2.Normalize(vector);
 
 	/// <summary>
-	/// Normalizes a Vector3 safely (a zero-length Vector2 returns the <paramref name="fallbackValue"/>)
+	/// Normalizes a <see cref="Vector3"/> safely (a zero-length <see cref="Vector3"/> returns the <paramref name="fallbackValue"/>)
 	/// </summary>
 	public static Vector3 Normalized(this Vector3 vector, Vector3 fallbackValue = default)
 		=> vector == Vector3.Zero ? fallbackValue : Vector3.Normalize(vector);
 
 	/// <summary>
-	/// Normalizes a Vector2 and snaps it to the closest of the 4 cardinal directions (a zero-length Vector2 returns the <paramref name="fallbackValue"/>)
+	/// Normalizes a <see cref="Vector2"/> and snaps it to the closest of the 4 cardinal directions (a zero-length <see cref="Vector2"/> returns the <paramref name="fallbackValue"/>)
 	/// </summary>
 	public static Vector2 FourWayNormal(this Vector2 vector, Vector2 fallbackValue = default)
 	{
@@ -142,7 +142,7 @@ public static class VectorExt
 	}
 
 	/// <summary>
-	/// Normalizes a Vector2 and snaps it to the closest of the 8 cardinal or diagonal directions (a zero-length Vector2 returns the <paramref name="fallbackValue"/>)
+	/// Normalizes a <see cref="Vector2"/> and snaps it to the closest of the 8 cardinal or diagonal directions (a zero-length <see cref="Vector2"/> returns the <paramref name="fallbackValue"/>)
 	/// </summary>
 	public static Vector2 EightWayNormal(this Vector2 vector, Vector2 fallbackValue = default)
 	{
@@ -165,12 +165,12 @@ public static class VectorExt
 	}
 
 	/// <summary>
-	/// Returns a Vector2 with the X-value of this Vector2, but zero Y
+	/// Returns a <see cref="Vector2"/> with the X-value of this <see cref="Vector2"/>, but zero Y
 	/// </summary>
 	public static Vector2 ZeroY(this Vector2 vector) => new(vector.X, 0);
 
 	/// <summary>
-	/// Returns a Vector2 with the Y-value of this Vector2, but zero X
+	/// Returns a <see cref="Vector2"/> with the Y-value of this <see cref="Vector2"/>, but zero X
 	/// </summary>
 	public static Vector2 ZeroX(this Vector2 vector) => new(0, vector.Y);
 
@@ -179,12 +179,6 @@ public static class VectorExt
 	/// </summary>
 	public static Vector2 Abs(this Vector2 vector)
 		=> new(MathF.Abs(vector.X), MathF.Abs(vector.Y));
-
-	/// <summary>
-	/// Get the left-handed perpendicular of the vector with the same length
-	/// </summary>
-	public static Vector2 Perpendicular(this Vector2 vector)
-		=> new(vector.Y, -vector.X);
 
 	/// <summary>
 	/// Get a <see cref="Vector2"/> from the X- and Y-components of a <see cref="Vector3"/>
@@ -197,4 +191,10 @@ public static class VectorExt
 	/// </summary>
 	public static Vector3 WithXY(this Vector3 vector, in Vector2 xy)
 		=> new(xy.X, xy.Y, vector.Z);
+
+	/// <summary>
+	/// Reinterprets the <see cref="Vector2"/> as a <see cref="Vector3"/> with a Z-value of zero
+	/// </summary>
+	public static Vector3 AsVector3(this Vector2 vector)
+		=> new(vector.X, vector.Y, 0);
 }
