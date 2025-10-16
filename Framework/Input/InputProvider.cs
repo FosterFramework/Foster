@@ -64,11 +64,11 @@ public abstract class InputProvider
 	/// </summary>
 	public void Text(in ReadOnlySpan<char> text, Window? window = null)
 	{
-		if (Input.ReceiveEvents)
+		if (Input.Enabled.Has(Input.EnabledFlags.Text))
 			Input.OnText(text, window);
 
 		foreach (var it in echos)
-			if (it.TryGetTarget(out var target) && target.ReceiveEvents)
+			if (it.TryGetTarget(out var target) && target.Enabled.Has(Input.EnabledFlags.Text))
 				target.OnText(text, window);
 	}
 
@@ -96,11 +96,11 @@ public abstract class InputProvider
 	/// </summary>
 	public void Key(int key, bool pressed, in TimeSpan time)
 	{
-		if (Input.ReceiveEvents)
+		if (Input.Enabled.Has(Input.EnabledFlags.KeyboardKeys))
 			Input.NextState.Keyboard.OnKey(key, pressed, time);
 
 		foreach (var it in echos)
-			if (it.TryGetTarget(out var target) && target.ReceiveEvents)
+			if (it.TryGetTarget(out var target) && target.Enabled.Has(Input.EnabledFlags.KeyboardKeys))
 				target.NextState.Keyboard.OnKey(key, pressed, time);
 	}
 
@@ -109,11 +109,11 @@ public abstract class InputProvider
 	/// </summary>
 	public void MouseButton(int button, bool pressed, in TimeSpan time)
 	{
-		if (Input.ReceiveEvents)
+		if (Input.Enabled.Has(Input.EnabledFlags.MouseButtons))
 			Input.NextState.Mouse.OnButton(button, pressed, time);
 
 		foreach (var it in echos)
-			if (it.TryGetTarget(out var target) && target.ReceiveEvents)
+			if (it.TryGetTarget(out var target) && target.Enabled.Has(Input.EnabledFlags.MouseButtons))
 				target.NextState.Mouse.OnButton(button, pressed, time);
 	}
 
@@ -122,11 +122,11 @@ public abstract class InputProvider
 	/// </summary>
 	public void MouseMove(Vector2 position, Vector2 delta, in TimeSpan time)
 	{
-		if (Input.ReceiveEvents)
+		if (Input.Enabled.Has(Input.EnabledFlags.MouseMotion))
 			Input.NextState.Mouse.OnMotion(position, delta, time);
 
 		foreach (var it in echos)
-			if (it.TryGetTarget(out var target) && target.ReceiveEvents)
+			if (it.TryGetTarget(out var target) && target.Enabled.Has(Input.EnabledFlags.MouseMotion))
 				target.NextState.Mouse.OnMotion(position, delta, time);
 	}
 
@@ -135,11 +135,11 @@ public abstract class InputProvider
 	/// </summary>
 	public void MouseWheel(Vector2 wheel)
 	{
-		if (Input.ReceiveEvents)
+		if (Input.Enabled.Has(Input.EnabledFlags.MouseWheel))
 			Input.NextState.Mouse.OnWheel(wheel);
 
 		foreach (var it in echos)
-			if (it.TryGetTarget(out var target) && target.ReceiveEvents)
+			if (it.TryGetTarget(out var target) && target.Enabled.Has(Input.EnabledFlags.MouseWheel))
 				target.NextState.Mouse.OnWheel(wheel);
 	}
 
@@ -181,11 +181,11 @@ public abstract class InputProvider
 	/// </summary>
 	public void ControllerButton(ControllerID id, int button, bool pressed, in TimeSpan time)
 	{
-		if (Input.ReceiveEvents)
+		if (Input.Enabled.Has(Input.EnabledFlags.ControllerButtons))
 			Input.NextState.GetController(id)?.OnButton(button, pressed, time);
 
 		foreach (var it in echos)
-			if (it.TryGetTarget(out var target) && target.ReceiveEvents)
+			if (it.TryGetTarget(out var target) && target.Enabled.Has(Input.EnabledFlags.ControllerButtons))
 				target.NextState.GetController(id)?.OnButton(button, pressed, time);
 	}
 
@@ -194,11 +194,11 @@ public abstract class InputProvider
 	/// </summary>
 	public void ControllerAxis(ControllerID id, int axis, float value, in TimeSpan time)
 	{
-		if (Input.ReceiveEvents)
+		if (Input.Enabled.Has(Input.EnabledFlags.ControllerAxis))
 			Input.NextState.GetController(id)?.OnAxis(axis, value, time);
 
 		foreach (var it in echos)
-			if (it.TryGetTarget(out var target) && target.ReceiveEvents)
+			if (it.TryGetTarget(out var target) && target.Enabled.Has(Input.EnabledFlags.ControllerAxis))
 				target.NextState.GetController(id)?.OnAxis(axis, value, time);
 	}
 }

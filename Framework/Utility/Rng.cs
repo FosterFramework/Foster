@@ -91,12 +91,12 @@ public struct Rng
 	/// <summary>
 	/// Returns true a certain percentage of the time, where 0 = 0% and 1 = 100%
 	/// </summary>
-	public bool Chance(float percent) => Float() <= percent;
+	public bool Chance(float percent) => Float() < percent;
 
 	/// <summary>
 	/// Returns true a certain percentage of the time, where 0 = 0% and 1 = 100%
 	/// </summary>
-	public bool Chance(double percent) => Double() <= percent;
+	public bool Chance(double percent) => Double() < percent;
 
 	/// <summary>
 	/// Get a random shake value where both X and Y are randomly -1, 0, or 1. Useful for shaking visual elements
