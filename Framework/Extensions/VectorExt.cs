@@ -181,6 +181,12 @@ public static class VectorExt
 		=> new(MathF.Abs(vector.X), MathF.Abs(vector.Y));
 
 	/// <summary>
+	/// Get the left-handed perpendicular of the vector with the same length
+	/// </summary>
+	public static Vector2 Perpendicular(this Vector2 vector)
+		=> new(vector.Y, -vector.X);
+
+	/// <summary>
 	/// Get a <see cref="Vector2"/> from the X- and Y-components of a <see cref="Vector3"/>
 	/// </summary>
 	public static Vector2 XY(this Vector3 vector)
