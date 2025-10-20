@@ -703,32 +703,51 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 	/// <summary>
 	/// Get a rect centered around a position
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static RectInt Centered(int centerX, int centerY, int width, int height)
 		=> new(centerX - width / 2, centerY - height / 2, width, height);
 
 	/// <summary>
 	/// Get a rect centered around a position
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static RectInt Centered(in Point2 center, int width, int height)
 		=> new(center.X - width / 2, center.Y - height / 2, width, height);
 
 	/// <summary>
 	/// Get a rect centered around a position
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static RectInt Centered(in Point2 center, in Point2 size)
 		=> new(center.X - size.X / 2, center.Y - size.Y / 2, size.X, size.Y);
 
 	/// <summary>
 	/// Get a rect centered around (0, 0)
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static RectInt Centered(in Point2 size)
 		=> new(-size.X / 2, -size.Y / 2, size.X, size.Y);
 
 	/// <summary>
 	/// Get a rect centered around (0, 0)
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static RectInt Centered(int width, int height)
 		=> new(-width / 2, -height / 2, width, height);
+
+	/// <summary>
+	/// Get a rect justified around the origin point
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static RectInt Justified(in Point2 origin, int width, int height, float justifyX, float justifyY)
+		=> new(origin.X - Calc.Round(justifyX * width), origin.Y - Calc.Round(justifyY * height), width, height);
+
+	/// <summary>
+	/// Get a rect justified around the origin point
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static RectInt Justified(in Point2 origin, in Point2 size, in Vector2 justify)
+		=> new(origin.X - Calc.Round(justify.X * size.X), origin.Y - Calc.Round(justify.Y * size.Y), size.X, size.Y);
 
 	/// <summary>
 	/// Get the rect with positive width and height that stretches from point a to point b

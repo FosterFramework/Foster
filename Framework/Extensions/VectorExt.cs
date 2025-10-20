@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace Foster.Framework;
 
@@ -7,116 +8,88 @@ namespace Foster.Framework;
 /// </summary>
 public static class VectorExt
 {
+	#region Vector2
+
 	/// <summary>
 	/// Clamps the <see cref="Vector2"/> inside the provided range
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 Clamp(this Vector2 vector, in Vector2 min, in Vector2 max)
 		=> new(Calc.Clamp(vector.X, min.X, max.X), Calc.Clamp(vector.Y, min.Y, max.Y));
 
 	/// <summary>
 	/// Clamps the <see cref="Vector2"/> inside the bounding <see cref="Rect"/>
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 Clamp(this Vector2 vector, in Rect bounds)
 		=> vector.Clamp(bounds.TopLeft, bounds.BottomRight);
 
 	/// <summary>
 	/// Floors the individual components of a <see cref="Vector2"/>
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 Floor(this Vector2 vector)
 		=> new (MathF.Floor(vector.X), MathF.Floor(vector.Y));
 
 	/// <summary>
-	/// Floors the individual components of a <see cref="Vector4"/>
-	/// </summary>
-	public static Vector3 Floor(this Vector3 vector)
-		=> new(MathF.Floor(vector.X), MathF.Floor(vector.Y), MathF.Floor(vector.Z));
-
-	/// <summary>
-	/// Floors the individual components of a <see cref="Vector4"/>
-	/// </summary>
-	public static Vector4 Floor(this Vector4 vector)
-		=> new(MathF.Floor(vector.X), MathF.Floor(vector.Y), MathF.Floor(vector.Z), MathF.Floor(vector.W));
-
-	/// <summary>
 	/// Rounds the individual components of a <see cref="Vector2"/>
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 Round(this Vector2 vector)
 		=> new(MathF.Round(vector.X), MathF.Round(vector.Y));
 
 	/// <summary>
 	/// Rounds the individual components of a <see cref="Vector2"/>
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Point2 RoundToPoint2(this Vector2 vector)
 		=> new((int)MathF.Round(vector.X), (int)MathF.Round(vector.Y));
 
 	/// <summary>
 	/// Floors the individual components of a <see cref="Vector2"/>
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Point2 FloorToPoint2(this Vector2 vector)
 		=> new((int)MathF.Floor(vector.X), (int)MathF.Floor(vector.Y));
 
 	/// <summary>
 	/// Ceilings the individual components of a <see cref="Vector2"/>
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Point2 CeilingToPoint2(this Vector2 vector)
 		=> new((int)MathF.Ceiling(vector.X), (int)MathF.Ceiling(vector.Y));
 
 	/// <summary>
-	/// Rounds the individual components of a <see cref="Vector3"/>
-	/// </summary>
-	public static Vector3 Round(this Vector3 vector)
-		=> new(MathF.Round(vector.X), MathF.Round(vector.Y), MathF.Round(vector.Z));
-
-	/// <summary>
-	/// Rounds the individual components of a <see cref="Vector4"/>
-	/// </summary>
-	public static Vector4 Round(this Vector4 vector)
-		=> new(MathF.Round(vector.X), MathF.Round(vector.Y), MathF.Round(vector.Z), MathF.Round(vector.W));
-
-	/// <summary>
 	/// Ceilings the individual components of a <see cref="Vector2"/>
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 Ceiling(this Vector2 vector)
 		=> new(MathF.Ceiling(vector.X), MathF.Ceiling(vector.Y));
 
 	/// <summary>
-	/// Ceilings the individual components of a <see cref="Vector3"/>
-	/// </summary>
-	public static Vector3 Ceiling(this Vector3 vector)
-		=> new(MathF.Ceiling(vector.X), MathF.Ceiling(vector.Y), MathF.Ceiling(vector.Z));
-
-	/// <summary>
-	/// Ceilings the individual components of a <see cref="Vector4"/>
-	/// </summary>
-	public static Vector4 Ceiling(this Vector4 vector)
-		=> new(MathF.Ceiling(vector.X), MathF.Ceiling(vector.Y), MathF.Ceiling(vector.Z), MathF.Ceiling(vector.W));
-
-	/// <summary>
 	/// Turns a <see cref="Vector2"/> to its right perpendicular
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 TurnRight(this Vector2 vector) => new(-vector.Y, vector.X);
 
 	/// <summary>
 	/// Turns a <see cref="Vector2"/> to its left perpendicular
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 TurnLeft(this Vector2 vector) => new(vector.Y, -vector.X);
 
 	/// <summary>
 	/// Gets the angle of a <see cref="Vector2"/> in radians
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Angle(this Vector2 vector) => MathF.Atan2(vector.Y, vector.X);
 
 	/// <summary>
 	/// Normalizes a <see cref="Vector2"/> safely (a zero-length <see cref="Vector2"/> returns the <paramref name="fallbackValue"/>)
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 Normalized(this Vector2 vector, Vector2 fallbackValue = default)
 		=> vector == Vector2.Zero ? fallbackValue : Vector2.Normalize(vector);
-
-	/// <summary>
-	/// Normalizes a <see cref="Vector3"/> safely (a zero-length <see cref="Vector3"/> returns the <paramref name="fallbackValue"/>)
-	/// </summary>
-	public static Vector3 Normalized(this Vector3 vector, Vector3 fallbackValue = default)
-		=> vector == Vector3.Zero ? fallbackValue : Vector3.Normalize(vector);
 
 	/// <summary>
 	/// Normalizes a <see cref="Vector2"/> and snaps it to the closest of the 4 cardinal directions (a zero-length <see cref="Vector2"/> returns the <paramref name="fallbackValue"/>)
@@ -167,34 +140,109 @@ public static class VectorExt
 	/// <summary>
 	/// Returns a <see cref="Vector2"/> with the X-value of this <see cref="Vector2"/>, but zero Y
 	/// </summary>
-	public static Vector2 ZeroY(this Vector2 vector) => new(vector.X, 0);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vector2 ZeroY(this Vector2 vector) => vector with { Y = 0 };
 
 	/// <summary>
 	/// Returns a <see cref="Vector2"/> with the Y-value of this <see cref="Vector2"/>, but zero X
 	/// </summary>
-	public static Vector2 ZeroX(this Vector2 vector) => new(0, vector.Y);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vector2 ZeroX(this Vector2 vector) => vector with { X = 0 };
 
 	/// <summary>
-	/// Returns a Vector2 with the Abs of both our components
+	/// Returns a <see cref="Vector2"/> with the absolute value of both its components
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 Abs(this Vector2 vector)
 		=> new(MathF.Abs(vector.X), MathF.Abs(vector.Y));
 
 	/// <summary>
+	/// Move a <see cref="Vector2"/> from one bounds to another
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vector2 Map(this Vector2 vector, in Rect fromBounds, in Rect toBounds)
+		=> new(
+			Calc.Map(vector.X, fromBounds.X, fromBounds.X + fromBounds.Width, toBounds.X, toBounds.X + toBounds.Width),
+			Calc.Map(vector.Y, fromBounds.Y, fromBounds.Y + fromBounds.Height, toBounds.Y, toBounds.Y + toBounds.Height)
+		);
+
+	#endregion
+
+	#region Vector3
+
+	/// <summary>
+	/// Reinterprets the <see cref="Vector2"/> as a <see cref="Vector3"/> with a Z-value of zero
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vector3 AsVector3(this Vector2 vector)
+		=> new(vector.X, vector.Y, 0);
+
+	/// <summary>
+	/// Normalizes a <see cref="Vector3"/> safely (a zero-length <see cref="Vector3"/> returns the <paramref name="fallbackValue"/>)
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vector3 Normalized(this Vector3 vector, Vector3 fallbackValue = default)
+		=> vector == Vector3.Zero ? fallbackValue : Vector3.Normalize(vector);
+
+	/// <summary>
 	/// Get a <see cref="Vector2"/> from the X- and Y-components of a <see cref="Vector3"/>
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 XY(this Vector3 vector)
 		=> new(vector.X, vector.Y);
 
 	/// <summary>
 	/// Apply the X- and Y-components of a <see cref="Vector2"/> to a <see cref="Vector3"/>
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector3 WithXY(this Vector3 vector, in Vector2 xy)
 		=> new(xy.X, xy.Y, vector.Z);
 
 	/// <summary>
-	/// Reinterprets the <see cref="Vector2"/> as a <see cref="Vector3"/> with a Z-value of zero
+	/// Rounds the individual components of a <see cref="Vector3"/>
 	/// </summary>
-	public static Vector3 AsVector3(this Vector2 vector)
-		=> new(vector.X, vector.Y, 0);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vector3 Round(this Vector3 vector)
+		=> new(MathF.Round(vector.X), MathF.Round(vector.Y), MathF.Round(vector.Z));
+
+	/// <summary>
+	/// Floors the individual components of a <see cref="Vector3"/>
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vector3 Floor(this Vector3 vector)
+		=> new(MathF.Floor(vector.X), MathF.Floor(vector.Y), MathF.Floor(vector.Z));
+
+	/// <summary>
+	/// Ceilings the individual components of a <see cref="Vector3"/>
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vector3 Ceiling(this Vector3 vector)
+		=> new(MathF.Ceiling(vector.X), MathF.Ceiling(vector.Y), MathF.Ceiling(vector.Z));
+
+	#endregion
+
+	#region Vector4
+
+	/// <summary>
+	/// Rounds the individual components of a <see cref="Vector4"/>
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vector4 Round(this Vector4 vector)
+		=> new(MathF.Round(vector.X), MathF.Round(vector.Y), MathF.Round(vector.Z), MathF.Round(vector.W));
+
+	/// <summary>
+	/// Floors the individual components of a <see cref="Vector4"/>
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vector4 Floor(this Vector4 vector)
+		=> new(MathF.Floor(vector.X), MathF.Floor(vector.Y), MathF.Floor(vector.Z), MathF.Floor(vector.W));
+
+	/// <summary>
+	/// Ceilings the individual components of a <see cref="Vector4"/>
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vector4 Ceiling(this Vector4 vector)
+		=> new(MathF.Ceiling(vector.X), MathF.Ceiling(vector.Y), MathF.Ceiling(vector.Z), MathF.Ceiling(vector.W));
+
+	#endregion
 }
