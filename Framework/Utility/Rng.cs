@@ -241,14 +241,25 @@ public struct Rng
 	/// <summary>
 	/// Randomly choose and return an element of the array
 	/// </summary>
-	public T Choose<T>(params T[] choices)
+	public T Choose<T>(T[] choices)
 		=> choices[Int(choices.Length)];
 
 	/// <summary>
 	/// Randomly choose and return an element of the list
 	/// </summary>
-	public T Choose<T>(params IList<T> choices)
+	public T Choose<T>(List<T> choices)
 		=> choices[Int(choices.Count)];
+
+	/// <summary>
+	/// Randomly choose an element of the list, remove it from the list, and return it
+	/// </summary>
+	public T ChooseAndRemove<T>(List<T> choices)
+	{
+		int index = Int(choices.Count);
+		var value = choices[index];
+		choices.RemoveAt(index);
+		return value;
+	}
 
 	/// <summary>
 	/// Randomly shuffle a span in-place
