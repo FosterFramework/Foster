@@ -23,6 +23,20 @@ public class Material
 		public const int MaxUniformBuffers = 8;
 
 		/// <summary>
+        /// The Shader used for this stage
+        /// </summary>
+		public Shader? Shader
+		{
+			get => shader;
+			set
+            {
+                if (shader != null && shader.Stage != stage)
+					throw new Exception("Invalid Shader Stage");
+				shader = value;
+            }
+        }
+
+		/// <summary>
 		/// Texture Samplers bound to this Shader Stage
 		/// </summary>
 		public readonly BoundSampler[] Samplers = new BoundSampler[16];
@@ -32,7 +46,11 @@ public class Material
 		/// </summary>
 		internal readonly byte[][] UniformBuffers = [..Enumerable.Range(0, MaxUniformBuffers).Select(it => Array.Empty<byte>())];
 
-		internal Stage() {}
+		private Shader? shader = null;
+		private readonly ShaderStage stage;
+
+		internal Stage(ShaderStage stage)
+			=> this.stage = stage;
 
 		/// <summary>
 		/// Sets the Data stored in a Uniform Buffer
@@ -85,6 +103,7 @@ public class Material
 		/// </summary>
 		public void CopyTo(Stage to)
 		{
+			to.Shader = Shader;
 			Array.Copy(Samplers, to.Samplers, Samplers.Length);
 			for (int i = 0; i < MaxUniformBuffers; i ++)
 			{
@@ -96,30 +115,27 @@ public class Material
 	}
 
 	/// <summary>
-	/// Shader used by the Material
-	/// </summary>
-	public Shader? Shader;
-
-	/// <summary>
 	/// Data for the Vertex Shader stage
 	/// </summary>
-	public readonly Stage Vertex = new();
+	public readonly Stage Vertex = new(ShaderStage.Vertex);
 
 	/// <summary>
 	/// Data for the Fragment Shader stage
 	/// </summary>
-	public readonly Stage Fragment = new();
+	public readonly Stage Fragment = new(ShaderStage.Fragment);
 
 	public Material() {}
-
-	public Material(Shader? shader) => Shader = shader;
+	public Material(Shader? vertexShader, Shader? fragmentShader)
+	{
+		Vertex.Shader = vertexShader;
+		Fragment.Shader = fragmentShader;
+	}
 
 	/// <summary>
 	/// Copies the State of this Material to another
 	/// </summary>
 	public void CopyTo(Material to)
 	{
-		to.Shader = Shader;
 		Vertex.CopyTo(to.Vertex);
 		Fragment.CopyTo(to.Fragment);
 	}

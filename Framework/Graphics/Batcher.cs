@@ -45,7 +45,8 @@ public class Batcher : IDisposable
 	/// The Default shader used by the Batcher.
 	/// TODO: this shouldn't be static, but should be shared between sprite batchers...
 	/// </summary>
-	private static Shader? DefaultShader;
+	private static Shader? DefaultVertexShader;
+	private static Shader? DefaultFragmentShader;
 
 	/// <summary>
 	/// The current Matrix Value of the Batcher
@@ -216,9 +217,13 @@ public class Batcher : IDisposable
 		Upload();
 
 		// make sure default shader and material are valid
-		if (DefaultShader == null || DefaultShader.IsDisposed)
-			DefaultShader = new BatcherShader(GraphicsDevice);
-		defaultMaterial.Shader = DefaultShader;
+		if (DefaultVertexShader == null || DefaultVertexShader.IsDisposed)
+			DefaultVertexShader = new BatcherVertexShader(GraphicsDevice);
+		defaultMaterial.Vertex.Shader = DefaultVertexShader;
+
+		if (DefaultFragmentShader == null || DefaultFragmentShader.IsDisposed)
+			DefaultFragmentShader = new BatcherFragmentShader(GraphicsDevice);
+		defaultMaterial.Fragment.Shader = DefaultFragmentShader;
 
 		// render batches
 		for (int i = 0; i < batches.Count; i++)
@@ -411,7 +416,8 @@ public class Batcher : IDisposable
 	/// </summary>
 	public void PushMaterial(Material material)
 	{
-		if (material.Shader == null)
+		if (material.Vertex.Shader == null ||
+			material.Fragment.Shader == null)
 			throw new Exception("Material must have a Shader assigned");
 
 		materialStack.Push(currentBatch.Material);

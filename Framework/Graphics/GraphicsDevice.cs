@@ -76,12 +76,15 @@ public abstract class GraphicsDevice
 		// that is more dynamic is just a warning.
 
 		var mat = command.Material ?? throw new Exception("Attempting to render with a null Material");
-		var shader = mat.Shader;
 		var target = command.Target;
 
 		// invalid shader state
-		if (shader == null || shader.IsDisposed)
-			throw new Exception("Attempting to render a null or disposed Shader");
+		if (mat.Vertex.Shader == null || mat.Vertex.Shader.IsDisposed)
+			throw new Exception("Attempting to render a null or disposed Vertex Shader");
+
+		// invalid shader state
+		if (mat.Fragment.Shader == null || mat.Fragment.Shader.IsDisposed)
+			throw new Exception("Attempting to render a null or disposed Fragment Shader");
 
 		// invalid target state
 		if (target == null || (target is Target t && t.IsDisposed))

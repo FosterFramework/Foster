@@ -3,9 +3,9 @@ using System.Collections.Frozen;
 namespace Foster.Framework;
 
 /// <summary>
-/// A combination of a Vertex and Fragment Shader programs used for Rendering.<br/>
+/// A Shader program used for Rendering.<br/>
 /// <br/>
-/// The Provided <see cref="ShaderStageInfo.Code"/> must match the <see cref="GraphicsDriver"/>
+/// The Provided <see cref="ShaderCreateInfo.Code"/> must match the <see cref="GraphicsDriver"/>
 /// in use, which can be checked with <see cref="GraphicsDevice.Driver"/>.<br/>
 /// <br/>
 /// Shaders must match SDL_GPU Shader resource binding rules:
@@ -17,6 +17,11 @@ public class Shader : IGraphicResource
 	/// The GraphicsDevice this Shader was created in
 	/// </summary>
 	public readonly GraphicsDevice GraphicsDevice;
+
+	/// <summary>
+    /// The Stage this shader was built for
+    /// </summary>
+	public readonly ShaderStage Stage;
 
 	/// <summary>
 	/// Optional Shader Name
@@ -40,6 +45,7 @@ public class Shader : IGraphicResource
 		GraphicsDevice = graphicsDevice;
 		CreateInfo = createInfo;
 		Name = name ?? string.Empty;
+		Stage = createInfo.Stage;
 		Resource = GraphicsDevice.CreateShader(name, createInfo);
 	}
 

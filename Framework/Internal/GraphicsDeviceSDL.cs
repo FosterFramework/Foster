@@ -51,9 +51,8 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 	private class ShaderResource(GraphicsDevice graphicsDevice) : Resource(graphicsDevice)
 	{
-		public nint VertexShader;
-		public nint FragmentShader;
-		public readonly ConcurrentDictionary<int, nint> Pipelines = [];
+		public nint Shader;
+		public readonly ConcurrentBag<int> Pipelines = [];
 	}
 
 	private record struct ClearInfo(StackList8<Color>? Color, float? Depth, int? Stencil);
@@ -95,6 +94,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	// tracked / allocated resources
 	private readonly HashSet<IHandle> resources = [];
 	private readonly Dictionary<TextureSampler, nint> samplers = [];
+	private readonly ConcurrentDictionary<int, nint> pipelines = [];
 	private IHandle? emptyDefaultTexture;
 
 	// texture/mesh transfer buffers
@@ -291,6 +291,15 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			textureUploadBuffer = nint.Zero;
 			SDL_ReleaseGPUTransferBuffer(device, bufferUploadBuffer);
 			bufferUploadBuffer = nint.Zero;
+		}
+
+		// release pipelines
+		while (!pipelines.IsEmpty)
+		{
+			var destroying = pipelines.Values.ToArray();
+			pipelines.Clear();
+			foreach (var pipeline in destroying)
+				SDL_ReleaseGPUGraphicsPipeline(device, pipeline);
 		}
 
 		// release samplers
@@ -884,59 +893,39 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			_ => SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
 		};
 
-		var vertexEntryPoint = Encoding.UTF8.GetBytes(shaderInfo.Vertex.EntryPoint);
-		var fragmentEntryPoint = Encoding.UTF8.GetBytes(shaderInfo.Fragment.EntryPoint);
-		nint vertexProgram;
-		nint fragmentProgram;
+		var entryPoint = Encoding.UTF8.GetBytes(shaderInfo.EntryPoint);
+		nint program;
 
-		// create vertex shader
-		fixed (byte* entryPointPtr = vertexEntryPoint)
-		fixed (byte* vertexCode = shaderInfo.Vertex.Code)
+		// create shader program
+		fixed (byte* entryPointPtr = entryPoint)
+		fixed (byte* code = shaderInfo.Code)
 		{
 			SDL_GPUShaderCreateInfo info = new()
 			{
-				code_size = (nuint)shaderInfo.Vertex.Code.Length,
-				code = vertexCode,
+				code_size = (nuint)shaderInfo.Code.Length,
+				code = code,
 				entrypoint = entryPointPtr,
 				format = format,
-				stage = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX,
-				num_samplers = (uint)shaderInfo.Vertex.SamplerCount,
+				stage = shaderInfo.Stage switch
+				{
+					ShaderStage.Vertex => SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX,
+					ShaderStage.Fragment => SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT,
+					_ => throw new NotImplementedException()
+				},
+				num_samplers = (uint)shaderInfo.SamplerCount,
 				num_storage_textures = 0,
 				num_storage_buffers = 0,
-				num_uniform_buffers = (uint)shaderInfo.Vertex.UniformBufferCount,
+				num_uniform_buffers = (uint)shaderInfo.UniformBufferCount,
 			};
 
-			vertexProgram = SDL_CreateGPUShader(device, info);
-			if (vertexProgram == nint.Zero)
-				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUShader), "Failed to create Vertex Shader");
-		}
-
-		// create fragment program
-		fixed (byte* entryPointPtr = fragmentEntryPoint)
-		fixed (byte* fragmentCode = shaderInfo.Fragment.Code)
-		{
-			SDL_GPUShaderCreateInfo info = new()
-			{
-				code_size = (nuint)shaderInfo.Fragment.Code.Length,
-				code = fragmentCode,
-				entrypoint = entryPointPtr,
-				format = format,
-				stage = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT,
-				num_samplers = (uint)shaderInfo.Fragment.SamplerCount,
-				num_storage_textures = 0,
-				num_storage_buffers = 0,
-				num_uniform_buffers = (uint)shaderInfo.Fragment.UniformBufferCount,
-			};
-
-			fragmentProgram = SDL_CreateGPUShader(device, info);
-			if (fragmentProgram == nint.Zero)
-				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUShader), "Failed to create Fragment Shader");
+			program = SDL_CreateGPUShader(device, info);
+			if (program == nint.Zero)
+				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUShader), $"Failed to create {shaderInfo.Stage} Shader");
 		}
 
 		var res = new ShaderResource(this)
 		{
-			VertexShader = vertexProgram,
-			FragmentShader = fragmentProgram,
+			Shader = program,
 		};
 
 		lock (resources)
@@ -957,8 +946,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			}
 
 			ReleaseGraphicsPipelinesAssociatedWith(res);
-			SDL_ReleaseGPUShader(device, res.VertexShader);
-			SDL_ReleaseGPUShader(device, res.FragmentShader);
+			SDL_ReleaseGPUShader(device, res.Shader);
 		}
 	}
 
@@ -983,7 +971,8 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			throw deviceNotCreated;
 
 		var mat = command.Material;
-		var shader = mat.Shader!;
+		var vertexShader = mat.Vertex.Shader!;
+		var fragmentShader = mat.Fragment.Shader!;
 		var target = command.Target;
 
 		// try to start a render pass
@@ -1079,8 +1068,8 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			SDL_BindGPUVertexBuffers(renderPass, 0, vertexBinding, (uint)command.VertexBuffers.Count);
 		}
 
-		var fragmentInfo = shader.CreateInfo.Fragment;
-		var vertexInfo = shader.CreateInfo.Vertex;
+		var vertexInfo = vertexShader.CreateInfo;
+		var fragmentInfo = fragmentShader.CreateInfo;
 
 		// bind fragment samplers
 		// TODO: only do this if Samplers change
@@ -1363,14 +1352,18 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 	private nint GetGraphicsPipeline(in DrawCommand command)
 	{
-		var shader = command.Material.Shader!;
-		var shaderRes = (ShaderResource)shader.Resource;
-		if (shaderRes.GraphicsDevice != this)
+		var vertexShader = command.Material.Vertex.Shader!;
+		if (((ShaderResource)vertexShader.Resource).GraphicsDevice != this)
+			throw deviceWasDestroyed;
+
+		var fragmentShader = command.Material.Fragment.Shader!;
+		if (((ShaderResource)fragmentShader.Resource).GraphicsDevice != this)
 			throw deviceWasDestroyed;
 
 		// build a big hashcode of everything in use
 		var hash = HashCode.Combine(
-			shader.Resource,
+			vertexShader.Resource,
+			fragmentShader.Resource,
 			command.CullMode,
 			command.DepthCompare,
 			command.DepthTestEnabled,
@@ -1389,11 +1382,12 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			hash = HashCode.Combine(hash, format);
 
 		// try to find an existing pipeline
-		var pipeline = shaderRes.Pipelines.GetOrAdd<(GraphicsDeviceSDL, DrawCommand)>(hash, static (hash, args) =>
+		var pipeline = pipelines.GetOrAdd<(GraphicsDeviceSDL, DrawCommand)>(hash, static (hash, args) =>
 		{
 			var self = args.Item1;
 			var command = args.Item2;
-			var shaderRes = (ShaderResource)command.Material.Shader!.Resource;
+			var vertRes = (ShaderResource)command.Material.Vertex.Shader!.Resource;
+			var fragRes = (ShaderResource)command.Material.Fragment.Shader!.Resource;
 			var vertexAttributeCount = 0;
 			foreach (var vb in command.VertexBuffers)
 				vertexAttributeCount += vb.Buffer.Format.Elements.Count;
@@ -1462,8 +1456,8 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 			SDL_GPUGraphicsPipelineCreateInfo info = new()
 			{
-				vertex_shader = shaderRes.VertexShader,
-				fragment_shader = shaderRes.FragmentShader,
+				vertex_shader = vertRes.Shader,
+				fragment_shader = fragRes.Shader,
 				vertex_input_state = new()
 				{
 					vertex_buffer_descriptions = vertexBindings,
@@ -1526,6 +1520,11 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			var pipeline = SDL_CreateGPUGraphicsPipeline(self.device, info);
 			if (pipeline == nint.Zero)
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUGraphicsPipeline));
+
+			// add pipelines to shaders to be tracked by them
+			vertRes.Pipelines.Add(hash);
+			fragRes.Pipelines.Add(hash);
+
 			return pipeline;
 
 		}, (this, command));
@@ -1567,9 +1566,11 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	{
 		while (!shader.Pipelines.IsEmpty)
 		{
-			var removing = shader.Pipelines.Keys.ToArray();
+			var removing = shader.Pipelines.ToArray();
+			shader.Pipelines.Clear();
+
 			foreach (var it in removing)
-				if (shader.Pipelines.TryRemove(it, out var pipeline))
+				if (pipelines.Remove(it, out var pipeline))
 				{
 					SDL_ReleaseGPUGraphicsPipeline(device, pipeline);
 				}
