@@ -217,12 +217,8 @@ public class Batcher : IDisposable
 		Upload();
 
 		// make sure default shader and material are valid
-		if (DefaultVertexShader == null || DefaultVertexShader.IsDisposed)
-			DefaultVertexShader = new BatcherVertexShader(GraphicsDevice);
+		ValidateDefaultShaders(GraphicsDevice);
 		defaultMaterial.Vertex.Shader = DefaultVertexShader;
-
-		if (DefaultFragmentShader == null || DefaultFragmentShader.IsDisposed)
-			DefaultFragmentShader = new BatcherFragmentShader(GraphicsDevice);
 		defaultMaterial.Fragment.Shader = DefaultFragmentShader;
 
 		// render batches
@@ -416,15 +412,22 @@ public class Batcher : IDisposable
 	/// </summary>
 	public void PushMaterial(Material material)
 	{
-		if (material.Vertex.Shader == null ||
-			material.Fragment.Shader == null)
-			throw new Exception("Material must have a Shader assigned");
+		if (material.Fragment.Shader == null)
+			throw new Exception("Material must have a Fragment assigned");
 
 		materialStack.Push(currentBatch.Material);
 		if (!materialsPool.TryDequeue(out var copy))
 			copy = new Material();
 		materialsUsed.Add(copy);
 		material.CopyTo(copy);
+
+		// allow fallback to default vertex shader
+		if (copy.Vertex.Shader == null)
+		{
+			ValidateDefaultShaders(GraphicsDevice);
+			copy.Vertex.Shader = DefaultVertexShader;
+		}
+
 		SetMaterial(copy);
 	}
 
@@ -1669,6 +1672,14 @@ public class Batcher : IDisposable
 		var cc = q0 - p0;
 		var t = (bb.X * cc.Y - bb.Y * cc.X) / (aa.Y * bb.X - aa.X * bb.Y);
 		return new(p0.X + t * (p1.X - p0.X), p0.Y + t * (p1.Y - p0.Y));
+	}
+
+	private static void ValidateDefaultShaders(GraphicsDevice gfx)
+	{
+		if (DefaultVertexShader == null || DefaultVertexShader.IsDisposed || DefaultVertexShader.GraphicsDevice != gfx)
+			DefaultVertexShader = new BatcherVertexShader(gfx);
+		if (DefaultFragmentShader == null || DefaultFragmentShader.IsDisposed || DefaultFragmentShader.GraphicsDevice != gfx)
+			DefaultFragmentShader = new BatcherFragmentShader(gfx);
 	}
 
 	#endregion
