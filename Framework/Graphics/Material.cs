@@ -139,4 +139,14 @@ public class Material
 		Vertex.CopyTo(to.Vertex);
 		Fragment.CopyTo(to.Fragment);
 	}
+
+	/// <summary>
+    /// Creates a Copy of this Material
+    /// </summary>
+	public Material Clone()
+	{
+		var clone = new Material();
+		CopyTo(clone);
+		return clone;	
+	}
 }

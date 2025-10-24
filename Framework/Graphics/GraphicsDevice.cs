@@ -38,7 +38,17 @@ public abstract class GraphicsDevice
 	/// </summary>
 	public abstract bool VSync { get; set; }
 
-	internal GraphicsDevice(App app) => App = app;
+	/// <summary>
+    /// Built-in Default Materials
+    /// </summary>
+	public DefaultResources Defaults { get; private set; } = null!;
+
+	internal GraphicsDevice(App app)
+	{
+		App = app;
+		Defaults = new(this);
+	}
+
 	internal abstract void CreateDevice(in AppFlags flags);
 	internal abstract void DestroyDevice();
 	internal abstract void Startup(nint window);
