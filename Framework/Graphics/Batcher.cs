@@ -382,7 +382,7 @@ public class Batcher : IDisposable
 	}
 
 	/// <summary>
-	/// Pushes a relative draw layer, with lower values being rendered first.
+	/// Pushes a relative draw layer, with lower values being rendered later (ie. above).
 	/// Note that this is not very performant and should generally be avoided.
 	/// </summary>
 	public void PushLayer(int delta)
