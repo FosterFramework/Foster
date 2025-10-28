@@ -1171,9 +1171,9 @@ public static class Calc
 	#region Vector2
 
 	/// <summary>
-	/// Find the closest point in the list to a given point
+	/// Find the closest point in the span to a given point
 	/// </summary>
-	/// <returns>The closest point, or default value if the list is empty</returns>
+	/// <returns>The closest point, or default value if the span is empty</returns>
 	public static Vector2 GetClosestPoint(this ReadOnlySpan<Vector2> points, in Vector2 to)
 	{
 		Vector2? closest = null;
@@ -1193,17 +1193,17 @@ public static class Calc
 	}
 
 	/// <summary>
-	/// Find the closest point in the list to a given point
+	/// Find the closest point in the span to a given point
 	/// </summary>
-	/// <returns>The closest point, or default value if the list is empty</returns>
+	/// <returns>The closest point, or default value if the span is empty</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 GetClosestPoint(this Span<Vector2> points, in Vector2 to)
 		=> GetClosestPoint((ReadOnlySpan<Vector2>)points, to);
 
 	/// <summary>
-	/// Find the closest point in the list to a given point
+	/// Find the closest point in the array to a given point
 	/// </summary>
-	/// <returns>The closest point, or default value if the list is empty</returns>
+	/// <returns>The closest point, or default value if the array is empty</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 GetClosestPoint(this Vector2[] points, in Vector2 to)
 		=> GetClosestPoint(points.AsSpan(), to);
@@ -1217,9 +1217,9 @@ public static class Calc
 		=> GetClosestPoint(CollectionsMarshal.AsSpan(points), to);
 
 	/// <summary>
-	/// Find the furthest point in the list to a given point
+	/// Find the furthest point in the span to a given point
 	/// </summary>
-	/// <returns>The furthest point, or default value if the list is empty</returns>
+	/// <returns>The furthest point, or default value if the span is empty</returns>
 	public static Vector2 GetFurthestPoint(this ReadOnlySpan<Vector2> points, in Vector2 to)
 	{
 		Vector2? furthest = null;
@@ -1239,17 +1239,17 @@ public static class Calc
 	}
 
 	/// <summary>
-	/// Find the furthest point in the list to a given point
+	/// Find the furthest point in the span to a given point
 	/// </summary>
-	/// <returns>The furthest point, or default value if the list is empty</returns>
+	/// <returns>The furthest point, or default value if the span is empty</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 GetFurthestPoint(this Span<Vector2> points, in Vector2 to)
 		=> GetFurthestPoint((ReadOnlySpan<Vector2>)points, to);
 
 	/// <summary>
-	/// Find the furthest point in the list to a given point
+	/// Find the furthest point in the array to a given point
 	/// </summary>
-	/// <returns>The furthest point, or default value if the list is empty</returns>
+	/// <returns>The furthest point, or default value if the array is empty</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 GetFurthestPoint(this Vector2[] points, in Vector2 to)
 		=> GetFurthestPoint(points.AsSpan(), to);
@@ -1554,18 +1554,63 @@ public static class Calc
 
 	#endregion
 
+	#region Move Vector2 List
+
+	/// <summary>
+	/// Add a delta to every element of the span
+	/// </summary>
+	public static void Move(this Span<Vector2> points, in Vector2 delta)
+	{
+		foreach (ref var pt in points)
+			pt += delta;
+	}
+
+	/// <summary>
+	/// Add a delta to every element of the array
+	/// </summary>
+	public static void Move(this Vector2[] points, in Vector2 delta)
+		=> Move(points.AsSpan(), delta);
+
+	/// <summary>
+	/// Add a delta to every element of the list
+	/// </summary>
+	public static void Move(this List<Vector2> points, in Vector2 delta)
+		=> Move(CollectionsMarshal.AsSpan(points), delta);
+
+	#endregion
+
 	#region Triangulation
 
-	public static void Triangulate(IList<Vector2> points, List<int> populate)
+	public static bool InsideTriangle(Vector2 a, Vector2 b, Vector2 c, Vector2 point)
+	{
+		var p0 = c - b;
+		var p1 = a - c;
+		var p2 = b - a;
+
+		var ap = point - a;
+		var bp = point - b;
+		var cp = point - c;
+
+		return (p0.X * bp.Y - p0.Y * bp.X >= 0.0f) &&
+			(p2.X * ap.Y - p2.Y * ap.X >= 0.0f) &&
+			(p1.X * cp.Y - p1.Y * cp.X >= 0.0f);
+	}
+
+	/// <summary>
+	/// Triangulate the vertices and populate the results into <paramref name="populateIndices"/>
+	/// </summary>
+	/// <param name="vertices">The vertices to triangulate</param>
+	/// <param name="populateIndices">Stores the results of the triangulation. Each triplet of integers in this list represents indices into the vertex list of the vertices of a triangle. So if the list contains six integers, that represents two triangles. If this list is reused, be sure to clear it first!</param>
+	public static void Triangulate(IReadOnlyList<Vector2> vertices, List<int> populateIndices)
 	{
 		float Area()
 		{
 			var area = 0f;
 
-			for (int p = points.Count - 1, q = 0; q < points.Count; p = q++)
+			for (int p = vertices.Count - 1, q = 0; q < vertices.Count; p = q++)
 			{
-				var pval = points[p];
-				var qval = points[q];
+				var pval = vertices[p];
+				var qval = vertices[q];
 
 				area += pval.X * qval.Y - qval.X * pval.Y;
 			}
@@ -1575,9 +1620,9 @@ public static class Calc
 
 		bool Snip(int u, int v, int w, int n, Span<int> list)
 		{
-			var a = points[list[u]];
-			var b = points[list[v]];
-			var c = points[list[w]];
+			var a = vertices[list[u]];
+			var b = vertices[list[v]];
+			var c = vertices[list[w]];
 
 			if (float.Epsilon > (((b.X - a.X) * (c.Y - a.Y)) - ((b.Y - a.Y) * (c.X - a.X))))
 				return false;
@@ -1587,32 +1632,32 @@ public static class Calc
 				if ((p == u) || (p == v) || (p == w))
 					continue;
 
-				if (InsideTriangle(a, b, c, points[list[p]]))
+				if (InsideTriangle(a, b, c, vertices[list[p]]))
 					return false;
 			}
 
 			return true;
 		}
 
-		if (points.Count < 3)
+		if (vertices.Count < 3)
 			return;
 
-		Span<int> list = points.Count < 1000
-			? stackalloc int[points.Count]
-			: new int[points.Count];
+		var list = vertices.Count < 1000
+			? stackalloc int[vertices.Count]
+			: new int[vertices.Count];
 
 		if (Area() > 0)
 		{
-			for (int v = 0; v < points.Count; v++)
+			for (int v = 0; v < vertices.Count; v++)
 				list[v] = v;
 		}
 		else
 		{
-			for (int v = 0; v < points.Count; v++)
-				list[v] = (points.Count - 1) - v;
+			for (int v = 0; v < vertices.Count; v++)
+				list[v] = (vertices.Count - 1) - v;
 		}
 
-		var nv = points.Count;
+		var nv = vertices.Count;
 		var count = 2 * nv;
 
 		for (int v = nv - 1; nv > 2;)
@@ -1632,9 +1677,9 @@ public static class Calc
 
 			if (Snip(u, v, w, nv, list))
 			{
-				populate.Add(list[u]);
-				populate.Add(list[v]);
-				populate.Add(list[w]);
+				populateIndices.Add(list[u]);
+				populateIndices.Add(list[v]);
+				populateIndices.Add(list[w]);
 
 				for (int s = v, t = v + 1; t < nv; s++, t++)
 					list[s] = list[t];
@@ -1645,26 +1690,49 @@ public static class Calc
 		}
 	}
 
-	public static List<int> Triangulate(IList<Vector2> points)
+	/// <summary>
+	/// Triangulate the vertices. This will allocate a new list of integers to return
+	/// </summary>
+	/// <returns>A list of integers. Each triplet of integers in the list represents indices into the vertex list of the vertices of a triangle. So if the list contains six integers, that represents two triangles</returns>
+	public static List<int> Triangulate(IReadOnlyList<Vector2> vertices)
 	{
 		var indices = new List<int>();
-		Triangulate(points, indices);
+		Triangulate(vertices, indices);
 		return indices;
 	}
 
-	public static bool InsideTriangle(Vector2 a, Vector2 b, Vector2 c, Vector2 point)
+	/// <summary>
+	/// Triangulate the vertices. This get a list of integers to return from the <see cref="FramePool"/> to avoid allocating. This list should not be stored, because it will be returned to the pool at the end of the current frame
+	/// </summary>
+	/// <returns>A list of integers. Each triplet of integers in the list represents indices into the vertex list of the vertices of a triangle. So if the list contains six integers, that represents two triangles</returns>
+	public static List<int> TriangulatePooled(IReadOnlyList<Vector2> vertices)
 	{
-		var p0 = c - b;
-		var p1 = a - c;
-		var p2 = b - a;
+		var indices = FramePool<List<int>>.Get();
+		Triangulate(vertices, indices);
+		return indices;
+	}
 
-		var ap = point - a;
-		var bp = point - b;
-		var cp = point - c;
+	/// <summary>
+	/// Triangle the vertices and return an enumerable that can enumerate the triangles found
+	/// </summary>
+	/// <param name="vertices">The vertices to triangulate</param>
+	/// <param name="populateIndices">An empty list of integers that will be populated during the process. If this is reused, be sure to clear it first</param>
+	public static TriangulationEnumerable TriangulateAndEnumerate(IReadOnlyList<Vector2> vertices,
+		List<int> populateIndices)
+	{
+		Triangulate(vertices, populateIndices);
+		return new(vertices, populateIndices);
+	}
 
-		return (p0.X * bp.Y - p0.Y * bp.X >= 0.0f) &&
-			   (p2.X * ap.Y - p2.Y * ap.X >= 0.0f) &&
-			   (p1.X * cp.Y - p1.Y * cp.X >= 0.0f);
+	/// <summary>
+	/// Triangle the vertices and return an enumerable that can enumerate the triangles found. The 'Pooled' in this method name indicates that a list of integers from the <see cref="FramePool"/> will be used to store data during enumeration to avoid allocations. This means that the enumerable returned should not be stored beyond the current frame, because an internal data structure may be reused on a future frame!
+	/// </summary>
+	/// <param name="vertices">The vertices to triangulate</param>
+	public static TriangulationEnumerable TriangulateAndEnumeratePooled(IReadOnlyList<Vector2> vertices)
+	{
+		var indices = FramePool<List<int>>.Get();
+		Triangulate(vertices, indices);
+		return new(vertices, indices);
 	}
 
 	#endregion

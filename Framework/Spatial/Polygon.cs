@@ -360,46 +360,23 @@ public class Polygon : IList<Vector2>, IList
 	/// <summary>
 	/// Get the triangles
 	/// </summary>
-	public void GetTriangles(out IReadOnlyList<Vector2> verts, out IReadOnlyList<int> indices)
+	public void GetTriangles(out IReadOnlyList<Vector2> vertices, out IReadOnlyList<int> indices)
 	{
 		Triangulate();
-		verts = vertices;
+		vertices = this.vertices;
 		indices = triangles;
 	}
 
 	/// <summary>
 	/// Enumerate all triangles formed by this polygon. If the polygon's edges cross themselves these may be incorrect. The polygon must triangulate to find these triangles, which is expensive, but it will cache triangles so long as no vertices are changed.
 	/// </summary>
-	public TriangleEnumerable Triangles
+	public TriangulationEnumerable Triangles
 	{
 		get
 		{
 			Triangulate();
-			return new(this);
+			return new(vertices, triangles);
 		}
-	}
-
-	public readonly struct TriangleEnumerable(Polygon polygon) : IEnumerable<Triangle>
-	{
-		public TriangleEnumerator GetEnumerator() => new(polygon);
-		IEnumerator<Triangle> IEnumerable<Triangle>.GetEnumerator() => GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-	}
-
-	public struct TriangleEnumerator(Polygon polygon) : IEnumerator<Triangle>
-	{
-		private int index = -3;
-
-		public bool MoveNext() => (index += 3) < polygon.triangles.Count - 2;
-		public void Reset() => index = -3;
-		public void Dispose() { }
-		object? IEnumerator.Current => Current;
-
-		public Triangle Current => new(
-			polygon.vertices[polygon.triangles[index]],
-			polygon.vertices[polygon.triangles[index + 1]],
-			polygon.vertices[polygon.triangles[index + 2]]
-		);
 	}
 
 	#endregion
