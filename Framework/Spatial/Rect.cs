@@ -369,6 +369,10 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 		=> new(pos.X - Width * justify.X, pos.Y - Height * justify.Y, Width, Height);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Rect CenteredAt(in Vector2 pos)
+		=> new(pos.X - Width * .5f, pos.Y - Height * .5f, Width, Height);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly Rect At(in Vector2 pos) => new(pos.X, pos.Y, Width, Height);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
