@@ -1969,18 +1969,23 @@ public static class Calc
 
 	#region Interpolation
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Lerp(float a, float b, float percent)
-		=> (a + (b - a) * percent);
+		=> float.Lerp(a, b, percent);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Bezier(float a, float b, float c, float t)
 		=> Lerp(Lerp(a, b, t), Lerp(b, c, t), t);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Bezier(float a, float b, float c, float d, float t)
 		=> Bezier(Lerp(a, b, t), Lerp(b, c, t), Lerp(c, d, t), t);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 Bezier(Vector2 a, Vector2 b, Vector2 c, float t)
 		=> Vector2.Lerp(Vector2.Lerp(a, b, t), Vector2.Lerp(b, c, t), t);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 Bezier(Vector2 a, Vector2 b, Vector2 c, Vector2 d, float t)
 		=> Bezier(Vector2.Lerp(a, b, t), Vector2.Lerp(b, c, t), Vector2.Lerp(c, d, t), t);
 
