@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
@@ -40,6 +41,14 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 			_ => throw new IndexOutOfRangeException()
 		};
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Vector2 On(float percent)
+		=> Vector2.Lerp(From, To, percent);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Vector2 OnClamped(float percent)
+		=> Vector2.Lerp(From, To, Calc.Clamp(percent));
+
 	public readonly void Project(in Vector2 axis, out float min, out float max)
 	{
 		min = float.MaxValue;
@@ -53,35 +62,40 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 		max = Math.Max(dot, max);
 	}
 
-	public readonly Vector2 ClosestPoint(in Vector2 to)
+	public readonly float ClosestTUnclamped(in Vector2 to)
 	{
 		var diff = To - From;
 		if (diff == Vector2.Zero)
-			return From;
-
-		var w = to - From;
-
-		var t = Vector2.Dot(w, diff) / (diff.X * diff.X + diff.Y * diff.Y);
-		if (t < 0)
-			t = 0;
-		else if (t > 1)
-			t = 1;
-
-		return diff * t + From;
+			return 0;
+		else
+			return Vector2.Dot(to - From, diff) / (diff.X * diff.X + diff.Y * diff.Y);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly float ClosestT(in Vector2 to)
+		=> Calc.Clamp(ClosestTUnclamped(to));
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Vector2 ClosestPoint(in Vector2 to)
+		=> (To - From) * ClosestT(to) + From;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly float DistanceSquared(in Vector2 to)
 		=> Vector2.DistanceSquared(ClosestPoint(to), to);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly float Distance(in Vector2 to)
 		=> Vector2.Distance(ClosestPoint(to), to);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly bool Intersects(in Rect rect)
 		=> rect.Overlaps(this);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly bool Intersects(in Circle circle)
 		=> circle.Overlaps(this);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly bool Intersects(in Line other)
 		=> Intersects(other, out _);
 
