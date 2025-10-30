@@ -357,9 +357,10 @@ public sealed class Window : IDrawableTarget
 	/// </summary>
 	public void SetMousePosition(Vector2 position)
 	{
-		// account for content scale / DPI
-		position /= ContentScale;
-		SDL_WarpMouseInWindow(Handle, position.X, position.Y);
+		SDL_WarpMouseInWindow(Handle, 
+			position.X * (Width / (float)WidthInPixels),
+			position.Y * (Height / (float)HeightInPixels)
+		);
 	}
 
 	/// <summary>
