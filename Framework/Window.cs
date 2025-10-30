@@ -353,6 +353,14 @@ public sealed class Window : IDrawableTarget
 	}
 
 	/// <summary>
+	/// Sets the Mouse position within the Window
+	/// </summary>
+	public void SetMousePosition(Vector2 position)
+	{
+		SDL_WarpMouseInWindow(Handle, position.X, position.Y);
+	}
+
+	/// <summary>
 	/// Sets the Mouse Cursor. If null, resets the Cursor to the default OS cursor.
 	/// </summary>
 	public void SetMouseCursor(Cursor? cursor)
