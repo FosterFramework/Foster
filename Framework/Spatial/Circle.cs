@@ -22,7 +22,7 @@ public struct Circle : IProjectable, IEquatable<Circle>
 	public float Radius;
 
 	/// <summary>
-	/// Creates a new Circle at the given position with the given Radius
+	/// Creates a new Circle at the given position with the given radius
 	/// </summary>
 	public Circle(Vector2 position, float radius)
 	{
@@ -31,11 +31,19 @@ public struct Circle : IProjectable, IEquatable<Circle>
 	}
 
 	/// <summary>
-	/// Creates a new Circle at the given x and y coordinates with the given Radius
+	/// Creates a new Circle at the given x and y coordinates with the given radius
 	/// </summary>
 	public Circle(float x, float y, float radius)
 	{
-		Position = new Vector2(x, y);
+		Position = new(x, y);
+		Radius = radius;
+	}
+
+	/// <summary>
+	/// Creates a new Circle at (0, 0) with the given radius
+	/// </summary>
+	public Circle(float radius)
+	{
 		Radius = radius;
 	}
 
