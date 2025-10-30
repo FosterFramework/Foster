@@ -473,6 +473,11 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			SampleCount = GetSampleCount(sampleCount),
 			MultiSampleResolve = resolve
 		};
+
+		// attach to target
+		if (targetBinding is TargetResource tar)
+			tar.Attachments.Add(res);
+
 		lock (resources)
 			resources.Add(res);
 		return res;
