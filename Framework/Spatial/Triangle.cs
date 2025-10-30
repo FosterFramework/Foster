@@ -14,6 +14,12 @@ public struct Triangle(Vector2 a, Vector2 b, Vector2 c) : IConvexShape
 	public Vector2 B = b;
 	public Vector2 C = c;
 
+	public Triangle(float x1, float y1, float x2, float y2, float x3, float y3)
+		: this(new(x1, y1), new(x2, y2), new(x3, y3))
+	{
+
+	}
+
 	public readonly bool Contains(in Vector2 pt)
 		=> Calc.Cross(B - A, pt - A) > 0 && Calc.Cross(C - B, pt - B) > 0 && Calc.Cross(A - C, pt - C) > 0;
 
