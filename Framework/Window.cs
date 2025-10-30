@@ -353,10 +353,12 @@ public sealed class Window : IDrawableTarget
 	}
 
 	/// <summary>
-	/// Sets the Mouse position within the Window
+	/// Sets the Mouse position within the Window in Pixel Coordinates
 	/// </summary>
 	public void SetMousePosition(Vector2 position)
 	{
+		// account for content scale / DPI
+		position /= ContentScale;
 		SDL_WarpMouseInWindow(Handle, position.X, position.Y);
 	}
 
