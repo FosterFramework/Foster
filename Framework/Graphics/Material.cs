@@ -147,6 +147,12 @@ public class Material
 	}
 
 	/// <summary>
+	/// Copies the State of another Material onto this Material
+	/// </summary>
+	public void CopyFrom(Material from)
+		=> from.CopyTo(this);
+
+	/// <summary>
     /// Creates a Copy of this Material
     /// </summary>
 	public Material Clone()
