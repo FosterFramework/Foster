@@ -125,10 +125,16 @@ public class Material
 	public readonly Stage Fragment = new(ShaderStage.Fragment);
 
 	public Material() {}
+	
 	public Material(Shader? vertexShader, Shader? fragmentShader)
 	{
 		Vertex.Shader = vertexShader;
 		Fragment.Shader = fragmentShader;
+	}
+
+	public Material(Material from)
+	{
+		from.CopyTo(this);
 	}
 
 	/// <summary>
