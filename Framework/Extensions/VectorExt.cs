@@ -1,10 +1,11 @@
 ﻿using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.Intrinsics;
 
 namespace Foster.Framework;
 
 /// <summary>
-/// <see cref="Vector2"/>, <see cref="Vector3"/>, <see cref="Vector4"/> Extension Methods
+/// <see cref="Vector2"/>, <see cref="Vector3"/>, <see cref="Vector4"/>, and <see cref="Vector128{T}"/> Extension Methods
 /// </summary>
 public static class VectorExt
 {
@@ -15,7 +16,7 @@ public static class VectorExt
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 Clamp(this Vector2 vector, in Vector2 min, in Vector2 max)
-		=> new(Calc.Clamp(vector.X, min.X, max.X), Calc.Clamp(vector.Y, min.Y, max.Y));
+		=> Vector2.Clamp(vector, min, max);
 
 	/// <summary>
 	/// Clamps the <see cref="Vector2"/> inside the bounding <see cref="Rect"/>
@@ -29,42 +30,42 @@ public static class VectorExt
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 Floor(this Vector2 vector)
-		=> new (MathF.Floor(vector.X), MathF.Floor(vector.Y));
+		=> Vector2.Truncate(vector);
 
 	/// <summary>
-	/// Rounds the individual components of a <see cref="Vector2"/>
+	/// Rounds the individual components of a <see cref="Vector2"/> to the nearest even number.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 Round(this Vector2 vector)
-		=> new(MathF.Round(vector.X), MathF.Round(vector.Y));
+		=> Vector2.Round(vector);
 
 	/// <summary>
-	/// Rounds the individual components of a <see cref="Vector2"/>
+	/// Rounds the individual components of a <see cref="Vector2"/> and returns them as a <see cref="Point2"/>
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Point2 RoundToPoint2(this Vector2 vector)
-		=> new((int)MathF.Round(vector.X), (int)MathF.Round(vector.Y));
+		=> Vector128.ConvertToInt32(Vector128.Round(vector.AsVector128Unsafe())).AsPoint2();
 
 	/// <summary>
-	/// Floors the individual components of a <see cref="Vector2"/>
+	/// Floors the individual components of a <see cref="Vector2"/> and returns them as a <see cref="Point2"/>
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Point2 FloorToPoint2(this Vector2 vector)
-		=> new((int)MathF.Floor(vector.X), (int)MathF.Floor(vector.Y));
+		=> Vector128.ConvertToInt32(Vector128.Floor(vector.AsVector128Unsafe())).AsPoint2();
 
 	/// <summary>
-	/// Ceilings the individual components of a <see cref="Vector2"/>
+	/// Ceilings the individual components of a <see cref="Vector2"/> and returns them as a <see cref="Point2"/>
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Point2 CeilingToPoint2(this Vector2 vector)
-		=> new((int)MathF.Ceiling(vector.X), (int)MathF.Ceiling(vector.Y));
+		=> Vector128.ConvertToInt32(Vector128.Ceiling(vector.AsVector128Unsafe())).AsPoint2();
 
 	/// <summary>
 	/// Ceilings the individual components of a <see cref="Vector2"/>
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static Vector2 Ceiling(this Vector2 vector)
-		=> new(MathF.Ceiling(vector.X), MathF.Ceiling(vector.Y));
+	public static Vector2 Ceiling(this Vector2 vector) // Can be swapped with Vector2.Ceiling(vector) in .NET 10 
+		=> Vector128.Ceiling(vector.AsVector128Unsafe()).AsVector2();
 
 	/// <summary>
 	/// Turns a <see cref="Vector2"/> to its right perpendicular
@@ -154,7 +155,7 @@ public static class VectorExt
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 Abs(this Vector2 vector)
-		=> new(MathF.Abs(vector.X), MathF.Abs(vector.Y));
+		=> Vector2.Abs(vector);
 
 	/// <summary>
 	/// Move a <see cref="Vector2"/> from one bounds to another
@@ -175,7 +176,7 @@ public static class VectorExt
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector3 AsVector3(this Vector2 vector)
-		=> new(vector.X, vector.Y, 0);
+		=> vector.AsVector128Unsafe().WithElement(2, 0f).AsVector3();
 
 	/// <summary>
 	/// Normalizes a <see cref="Vector3"/> safely (a zero-length <see cref="Vector3"/> returns the <paramref name="fallbackValue"/>)
@@ -189,7 +190,7 @@ public static class VectorExt
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 XY(this Vector3 vector)
-		=> new(vector.X, vector.Y);
+		=> vector.AsVector128Unsafe().AsVector2();
 
 	/// <summary>
 	/// Apply the X- and Y-components of a <see cref="Vector2"/> to a <see cref="Vector3"/>
@@ -199,26 +200,46 @@ public static class VectorExt
 		=> new(xy.X, xy.Y, vector.Z);
 
 	/// <summary>
-	/// Rounds the individual components of a <see cref="Vector3"/>
+	/// Rounds the individual components of a <see cref="Vector3"/> to the nearest even number.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector3 Round(this Vector3 vector)
-		=> new(MathF.Round(vector.X), MathF.Round(vector.Y), MathF.Round(vector.Z));
+		=> Vector3.Round(vector);
 
 	/// <summary>
 	/// Floors the individual components of a <see cref="Vector3"/>
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector3 Floor(this Vector3 vector)
-		=> new(MathF.Floor(vector.X), MathF.Floor(vector.Y), MathF.Floor(vector.Z));
+		=> Vector3.Truncate(vector);
 
 	/// <summary>
 	/// Ceilings the individual components of a <see cref="Vector3"/>
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static Vector3 Ceiling(this Vector3 vector)
-		=> new(MathF.Ceiling(vector.X), MathF.Ceiling(vector.Y), MathF.Ceiling(vector.Z));
+	public static Vector3 Ceiling(this Vector3 vector) // Can be swapped with Vector3.Ceiling(vector) in .NET 10 
+		=> Vector128.Ceiling(vector.AsVector128Unsafe()).AsVector3();
 
+	/// <summary>
+	/// Rounds the individual components of a <see cref="Vector3"/> and returns them as a <see cref="Point3"/>
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Point3 RoundToPoint3(this Vector3 vector)
+		=> Vector128.ConvertToInt32(Vector128.Round(vector.AsVector128Unsafe())).AsPoint3();
+
+	/// <summary>
+	/// Floors the individual components of a <see cref="Vector3"/> and returns them as a <see cref="Point3"/>
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Point3 FloorToPoint3(this Vector3 vector)
+		=> Vector128.ConvertToInt32(Vector128.Floor(vector.AsVector128Unsafe())).AsPoint3();
+
+	/// <summary>
+	/// Ceilings the individual components of a <see cref="Vector3"/> and returns them as a <see cref="Point3"/>
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Point3 CeilingToPoint3(this Vector3 vector)
+		=> Vector128.ConvertToInt32(Vector128.Ceiling(vector.AsVector128Unsafe())).AsPoint3();
 	#endregion
 
 	#region Vector4
@@ -228,21 +249,55 @@ public static class VectorExt
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector4 Round(this Vector4 vector)
-		=> new(MathF.Round(vector.X), MathF.Round(vector.Y), MathF.Round(vector.Z), MathF.Round(vector.W));
+		=> Vector4.Round(vector);
 
 	/// <summary>
 	/// Floors the individual components of a <see cref="Vector4"/>
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector4 Floor(this Vector4 vector)
-		=> new(MathF.Floor(vector.X), MathF.Floor(vector.Y), MathF.Floor(vector.Z), MathF.Floor(vector.W));
+		=> Vector4.Truncate(vector);
 
 	/// <summary>
 	/// Ceilings the individual components of a <see cref="Vector4"/>
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector4 Ceiling(this Vector4 vector)
-		=> new(MathF.Ceiling(vector.X), MathF.Ceiling(vector.Y), MathF.Ceiling(vector.Z), MathF.Ceiling(vector.W));
+		=> Vector128.Ceiling(vector.AsVector128()).AsVector4();
 
+	#endregion
+
+	#region Vector128-Point conversions
+	// TL;DR: Using a cheeky hack to maintain dotnet consistency with future updates.
+
+	// The action of converting values from a Vector128 to some other struct containing values is consistent across all structs with the same "bit structure".
+	// Therefore, we can use some cheeky reinterpret_casts and the .NET-provided intrinsic conversions used specially for System.Numerics, without having a System.Numerics class.
+	// This will continue to work as long as .NET is supporting Vector2 and the size of Vector2 in bytes is the same as Point2 in bytes.
+	// This compiles into 2 instructions. If Point2/3 are read internally as SIMD vectors, then that will reduce to 1 instruction (identical to AsVector2())
+	// https://godbolt.org/z/bMjvj6bYG
+#if true
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Point2 AsPoint2(this Vector128<int> vector)
+	{
+		Vector2 v = vector.AsSingle().AsVector2(); // ToVector2(reinterpret_cast(Vector128<int>, Vector128<float>)) - maintains bit values, then reads as Vector2 according to .NET spec
+		return Unsafe.BitCast<Vector2, Point2>(v); // reinterpret_cast(Vector2, Point2) - maintains bit values, read now as integer values.
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Point3 AsPoint3(this Vector128<int> vector)
+	{
+		Vector3 v = vector.AsSingle().AsVector3(); // reinterpret_cast(Vector128<int>, Vector128<float>) - maintains bit values, then reads as Vector3 according to .NET spec
+		return Unsafe.BitCast<Vector3, Point3>(v); // reinterpret_cast(Vector3, Point3) - maintains bit values, read now as integer values.
+	}
+#else // If for some reason the above breaks, this is the fallback for dotnet, based on https://github.com/dotnet/runtime/blob/v9.0.10/src/libraries/System.Private.CoreLib/src/System/Runtime/Intrinsics/Vector128.cs#L343
+	public static Point2 AsPoint2(this Vector128<int> vector) {
+		ref byte address = ref Unsafe.As<Vector128<int>, byte>(ref value);
+        return Unsafe.ReadUnaligned<Point2>(ref address);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Point3 AsPoint3(this Vector128<int> vector) {
+		ref byte address = ref Unsafe.As<Vector128<int>, byte>(ref value);
+        return Unsafe.ReadUnaligned<Point3>(ref address);
+	}
+#endif
 	#endregion
 }
