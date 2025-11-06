@@ -49,6 +49,13 @@ public abstract class GraphicsDevice
 		Defaults = new(this);
 	}
 
+	internal enum BufferType
+	{
+		Vertex,
+		Index,
+		Storage
+	}
+
 	internal abstract void CreateDevice(in AppFlags flags);
 	internal abstract void DestroyDevice();
 	internal abstract void Startup(nint window);
@@ -59,8 +66,7 @@ public abstract class GraphicsDevice
 	internal abstract void GetTextureData(IHandle texture, nint data, int length);
 	internal abstract IHandle CreateTarget(int width, int height);
 	internal abstract IHandle CreateShader(string? name, in ShaderCreateInfo shaderInfo);
-	internal abstract IHandle CreateIndexBuffer(string? name, IndexFormat format);
-	internal abstract IHandle CreateVertexBuffer(string? name);
+	internal abstract IHandle CreateBuffer(string? name, BufferType type, IndexFormat format);
 	internal abstract void UploadBufferData(IHandle buffer, nint data, int dataSize, int dataDestOffset);
 	internal abstract void DestroyResource(IHandle resource);
 	internal abstract void PerformDraw(DrawCommand command);
@@ -100,10 +106,6 @@ public abstract class GraphicsDevice
 		if (target == null || (target is Target t && t.IsDisposed))
 			throw new Exception("Attempting to render a null or disposed Target");
 
-		// no vertex buffer
-		if (command.VertexBuffers.Count <= 0)
-			throw new Exception("Attempting to render without a Vertex Buffer");
-
 		// invalid index buffer state
 		if (command.IndexBuffer != null && command.IndexBuffer.IsDisposed)
 			throw new Exception("Attempting to render with a disposed Index Buffer");
@@ -133,6 +135,20 @@ public abstract class GraphicsDevice
 				Log.Warning("Attempting to render an empty Vertex Buffer; Nothing will be drawn");
 				return;
 			}
+		}
+
+		// validate storage buffers
+		for (int i = 0; i < command.VertexStorageBuffers.Count; i ++)
+		{
+			var it = command.VertexStorageBuffers[i];
+			if (it == null || it.IsDisposed)
+				throw new Exception("Attempting to render a null or disposed Vertex Storage Buffer");
+		}
+		for (int i = 0; i < command.FragmentStorageBuffers.Count; i ++)
+		{
+			var it = command.FragmentStorageBuffers[i];
+			if (it == null || it.IsDisposed)
+				throw new Exception("Attempting to render a null or disposed Fragment Storage Buffer");
 		}
 
 		// using an index buffer that is empty

@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 namespace Foster.Framework;
 
 /// <summary>
@@ -28,16 +30,12 @@ public abstract class GraphicsBuffer : IGraphicResource
 	/// </summary>
 	public bool IsDisposed => Resource.Disposed;
 
-	internal GraphicsBuffer(GraphicsDevice graphicsDevice, int elementSizeInBytes, IndexFormat? indexFormat, string? name)
+	internal GraphicsBuffer(GraphicsDevice graphicsDevice, int elementSizeInBytes, GraphicsDevice.BufferType type, IndexFormat? indexFormat, string? name)
 	{
 		GraphicsDevice = graphicsDevice;
 		Name = name ?? string.Empty;
 		ElementSizeInBytes = elementSizeInBytes;
-
-		if (indexFormat.HasValue)
-			Resource = graphicsDevice.CreateIndexBuffer(name, indexFormat.Value);
-		else
-			Resource = graphicsDevice.CreateVertexBuffer(name);
+		Resource = graphicsDevice.CreateBuffer(name, type, indexFormat ?? default);
 	}
 
 	~GraphicsBuffer()
@@ -78,11 +76,10 @@ public abstract class GraphicsBuffer : IGraphicResource
 /// Holds Vertex Elements for drawing
 /// </summary>
 public class VertexBuffer(GraphicsDevice graphicsDevice, VertexFormat format, string? name = null)
-	: GraphicsBuffer(graphicsDevice, format.Stride, null, name)
+	: GraphicsBuffer(graphicsDevice, format.Stride, GraphicsDevice.BufferType.Vertex, null, name)
 {
 	public readonly VertexFormat Format = format;
 }
-
 
 /// <summary>
 /// Holds Vertex Elements for drawing
@@ -104,7 +101,7 @@ public class VertexBuffer<T>(GraphicsDevice graphicsDevice, string? name = null)
 /// Holds Index Elements for drawing
 /// </summary>
 public class IndexBuffer(GraphicsDevice graphicsDevice, IndexFormat format, string? name = null)
-	: GraphicsBuffer(graphicsDevice, format.SizeInBytes(), format, name)
+	: GraphicsBuffer(graphicsDevice, format.SizeInBytes(), GraphicsDevice.BufferType.Index, format, name)
 {
 	/// <summary>
 	/// The Index Element Format
@@ -117,6 +114,28 @@ public class IndexBuffer(GraphicsDevice graphicsDevice, IndexFormat format, stri
 /// </summary>
 public class IndexBuffer<T>(GraphicsDevice graphicsDevice, string? name = null)
 	: IndexBuffer(graphicsDevice, IndexFormatExt.GetFormatOf<T>(), name) where T : unmanaged
+{
+	/// <summary>
+	/// Uploads data to the buffer, and resizes it if required.
+	/// </summary>
+	public unsafe void Upload(in ReadOnlySpan<T> data, int offset = 0)
+	{
+		fixed (T* ptr = data)
+			Upload(new nint(ptr), data.Length, offset);
+	}
+}
+
+/// <summary>
+/// Holds Storage Elements for drawing
+/// </summary>
+public class StorageBuffer(GraphicsDevice graphicsDevice, int elementSizeInBytes, string? name = null)
+	: GraphicsBuffer(graphicsDevice, elementSizeInBytes, GraphicsDevice.BufferType.Storage, null, name) {}
+
+/// <summary>
+/// Holds Storage Elements for drawing
+/// </summary>
+public class StorageBuffer<T>(GraphicsDevice graphicsDevice, string? name = null)
+	: StorageBuffer(graphicsDevice, Marshal.SizeOf<T>(), name) where T : unmanaged
 {
 	/// <summary>
 	/// Uploads data to the buffer, and resizes it if required.

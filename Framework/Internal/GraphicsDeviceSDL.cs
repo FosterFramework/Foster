@@ -716,19 +716,19 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 	}
 
-	internal override IHandle CreateIndexBuffer(string? name, IndexFormat format)
+	internal override IHandle CreateBuffer(string? name, BufferType type, IndexFormat format)
 	{
-		var res = new BufferResource(this, name, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_INDEX, format);
-		lock (resources)
-			resources.Add(res);
-		return res;
-	}
+		var res = new BufferResource(this, name, type switch
+		{
+			BufferType.Vertex => SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_VERTEX,
+			BufferType.Index => SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_INDEX,
+			BufferType.Storage => SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+			_ => throw new NotImplementedException()
+		}, format);
 
-	internal override IHandle CreateVertexBuffer(string? name)
-	{
-		var res = new BufferResource(this, name, SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_VERTEX, default);
 		lock (resources)
 			resources.Add(res);
+
 		return res;
 	}
 
@@ -919,7 +919,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				},
 				num_samplers = (uint)shaderInfo.SamplerCount,
 				num_storage_textures = 0,
-				num_storage_buffers = 0,
+				num_storage_buffers = (uint)shaderInfo.StorageBufferCount,
 				num_uniform_buffers = (uint)shaderInfo.UniformBufferCount,
 			};
 
@@ -1041,6 +1041,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			}
 		}
 
+		// check if we need to rebind vertex buffers
 		bool rebindVertexBuffers = renderPassVertexBuffers.Count != command.VertexBuffers.Count;
 		if (!rebindVertexBuffers)
 		{
@@ -1056,21 +1057,32 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		// bind buffers
 		if (rebindVertexBuffers)
 		{
-			Span<SDL_GPUBufferBinding> vertexBinding = stackalloc SDL_GPUBufferBinding[command.VertexBuffers.Count];
+			renderPassVertexBuffers.Clear();
 
-			for (int i = 0; i < command.VertexBuffers.Count; i ++)
+			if (command.VertexBuffers.Count <= 0)
 			{
-				var res = (BufferResource)command.VertexBuffers[i].Buffer.Resource;
-				res.Dirty = false;
-
-				vertexBinding[i] = new()
-				{
-					buffer = res.Handle,
-					offset = 0
-				};
+				SDL_BindGPUVertexBuffers(renderPass, 0, [], 0);
 			}
+			else
+			{
+				Span<SDL_GPUBufferBinding> vertexBinding = stackalloc SDL_GPUBufferBinding[command.VertexBuffers.Count];
 
-			SDL_BindGPUVertexBuffers(renderPass, 0, vertexBinding, (uint)command.VertexBuffers.Count);
+				for (int i = 0; i < command.VertexBuffers.Count; i ++)
+				{
+					var res = (BufferResource)command.VertexBuffers[i].Buffer.Resource;
+					res.Dirty = false;
+
+					vertexBinding[i] = new()
+					{
+						buffer = res.Handle,
+						offset = 0
+					};
+
+					renderPassVertexBuffers.Add(res);
+				}
+
+				SDL_BindGPUVertexBuffers(renderPass, 0, vertexBinding, (uint)command.VertexBuffers.Count);
+			}
 		}
 
 		var vertexInfo = vertexShader.CreateInfo;
@@ -1128,6 +1140,23 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		{
 			fixed (byte* ptr = mat.Vertex.UniformBuffers[i])
 				SDL_PushGPUVertexUniformData(cmdRender, (uint)i, new nint(ptr), (uint)mat.Vertex.UniformBuffers[i].Length);
+		}
+
+		// bind storage buffers
+		if (command.VertexStorageBuffers.Count > 0)
+		{
+			Span<nint> buffers = stackalloc nint[command.VertexStorageBuffers.Count];
+			for (int i = 0; i < command.VertexStorageBuffers.Count; i ++)
+				buffers[i] = ((BufferResource)command.VertexStorageBuffers[i].Resource).Handle;
+			SDL_BindGPUVertexStorageBuffers(renderPass, 0, buffers, (uint)buffers.Length);
+		}
+
+		if (command.FragmentStorageBuffers.Count > 0)
+		{
+			Span<nint> buffers = stackalloc nint[command.FragmentStorageBuffers.Count];
+			for (int i = 0; i < command.FragmentStorageBuffers.Count; i ++)
+				buffers[i] = ((BufferResource)command.FragmentStorageBuffers[i].Resource).Handle;
+			SDL_BindGPUFragmentStorageBuffers(renderPass, 0, buffers, (uint)buffers.Length);
 		}
 
 		// perform draw

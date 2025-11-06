@@ -22,6 +22,16 @@ public struct DrawCommand
 	public StackList4<(VertexBuffer Buffer, bool InstanceInputRate)> VertexBuffers;
 
 	/// <summary>
+	/// Vertex Buffers to use
+	/// </summary>
+	public StackList4<StorageBuffer> VertexStorageBuffers;
+
+	/// <summary>
+	/// Fragment storage Buffers to use
+	/// </summary>
+	public StackList4<StorageBuffer> FragmentStorageBuffers;
+
+	/// <summary>
 	/// Index Buffer to use. Set <see cref="IndexCount"/> for the number of indices to draw.
 	/// </summary>
 	public IndexBuffer? IndexBuffer;

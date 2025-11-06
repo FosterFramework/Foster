@@ -15,11 +15,13 @@ namespace Foster.Framework;
 /// <param name="Stage">The stage this shader is built for</param>
 /// <param name="SamplerCount">The number of Samplers</param>
 /// <param name="UniformBufferCount">The number of Uniform Buffers</param>
+/// <param name="StorageBufferCount">The number of Storage Buffers</param>
 /// <param name="EntryPoint">The Shader's Entry Point</param>
 public readonly record struct ShaderCreateInfo(
 	ShaderStage Stage,
 	byte[] Code,
-	int SamplerCount,
-	int UniformBufferCount,
+	int SamplerCount = 0,
+	int UniformBufferCount = 0,
+	int StorageBufferCount = 0,
 	string EntryPoint = "main"
 );
