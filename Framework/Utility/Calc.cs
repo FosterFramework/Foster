@@ -544,6 +544,21 @@ public static class Calc
 		}
 	}
 
+	public static Vector3 Approach(Vector3 from, Vector3 target, float amount)
+	{
+		if (from == target)
+			return target;
+		else
+		{
+			var diff = target - from;
+			if (diff.LengthSquared() <= amount * amount)
+				return target;
+			else
+				return from + diff.Normalized() * amount;
+		}
+	}
+
+
 	public static Vector2 Approach(ref Vector2 from, Vector2 target, float amount)
 	{
 		if (from == target)
