@@ -1,5 +1,3 @@
-using System.Collections.Frozen;
-
 namespace Foster.Framework;
 
 /// <summary>
@@ -36,11 +34,14 @@ public class Shader : IGraphicResource
 	/// <summary>
 	/// The Data the Shader was created with
 	/// </summary>
-	public readonly ShaderCreateInfo CreateInfo;
+	public ShaderCreateInfo CreateInfo { get; private set; }
 
-	internal readonly GraphicsDevice.IHandle Resource;
+	/// <summary>
+    /// shader resource
+    /// </summary>
+	internal GraphicsDevice.IHandle Resource;
 
-	public Shader(GraphicsDevice graphicsDevice, ShaderCreateInfo createInfo, string? name = null)
+	public Shader(GraphicsDevice graphicsDevice, in ShaderCreateInfo createInfo, string? name = null)
 	{
 		GraphicsDevice = graphicsDevice;
 		CreateInfo = createInfo;
@@ -49,19 +50,29 @@ public class Shader : IGraphicResource
 		Resource = GraphicsDevice.CreateShader(name, createInfo);
 	}
 
+	/// <summary>
+    /// Recreates the shader with the new provided shader info
+    /// </summary>
+	public void Recreate(in ShaderCreateInfo createInfo)
+	{
+		if (createInfo.Stage != Stage)
+			throw new Exception("Cannot recreate the Shader with a different stage");
+		if (IsDisposed)
+			throw new Exception("Cannout recreate a disposed Shader");
+
+		GraphicsDevice.DestroyResource(Resource);
+		CreateInfo = createInfo;
+		Resource = GraphicsDevice.CreateShader(Name, createInfo);
+	}
+
 	~Shader()
 	{
-		Dispose(false);
+		GraphicsDevice.DestroyResource(Resource);
 	}
 
 	public void Dispose()
 	{
-		Dispose(true);
-		GC.SuppressFinalize(this);
-	}
-
-	private void Dispose(bool disposing)
-	{
 		GraphicsDevice.DestroyResource(Resource);
+		GC.SuppressFinalize(this);
 	}
 }
