@@ -647,6 +647,10 @@ public class Batcher : IDisposable
 		}
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void LineDashed(Line line, float lineWeight, Color color, float dashLength, float offsetPercent)
+		=> LineDashed(line.From, line.To, lineWeight, color, dashLength, offsetPercent);
+
 	#endregion
 
 	#region Quad

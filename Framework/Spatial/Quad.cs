@@ -105,6 +105,11 @@ public struct Quad : IConvexShape, IEquatable<Quad>
 		}
 	}
 
+	public readonly Line AB => new(A, B);
+	public readonly Line BC => new(B, C);
+	public readonly Line CD => new(C, D);
+	public readonly Line DA => new(D, A);
+
 	public readonly Vector2 Center => (a + b + c + d) / 4f;
 
 	public Quad(Vector2 a, Vector2 b, Vector2 c, Vector2 d)
@@ -238,4 +243,42 @@ public struct Quad : IConvexShape, IEquatable<Quad>
 	public static bool operator !=(Quad a, Quad b) => a.a != b.a || a.b != b.b || a.c != b.c || a.d != b.d;
 
 	public bool Equals(Quad other) => a.Equals(other.a) && b.Equals(other.b) && c.Equals(other.c) && d.Equals(other.d);
+
+	#region Enumerate Lines
+
+	public readonly LineEnumerable Lines => new(this);
+
+	public readonly struct LineEnumerable(Quad Quad)
+	{
+		public LineEnumerator GetEnumerator() => new(Quad);
+	}
+
+	public struct LineEnumerator(Quad Quad)
+	{
+		public Line Current { get; private set; }
+		private int index = 0;
+
+		public bool MoveNext()
+		{
+			switch (index++)
+			{
+			case 0:
+				Current = Quad.AB;
+				return true;
+			case 1:
+				Current = Quad.BC;
+				return true;
+			case 2:
+				Current = Quad.CD;
+				return true;
+			case 3:
+				Current = Quad.DA;
+				return true;
+			default:
+				return false;
+			}
+		}
+	}
+
+	#endregion
 }
