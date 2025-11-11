@@ -21,6 +21,10 @@ jobs:
             arch: x64
             target: win-x64
             ext: .dll
+          - os: windows-latest
+            arch: wasm
+            target: browser-wasm
+            ext: .a
           - os: macos-latest
             arch: x64-arm64
             target: osx
@@ -35,6 +39,12 @@ jobs:
         uses: actions/checkout@v4
       - name: Get CMake
         uses: lukka/get-cmake@v3.29.4
+      - name: Setup emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        if: ${{ matrix.target == 'browser-wasm' }}
+      - name: Get latest ninja
+        uses: urkle/action-get-ninja@v1
+        if: ${{ matrix.target == 'browser-wasm' }}
       - name: Setup Linux dependencies
         if: ${{ runner.os == 'Linux' }}
         run: |
@@ -46,7 +56,11 @@ jobs:
             libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
             libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev fcitx-libs-dev
       - name: CMake Configure
+        if: ${{ matrix.target != 'browser-wasm' }}
         run: cmake -B build -S Platform -DFOSTER_OVERRIDE_TARGET=${{matrix.target}} -D CMAKE_SYSTEM_VERSION=10.0.26100.0
+      - name: CMake Configure
+        if: ${{ matrix.target == 'browser-wasm' }}
+        run: emcmake cmake -B build -S Platform -DFOSTER_OVERRIDE_TARGET=${{matrix.target}} -D CMAKE_SYSTEM_VERSION=10.0.26100.0
       - name: CMake Build
         run: cmake --build build --config Release
       - name: Publish Artifact
@@ -76,6 +90,11 @@ jobs:
         with:
           name: ubuntu-latest-x64-build
           path: Platform/libs/linux-x64
+      - name: Download browser-wasm libs
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-latest-wasm-build
+          path: Platform/libs/browser-wasm
       - name: Display structure of libs
         run: ls -R
         working-directory: Platform/libs
