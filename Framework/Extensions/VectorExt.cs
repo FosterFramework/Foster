@@ -172,13 +172,6 @@ public static class VectorExt
 	#region Vector3
 
 	/// <summary>
-	/// Reinterprets the <see cref="Vector2"/> as a <see cref="Vector3"/> with a Z-value of zero
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static Vector3 AsVector3(this Vector2 vector)
-		=> vector.AsVector128Unsafe().WithElement(2, 0f).AsVector3();
-
-	/// <summary>
 	/// Normalizes a <see cref="Vector3"/> safely (a zero-length <see cref="Vector3"/> returns the <paramref name="fallbackValue"/>)
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
