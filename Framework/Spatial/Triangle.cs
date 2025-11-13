@@ -100,20 +100,20 @@ public struct Triangle(Vector2 a, Vector2 b, Vector2 c) : IConvexShape, IEquatab
 
 	#endregion
 
-	#region Edge Enumeration
+	#region Enumerate Lines
 
-	public readonly EdgeEnumerable Edges => new(this);
+	public readonly LineEnumerable Lines => new(this);
 
-	public readonly struct EdgeEnumerable(Triangle tri) : IEnumerable<Line>
+	public readonly struct LineEnumerable(Triangle tri)
 	{
-		public EdgeEnumerator GetEnumerator() => new(tri);
-		IEnumerator<Line> IEnumerable<Line>.GetEnumerator() => new EdgeEnumerator(tri);
-		IEnumerator IEnumerable.GetEnumerator() => new EdgeEnumerator(tri);
+		public LineEnumerator GetEnumerator() => new(tri);
 	}
 
-	public struct EdgeEnumerator(Triangle tri) : IEnumerator<Line>
+	public struct LineEnumerator(Triangle tri)
 	{
 		private int index = -1;
+
+		public Line Current => current;
 		private Line current;
 
 		public bool MoveNext()
@@ -132,16 +132,6 @@ public struct Triangle(Vector2 a, Vector2 b, Vector2 c) : IConvexShape, IEquatab
 			else
 				return false;
 		}
-
-		public void Reset()
-		{
-			index = -1;
-		}
-
-		public Line Current => current;
-		Line IEnumerator<Line>.Current => current;
-		object IEnumerator.Current => current;
-		public void Dispose() { }
 	}
 
 	#endregion
