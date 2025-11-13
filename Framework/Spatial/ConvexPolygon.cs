@@ -57,6 +57,23 @@ public struct ConvexPolygon : IConvexShape, IEnumerable<Vector2>
 		}
 	}
 
+	public readonly Vector2 Center => Bounds.Center;
+
+	public readonly Vector2 Average
+	{
+		get
+		{
+			var p = Vector2.Zero;
+			if (Points > 0)
+			{
+				foreach (var pt in this)
+					p += pt;
+				p /= Points;
+			}
+			return p;
+		}
+	}
+
 	public void Add(in Vector2 value)
 		=> Vertices.Add(value);
 
@@ -207,15 +224,44 @@ public struct ConvexPolygon : IConvexShape, IEnumerable<Vector2>
 	{
 		private int index = -1;
 
-		public Line Current => current;
-		private Line current;
+		public Line Current { get; private set; }
 
 		public bool MoveNext()
 		{
 			index++;
 			if (index < convexPolygon.Points)
 			{
-				current = new(convexPolygon[index], convexPolygon[(index + 1) % convexPolygon.Points]);
+				Current = new(convexPolygon[index], convexPolygon[(index + 1) % convexPolygon.Points]);
+				return true;
+			}
+			else
+				return false;
+		}
+	}
+
+	#endregion
+
+	#region Enumerate Triangles
+
+	public readonly TriangleEnumerable Triangles => new(this);
+
+	public readonly struct TriangleEnumerable(ConvexPolygon convexPolygon)
+	{
+		public TriangleEnumerator GetEnumerator() => new(convexPolygon);
+	}
+
+	public struct TriangleEnumerator(ConvexPolygon convexPolygon)
+	{
+		private int index = -1;
+
+		public Triangle Current { get; private set; }
+
+		public bool MoveNext()
+		{
+			index++;
+			if (index < convexPolygon.Points - 1)
+			{
+				Current = new(convexPolygon[0], convexPolygon[index], convexPolygon[(index + 1) % convexPolygon.Points]);
 				return true;
 			}
 			else

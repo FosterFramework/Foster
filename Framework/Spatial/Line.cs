@@ -17,6 +17,7 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 	public readonly int Axes => 1;
 
 	public readonly Rect Bounds => Rect.Between(From, To);
+	public readonly Vector2 Center => (From + To) / 2;
 	public readonly float Length => (To - From).Length();
 	public readonly float LengthSquared => (To - From).LengthSquared();
 	public readonly Vector2 Normal => (To - From).Normalized();

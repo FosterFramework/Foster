@@ -50,7 +50,8 @@ public struct Triangle(Vector2 a, Vector2 b, Vector2 c) : IConvexShape, IEquatab
 	public readonly Line AB => new(A, B);
 	public readonly Line BC => new(B, C);
 	public readonly Line CA => new(C, A);
-	public readonly Vector2 Center => (A + B + C) / 3;
+	public readonly Vector2 Center => Bounds.Center;
+	public readonly Vector2 Average => (A + B + C) / 3;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly Triangle Transform(Matrix3x2 matrix)
