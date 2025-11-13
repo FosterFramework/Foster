@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -12,17 +13,17 @@ namespace Foster.Framework;
 public struct Circle : IProjectable, IEquatable<Circle>
 {
 	/// <summary>
-	/// The Position of the Circle
+	/// The Position of the <see cref="Circle"/>
 	/// </summary>
 	public Vector2 Position;
 
 	/// <summary>
-	/// The Radius of the Circle
+	/// The Radius of the <see cref="Circle"/>
 	/// </summary>
 	public float Radius;
 
 	/// <summary>
-	/// Creates a new Circle at the given position with the given radius
+	/// Creates a new <see cref="Circle"/> at the given position with the given radius
 	/// </summary>
 	public Circle(Vector2 position, float radius)
 	{
@@ -31,7 +32,7 @@ public struct Circle : IProjectable, IEquatable<Circle>
 	}
 
 	/// <summary>
-	/// Creates a new Circle at the given x and y coordinates with the given radius
+	/// Creates a new <see cref="Circle"/> at the given x and y coordinates with the given radius
 	/// </summary>
 	public Circle(float x, float y, float radius)
 	{
@@ -40,7 +41,7 @@ public struct Circle : IProjectable, IEquatable<Circle>
 	}
 
 	/// <summary>
-	/// Creates a new Circle at (0, 0) with the given radius
+	/// Creates a new <see cref="Circle"/> at (0, 0) with the given radius
 	/// </summary>
 	public Circle(float radius)
 	{
@@ -48,29 +49,29 @@ public struct Circle : IProjectable, IEquatable<Circle>
 	}
 
 	/// <summary>
-	/// Calculate the area of the circle
+	/// Calculate the area of this <see cref="Circle"/>
 	/// </summary>
 	public readonly float Area => MathF.PI * Radius * Radius;
 
 	/// <summary>
-	/// Gets the smallest rectangle that contains this circle
+	/// Gets the smallest rectangle that contains this <see cref="Circle"/>
 	/// </summary>
 	public readonly Rect Bounds => Rect.Centered(Position, Radius * 2, Radius * 2);
 
 	/// <summary>
-	/// Checks if the Vector2 is in the Circle
+	/// Checks if the <see cref="Vector2"/> is inside this <see cref="Circle"/>
 	/// </summary>
 	public readonly bool Contains(in Vector2 point)
 		=> (Position - point).LengthSquared() < (Radius * Radius);
 
 	/// <summary>
-	/// Checks if the Point2 is in the Circle
+	/// Checks if the <see cref="Point2"/> is inside this <see cref="Circle"/>
 	/// </summary>
 	public readonly bool Contains(in Point2 point)
 		=> (Position - point).LengthSquared() < (Radius * Radius);
 
 	/// <summary>
-	/// Checks if the Circle overlaps with another Circle, and returns their pushout vector
+	/// Checks if the Circle overlaps with another <see cref="Circle"/>, and returns their pushout vector
 	/// </summary>
 	public readonly bool Overlaps(in Circle other, out Vector2 pushout)
 	{
@@ -97,25 +98,25 @@ public struct Circle : IProjectable, IEquatable<Circle>
 	}
 
 	/// <summary>
-	/// Checks whether we overlap a circle (as defined by its center and radius)
+	/// Checks whether we overlap a <see cref="Circle"/> (as defined by its center and radius)
 	/// </summary>
 	public readonly bool Overlaps(in Vector2 center, float radius)
 		=> Vector2.DistanceSquared(Position, center) < Calc.Squared(radius + Radius);
 
 	/// <summary>
-	/// Checks whether we overlap a line segment
+	/// Checks whether we overlap a <see cref="Line"/>
 	/// </summary>
 	public readonly bool Overlaps(in Line line)
 		=> Vector2.DistanceSquared(Position, line.ClosestPoint(Position)) < Radius * Radius;
 
 	/// <summary>
-	/// Checkers whether we overlap a triangle
+	/// Checkers whether we overlap a <see cref="Triangle"/>
 	/// </summary>
 	public readonly bool Overlaps(in Triangle tri)
 		=> tri.Contains(Position) || Overlaps(tri.AB) || Overlaps(tri.BC) || Overlaps(tri.CA);
 
 	/// <summary>
-	/// Checks if the Circle overlaps with a Convex Shape, and returns their pushout vector
+	/// Checks if the <see cref="Circle"/> overlaps with a convex shape, and returns their pushout vector
 	/// </summary>
 	public readonly bool Overlaps<TConvex>(in TConvex shape, out Vector2 pushout)
 		where TConvex : IConvexShape
@@ -132,7 +133,7 @@ public struct Circle : IProjectable, IEquatable<Circle>
 	}
 
 	/// <summary>
-	/// Projects the Circle onto an Axis
+	/// Projects the <see cref="Circle"/> onto an axis
 	/// </summary>
 	public readonly void Project(in Vector2 axis, out float min, out float max)
 	{
@@ -141,7 +142,19 @@ public struct Circle : IProjectable, IEquatable<Circle>
 	}
 
 	/// <summary>
-	/// Return a new circle with the radius increased by the given amount
+	/// Get a new <see cref="Circle"/> with the same radius at the position
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Circle At(in Vector2 position) => new(position, Radius);
+
+	/// <summary>
+	/// Get a new <see cref="Circle"/> with the same radius at the position
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Circle At(float x, float y) => new(x, y, Radius);
+
+	/// <summary>
+	/// Return a new <see cref="Circle"/> with the radius increased by the given amount
 	/// </summary>
 	public readonly Circle Inflate(float addRadius) => new(Position, Radius + addRadius);
 
