@@ -80,6 +80,65 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 	public readonly Vector2 ClosestPoint(in Vector2 to)
 		=> (To - From) * ClosestT(to) + From;
 
+	/// <summary>
+	/// Get the closest points on each line
+	/// </summary>
+	public readonly (Vector2 A, Vector2 B) ClosestPoints(in Line other)
+	{
+		var v1 = To - From;
+		var v2 = other.To - other.From;
+		var w = From - other.From;
+
+		float a = Vector2.Dot(v1, v1); // = to v1.LengthSquared()
+		float b = Vector2.Dot(v1, v2);
+		float c = Vector2.Dot(v2, v2); // = to v2.LengthSquared()
+		float d = Vector2.Dot(v1, w);
+		float e = Vector2.Dot(v2, w);
+
+		float denominator = a * c - b * b;
+		float s, t;
+
+		if (denominator < 1e-8f)
+		{
+			// lines are parallel (within error), so default to endpoint
+			s = 0;
+			t = float.Clamp(e / c, 0, 1); // Project an endpoint onto the other segment
+		}
+		else
+		{
+			s = (b * e - c * d) / denominator;
+			t = (a * e - b * d) / denominator;
+
+			// Clamp 's' and 't' to the range [0, 1] to ensure points stay on the segments
+			s = float.Clamp(s, 0, 1);
+			t = float.Clamp(t, 0, 1);
+		}
+
+		var closest1 = From + s * v1;
+		var closest2 = other.From + t * v2;
+		return (closest1, closest2);
+	}
+
+	/// <summary>
+	/// Get the shortest distance between the two lines
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly float ClosestDistance(in Line other)
+	{
+		var (a, b) = ClosestPoints(other);
+		return Vector2.Distance(a, b);
+	}
+
+	/// <summary>
+	/// Get the shortest distance squared between the two lines
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly float ClosestDistanceSquared(in Line other)
+	{
+		var (a, b) = ClosestPoints(other);
+		return Vector2.DistanceSquared(a, b);
+	}
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly float DistanceSquared(in Vector2 to)
 		=> Vector2.DistanceSquared(ClosestPoint(to), to);

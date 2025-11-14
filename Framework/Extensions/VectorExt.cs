@@ -86,6 +86,10 @@ public static class VectorExt
 		public Vector2 Normalized(Vector2 fallbackValue = default)
 			=> vector == Vector2.Zero ? fallbackValue : Vector2.Normalize(vector);
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool LengthLessThan(float length)
+			=> vector.LengthSquared() < length * length;
+
 		/// <summary>
 		/// Normalizes a <see cref="Vector2"/> and snaps it to the closest of the 4 cardinal directions (a zero-length <see cref="Vector2"/> returns the <paramref name="fallbackValue"/>)
 		/// </summary>
