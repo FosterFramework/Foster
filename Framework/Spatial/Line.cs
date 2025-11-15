@@ -159,6 +159,27 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 	public readonly bool Intersects(in Line other)
 		=> Intersects(other, out _);
 
+	public readonly bool Intersects(in Rect other, out Vector2 point)
+	{
+		foreach (var line in other.Edges)
+			if (Intersects(line, out point))
+				return true;
+
+		if (other.Contains(From))
+		{
+			point = From;
+			return true;
+		}
+		else if (other.Contains(To))
+		{
+			point = To;
+			return true;
+		}
+
+		point = default;
+		return false;
+	}
+
     public readonly bool Intersects(in Line other, out Vector2 point)
     {
 		point = default;
