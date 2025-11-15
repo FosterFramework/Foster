@@ -86,9 +86,29 @@ public static class VectorExt
 		public Vector2 Normalized(Vector2 fallbackValue = default)
 			=> vector == Vector2.Zero ? fallbackValue : Vector2.Normalize(vector);
 
+		/// <summary>
+		/// Check if the length of the <see cref="Vector2"/> is less than an absolute value. This squares the length and compares it against <see cref="Vector2.LengthSquared"/>
+		/// </summary>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public bool LengthLessThan(float length)
 			=> vector.LengthSquared() < length * length;
+
+		/// <summary>
+		/// Return the normalized <see cref="Vector2"/> and get its length at the same time. Normalizing requires computing the length of the <see cref="Vector2"/> anyways, so you can use this if you need both results
+		/// </summary>
+		public Vector2 GetLengthAndNormalize(out float length, Vector2 fallbackValue = default)
+		{
+			if (vector == Vector2.Zero)
+			{
+				length = 0;
+				return fallbackValue;
+			}
+			else
+			{
+				length = vector.Length();
+				return vector / length;
+			}
+		}
 
 		/// <summary>
 		/// Normalizes a <see cref="Vector2"/> and snaps it to the closest of the 4 cardinal directions (a zero-length <see cref="Vector2"/> returns the <paramref name="fallbackValue"/>)
