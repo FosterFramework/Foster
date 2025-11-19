@@ -41,7 +41,7 @@ public abstract class GraphicsDevice
 	/// <summary>
     /// Built-in Default Materials
     /// </summary>
-	public DefaultResources Defaults { get; private set; } = null!;
+	public DefaultResources Defaults { get; private set; }
 
 	internal GraphicsDevice(App app)
 	{

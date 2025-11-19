@@ -1,7 +1,8 @@
 namespace Foster.Framework;
 
 /// <summary>
-/// Built In Default Foster Resources
+/// Built In Default Foster Resources.<br/>
+/// These are automatically created by referencing <see cref="GraphicsDevice.Defaults"/>
 /// </summary>
 public class DefaultResources
 {
