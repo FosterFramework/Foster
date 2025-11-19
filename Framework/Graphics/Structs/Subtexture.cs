@@ -4,81 +4,81 @@ using System.Runtime.CompilerServices;
 namespace Foster.Framework;
 
 /// <summary>
-/// A Subtexture representing a rectangular segment of a <see cref="Texture"/>
+/// Represents a rectangular segment of a <see cref="Texture"/>
 /// </summary>
-public readonly struct Subtexture
+public readonly struct Subtexture : IEquatable<Subtexture>
 {
 	/// <summary>
-	/// Holds 4 Vector2 coordinate components
+	/// Holds 4 <see cref="Vector2"/> coordinate components
 	/// </summary>
 	[InlineArray(4)]
 	public struct CoordinateBuffer { private Vector2 element; }
 
 	/// <summary>
-	/// An empty (default) Subtexture
+	/// An empty (default) <see cref="Subtexture"/>
 	/// </summary>
 	public static readonly Subtexture Empty = default;
 
 	/// <summary>
-	/// The Texture this Subtexture is... a subtexture of
+	/// The <see cref="Texture"/> this <see cref="Subtexture"/> is... a subtexture of
 	/// </summary>
 	public readonly Texture? Texture;
 
 	/// <summary>
-	/// The source rectangle to sample from the Texture
+	/// The source <see cref="Rect"/> to sample from the <see cref="Texture"/> when drawing this <see cref="Subtexture"/>
 	/// </summary>
 	public readonly Rect Source;
 
 	/// <summary>
-	/// The frame of the Subtexture. This is useful if you trim transparency and want to store the original size of the image.
-	/// For example, if the original image was (64, 64), but the trimmed version is (32, 48), the Frame may be (-16, -8, 64, 64)
+	/// The actual full bounds of the <see cref="Subtexture"/> on the <see cref="Texture"/> before trimming.
+	/// For example, if the original image was (64, 64), but the trimmed version is (32, 48), the <see cref="Frame"/> might be (-16, -8, 64, 64)
 	/// </summary>
 	public readonly Rect Frame;
 
 	/// <summary>
-	/// The texture UV coordinates. These are set automatically based on the Source rectangle
+	/// The texture UV coordinates. These are set automatically based on the <see cref="Source"/> rectangle
 	/// </summary>
 	public readonly CoordinateBuffer TexCoords;
 
 	/// <summary>
-	/// The draw coordinates. These are set automatically based on the Source and Frame rectangle
+	/// The draw coordinates. These are set automatically based on the <see cref="Source"/> and <see cref="Frame"/> rectangle
 	/// </summary>
 	public readonly CoordinateBuffer DrawCoords;
 
 	/// <summary>
-	/// The drawable Width of the Subtexture, in pixels
+	/// The drawable width of the <see cref="Subtexture"/>, in pixels
 	/// </summary>
-	public readonly float Width => Frame.Width;
+	public float Width => Frame.Width;
 
 	/// <summary>
-	/// The drawable Height of the Subtexture, in pixels
+	/// The drawable height of the <see cref="Subtexture"/>, in pixels
 	/// </summary>
-	public readonly float Height => Frame.Height;
+	public float Height => Frame.Height;
 
 	/// <summary>
-	/// The drawable size of the Textue, in pixels
+	/// The drawable size of the <see cref="Subtexture"/>, in pixels
 	/// </summary>
-	public readonly Vector2 Size => new(Width, Height);
+	public Vector2 Size => new(Width, Height);
 
 	/// <summary>
-	/// Constructs an Empty Subtexture
+	/// Constructs an empty <see cref="Subtexture"/>
 	/// </summary>
 	public Subtexture() {}
 
 	/// <summary>
-	/// Constructs an Subtexture encompassing a full Texture
+	/// Constructs an <see cref="Subtexture"/> encompassing a full <see cref="Texture"/>
 	/// </summary>
 	public Subtexture(Texture? texture)
 		: this(texture, new(0, 0, texture?.Width ?? 0, texture?.Height ?? 0), new(0, 0, texture?.Width ?? 0, texture?.Height ?? 0)) {}
 
 	/// <summary>
-	/// Constructs an Subtexture of part of a Texture
+	/// Constructs an <see cref="Subtexture"/> of part of a <see cref="Texture"/>
 	/// </summary>
 	public Subtexture(Texture? texture, Rect source)
 		: this(texture, source, new(0, 0, source.Width, source.Height)) {}
 
 	/// <summary>
-	/// Constructs an Subtexture of part of a Texture
+	/// Constructs an <see cref="Subtexture"/> of part of a <see cref="Texture"/>
 	/// </summary>
 	public Subtexture(Texture? texture, Rect source, Rect frame)
 	{
@@ -95,7 +95,7 @@ public readonly struct Subtexture
 		DrawCoords[3].X = -frame.X;
 		DrawCoords[3].Y = -frame.Y + source.Height;
 
-		if (Texture != null && Texture.Width > 0 && Texture.Height > 0)
+		if (Texture is { Width: > 0, Height: > 0 })
 		{
 			var px = 1.0f / Texture.Width;
 			var py = 1.0f / Texture.Height;
@@ -117,9 +117,9 @@ public readonly struct Subtexture
 	}
 
 	/// <summary>
-	/// Gets clipping values from the Subtexture
+	/// Gets clipping values from the <see cref="Subtexture"/>
 	/// </summary>
-	public readonly (Rect Source, Rect Frame) GetClip(in Rect clip)
+	public (Rect Source, Rect Frame) GetClip(in Rect clip)
 	{
 		(Rect Source, Rect Frame) result;
 
@@ -134,19 +134,28 @@ public readonly struct Subtexture
 	}
 
 	/// <summary>
-	/// Gets clipping values from the Subtexture
+	/// Gets clipping values from the <see cref="Subtexture"/>
 	/// </summary>
-	public readonly (Rect Source, Rect Frame) GetClip(float x, float y, float w, float h)
-	{
-		return GetClip(new Rect(x, y, w, h));
-	}
+	public (Rect Source, Rect Frame) GetClip(float x, float y, float w, float h) => GetClip(new Rect(x, y, w, h));
 
 	/// <summary>
-	/// Gets a subtexture of this Subtexture
+	/// Gets a subtexture of this <see cref="Subtexture"/>
 	/// </summary>
-	public readonly Subtexture GetClipSubtexture(in Rect clip)
+	public Subtexture GetClipSubtexture(in Rect clip)
 	{
 		var (source, frame) = GetClip(clip);
 		return new Subtexture(Texture, source, frame);
 	}
+
+	/// <summary>
+	/// True if this <see cref="Subtexture"/> is empty
+	/// </summary>
+	public bool IsEmpty => Texture is null || Source.Size == default;
+
+	public bool Equals(Subtexture other) => Equals(Texture, other.Texture) && Source.Equals(other.Source) && Frame.Equals(other.Frame);
+	public override bool Equals(object? obj) => obj is Subtexture other && Equals(other);
+	public override int GetHashCode() => HashCode.Combine(Texture, Source, Frame);
+
+	public static bool operator ==(Subtexture a, Subtexture b) => a.Equals(b);
+	public static bool operator !=(Subtexture a, Subtexture b) => !a.Equals(b);
 }
