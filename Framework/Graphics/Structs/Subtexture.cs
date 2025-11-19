@@ -58,7 +58,7 @@ public readonly struct Subtexture : IEquatable<Subtexture>
 	/// <summary>
 	/// The drawable size of the <see cref="Subtexture"/>, in pixels
 	/// </summary>
-	public Vector2 Size => new(Width, Height);
+	public Vector2 Size => Frame.Size;
 
 	/// <summary>
 	/// Constructs an empty <see cref="Subtexture"/>
