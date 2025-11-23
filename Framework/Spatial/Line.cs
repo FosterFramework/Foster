@@ -63,14 +63,9 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 		max = Math.Max(dot, max);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly float ClosestTUnclamped(in Vector2 to)
-	{
-		var diff = To - From;
-		if (diff == Vector2.Zero)
-			return 0;
-		else
-			return Vector2.Dot(to - From, diff) / (diff.X * diff.X + diff.Y * diff.Y);
-	}
+		=> Vector2.Dot(to - From, To - From) / (To - From).LengthSquared();
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly float ClosestT(in Vector2 to)
