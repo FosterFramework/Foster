@@ -87,7 +87,7 @@ public readonly record struct Time(
 	/// <param name="to">Sine wave to</param>
 	/// <param name="duration">Duration, in seconds, of the period of the SineWave</param>
 	/// <param name="offsetPercent">Offset time by a percentage of the Duration</param>
-	public float SineWave(float from, float to, float duration, float offsetPercent = 0)
+	public float SineWave(float from, float to, double duration, float offsetPercent = 0)
 	{
 		var dur = TimeSpan.FromSeconds(duration);
 		var input = (Elapsed + dur * offsetPercent).Modulo(dur).TotalSeconds / duration;
