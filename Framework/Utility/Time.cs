@@ -23,7 +23,7 @@ public readonly record struct Time(
 	/// <summary>
 	/// The Time, in a TimeSpan format, since the previous Update
 	/// </summary>
-	public readonly TimeSpan DeltaTimeSpan => Elapsed - Previous;
+	public TimeSpan DeltaTimeSpan => Elapsed - Previous;
 
 	/// <summary>
 	/// Total time in Seconds (shorthand to Elapsed.TotalSeconds)
@@ -93,4 +93,11 @@ public readonly record struct Time(
 		var input = (Elapsed + dur * offsetPercent).Modulo(dur).TotalSeconds / duration;
 		return Calc.ClampedMap((float)Math.Sin(input * MathF.Tau), -1, 1, from, to);
 	}
+
+	/// <summary>
+	/// Get this <see cref="Time"/> struct with our delta time multiplied by a scalar value.
+	/// This can be useful for features such as slowing down or speeding up time.
+	/// </summary>
+	public Time MultiplyDelta(double multiplier)
+		=> new(Previous + DeltaTimeSpan * multiplier, Previous, Frame, RenderFrame);
 }
