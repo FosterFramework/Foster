@@ -127,42 +127,42 @@ public readonly struct Signs(bool positive) : IEquatable<Signs>
 	public static Vector2 operator*(Signs facing, Vector2 vec) => vec * facing.AsInt;
 
 	/// <summary>
-	/// Check if the facing equals the sign of the number. If the number is zero, false is always returned
+	/// Check if the <see cref="Signs"/> matches the sign of the number. If the number is zero, false is always returned
 	/// </summary>
 	public static bool operator ==(Signs a, int b) => a.AsInt == Math.Sign(b);
 
 	/// <summary>
-	/// Check if the facing does not equal the sign of the number. If the number is zero, true is always returned
+	/// Check if the <see cref="Signs"/> does not match the sign of the number. If the number is zero, true is always returned
 	/// </summary>
 	public static bool operator !=(Signs a, int b) => a.AsInt != Math.Sign(b);
 
 	/// <summary>
-	/// Check if the facing equals the sign of the number. If the number is zero, false is always returned
+	/// Check if the <see cref="Signs"/> matches the sign of the number. If the number is zero, false is always returned
 	/// </summary>
 	public static bool operator ==(int a, Signs b) => b.AsInt == Math.Sign(a);
 
 	/// <summary>
-	/// Check if the facing does not equal the sign of the number. If the number is zero, true is always returned
+	/// Check if the <see cref="Signs"/> does not match the sign of the number. If the number is zero, true is always returned
 	/// </summary>
 	public static bool operator !=(int a, Signs b) => b.AsInt != Math.Sign(a);
 
 	/// <summary>
-	/// Check if the facing equals the sign of the number. If the number is zero, false is always returned
+	/// Check if the <see cref="Signs"/> matches the sign of the number. If the number is zero, false is always returned
 	/// </summary>
 	public static bool operator ==(Signs a, float b) => a.AsInt == Math.Sign(b);
 
 	/// <summary>
-	/// Check if the facing does not equal the sign of the number. If the number is zero, true is always returned
+	/// Check if the <see cref="Signs"/> does not match the sign of the number. If the number is zero, true is always returned
 	/// </summary>
 	public static bool operator !=(Signs a, float b) => a.AsInt != Math.Sign(b);
 
 	/// <summary>
-	/// Check if the facing equals the sign of the number. If the number is zero, false is always returned
+	/// Check if the <see cref="Signs"/> matches the sign of the number. If the number is zero, false is always returned
 	/// </summary>
 	public static bool operator ==(float a, Signs b) => b.AsInt == Math.Sign(a);
 
 	/// <summary>
-	/// Check if the facing does not equal the sign of the number. If the number is zero, true is always returned
+	/// Check if the <see cref="Signs"/> does not match the sign of the number. If the number is zero, true is always returned
 	/// </summary>
 	public static bool operator !=(float a, Signs b) => b.AsInt != Math.Sign(a);
 
