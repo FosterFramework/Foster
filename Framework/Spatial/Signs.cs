@@ -24,17 +24,17 @@ public readonly struct Signs(bool positive) : IEquatable<Signs>
 	public int AsInt => negative ? -1 : 1;
 
 	/// <summary>
-	/// The opposite of our value
+	/// The opposite of this value
 	/// </summary>
 	public Signs Negate => new(negative);
 
 	/// <summary>
-	/// Integers convert to <see cref="Negative"/> if negative, otherwise (including 0) give <see cref="Positive"/>
+	/// Integers convert to <see cref="Negative"/> if negative, otherwise (including 0) give <see cref="Positive"/>. To define behavior when integer is 0, use <see cref="FromInt"/>.
 	/// </summary>
 	public static implicit operator Signs(int v) => v < 0 ? Negative : Positive;
 
 	/// <summary>
-	/// Floats convert to <see cref="Negative"/> if negative, otherwise (including 0) give <see cref="Positive"/>
+	/// Floats convert to <see cref="Negative"/> if negative, otherwise (including 0) give <see cref="Positive"/>. To define behavior when integer is 0, use <see cref="FromFloat"/>.
 	/// </summary>
 	public static explicit operator Signs(float f) => f < 0 ? Negative : Positive;
 
