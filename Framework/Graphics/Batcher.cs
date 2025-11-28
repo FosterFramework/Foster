@@ -46,6 +46,18 @@ public class Batcher : IDisposable
 	public Matrix3x2 Matrix = Matrix3x2.Identity;
 
 	/// <summary>
+	/// Optional Vertex Storage Buffers to pass to the Draw Command.<br/>
+	/// Calling <see cref="Clear"/> will also clear these.
+	/// </summary>
+	public StackList4<StorageBuffer> VertexStorageBuffers;
+
+	/// <summary>
+	/// Optional Fragment Storage Buffers to pass to the Draw Command.<br/>
+	/// Calling <see cref="Clear"/> will also clear these.
+	/// </summary>
+	public StackList4<StorageBuffer> FragmentStorageBuffers;
+
+	/// <summary>
 	/// The current Scissor Value of the Batcher
 	/// </summary>
 	public RectInt? Scissor => currentBatch.Scissor;
@@ -157,6 +169,8 @@ public class Batcher : IDisposable
 		layerStack.Clear();
 		samplerStack.Clear();
 		modeStack.Clear();
+		FragmentStorageBuffers.Clear();
+		VertexStorageBuffers.Clear();
 
 		foreach (var it in materialsUsed)
 			materialsPool.Enqueue(it);
@@ -215,58 +229,57 @@ public class Batcher : IDisposable
 		{
 			// remaining elements in the current batch
 			if (currentBatchInsert == i && currentBatch.Elements > 0)
-				RenderBatch(GraphicsDevice, defaultMaterial, mesh, target, currentBatch, matrix, viewport, scissor);
+				RenderBatch(target, currentBatch, matrix, viewport, scissor);
 
 			// render the batch
-			RenderBatch(GraphicsDevice, defaultMaterial, mesh, target, batches[i], matrix, viewport, scissor);
+			RenderBatch(target, batches[i], matrix, viewport, scissor);
 		}
 
 		// remaining elements in the current batch
 		if (currentBatchInsert == batches.Count && currentBatch.Elements > 0)
-			RenderBatch(GraphicsDevice, defaultMaterial, mesh, target, currentBatch, matrix, viewport, scissor);
+			RenderBatch(target, currentBatch, matrix, viewport, scissor);
+	}
 
-		static void RenderBatch(
-			GraphicsDevice device,
-			Material defaultMaterial,
-			Mesh mesh,
-			IDrawableTarget target,
-			in Batch batch,
-			in Matrix4x4 matrix,
-			in RectInt? viewport,
-			in RectInt? scissor)
+	private void RenderBatch(
+		IDrawableTarget target,
+		in Batch batch,
+		in Matrix4x4 matrix,
+		in RectInt? viewport,
+		in RectInt? scissor)
+	{
+		// get trimmed scissor value
+		var trimmed = scissor;
+		if (batch.Scissor.HasValue && trimmed.HasValue)
+			trimmed = batch.Scissor.Value.GetIntersection(trimmed.Value);
+		else if (batch.Scissor.HasValue)
+			trimmed = batch.Scissor;
+
+		// don't render if we're going to clip the entire visible contents
+		if (trimmed.HasValue && (trimmed.Value.Width <= 0 || trimmed.Value.Height <= 0))
+			return;
+
+		var texture = batch.Texture != null && !batch.Texture.IsDisposed ? batch.Texture : null;
+		var mat = batch.Material ?? defaultMaterial ?? throw new Exception("Default Material has not been instantiated");
+
+		// set Fragment Sampler 0 to the texture to be drawn
+		mat.Fragment.Samplers[0] = new(texture, batch.Sampler);
+
+		// set Vertex Matrix, always assumed to be in slot 0 as the first data
+		mat.Vertex.SetUniformBuffer(matrix);
+
+		GraphicsDevice.Draw(new(target, mesh, mat)
 		{
-			// get trimmed scissor value
-			var trimmed = scissor;
-			if (batch.Scissor.HasValue && trimmed.HasValue)
-				trimmed = batch.Scissor.Value.GetIntersection(trimmed.Value);
-			else if (batch.Scissor.HasValue)
-				trimmed = batch.Scissor;
-
-			// don't render if we're going to clip the entire visible contents
-			if (trimmed.HasValue && (trimmed.Value.Width <= 0 || trimmed.Value.Height <= 0))
-				return;
-
-			var texture = batch.Texture != null && !batch.Texture.IsDisposed ? batch.Texture : null;
-			var mat = batch.Material ?? defaultMaterial;
-
-			// set Fragment Sampler 0 to the texture to be drawn
-			mat.Fragment.Samplers[0] = new(texture, batch.Sampler);
-
-			// set Vertex Matrix, always assumed to be in slot 0 as the first data
-			mat.Vertex.SetUniformBuffer(matrix);
-
-			device.Draw(new(target, mesh, mat)
-			{
-				Viewport = viewport,
-				Scissor = trimmed,
-				BlendMode = batch.Blend,
-				IndexOffset = batch.Offset * 3,
-				IndexCount = batch.Elements * 3,
-				DepthWriteEnabled = false,
-				DepthTestEnabled = false,
-				CullMode = CullMode.None
-			});
-		}
+			Viewport = viewport,
+			Scissor = trimmed,
+			BlendMode = batch.Blend,
+			IndexOffset = batch.Offset * 3,
+			IndexCount = batch.Elements * 3,
+			DepthWriteEnabled = false,
+			DepthTestEnabled = false,
+			CullMode = CullMode.None,
+			VertexStorageBuffers = VertexStorageBuffers,
+			FragmentStorageBuffers = FragmentStorageBuffers
+		});
 	}
 
 	#endregion
