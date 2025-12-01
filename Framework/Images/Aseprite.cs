@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Foster.Framework;
@@ -487,18 +488,17 @@ public class Aseprite : Aseprite.IUserDataTarget
 
 				switch (format)
 				{
-					case Format.Rgba:
-						for (int i = 0, b = 0; i < pixels.Length; ++i, b += 4)
-							pixels[i] = new Color(buffer[b], buffer[b + 1], buffer[b + 2], buffer[b + 3]);
-						break;
-					case Format.Grayscale:
-						for (int i = 0, b = 0; i < pixels.Length; ++i, b += 2)
-							pixels[i] = new Color(buffer[b], buffer[b], buffer[b], buffer[b + 1]);
-						break;
-					case Format.Indexed:
-						for (int i = 0; i < pixels.Length; ++i)
-							pixels[i] = Palette[buffer[i]];
-						break;
+				case Format.Rgba:
+					MemoryMarshal.Cast<byte, Color>(buffer).Slice(0, pixels.Length).CopyTo(pixels);
+					break;
+				case Format.Grayscale:
+					for (int i = 0, b = 0; i < pixels.Length; ++i, b += 2)
+						pixels[i] = new Color(buffer[b], buffer[b], buffer[b], buffer[b + 1]);
+					break;
+				case Format.Indexed:
+					for (int i = 0; i < pixels.Length; ++i)
+						pixels[i] = Palette[buffer[i]];
+					break;
 				}
 
 				image = new Image(width, height, pixels);
@@ -552,15 +552,15 @@ public class Aseprite : Aseprite.IUserDataTarget
 				continue;
 			if (layerFilter != null && !layerFilter(layer))
 				continue;
-			for (int i = 0; i < len; ++i)
+			for (var i = 0; i < len; ++i)
 			{
-				if (Frames[from + i].Cels.Find(cel => cel.Layer == layer) is not Cel cel)
+				if (Frames[from + i].Cels.Find(it => it.Layer == layer) is not { } cel)
 					continue;
-				if (cel.Image is not Image src)
+				if (cel.Image is not { } img)
 					continue;
 
-				int opacity = MulUn8(cel.Opacity, layer.Opacity);
-				results[i].CopyPixels(src, src.Bounds, cel.Pos, (src, dst) => BlendNormal(dst, src, opacity));
+				var opacity = MulUn8(cel.Opacity, layer.Opacity);
+				results[i].CopyPixels(img, img.Bounds, cel.Pos, (src, dst) => BlendNormal(dst, src, opacity));
 			}
 		}
 
@@ -624,7 +624,7 @@ public class Aseprite : Aseprite.IUserDataTarget
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	private static Color BlendNormal(Color backdrop, Color src, int opacity)
 	{
-		int r, g, b, a;
+		int r, g, b;
 
 		if (backdrop.A == 0)
 		{
@@ -645,7 +645,7 @@ public class Aseprite : Aseprite.IUserDataTarget
 			b = backdrop.B + MulUn8(src.B - backdrop.B, opacity);
 		}
 
-		a = backdrop.A + MulUn8(Math.Max(0, src.A - backdrop.A), opacity);
+		var a = backdrop.A + MulUn8(Math.Max(0, src.A - backdrop.A), opacity);
 		if (a == 0)
 			r = g = b = 0;
 
