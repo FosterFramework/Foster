@@ -1536,16 +1536,10 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 	private void ReleaseGraphicsPipelinesAssociatedWith(ShaderResource shader)
 	{
-		while (!shader.Pipelines.IsEmpty)
+		while (shader.Pipelines.TryTake(out var it))
 		{
-			var removing = shader.Pipelines.ToArray();
-			shader.Pipelines.Clear();
-
-			foreach (var it in removing)
-				if (pipelines.Remove(it, out var pipeline))
-				{
-					SDL_ReleaseGPUGraphicsPipeline(device, pipeline);
-				}
+			if (pipelines.Remove(it, out var pipeline))
+				SDL_ReleaseGPUGraphicsPipeline(device, pipeline);
 		}
 	}
 
