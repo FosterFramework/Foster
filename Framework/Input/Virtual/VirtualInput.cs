@@ -39,13 +39,19 @@ public abstract class VirtualInput : IDisposable
 	/// Disposes of the Virtual Input.
 	/// Once disposed, no values will be updated.
 	/// </summary>
-	public virtual void Dispose()
+	public void Dispose()
 	{
+		Dispose(true);
 		GC.SuppressFinalize(this);
+	}
 
+	protected virtual void Dispose(bool disposing)
+    {
 		if (!IsDisposed)
-			Input.RemoveVirtualInput(this);
-
-		IsDisposed = true;
+		{
+			if (disposing)
+				Input.RemoveVirtualInput(this);
+			IsDisposed = true;
+		}
 	}
 }

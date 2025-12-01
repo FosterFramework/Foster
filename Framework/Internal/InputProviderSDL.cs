@@ -3,18 +3,13 @@ using static SDL3.SDL;
 
 namespace Foster.Framework;
 
-internal sealed class InputProviderSDL(App app) : InputProvider, IDisposable
+internal sealed class InputProviderSDL(App app) : InputProvider
 {
 	public readonly App App = app;
 	private Vector2 lastMouse;
 
 	private readonly List<(uint ID, nint Ptr)> openJoysticks = [];
 	private readonly List<(uint ID, nint Ptr)> openGamepads = [];
-
-	~InputProviderSDL()
-	{
-		Dispose();
-	}
 
 	public override string GetClipboard()
 	{
@@ -246,8 +241,8 @@ internal sealed class InputProviderSDL(App app) : InputProvider, IDisposable
 		}
 	}
 
-	public void Dispose()
-	{
+	public void CloseDevices()
+    {
 		foreach (var it in openJoysticks)
 			SDL_CloseJoystick(it.Ptr);
 		foreach (var it in openGamepads)

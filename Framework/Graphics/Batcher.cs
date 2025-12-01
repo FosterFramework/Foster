@@ -127,11 +127,6 @@ public class Batcher : IDisposable
 		Clear();
 	}
 
-	~Batcher()
-	{
-		Dispose();
-	}
-
 	/// <summary>
 	/// Uploads the current state of the internal Mesh to the GPU
 	/// </summary>
@@ -147,9 +142,9 @@ public class Batcher : IDisposable
 	}
 
 	public void Dispose()
-	{
-		GC.SuppressFinalize(this);
-	}
+    {
+        mesh.Dispose();
+    }
 
 	/// <summary>
 	/// Clears the Batcher.

@@ -233,20 +233,24 @@ public class Font : IDisposable
 
 	public void Dispose()
 	{
-		Disposed = true;
+		if (!Disposed)
+		{
+			if (dataPtr != IntPtr.Zero)
+			{
+				dataHandle.Free();
+				dataHandle = new();
+				dataPtr = IntPtr.Zero;
+			}
+
+			if (fontPtr != IntPtr.Zero)
+			{
+				Platform.FontFree(fontPtr);
+				fontPtr = IntPtr.Zero;
+			}
+
+			Disposed = true;
+		}
+
 		GC.SuppressFinalize(this);
-
-		if (dataPtr != IntPtr.Zero)
-		{
-			dataHandle.Free();
-			dataHandle = new();
-			dataPtr = IntPtr.Zero;
-		}
-
-		if (fontPtr != IntPtr.Zero)
-		{
-			Platform.FontFree(fontPtr);
-			fontPtr = IntPtr.Zero;
-		}
 	}
 }

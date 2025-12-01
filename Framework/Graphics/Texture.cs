@@ -21,7 +21,7 @@ public class Texture : IGraphicResource
 	/// <summary>
 	/// If the Texture has been disposed
 	/// </summary>
-	public bool IsDisposed => Resource.Disposed;
+	public bool IsDisposed => disposed || GraphicsDevice.Disposed;
 
 	/// <summary>
 	/// Gets the Width of the Texture
@@ -58,7 +58,9 @@ public class Texture : IGraphicResource
 	/// </summary>
 	public int MemorySize => Width * Height * Format.Size();
 
-	internal readonly GraphicsDevice.IHandle Resource;
+	internal readonly GraphicsDevice.ResourceHandle Resource;
+
+	private bool disposed;
 
 	public Texture(GraphicsDevice graphicsDevice, int width, int height, TextureFormat format = TextureFormat.Color, string? name = null)
 		: this(graphicsDevice, width, height, format, SampleCount.One, targetBinding: null, name) {}
@@ -88,11 +90,7 @@ public class Texture : IGraphicResource
 		IsTargetAttachment = targetBinding != null;
 	}
 
-	~Texture()
-	{
-		if (!IsTargetAttachment)
-			Dispose(false);
-	}
+	~Texture() => Dispose(false);
 
 	/// <summary>
 	/// Sets the Texture data from the given buffer
@@ -138,8 +136,13 @@ public class Texture : IGraphicResource
 
 	private void Dispose(bool disposing)
 	{
-		// Targets should dispose their Texture Attachments
-		if (!IsTargetAttachment)
-			GraphicsDevice.DestroyResource(Resource);
+		if (!disposed)
+		{
+			// Targets should dispose their Texture Attachments
+			if (!IsTargetAttachment)
+				GraphicsDevice.DestroyResource(Resource);
+
+			disposed = true;
+		}
 	}
 }

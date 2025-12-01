@@ -22,10 +22,7 @@ public sealed class Storage : StorageContainer
 		this.writable = writable;
 	}
 
-	~Storage()
-	{
-		Dispose();
-	}
+	~Storage() =>Dispose(false);
 
 	internal static Storage OpenUserStorage(string name)
 	{
@@ -180,7 +177,7 @@ public sealed class Storage : StorageContainer
 		return new UserStream(path, handle);
 	}
 
-	public override void Dispose()
+	public override void Dispose(bool disposing)
 	{
 		if (handle != nint.Zero)
 			SDL_CloseStorage(handle);

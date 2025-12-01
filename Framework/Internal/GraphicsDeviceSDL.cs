@@ -7,14 +7,14 @@ namespace Foster.Framework;
 
 internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 {
-	private class Resource(GraphicsDevice graphicsDevice) : IHandle
+	private class Resource(GraphicsDeviceSDL graphicsDevice)
 	{
-		public readonly GraphicsDevice GraphicsDevice = graphicsDevice;
-		public bool Destroyed;
-		public bool Disposed => Destroyed || GraphicsDevice.Disposed;
+		public ResourceHandle Handle = nint.Zero;
+		public readonly GraphicsDeviceSDL GraphicsDevice = graphicsDevice;
 	}
 
-	private class TextureResource(GraphicsDevice graphicsDevice) : Resource(graphicsDevice)
+	private class TextureResource(GraphicsDeviceSDL graphicsDevice)
+		: Resource(graphicsDevice)
 	{
 		public nint Texture;
 		public int Width;
@@ -25,33 +25,36 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		/// <summary>
 		/// If we are multisampled, we need a resolve texture
 		/// </summary>
-		public TextureResource? MultiSampleResolve;
+		public ResourceHandle MultiSampleResolve;
 
 		/// <summary>
 		/// If we are multisampled, we should sample from the resolve texture,
 		/// NOT the texture that is being multisampled.
 		/// </summary>
-		public nint SamplerTexture => MultiSampleResolve?.Texture ?? Texture;
+		public nint SamplerTexture => GraphicsDevice.FindResource<TextureResource>(MultiSampleResolve)?.Texture ?? Texture;
 	}
 
-	private class TargetResource(GraphicsDevice graphicsDevice) : Resource(graphicsDevice)
+	private class TargetResource(GraphicsDeviceSDL graphicsDevice)
+		: Resource(graphicsDevice)
 	{
-		public readonly List<TextureResource> Attachments = [];
+		public readonly List<ResourceHandle> Attachments = [];
 	}
 
-	private class BufferResource(GraphicsDevice graphicsDevice, string? name, SDL_GPUBufferUsageFlags usage, IndexFormat indexFormat) : Resource(graphicsDevice)
+	private class BufferResource(GraphicsDeviceSDL graphicsDevice, string? name, SDL_GPUBufferUsageFlags usage, IndexFormat indexFormat)
+		: Resource(graphicsDevice)
 	{
 		public readonly string? Name = name;
 		public readonly IndexFormat IndexFormat = indexFormat;
 		public readonly SDL_GPUBufferUsageFlags Usage = usage;
-		public nint Handle;
+		public nint Buffer;
 		public int Capacity;
 		public bool Dirty;
 	}
 
-	private class ShaderResource(GraphicsDevice graphicsDevice) : Resource(graphicsDevice)
+	private class ShaderResource(GraphicsDeviceSDL graphicsDevice, nint shader)
+		: Resource(graphicsDevice)
 	{
-		public nint Shader;
+		public readonly nint Shader = shader;
 		public readonly ConcurrentBag<int> Pipelines = [];
 	}
 
@@ -75,8 +78,8 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	private IDrawableTarget? renderPassTarget;
 	private Point2 renderPassTargetSize;
 	private nint renderPassPipeline;
-	private StackList4<IHandle> renderPassVertexBuffers;
-	private IHandle? renderPassIndexBuffer;
+	private StackList4<ResourceHandle> renderPassVertexBuffers;
+	private ResourceHandle renderPassIndexBuffer;
 	private RectInt? renderPassScissor;
 	private RectInt? renderPassViewport;
 
@@ -92,10 +95,11 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	private Point2 backbufferSize;
 
 	// tracked / allocated resources
-	private readonly HashSet<IHandle> resources = [];
 	private readonly Dictionary<TextureSampler, nint> samplers = [];
 	private readonly ConcurrentDictionary<int, nint> pipelines = [];
-	private IHandle? emptyDefaultTexture;
+	private readonly ConcurrentDictionary<nint, Resource> resources = [];
+	private ResourceHandle emptyDefaultTexture;
+	private long nextResourceId;
 
 	// texture/mesh transfer buffers
 	private nint bufferUploadBuffer;
@@ -270,14 +274,13 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		SDL_WaitForGPUIdle(device);
 
 		// destroy default texture
-		{
-			DestroyTexture(emptyDefaultTexture!);
-			emptyDefaultTexture = null;
-		}
+		DestroyResource(emptyDefaultTexture);
+		emptyDefaultTexture = nint.Zero;
 
 		// destroy resources
+		while (!resources.IsEmpty)
 		{
-			IHandle[] destroying = [.. resources];
+			nint[] destroying = [.. resources.Keys];
 			foreach (var it in destroying)
 				DestroyResource(it);
 		}
@@ -330,13 +333,13 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		// copy buffer to swap chain
 		if (SDL_WaitAndAcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
 		{
-			if (scTex != nint.Zero && backbuffer != null && scW > 0 && scH > 0 && backbufferSize.X > 0 && backbufferSize.Y > 0)
+			if (scTex != nint.Zero && scW > 0 && scH > 0 && backbufferSize.X > 0 && backbufferSize.Y > 0 && backbuffer != null)
 			{
 				SDL_GPUBlitInfo blit = new()
 				{
 					source = new()
 					{
-						texture = ((TextureResource)backbuffer.Attachments[0].Resource).SamplerTexture,
+						texture = RequireResource<TextureResource>(backbuffer.Attachments[0].Resource).SamplerTexture,
 						mip_level = 0,
 						layer_or_depth_plane = 0,
 						x = 0,
@@ -409,7 +412,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		return SDL_GPUTextureSupportsSampleCount(device, GetTextureFormat(format), GetSampleCount(sampleCount));
 	}
 
-	internal override IHandle CreateTexture(string? name, int width, int height, TextureFormat format, SampleCount sampleCount, IHandle? targetBinding)
+	internal override ResourceHandle CreateTexture(string? name, int width, int height, TextureFormat format, SampleCount sampleCount, nint? targetBinding)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
@@ -456,11 +459,11 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUTexture));
 
 		// create a resolve texture if we're multisampled
-		TextureResource? resolve = null;
+		ResourceHandle resolveTexture = default;
 		if (sampleCount != SampleCount.One)
 		{
 			var resolveName = name != null ? $"Resolve-{name}" : null;
-			resolve = (TextureResource)CreateTexture(resolveName, width, height, format, SampleCount.One, targetBinding);
+			resolveTexture = CreateTexture(resolveName, width, height, format, SampleCount.One, targetBinding);
 		}
 
 		// create resulting texture resource
@@ -471,19 +474,19 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			Height = height,
 			Format = info.format,
 			SampleCount = GetSampleCount(sampleCount),
-			MultiSampleResolve = resolve
+			MultiSampleResolve = resolveTexture
 		};
 
-		// attach to target
-		if (targetBinding is TargetResource tar)
-			tar.Attachments.Add(res);
+		var handle = RegisterResource(res);
 
-		lock (resources)
-			resources.Add(res);
-		return res;
+		// attach to target
+		if (targetBinding.HasValue && resources.TryGetValue(targetBinding.Value, out var tar) && tar is TargetResource att)
+			att.Attachments.Add(handle);
+
+		return handle;
 	}
 
-	internal override void SetTextureData(IHandle texture, nint data, int length)
+	internal override void SetTextureData(ResourceHandle handle, nint data, int length)
 	{
 		static uint RoundToAlignment(uint value, uint alignment)
 			=> alignment * ((value + alignment - 1) / alignment);
@@ -491,13 +494,10 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (device == nint.Zero)
 			throw deviceNotCreated;
 
-		// get texture
-		TextureResource res = (TextureResource)texture;
-		if (res.GraphicsDevice != this)
-			throw deviceWasDestroyed;
+		var res = RequireResource<TextureResource>(handle);
 		
 		// search up for resolve texture if we're multisampled
-		if (res.MultiSampleResolve != null)
+		if (res.MultiSampleResolve)
 		{
 			SetTextureData(res.MultiSampleResolve, data, length);
 			return;
@@ -592,18 +592,16 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			textureUploadBufferOffset += (uint)length;
 	}
 
-	internal override void GetTextureData(IHandle texture, nint data, int length)
+	internal override void GetTextureData(ResourceHandle handle, nint data, int length)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
 
 		// get texture
-		TextureResource res = (TextureResource)texture;
-		if (res.GraphicsDevice != this)
-			throw deviceWasDestroyed;
+		var res = RequireResource<TextureResource>(handle);
 
 		// search up for the resolve texture
-		if (res.MultiSampleResolve != null)
+		if (res.MultiSampleResolve)
 		{
 			GetTextureData(res.MultiSampleResolve, data, length);
 			return;
@@ -672,51 +670,12 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 	}
 
-	public void DestroyTexture(IHandle texture)
+	internal override ResourceHandle CreateTarget(int width, int height)
 	{
-		if (!texture.Disposed)
-		{
-			var res = (TextureResource)texture;
-
-			if (res.MultiSampleResolve != null)
-				DestroyTexture(res.MultiSampleResolve);
-
-			lock (resources)
-			{
-				resources.Remove(texture);
-				res.Destroyed = true;
-			}
-
-			SDL_ReleaseGPUTexture(device, res.Texture);
-		}
+		return RegisterResource(new TargetResource(this));
 	}
 
-	internal override IHandle CreateTarget(int width, int height)
-	{
-		var res = new TargetResource(this);
-		lock (resources)
-			resources.Add(res);
-		return res;
-	}
-
-	public void DestroyTarget(IHandle target)
-	{
-		if (!target.Disposed)
-		{
-			var res = (TargetResource)target;
-
-			foreach (var it in res.Attachments)
-				DestroyTexture(it);
-
-			lock (resources)
-			{
-				resources.Remove(target);
-				res.Destroyed = true;
-			}
-		}
-	}
-
-	internal override IHandle CreateBuffer(string? name, BufferType type, IndexFormat format)
+	internal override ResourceHandle CreateBuffer(string? name, BufferType type, IndexFormat format)
 	{
 		var res = new BufferResource(this, name, type switch
 		{
@@ -726,26 +685,23 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			_ => throw new NotImplementedException()
 		}, format);
 
-		lock (resources)
-			resources.Add(res);
-
-		return res;
+		return RegisterResource(res);
 	}
 
-	internal override void UploadBufferData(IHandle buffer, nint data, int dataSize, int dataDestOffset)
+	internal override void UploadBufferData(ResourceHandle buffer, nint data, int dataSize, int dataDestOffset)
 	{
-		var res = (BufferResource)buffer;
+		var res = RequireResource<BufferResource>(buffer);
 		res.Dirty = true;
 
 		// (re)create buffer if needed
 		var required = dataSize + dataDestOffset;
-		if (required > res.Capacity || res.Handle == nint.Zero)
+		if (required > res.Capacity || res.Buffer == nint.Zero)
 		{
 			// TODO: A resize wipes all contents but the Buffer API doesn't expect this
-			if (res.Handle != nint.Zero)
+			if (res.Buffer != nint.Zero)
 			{
-				SDL_ReleaseGPUBuffer(device, res.Handle);
-				res.Handle = nint.Zero;
+				SDL_ReleaseGPUBuffer(device, res.Buffer);
+				res.Buffer = nint.Zero;
 			}
 
 			// TODO: Upon first creation we should probably just create a perfectly sized buffer, and afterward next Po2
@@ -769,7 +725,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				SDL_SetStringProperty(props, SDL_PROP_GPU_BUFFER_CREATE_NAME_STRING, res.Name);
 			}
 
-			res.Handle = SDL_CreateGPUBuffer(device, new()
+			res.Buffer = SDL_CreateGPUBuffer(device, new()
 			{
 				usage = res.Usage,
 				size = (uint)size,
@@ -779,7 +735,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			if (props != 0)
 				SDL_DestroyProperties(props);
 
-			if (res.Handle == nint.Zero)
+			if (res.Buffer == nint.Zero)
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUBuffer), "Mesh Creation Failed");
 			res.Capacity = size;
 		}
@@ -850,7 +806,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				},
 				destination: new()
 				{
-					buffer = res.Handle,
+					buffer = res.Buffer,
 					offset = (uint)dataDestOffset,
 					size = (uint)dataSize
 				},
@@ -869,23 +825,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 	}
 
-	public void DestroyBuffer(IHandle buffer)
-	{
-		if (!buffer.Disposed)
-		{
-			var res = (BufferResource)buffer;
-
-			lock (resources)
-			{
-				resources.Remove(buffer);
-				res.Destroyed = true;
-			}
-
-			SDL_ReleaseGPUBuffer(device, res.Handle);
-		}
-	}
-
-	internal override IHandle CreateShader(string? name, in ShaderCreateInfo shaderInfo)
+	internal override ResourceHandle CreateShader(string? name, in ShaderCreateInfo shaderInfo)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
@@ -928,46 +868,58 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUShader), $"Failed to create {shaderInfo.Stage} Shader");
 		}
 
-		var res = new ShaderResource(this)
-		{
-			Shader = program,
-		};
-
-		lock (resources)
-			resources.Add(res);
-
-		return res;
+		return RegisterResource(new ShaderResource(this, program));
 	}
 
-	public void DestroyShader(IHandle shader)
+	private ResourceHandle RegisterResource(Resource it)
 	{
-		var res = (ShaderResource)shader;
-		if (!res.Disposed)
+		var id = Interlocked.Add(ref nextResourceId, 1);
+		it.Handle = new nint(id);
+		resources.TryAdd(it.Handle, it);
+		return it.Handle;
+	}
+
+	internal override void DestroyResource(ResourceHandle resource)
+	{
+		if (resources.TryRemove(resource.Id, out var it))
 		{
-			lock (resources)
+			if (it is TextureResource tex)
 			{
-				resources.Remove(shader);
-				res.Destroyed = true;
+				if (tex.MultiSampleResolve)
+					DestroyResource(tex.MultiSampleResolve);
+				SDL_ReleaseGPUTexture(device, tex.Texture);
 			}
-
-			ReleaseGraphicsPipelinesAssociatedWith(res);
-			SDL_ReleaseGPUShader(device, res.Shader);
+			else if (it is TargetResource tar)
+			{
+				foreach (var att in tar.Attachments)
+					DestroyResource(att);
+			}
+			else if (it is BufferResource buf)
+			{
+				SDL_ReleaseGPUBuffer(device, buf.Buffer);
+			}
+			else if (it is ShaderResource sha)
+            {
+				ReleaseGraphicsPipelinesAssociatedWith(sha);
+				SDL_ReleaseGPUShader(device, sha.Shader);
+			}
 		}
 	}
 
-	internal override void DestroyResource(IHandle resource)
+	private T RequireResource<T>(ResourceHandle handle) where T : Resource
 	{
-		if (!resource.Disposed)
-		{
-			if (resource is TextureResource)
-				DestroyTexture(resource);
-			else if (resource is TargetResource)
-				DestroyTarget(resource);
-			else if (resource is BufferResource)
-				DestroyBuffer(resource);
-			else if (resource is ShaderResource)
-				DestroyShader(resource);
-		}
+		if (resources.TryGetValue(handle, out var res) && res is T resource)
+			return resource;
+		throw new Exception("Attempting to use a Disposed Resource");
+	}
+
+	private T? FindResource<T>(ResourceHandle? handle) where T : Resource
+	{
+		if (handle == null || handle.Value.Id == 0)
+			return null;
+		if (resources.TryGetValue(handle.Value, out var res) && res is T resource)
+			return resource;
+		return null;
 	}
 
 	internal override void PerformDraw(DrawCommand command)
@@ -1018,21 +970,20 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 
 		// bind index buffer
-		if (renderPassIndexBuffer != command.IndexBuffer?.Resource ||
-			(command.IndexBuffer != null && ((BufferResource)command.IndexBuffer.Resource).Dirty))
+		var indexBuffer = FindResource<BufferResource>(command.IndexBuffer?.Resource);
+		if (renderPassIndexBuffer != command.IndexBuffer?.Resource || (indexBuffer?.Dirty ?? false))
 		{
-			renderPassIndexBuffer = command.IndexBuffer?.Resource;
-			if (renderPassIndexBuffer != null)
+			renderPassIndexBuffer = indexBuffer?.Handle ?? default;
+			if (indexBuffer != null)
 			{
-				var it = (BufferResource)renderPassIndexBuffer;
-				it.Dirty = false;
+				indexBuffer.Dirty = false;
 
 				SDL_GPUBufferBinding indexBinding = new()
 				{
-					buffer = it.Handle,
+					buffer = indexBuffer.Buffer,
 					offset = 0
 				};
-				SDL_BindGPUIndexBuffer(renderPass, indexBinding, it.IndexFormat switch
+				SDL_BindGPUIndexBuffer(renderPass, indexBinding, indexBuffer.IndexFormat switch
 				{
 					IndexFormat.Sixteen => SDL_GPUIndexElementSize.SDL_GPU_INDEXELEMENTSIZE_16BIT,
 					IndexFormat.ThirtyTwo => SDL_GPUIndexElementSize.SDL_GPU_INDEXELEMENTSIZE_32BIT,
@@ -1046,12 +997,14 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (!rebindVertexBuffers)
 		{
 			for (int i = 0; i < command.VertexBuffers.Count; i ++)
-				if (renderPassVertexBuffers[i] != command.VertexBuffers[i].Buffer.Resource ||
-					((BufferResource)command.VertexBuffers[i].Buffer.Resource).Dirty)
+			{
+				var vertexBuffer = RequireResource<BufferResource>(command.VertexBuffers[i].Buffer.Resource);
+				if (renderPassVertexBuffers[i] != vertexBuffer.Handle || vertexBuffer.Dirty)
 				{
 					rebindVertexBuffers = true;
 					break;
 				}
+			}
 		}
 
 		// bind buffers
@@ -1069,16 +1022,16 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 				for (int i = 0; i < command.VertexBuffers.Count; i ++)
 				{
-					var res = (BufferResource)command.VertexBuffers[i].Buffer.Resource;
+					var res = RequireResource<BufferResource>(command.VertexBuffers[i].Buffer.Resource);
 					res.Dirty = false;
 
 					vertexBinding[i] = new()
 					{
-						buffer = res.Handle,
+						buffer = res.Buffer,
 						offset = 0
 					};
 
-					renderPassVertexBuffers.Add(res);
+					renderPassVertexBuffers.Add(res.Handle);
 				}
 
 				SDL_BindGPUVertexBuffers(renderPass, 0, vertexBinding, (uint)command.VertexBuffers.Count);
@@ -1096,11 +1049,9 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 			for (int i = 0; i < vertexInfo.SamplerCount; i++)
 			{
-				if (mat.Vertex.Samplers[i].Texture is { } tex && !tex.IsDisposed)
-					samplers[i].texture = ((TextureResource)tex.Resource).SamplerTexture;
-				else
-					samplers[i].texture = ((TextureResource)emptyDefaultTexture!).SamplerTexture;
-
+				samplers[i].texture = 
+					(FindResource<TextureResource>(mat.Vertex.Samplers[i].Texture?.Resource) ??
+					RequireResource<TextureResource>(emptyDefaultTexture)).SamplerTexture;
 				samplers[i].sampler = GetSampler(mat.Vertex.Samplers[i].Sampler);
 			}
 
@@ -1115,11 +1066,9 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 			for (int i = 0; i < fragmentInfo.SamplerCount; i++)
 			{
-				if (mat.Fragment.Samplers[i].Texture is { } tex && !tex.IsDisposed)
-					samplers[i].texture = ((TextureResource)tex.Resource).SamplerTexture;
-				else
-					samplers[i].texture = ((TextureResource)emptyDefaultTexture!).SamplerTexture;
-
+				samplers[i].texture = 
+					(FindResource<TextureResource>(mat.Fragment.Samplers[i].Texture?.Resource) ??
+					RequireResource<TextureResource>(emptyDefaultTexture)).SamplerTexture;
 				samplers[i].sampler = GetSampler(mat.Fragment.Samplers[i].Sampler);
 			}
 
@@ -1147,7 +1096,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		{
 			Span<nint> buffers = stackalloc nint[command.VertexStorageBuffers.Count];
 			for (int i = 0; i < command.VertexStorageBuffers.Count; i ++)
-				buffers[i] = ((BufferResource)command.VertexStorageBuffers[i].Resource).Handle;
+				buffers[i] = RequireResource<BufferResource>(command.VertexStorageBuffers[i].Resource).Buffer;
 			SDL_BindGPUVertexStorageBuffers(renderPass, 0, buffers, (uint)buffers.Length);
 		}
 
@@ -1156,7 +1105,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		{
 			Span<nint> buffers = stackalloc nint[command.FragmentStorageBuffers.Count];
 			for (int i = 0; i < command.FragmentStorageBuffers.Count; i ++)
-				buffers[i] = ((BufferResource)command.FragmentStorageBuffers[i].Resource).Handle;
+				buffers[i] = RequireResource<BufferResource>(command.FragmentStorageBuffers[i].Resource).Buffer;
 			SDL_BindGPUFragmentStorageBuffers(renderPass, 0, buffers, (uint)buffers.Length);
 		}
 
@@ -1299,18 +1248,14 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		foreach (var it in target.Attachments)
 		{
-			var tex = (TextureResource)it.Resource;
-			var res = tex.Texture;
-			var resolve = tex.MultiSampleResolve?.Texture ?? nint.Zero;
-
-			// drawing to an invalid target
-			if (it.IsDisposed || !it.IsTargetAttachment || res == nint.Zero)
-				throw new Exception("Drawing to a Disposed or Invalid Texture");
-
+			var tex = RequireResource<TextureResource>(it.Resource);
 			if (it.Format.IsDepthStencilFormat())
-				depthStencilTarget = res;
+				depthStencilTarget = tex.Texture;
 			else
-				colorTargets.Add((res, resolve));
+			{
+				var resolve = FindResource<TextureResource>(tex.MultiSampleResolve)?.Texture ?? nint.Zero;
+				colorTargets.Add((tex.Texture, resolve));
+			}
 		}
 
 		Span<SDL_GPUColorTargetInfo> colorInfo = stackalloc SDL_GPUColorTargetInfo[colorTargets.Count];
@@ -1381,24 +1326,16 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		renderPassPipeline = nint.Zero;
 		renderPassViewport = null;
 		renderPassScissor = null;
-		renderPassIndexBuffer = null;
+		renderPassIndexBuffer = nint.Zero;
 		renderPassVertexBuffers.Clear();
 	}
 
 	private nint GetGraphicsPipeline(in DrawCommand command)
 	{
-		var vertexShader = command.Material.Vertex.Shader!;
-		if (((ShaderResource)vertexShader.Resource).GraphicsDevice != this)
-			throw deviceWasDestroyed;
-
-		var fragmentShader = command.Material.Fragment.Shader!;
-		if (((ShaderResource)fragmentShader.Resource).GraphicsDevice != this)
-			throw deviceWasDestroyed;
-
 		// build a big hashcode of everything in use
 		var hash = HashCode.Combine(
-			vertexShader.Resource,
-			fragmentShader.Resource,
+			command.Material.Vertex.Shader!.Resource,
+			command.Material.Fragment.Shader!.Resource,
 			command.CullMode,
 			command.DepthCompare,
 			command.DepthTestEnabled,
@@ -1421,8 +1358,8 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		{
 			var self = args.Item1;
 			var command = args.Item2;
-			var vertRes = (ShaderResource)command.Material.Vertex.Shader!.Resource;
-			var fragRes = (ShaderResource)command.Material.Fragment.Shader!.Resource;
+			var vertRes = self.RequireResource<ShaderResource>(command.Material.Vertex.Shader!.Resource);
+			var fragRes = self.RequireResource<ShaderResource>(command.Material.Fragment.Shader!.Resource);
 			var vertexAttributeCount = 0;
 			foreach (var vb in command.VertexBuffers)
 				vertexAttributeCount += vb.Buffer.Format.Elements.Count;

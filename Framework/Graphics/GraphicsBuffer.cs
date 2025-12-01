@@ -8,10 +8,11 @@ namespace Foster.Framework;
 public abstract class GraphicsBuffer : IGraphicResource
 {
 	internal readonly int ElementSizeInBytes;
-	internal readonly GraphicsDevice.IHandle Resource;
+	internal readonly GraphicsDevice.ResourceHandle Resource;
+	private bool disposed;
 
 	/// <summary>
-	/// The GraphicsDevice this Mesh was created in
+	/// The GraphicsDevice this Buffer was created in
 	/// </summary>
 	public readonly GraphicsDevice GraphicsDevice;
 
@@ -28,7 +29,7 @@ public abstract class GraphicsBuffer : IGraphicResource
 	/// <summary>
 	/// If the Buffer has been disposed
 	/// </summary>
-	public bool IsDisposed => Resource.Disposed;
+	public bool IsDisposed => disposed || GraphicsDevice.Disposed;
 
 	internal GraphicsBuffer(GraphicsDevice graphicsDevice, int elementSizeInBytes, GraphicsDevice.BufferType type, IndexFormat? indexFormat, string? name)
 	{
@@ -66,9 +67,13 @@ public abstract class GraphicsBuffer : IGraphicResource
 	/// </summary>
 	public void Dispose()
 	{
-		GC.SuppressFinalize(this);
-		if (!Resource.Disposed)
+		if (!disposed)
+		{
 			GraphicsDevice.DestroyResource(Resource);
+			disposed = true;
+		}
+
+		GC.SuppressFinalize(this);
 	}
 }
 

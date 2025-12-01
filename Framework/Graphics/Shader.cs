@@ -29,7 +29,7 @@ public class Shader : IGraphicResource
 	/// <summary>
 	/// If the Shader is disposed
 	/// </summary>
-	public bool IsDisposed => Resource.Disposed;
+	public bool IsDisposed => disposed || GraphicsDevice.Disposed;
 
 	/// <summary>
 	/// The Data the Shader was created with
@@ -39,7 +39,9 @@ public class Shader : IGraphicResource
 	/// <summary>
     /// shader resource
     /// </summary>
-	internal GraphicsDevice.IHandle Resource;
+	internal GraphicsDevice.ResourceHandle Resource;
+
+	private bool disposed;
 
 	public Shader(GraphicsDevice graphicsDevice, in ShaderCreateInfo createInfo, string? name = null)
 	{
@@ -66,13 +68,16 @@ public class Shader : IGraphicResource
 	}
 
 	~Shader()
-	{
-		GraphicsDevice.DestroyResource(Resource);
-	}
+		=> Dispose();
 
 	public void Dispose()
 	{
-		GraphicsDevice.DestroyResource(Resource);
+		if (!disposed)
+		{
+			GraphicsDevice.DestroyResource(Resource);
+			disposed = true;
+		}
+
 		GC.SuppressFinalize(this);
 	}
 }

@@ -102,5 +102,11 @@ public abstract class StorageContainer : IDisposable
 		stream.Flush();
 	}
 
-	public abstract void Dispose();
+	public void Dispose()
+	{
+		Dispose(true);
+		GC.SuppressFinalize(this);
+	}
+
+	public abstract void Dispose(bool disposing);
 }

@@ -20,7 +20,7 @@ public class Target : IGraphicResource, IDrawableTarget
 	/// <summary>
 	/// Ii the Target has been disposed.
 	/// </summary>
-	public bool IsDisposed => Resource.Disposed;
+	public bool IsDisposed => disposed || GraphicsDevice.Disposed;
 
 	/// <summary>
 	/// The Width of the Target.
@@ -46,7 +46,9 @@ public class Target : IGraphicResource, IDrawableTarget
 	int IDrawableTarget.WidthInPixels => Width;
 	int IDrawableTarget.HeightInPixels => Height;
 
-	internal readonly GraphicsDevice.IHandle Resource;
+	internal readonly GraphicsDevice.ResourceHandle Resource;
+
+	private bool disposed;
 
 	/// <summary>
 	/// Constructs a Target with a single <see cref="TextureFormat.Color"/> attachment. 
@@ -88,10 +90,7 @@ public class Target : IGraphicResource, IDrawableTarget
 		}
 	}
 
-	~Target()
-	{
-		Dispose();
-	}
+	~Target() => Dispose();
 
 	private static StackList16<(TextureFormat Format, SampleCount SampleCount)> GetAttachments(in ReadOnlySpan<TextureFormat> values)
 	{
@@ -109,7 +108,12 @@ public class Target : IGraphicResource, IDrawableTarget
 	/// </summary>
 	public void Dispose()
 	{
-		GraphicsDevice.DestroyResource(Resource);
+		if (!disposed)
+		{
+			GraphicsDevice.DestroyResource(Resource);
+			disposed = true;
+		}
+
 		GC.SuppressFinalize(this);
 	}
 

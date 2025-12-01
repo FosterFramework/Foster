@@ -68,7 +68,7 @@ public class VirtualDevice : VirtualInput, IDisposable
 	}
 
 	~VirtualDevice()
-		=> Dispose();
+		=> Dispose(false);
 
 	/// <summary>
 	/// Adds a Virtual Action to this Device
@@ -175,13 +175,17 @@ public class VirtualDevice : VirtualInput, IDisposable
 	/// Called when the Controller at our Index is disconnected
 	/// </summary>
 	protected internal virtual void ControllerDisconnected() {}
-
-	public override void Dispose()
+	
+	protected override void Dispose(bool disposing)
 	{
-		foreach (var it in inputs)
-			it.Dispose();
-		inputs.Clear();
-		base.Dispose();
+		if (disposing)
+		{
+			foreach (var it in inputs)
+				it.Dispose();
+			inputs.Clear();
+		}
+
+		base.Dispose(disposing);
 	}
 
 	private void UpdateControllerIndex(int value)

@@ -145,15 +145,16 @@ public class SpriteFont : IDisposable
 		Size = size;
 	}
 
-	~SpriteFont()
-	{
-		Dispose();
-	}
+	~SpriteFont() => Dispose(false);
 
 	public void Dispose()
 	{
+		Dispose(true);
 		GC.SuppressFinalize(this);
+	}
 
+	private void Dispose(bool disposing)
+	{
 		if (blittingTask != null)
 		{
 			blittingQueue.CompleteAdding();
@@ -585,7 +586,9 @@ public class SpriteFont : IDisposable
 					int codepoint = 0;
 					Font.Character metrics = default;
 
-					// in case it's emptied between the while loop and reaching this point
+					// TODO: .Take() seems to throw if the BlockingCollection is marked completed
+					// even with TryTake(), or using a CancellationToken. Is there a way to avoid that?
+					// it seems weird to design something around throwing exceptions as intended behavior.
 					try { (codepoint, metrics) = blittingQueue.Take(); }
 					catch {}
 

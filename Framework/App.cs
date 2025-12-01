@@ -222,28 +222,33 @@ public abstract class App : IDisposable
 		Input.AddDefaultSDLGamepadMappings(AppContext.BaseDirectory);
 	}
 
-	~App()
-	{
-		Dispose();
-	}
+	~App() => Dispose(false);
 
 	public void Dispose()
 	{
-		if (Disposed)
-			return;
-		if (Running)
-			throw new Exception("Cannot dispose App while running");
-
+		Dispose(true);
 		GC.SuppressFinalize(this);
-		Disposed = true;
+	}
 
-		GraphicsDevice.Shutdown();
-		Window.Close();
-		GraphicsDevice.DestroyDevice();
-		inputProvider.Dispose();
-		mainThreadQueue.Clear();
+	private void Dispose(bool disposing)
+	{
+		if (!Disposed)
+		{
+			if (Running)
+				throw new Exception("Cannot dispose App while running");
 
-		SDL_Quit();
+			if (disposing)
+			{
+				GraphicsDevice.Shutdown();
+				Window.Close();
+				GraphicsDevice.DestroyDevice();
+				inputProvider.CloseDevices();
+				mainThreadQueue.Clear();
+			}
+
+			SDL_Quit();
+			Disposed = true;
+		}
 	}
 
 	/// <summary>
@@ -301,6 +306,7 @@ public abstract class App : IDisposable
 		// shutdown
 		Shutdown();
 		Window.Hide();
+		inputProvider.CloseDevices();
 		Running = false;
 		Exiting = false;
 	}

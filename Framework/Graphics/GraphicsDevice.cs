@@ -5,12 +5,11 @@ namespace Foster.Framework;
 /// </summary>
 public abstract class GraphicsDevice
 {
-	/// <summary>
-	/// A graphical resource handle
-	/// </summary>
-	internal interface IHandle
+	internal readonly record struct ResourceHandle(nint Id)
 	{
-		public bool Disposed { get; }
+		public static implicit operator ResourceHandle(nint id) => new(id);
+		public static implicit operator nint(ResourceHandle handle) => handle.Id;
+		public static implicit operator bool(ResourceHandle handle) => handle.Id != nint.Zero;
 	}
 
 	/// <summary>
@@ -61,14 +60,14 @@ public abstract class GraphicsDevice
 	internal abstract void Startup(nint window);
 	internal abstract void Shutdown();
 	internal abstract void Present();
-	internal abstract IHandle CreateTexture(string? name, int width, int height, TextureFormat format, SampleCount sampleCount, IHandle? targetBinding);
-	internal abstract void SetTextureData(IHandle texture, nint data, int length);
-	internal abstract void GetTextureData(IHandle texture, nint data, int length);
-	internal abstract IHandle CreateTarget(int width, int height);
-	internal abstract IHandle CreateShader(string? name, in ShaderCreateInfo shaderInfo);
-	internal abstract IHandle CreateBuffer(string? name, BufferType type, IndexFormat format);
-	internal abstract void UploadBufferData(IHandle buffer, nint data, int dataSize, int dataDestOffset);
-	internal abstract void DestroyResource(IHandle resource);
+	internal abstract ResourceHandle CreateTexture(string? name, int width, int height, TextureFormat format, SampleCount sampleCount, nint? targetBinding);
+	internal abstract void SetTextureData(ResourceHandle texture, nint data, int length);
+	internal abstract void GetTextureData(ResourceHandle texture, nint data, int length);
+	internal abstract ResourceHandle CreateTarget(int width, int height);
+	internal abstract ResourceHandle CreateShader(string? name, in ShaderCreateInfo shaderInfo);
+	internal abstract ResourceHandle CreateBuffer(string? name, BufferType type, IndexFormat format);
+	internal abstract void UploadBufferData(ResourceHandle buffer, nint data, int dataSize, int dataDestOffset);
+	internal abstract void DestroyResource(ResourceHandle resource);
 	internal abstract void PerformDraw(DrawCommand command);
 	internal abstract void Clear(IDrawableTarget target, ReadOnlySpan<Color> color, float depth, int stencil, ClearMask mask);
 
@@ -130,7 +129,7 @@ public abstract class GraphicsDevice
 			if (it == null || it.IsDisposed)
 				throw new Exception("Attempting to render a null or disposed Vertex Buffer");
 
-			if (it.Resource == null || it.Count <= 0)
+			if (it.Resource == nint.Zero || it.Count <= 0)
 			{
 				Log.Warning("Attempting to render an empty Vertex Buffer; Nothing will be drawn");
 				return;

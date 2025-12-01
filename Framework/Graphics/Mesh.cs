@@ -92,11 +92,6 @@ public class Mesh : IGraphicResource
 		) {}
 
 	/// <summary>
-	/// Disposes the Mesh resources
-	/// </summary>
-	~Mesh() => Dispose();
-
-	/// <summary>
 	/// Sets the Buffer's Element Counts to 0
 	/// </summary>
 	public void Clear()
@@ -169,7 +164,6 @@ public class Mesh : IGraphicResource
 	/// </summary>
 	public void Dispose()
 	{
-		GC.SuppressFinalize(this);
 		VertexBuffer.Dispose();
 		InstanceBuffer?.Dispose();
 		IndexBuffer.Dispose();

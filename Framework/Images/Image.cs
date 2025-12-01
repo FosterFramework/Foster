@@ -125,10 +125,7 @@ public class Image : IDisposable
 		Load(stream);
 	}
 
-	~Image()
-	{
-		Dispose();
-	}
+	~Image() => Dispose(false);
 
 	private unsafe void Load(Stream stream)
 	{
@@ -147,25 +144,35 @@ public class Image : IDisposable
 		if (mem == 0)
 			throw new Exception("Failed to load Image");
 
-		// update properties
-		Clear();
+		// dispose existing state
+		Dispose(true);
+
+		IsDisposed = false; // we can use it again
 		Width = w;
 		Height = h;
 		ptr = mem;
 		unmanaged = true;
 	}
 
-	private void Clear()
+	private void Dispose(bool disposing)
 	{
-		if (unmanaged)
-			Platform.ImageFree(ptr);
-		else if (handle.IsAllocated)
-			handle.Free();
+		if (!IsDisposed)
+		{
+			if (unmanaged)
+				Platform.ImageFree(ptr);
+			else if (handle.IsAllocated)
+				handle.Free();
 
-		handle = new();
-		ptr = new();
-		unmanaged = false;
-		Width = Height = 0;
+			if (disposing)
+			{
+				handle = new();
+				ptr = new();
+				unmanaged = false;
+				Width = Height = 0;
+			}
+			
+			IsDisposed = true;
+		}
 	}
 
 	/// <summary>
@@ -173,9 +180,8 @@ public class Image : IDisposable
 	/// </summary>
 	public void Dispose()
 	{
-		Clear();
+		Dispose(true);
 		GC.SuppressFinalize(this);
-		IsDisposed = true;
 	}
 
 	/// <summary>
