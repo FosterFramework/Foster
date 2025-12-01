@@ -1029,6 +1029,10 @@ public class Batcher : IDisposable
 		}
 		else
 		{
+			// TODO:
+			// replace this with a single convex shape (like how a circle is drawn)
+			// instead of this monstrosity
+
 			// get corners
 			var r0_tl = rect.TopLeft;
 			var r0_tr = r0_tl + new Vector2(r0, 0);
@@ -1050,42 +1054,39 @@ public class Batcher : IDisposable
 			var r3_bl = r3_tl + new Vector2(0, r3);
 			var r3_br = r3_tl + new Vector2(r3, r3);
 
-			Append(
-				vertices: [
-					new(Vector2.Transform(r0_tr, Matrix), color, FillMode), // 0
-					new(Vector2.Transform(r0_br, Matrix), color, FillMode), // 1
-					new(Vector2.Transform(r0_bl, Matrix), color, FillMode), // 2
+			// upload vertices / indices
+			{
+				Request(12, 30, out var vertexDest, out var indexDest, out var vs);
 
-					new(Vector2.Transform(r1_tl, Matrix), color, FillMode), // 3
-					new(Vector2.Transform(r1_br, Matrix), color, FillMode), // 4
-					new(Vector2.Transform(r1_bl, Matrix), color, FillMode), // 5
+				vertexDest[0] = new(Vector2.Transform(r0_tr, Matrix), color, FillMode);
+				vertexDest[1] = new(Vector2.Transform(r0_br, Matrix), color, FillMode);
+				vertexDest[2] = new(Vector2.Transform(r0_bl, Matrix), color, FillMode);
+				vertexDest[3] = new(Vector2.Transform(r1_tl, Matrix), color, FillMode);
+				vertexDest[4] = new(Vector2.Transform(r1_br, Matrix), color, FillMode);
+				vertexDest[5] = new(Vector2.Transform(r1_bl, Matrix), color, FillMode);
+				vertexDest[6] = new(Vector2.Transform(r2_tl, Matrix), color, FillMode);
+				vertexDest[7] = new(Vector2.Transform(r2_tr, Matrix), color, FillMode);
+				vertexDest[8] = new(Vector2.Transform(r2_bl, Matrix), color, FillMode);
+				vertexDest[9] = new(Vector2.Transform(r3_tl, Matrix), color, FillMode);
+				vertexDest[10] = new(Vector2.Transform(r3_tr, Matrix), color, FillMode);
+				vertexDest[11] = new(Vector2.Transform(r3_br, Matrix), color, FillMode);
 
-					new(Vector2.Transform(r2_tl, Matrix), color, FillMode), // 6
-					new(Vector2.Transform(r2_tr, Matrix), color, FillMode), // 7
-					new(Vector2.Transform(r2_bl, Matrix), color, FillMode), // 8
-
-					new(Vector2.Transform(r3_tl, Matrix), color, FillMode), // 9
-					new(Vector2.Transform(r3_tr, Matrix), color, FillMode), // 10
-					new(Vector2.Transform(r3_br, Matrix), color, FillMode), // 11
-				],
-				indices: [
-					// top quad
-						00, /* r0b */ 03, /* r1a */ 05, /* r1d */
-						00, /* r0b */ 05, /* r1d */ 01, /* r0c */
-					// left quad
-						02, /* r0d */ 01, /* r0c */ 10, /* r3b */
-						02, /* r0d */ 10, /* r3b */ 09, /* r3a */
-					// right quad
-						05, /* r1d */ 04, /* r1c */ 07, /* r2b */
-						05, /* r1d */ 07, /* r2b */ 06, /* r2a */
-					// bottom quad
-						10, /* r3b */ 06, /* r2a */ 08, /* r2d */
-						10, /* r3b */ 08, /* r2d */ 11, /* r3c */
-					// center quad
-						01, /* r0c */ 05, /* r1d */ 06, /* r2a */
-						01, /* r0c */ 06, /* r2a */ 10, /* r3b */
-				]
-			);
+				// top quad
+				indexDest[00] = vs + 00; /* r0b */ indexDest[01] = vs + 03; /* r1a */ indexDest[02] = vs + 05; /* r1d */
+				indexDest[03] = vs + 00; /* r0b */ indexDest[04] = vs + 05; /* r1d */ indexDest[05] = vs + 01; /* r0c */
+				// left quad
+				indexDest[06] = vs + 02; /* r0d */ indexDest[07] = vs + 01; /* r0c */ indexDest[08] = vs + 10; /* r3b */
+				indexDest[09] = vs + 02; /* r0d */ indexDest[10] = vs + 10; /* r3b */ indexDest[11] = vs + 09; /* r3a */
+				// right quad
+				indexDest[12] = vs + 05; /* r1d */ indexDest[13] = vs + 04; /* r1c */ indexDest[14] = vs + 07; /* r2b */
+				indexDest[15] = vs + 05; /* r1d */ indexDest[16] = vs + 07; /* r2b */ indexDest[17] = vs + 06; /* r2a */
+				// bottom quad
+				indexDest[18] = vs + 10; /* r3b */ indexDest[19] = vs + 06; /* r2a */ indexDest[20] = vs + 08; /* r2d */
+				indexDest[21] = vs + 10; /* r3b */ indexDest[22] = vs + 08; /* r2d */ indexDest[23] = vs + 11; /* r3c */
+				// center quad
+				indexDest[24] = vs + 01; /* r0c */ indexDest[25] = vs + 05; /* r1d */ indexDest[26] = vs + 06; /* r2a */
+				indexDest[27] = vs + 01; /* r0c */ indexDest[28] = vs + 06; /* r2a */ indexDest[29] = vs + 10; /* r3b */
+			}
 
 			var left = Calc.PI;
 			var right = 0.0f;
