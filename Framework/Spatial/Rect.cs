@@ -13,6 +13,11 @@ namespace Foster.Framework;
 [StructLayout(LayoutKind.Sequential), JsonConverter(typeof(JsonConverter))]
 public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatable<Rect>
 {
+	/// <summary>
+	/// The <see cref="Rect"/> at (0, 0) with size (1, 1)
+	/// </summary>
+	public static readonly Rect Identity = (0, 0, 1, 1);
+
 	public float X = x;
 	public float Y = y;
 	public float Width = w;

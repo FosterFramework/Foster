@@ -11,6 +11,11 @@ namespace Foster.Framework;
 [StructLayout(LayoutKind.Sequential)]
 public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<RectInt>
 {
+	/// <summary>
+	/// The <see cref="RectInt"/> at (0, 0) with size (1, 1)
+	/// </summary>
+	public static readonly RectInt Identity = (0, 0, 1, 1);
+
 	public int X = x;
 	public int Y = y;
 	public int Width = w;
