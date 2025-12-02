@@ -248,6 +248,7 @@ public struct Quad : IConvexShape, IEquatable<Quad>
 
 	public static bool operator ==(Quad a, Quad b) => a.a == b.a && a.b == b.b && a.c == b.c && a.d == b.d;
 	public static bool operator !=(Quad a, Quad b) => a.a != b.a || a.b != b.b || a.c != b.c || a.d != b.d;
+	public static implicit operator Quad(in Rect rect) => new(rect.TopLeft, rect.TopRight, rect.BottomRight, rect.BottomLeft);
 
 	public bool Equals(Quad other) => a.Equals(other.a) && b.Equals(other.b) && c.Equals(other.c) && d.Equals(other.d);
 
