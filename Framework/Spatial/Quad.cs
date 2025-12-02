@@ -229,25 +229,30 @@ public struct Quad : IConvexShape, IEquatable<Quad>
 		bool reverse = maintainWinding && MathF.Sign(matrix.M11) * MathF.Sign(matrix.M22) < 0;
 
 		if (reverse)
-		{
-			return new Quad(
+			return new(
 				Vector2.Transform(quad.d, matrix),
 				Vector2.Transform(quad.c, matrix),
 				Vector2.Transform(quad.b, matrix),
-				Vector2.Transform(quad.a, matrix));
-		}
+				Vector2.Transform(quad.a, matrix)
+				);
 		else
-		{
-			return new Quad(
+			return new(
 				Vector2.Transform(quad.a, matrix),
 				Vector2.Transform(quad.b, matrix),
 				Vector2.Transform(quad.c, matrix),
-				Vector2.Transform(quad.d, matrix));
-		}
+				Vector2.Transform(quad.d, matrix)
+				);
 	}
 
-	public static bool operator ==(Quad a, Quad b) => a.a == b.a && a.b == b.b && a.c == b.c && a.d == b.d;
-	public static bool operator !=(Quad a, Quad b) => a.a != b.a || a.b != b.b || a.c != b.c || a.d != b.d;
+	public static Quad operator *(Quad lhs, float rhs) => new(lhs.A * rhs, lhs.B * rhs, lhs.C * rhs, lhs.D * rhs);
+	public static Quad operator /(Quad lhs, float rhs) => new(lhs.A / rhs, lhs.B / rhs, lhs.C / rhs, lhs.D / rhs);
+	public static Quad operator +(Quad lhs, Vector2 rhs) => new(lhs.A + rhs, lhs.B + rhs, lhs.C + rhs, lhs.D + rhs);
+	public static Quad operator -(Quad lhs, Vector2 rhs) => new(lhs.A - rhs, lhs.B - rhs, lhs.C - rhs, lhs.D - rhs);
+	public static Quad operator +(Quad lhs, Quad rhs) => new(lhs.A + rhs.A, lhs.B + rhs.B, lhs.C + rhs.C, lhs.D + rhs.D);
+	public static Quad operator -(Quad lhs, Quad rhs) => new(lhs.A - rhs.A, lhs.B - rhs.B, lhs.C - rhs.C, lhs.D - rhs.D);
+	public static bool operator ==(Quad lhs, Quad rhs) => lhs.a == rhs.a && lhs.b == rhs.b && lhs.c == rhs.c && lhs.d == rhs.d;
+	public static bool operator !=(Quad lhs, Quad rhs) => lhs.a != rhs.a || lhs.b != rhs.b || lhs.c != rhs.c || lhs.d != rhs.d;
+
 	public static implicit operator Quad(in Rect rect) => new(rect.TopLeft, rect.TopRight, rect.BottomRight, rect.BottomLeft);
 
 	public bool Equals(Quad other) => a.Equals(other.a) && b.Equals(other.b) && c.Equals(other.c) && d.Equals(other.d);
