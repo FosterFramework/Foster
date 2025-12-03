@@ -2007,6 +2007,14 @@ public static class Calc
 		=> float.Lerp(a, b, percent);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static float ClampedLerp(float a, float b, float percent)
+		=> float.Lerp(a, b, float.Clamp(percent, 0, 1));
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static float ClampedLerp(float a, float b, float percent, Ease.Easer easer)
+		=> float.Lerp(a, b, float.Clamp(easer(percent), 0, 1));
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Bezier(float a, float b, float c, float t)
 		=> Lerp(Lerp(a, b, t), Lerp(b, c, t), t);
 
