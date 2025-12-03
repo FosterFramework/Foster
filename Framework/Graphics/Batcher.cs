@@ -909,63 +909,66 @@ public class Batcher : IDisposable
 	#region Rect
 
 	public void Rect(in Rect rect, Color color)
-	{
-		Quad(
+		=> Quad(
 			new(rect.X, rect.Y),
 			new(rect.X + rect.Width, rect.Y),
 			new(rect.X + rect.Width, rect.Y + rect.Height),
 			new(rect.X, rect.Y + rect.Height),
-			color);
-	}
+			color
+		);
 
 	public void Rect(in Vector2 position, in Vector2 size, Color color)
-	{
-		Quad(
+		=> Quad(
 			position,
-			position + new Vector2(size.X, 0),
+			position + size with { Y = 0 },
 			position + new Vector2(size.X, size.Y),
-			position + new Vector2(0, size.Y),
-			color);
-	}
+			position + size with { X = 0 },
+			color
+		);
+
+	public void Rect(in Vector2 position, float width, float height, Color color)
+		=> Quad(
+			position,
+			position + new Vector2(width, 0),
+			position + new Vector2(width, height),
+			position + new Vector2(0, height),
+			color
+		);
 
 	public void Rect(float x, float y, float width, float height, Color color)
-	{
-		Quad(
+		=> Quad(
 			new(x, y),
 			new(x + width, y),
 			new(x + width, y + height),
-			new(x, y + height), color);
-	}
+			new(x, y + height), color
+		);
 
 	public void Rect(in Rect rect, Color c0, Color c1, Color c2, Color c3)
-	{
-		Quad(
+		=> Quad(
 			new(rect.X, rect.Y),
 			new(rect.X + rect.Width, rect.Y),
 			new(rect.X + rect.Width, rect.Y + rect.Height),
 			new(rect.X, rect.Y + rect.Height),
-			c0, c1, c2, c3);
-	}
+			c0, c1, c2, c3
+		);
 
 	public void Rect(in Vector2 position, in Vector2 size, Color c0, Color c1, Color c2, Color c3)
-	{
-		Quad(
+		=> Quad(
 			position,
-			position + new Vector2(size.X, 0),
+			position + size with { Y = 0 },
 			position + new Vector2(size.X, size.Y),
-			position + new Vector2(0, size.Y),
-			c0, c1, c2, c3);
-	}
+			position + size with { X = 0 },
+			c0, c1, c2, c3
+		);
 
 	public void Rect(float x, float y, float width, float height, Color c0, Color c1, Color c2, Color c3)
-	{
-		Quad(
+		=> Quad(
 			new(x, y),
 			new(x + width, y),
 			new(x + width, y + height),
 			new(x, y + height),
-			c0, c1, c2, c3);
-	}
+			c0, c1, c2, c3
+		);
 
 	public void RectLine(in Rect rect, float lineWeight, Color color)
 	{
