@@ -94,7 +94,7 @@ public static class VectorExt
 			=> vector.LengthSquared() < length * length;
 
 		/// <summary>
-		/// Return the normalized <see cref="Vector2"/> and get its length at the same time. Normalizing requires computing the length of the <see cref="Vector2"/> anyways, so you can use this if you need both results
+		/// Get the length of a <see cref="Vector2"/> and return it normalized at the same time. Normalizing requires computing the length of the <see cref="Vector2"/> anyways, so you can use this if you need both results and save yourself a square root.
 		/// </summary>
 		public Vector2 GetLengthAndNormalize(out float length, Vector2 fallbackValue = default)
 		{
