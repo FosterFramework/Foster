@@ -54,6 +54,11 @@ public struct Circle : IProjectable, IEquatable<Circle>
 	public readonly float Area => MathF.PI * Radius * Radius;
 
 	/// <summary>
+	/// Calculate the circumference of this <see cref="Circle"/>
+	/// </summary>
+	public readonly float Circumference => Radius * 2 * MathF.PI;
+
+	/// <summary>
 	/// Gets the smallest rectangle that contains this <see cref="Circle"/>
 	/// </summary>
 	public readonly Rect Bounds => Rect.Centered(Position, Radius * 2, Radius * 2);
