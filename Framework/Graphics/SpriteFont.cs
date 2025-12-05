@@ -660,8 +660,7 @@ public static class SpriteFontBatcherExt
 	public static void Text(this Batcher batch, float size, ReadOnlySpan<char> text, float maxLineWidth, Vector2 position, Vector2 justify, Color color)
 		=> Text(batch, batch.GraphicsDevice.Defaults.SpriteFont, size, text, maxLineWidth, position, justify, color);
 
-
-	[Obsolete("Use explicit text size instead of scale")]
+	// TODO: should this be marked obsolete?
 	public static void Text(this Batcher batch, SpriteFont font, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, float scale, Color color)
 	{
 		batch.PushMatrix(position, Vector2.Zero, Vector2.One * scale, 0);
