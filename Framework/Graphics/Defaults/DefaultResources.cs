@@ -27,7 +27,7 @@ public class DefaultResources
 	/// <summary>
 	/// Default MSDF Font
 	/// </summary>
-	public MsdfFont DefaultMsdfFont => font ??= new(
+	public MsdfFont MsdfFont => font ??= new(
 		new Image(Platform.ReadEmbeddedBytes($"Fonts/Roboto.png")),
 		Platform.ReadEmbeddedBytes($"Fonts/Roboto.json")
 	);
@@ -35,7 +35,7 @@ public class DefaultResources
 	/// <summary>
 	/// A Default Sprite Font used for rendering text
 	/// </summary>
-	public SpriteFont SpriteFont => spritefont ??= new(device, DefaultMsdfFont);
+	public SpriteFont SpriteFont => spritefont ??= new(device, MsdfFont);
 
 	private readonly GraphicsDevice device;
 	private Material? batcher;
