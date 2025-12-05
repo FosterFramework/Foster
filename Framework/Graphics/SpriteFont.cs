@@ -550,14 +550,14 @@ public class SpriteFont : IDisposable
 	{
 		batch.PushMatrix(position, Vector2.One * (size / Size), 0f);
 
-		var at = new Vector2(0, Ascent);
 		var last = 0;
 
+		var at = new Vector2(0, Ascent);
 		if (justify.X != 0)
 			at.X -= justify.X * WidthOfLine(text);
-
 		if (justify.Y != 0)
 			at.Y -= justify.Y * HeightOf(text);
+		var start = at;
 
 		if (Material != null)
 			batch.PushMaterial(Material);
@@ -569,7 +569,7 @@ public class SpriteFont : IDisposable
 		{
 			if (text[i] == '\n')
 			{
-				at.X = position.X;
+				at.X = start.X;
 				if (justify.X != 0 && i < text.Length - 1)
 					at.X -= justify.X * WidthOfLine(text[(i + 1)..]);
 				at.Y += LineHeight;
