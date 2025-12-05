@@ -456,17 +456,13 @@ public class SpriteFont : IDisposable
 	/// Adds a Character to the Sprite Font
 	/// </summary>
 	public void AddCharacter(int codepoint, in float advance, in Vector2 offset, in Subtexture subtexture)
-	{
-		characters[codepoint] = new(codepoint, subtexture, advance, offset, true);
-	}
+		=> characters[codepoint] = new(codepoint, subtexture, advance, offset, true);
 
 	/// <summary>
 	/// Adds a Character to the Sprite Font
 	/// </summary>
 	public void AddCharacter(in Character character)
-	{
-		characters[character.Codepoint] = character;
-	}
+		=> characters[character.Codepoint] = character;
 
 	/// <summary>
 	/// Gets an existing Character from the SpriteFont
@@ -516,7 +512,7 @@ public class SpriteFont : IDisposable
 		kerning[new(codepointFirst, codepointSecond)] = advance;
 	}
 
-	public float GetKerning(int codepointFirst, int codepointSecond)
+	public float GetKerning(int codepointFirst, int codepointSecond, float size)
 	{
 		var key = new KerningPair(codepointFirst, codepointSecond);
 
@@ -528,25 +524,22 @@ public class SpriteFont : IDisposable
 				value = 0;
 		}
 
-		return value;
+		return value * (size / Size);
 	}
 
-	public void RenderText(Batcher batch, ReadOnlySpan<char> text, Vector2 position, Color color)
-	{
-		RenderText(batch, text, position, Vector2.Zero, Size, color);
-	}
+	public float GetKerning(int codepointFirst, int codepointSecond)
+		=> GetKerning(codepointFirst, codepointSecond, Size);
 
-	public void RenderText(Batcher batch, ReadOnlySpan<char> text, Vector2 position, float size, Color color)
-	{
-		RenderText(batch, text, position, Vector2.Zero, size, color);
-	}
+	public void Draw(Batcher batch, ReadOnlySpan<char> text, Vector2 position, Color color)
+		=> Draw(batch, text, position, Vector2.Zero, Size, color);
 
-	public void RenderText(Batcher batch, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, Color color)
-	{
-		RenderText(batch, text, position, justify, Size, color);
-	}
+	public void Draw(Batcher batch, ReadOnlySpan<char> text, Vector2 position, float size, Color color)
+		=> Draw(batch, text, position, Vector2.Zero, size, color);
 
-	public void RenderText(Batcher batch, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, float size, Color color)
+	public void Draw(Batcher batch, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, Color color)
+		=> Draw(batch, text, position, justify, Size, color);
+
+	public void Draw(Batcher batch, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, float size, Color color)
 	{
 		batch.PushMatrix(position, Vector2.One * (size / Size), 0f);
 
@@ -599,12 +592,10 @@ public class SpriteFont : IDisposable
 		batch.PopMatrix();
 	}
 
-	public void RenderTextWrapped(Batcher batch, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, float maxLineWidth, Color color)
-    {
-        RenderTextWrapped(batch, text, position, justify, maxLineWidth, Size, color);
-    }
+	public void DrawWrapped(Batcher batch, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, float maxLineWidth, Color color)
+		=> DrawWrapped(batch, text, position, justify, maxLineWidth, Size, color);
 
-	public void RenderTextWrapped(Batcher batch, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, float maxLineWidth, float size, Color color)
+	public void DrawWrapped(Batcher batch, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, float maxLineWidth, float size, Color color)
 	{
 		var lines = Pool.Get<List<(int Start, int Length)>>();
 		WrapText(text, maxLineWidth, lines, size);
@@ -617,7 +608,7 @@ public class SpriteFont : IDisposable
 
 		foreach (var (Start, Length) in lines)
 		{
-			RenderText(batch, text[Start..(Start + Length)], at, new Vector2(justify.X, 0), color);
+			Draw(batch, text[Start..(Start + Length)], at, new Vector2(justify.X, 0), color);
 			at.Y += LineHeight;
 		}
 
@@ -630,38 +621,38 @@ public class SpriteFont : IDisposable
 public static class SpriteFontBatcherExt
 {
 	public static void Text(this Batcher batch, SpriteFont font, ReadOnlySpan<char> text, Vector2 position, Color color)
-		=> font.RenderText(batch, text, position, Vector2.Zero, color);
+		=> font.Draw(batch, text, position, Vector2.Zero, color);
 
 	public static void Text(this Batcher batch, SpriteFont font, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, Color color)
-		=> font.RenderText(batch, text, position, justify, color);
+		=> font.Draw(batch, text, position, justify, color);
 
 	public static void Text(this Batcher batch, SpriteFont font, ReadOnlySpan<char> text, Vector2 position, float size, Color color)
-		=> font.RenderText(batch, text, position, Vector2.Zero, size, color);
+		=> font.Draw(batch, text, position, Vector2.Zero, size, color);
 
 	public static void Text(this Batcher batch, SpriteFont font, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, float size, Color color)
-		=> font.RenderText(batch, text, position, justify, size, color);
+		=> font.Draw(batch, text, position, justify, size, color);
 
 	public static void TextWrapped(this Batcher batch, SpriteFont font, ReadOnlySpan<char> text, float maxLineWidth, Vector2 position, Color color)
-		=> font.RenderTextWrapped(batch, text, position, Vector2.Zero, maxLineWidth, color);
+		=> font.DrawWrapped(batch, text, position, Vector2.Zero, maxLineWidth, color);
 
 	public static void TextWrapped(this Batcher batch, SpriteFont font, ReadOnlySpan<char> text, float maxLineWidth, Vector2 position, Vector2 justify, Color color)
-		=> font.RenderTextWrapped(batch, text, position, justify, maxLineWidth, color);
+		=> font.DrawWrapped(batch, text, position, justify, maxLineWidth, color);
 
 	public static void TextWrapped(this Batcher batch, SpriteFont font, ReadOnlySpan<char> text, float maxLineWidth, Vector2 position, float size, Color color)
-		=> font.RenderTextWrapped(batch, text, position, Vector2.Zero, maxLineWidth, size, color);
+		=> font.DrawWrapped(batch, text, position, Vector2.Zero, maxLineWidth, size, color);
 
 	public static void TextWrapped(this Batcher batch, SpriteFont font, ReadOnlySpan<char> text, float maxLineWidth, Vector2 position, Vector2 justify, float size, Color color)
-		=> font.RenderTextWrapped(batch, text, position, justify, maxLineWidth, size, color);
+		=> font.DrawWrapped(batch, text, position, justify, maxLineWidth, size, color);
 
 	public static void Text(this Batcher batch, ReadOnlySpan<char> text, Vector2 position, float size, Color color)
-		=> batch.GraphicsDevice.Defaults.SpriteFont.RenderText(batch, text, position, Vector2.Zero, size, color);
+		=> batch.GraphicsDevice.Defaults.SpriteFont.Draw(batch, text, position, Vector2.Zero, size, color);
 
 	public static void Text(this Batcher batch, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, float size, Color color)
-		=> batch.GraphicsDevice.Defaults.SpriteFont.RenderText(batch, text, position, justify, size, color);
+		=> batch.GraphicsDevice.Defaults.SpriteFont.Draw(batch, text, position, justify, size, color);
 
 	public static void TextWrapped(this Batcher batch, ReadOnlySpan<char> text, float maxLineWidth, Vector2 position, float size, Color color)
-		=> batch.GraphicsDevice.Defaults.SpriteFont.RenderTextWrapped(batch, text, position, Vector2.Zero, maxLineWidth, size, color);
+		=> batch.GraphicsDevice.Defaults.SpriteFont.DrawWrapped(batch, text, position, Vector2.Zero, maxLineWidth, size, color);
 
 	public static void TextWrapped(this Batcher batch, ReadOnlySpan<char> text, float maxLineWidth, Vector2 position, Vector2 justify, float size, Color color)
-		=> batch.GraphicsDevice.Defaults.SpriteFont.RenderTextWrapped(batch, text, position, justify, maxLineWidth, size, color);
+		=> batch.GraphicsDevice.Defaults.SpriteFont.DrawWrapped(batch, text, position, justify, maxLineWidth, size, color);
 }
