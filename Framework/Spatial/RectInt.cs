@@ -434,6 +434,9 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 	public readonly RectInt At(in Point2 pos) => new(pos.X, pos.Y, Width, Height);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly RectInt At(int x, int y) => new(x, y, Width, Height);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly RectInt AtX(int x) => new(x, Y, Width, Height);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
