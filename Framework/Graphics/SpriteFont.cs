@@ -557,7 +557,6 @@ public class SpriteFont : IDisposable
 			at.X -= justify.X * WidthOfLine(text);
 		if (justify.Y != 0)
 			at.Y -= justify.Y * HeightOf(text);
-		var start = at;
 
 		if (Material != null)
 			batch.PushMaterial(Material);
@@ -569,7 +568,7 @@ public class SpriteFont : IDisposable
 		{
 			if (text[i] == '\n')
 			{
-				at.X = start.X;
+				at.X = 0;
 				if (justify.X != 0 && i < text.Length - 1)
 					at.X -= justify.X * WidthOfLine(text[(i + 1)..]);
 				at.Y += LineHeight;
