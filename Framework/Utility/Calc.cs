@@ -603,25 +603,25 @@ public static class Calc
 	/// Clamps a number between two values
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static float Clamp(float value, float min, float max) => Math.Min(Math.Max(value, min), max);
+	public static float Clamp(float value, float min, float max) => MathF.Min(MathF.Max(value, min), max);
 
 	/// <summary>
 	/// Clamps a number between two values
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static float Clamp(ref float value, float min, float max) => value = Math.Min(Math.Max(value, min), max);
+	public static float Clamp(ref float value, float min, float max) => value = MathF.Min(MathF.Max(value, min), max);
 
 	/// <summary>
 	/// Clamps a number between 0 and 1
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static float Clamp(float value) => Math.Min(Math.Max(value, 0), 1);
+	public static float Clamp(float value) => MathF.Min(MathF.Max(value, 0), 1);
 
 	/// <summary>
 	/// Clamps a number between 0 and 1
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static float Clamp(ref float value) => value = Math.Min(Math.Max(value, 0), 1);
+	public static float Clamp(ref float value) => value = MathF.Min(MathF.Max(value, 0), 1);
 
 	/// <summary>
 	/// Shorthand to MathF.Round but returns an Integer
