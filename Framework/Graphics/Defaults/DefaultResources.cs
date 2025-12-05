@@ -18,9 +18,31 @@ public class DefaultResources
 	/// </summary>
 	public Material TexturedMaterial => textured ??= Create(device, "Textured", 0, 1, 1, 0);
 
+	/// <summary>
+	/// An MSDF Font Material
+	/// Expects <seealso cref="BatcherVertex"/> Vertices.
+	/// </summary>
+	public Material MsdfMaterial => msdf ??= Create(device, "Msdf", 0, 1, 1, 1);
+
+	/// <summary>
+	/// Default MSDF Font
+	/// </summary>
+	public MsdfFont DefaultMsdfFont => font ??= new(
+		new Image(Platform.ReadEmbeddedBytes($"Fonts/Roboto.png")),
+		Platform.ReadEmbeddedBytes($"Fonts/Roboto.json")
+	);
+
+	/// <summary>
+	/// A Default Sprite Font used for rendering text
+	/// </summary>
+	public SpriteFont SpriteFont => spritefont ??= new(device, DefaultMsdfFont);
+
 	private readonly GraphicsDevice device;
 	private Material? batcher;
 	private Material? textured;
+	private Material? msdf;
+	private MsdfFont? font;
+	private SpriteFont? spritefont;
 
 	internal DefaultResources(GraphicsDevice device)
 	{
@@ -33,14 +55,14 @@ public class DefaultResources
 		return new Material(
 			vertexShader: new(device, new(
 				Stage: ShaderStage.Vertex,
-				Code: Platform.ReadEmbeddedBytes($"{name}.vertex.{ext}"),
+				Code: Platform.ReadEmbeddedBytes($"Shaders/{name}.vertex.{ext}"),
 				SamplerCount: vertSamplers,
 				UniformBufferCount: vertUniformBuffers,
 				EntryPoint: "vertex_main"
 			), $"{name}Vertex"),
 			fragmentShader: new(device, new(
 				Stage: ShaderStage.Fragment,
-				Code: Platform.ReadEmbeddedBytes($"{name}.fragment.{ext}"),
+				Code: Platform.ReadEmbeddedBytes($"Shaders/{name}.fragment.{ext}"),
 				SamplerCount: fragSamplers,
 				UniformBufferCount: fragUniformBuffers,
 				EntryPoint: "fragment_main"

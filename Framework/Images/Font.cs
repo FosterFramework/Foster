@@ -7,7 +7,7 @@ namespace Foster.Framework;
 /// Queries and rasterizes characters from a Font File.
 /// To draw a font to the screen, use <see cref="SpriteFont"/>.
 /// </summary>
-public class Font : IDisposable
+public class Font : IDisposable, IProvideKerning
 {
 	public struct Character
 	{
@@ -26,6 +26,7 @@ public class Font : IDisposable
 	private int dataLength;
 	private readonly Dictionary<int, int> codepointToGlyphLookup = [];
 	private static readonly Exception invalidFontException = new("Attempting to use an invalid/disposed Font");
+	private readonly Dictionary<float, float> sizeToScale = [];
 
 	public int Ascent { get; private set; }
 	public int Descent { get; private set; }
@@ -109,9 +110,14 @@ public class Font : IDisposable
 	/// </summary>
 	public float GetScale(float size)
 	{
-		if (fontPtr == IntPtr.Zero)
-			throw invalidFontException;
-		return Platform.FontGetScale(fontPtr, size);
+		if (!sizeToScale.TryGetValue(size, out var value))
+		{
+			if (fontPtr == IntPtr.Zero)
+				throw invalidFontException;
+			sizeToScale[size] = value = Platform.FontGetScale(fontPtr, size);
+		}
+
+		return value;
 	}
 
 	/// <summary>
@@ -252,5 +258,10 @@ public class Font : IDisposable
 		}
 
 		GC.SuppressFinalize(this);
+	}
+
+	float IProvideKerning.GetKerning(int codepointA, int codepointB, float size)
+	{
+		return GetKerning(codepointA, codepointB, GetScale(size));
 	}
 }

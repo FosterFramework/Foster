@@ -3,6 +3,11 @@
 
 using namespace metal;
 
+struct type_UniformBlock
+{
+    float4x4 Matrix;
+};
+
 struct fragment_main_out
 {
     float4 out_var_SV_Target0 [[color(0)]];

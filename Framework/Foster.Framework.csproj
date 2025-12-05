@@ -66,10 +66,13 @@
     <None Include="$(ProjectDir)..\README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 
-  <!-- Default Shader Content -->
+  <!-- Default Font and Shader Content -->
   <ItemGroup>
-    <EmbeddedResource Include="$(ProjectDir)Content/Compiled/**" Visible="false">
-      <LogicalName>%(Filename)%(Extension)</LogicalName>
+    <EmbeddedResource Include="$(ProjectDir)Content/Shaders/Compiled/**" Visible="false">
+      <LogicalName>Shaders/%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(ProjectDir)Content/Fonts/Compiled/**" Visible="false">
+      <LogicalName>Fonts/%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
 
