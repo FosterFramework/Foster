@@ -73,7 +73,7 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly Vector2 ClosestPoint(in Vector2 to)
-		=> (To - From) * ClosestT(to) + From;
+		=> On(ClosestT(to));
 
 	/// <summary>
 	/// Get the closest points on each line
