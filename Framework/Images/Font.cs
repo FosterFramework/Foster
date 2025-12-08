@@ -23,7 +23,6 @@ public class Font : IDisposable, IProvideKerning
 	private IntPtr fontPtr;
 	private IntPtr dataPtr;
 	private GCHandle dataHandle;
-	private int dataLength;
 	private readonly Dictionary<int, int> codepointToGlyphLookup = [];
 	private static readonly Exception invalidFontException = new("Attempting to use an invalid/disposed Font");
 	private readonly Dictionary<float, float> sizeToScale = [];
@@ -63,15 +62,14 @@ public class Font : IDisposable, IProvideKerning
 		// pin the buffer
 		dataHandle =  GCHandle.Alloc(buffer, GCHandleType.Pinned);
 		dataPtr = dataHandle.AddrOfPinnedObject();
-		dataLength = buffer.Length;
 
 		// create the font ptr
-		fontPtr = Platform.FontInit(dataPtr, dataLength);
+		fontPtr = StbTrueType.Create(dataPtr);
 		if (fontPtr == IntPtr.Zero)
 			throw new Exception("Unable to parse Font Data");
 
 		// get font properties
-		Platform.FontGetMetrics(fontPtr, out int ascent, out int descent, out int linegap);
+		StbTrueType.GetMetrics(fontPtr, out int ascent, out int descent, out int linegap);
 		Ascent = ascent;
 		Descent = descent;
 		LineGap = linegap;
@@ -92,7 +90,7 @@ public class Font : IDisposable, IProvideKerning
 	public int GetGlyphIndex(int codepoint)
 	{
 		if (!codepointToGlyphLookup.TryGetValue(codepoint, out var glyphIndex))
-			codepointToGlyphLookup[codepoint] = glyphIndex = Platform.FontGetGlyphIndex(fontPtr, codepoint);
+			codepointToGlyphLookup[codepoint] = glyphIndex = StbTrueType.GetGlyphIndex(fontPtr, codepoint);
 
 		return glyphIndex;
 	}
@@ -114,7 +112,7 @@ public class Font : IDisposable, IProvideKerning
 		{
 			if (fontPtr == IntPtr.Zero)
 				throw invalidFontException;
-			sizeToScale[size] = value = Platform.FontGetScale(fontPtr, size);
+			sizeToScale[size] = value = StbTrueType.GetScale(fontPtr, size);
 		}
 
 		return value;
@@ -147,7 +145,7 @@ public class Font : IDisposable, IProvideKerning
 	{
 		if (fontPtr == IntPtr.Zero)
 			throw invalidFontException;
-		return Platform.FontGetKerning(fontPtr, glyph1, glyph2, scale);
+		return StbTrueType.GetKerning(fontPtr, glyph1, glyph2, scale);
 	}
 
 	/// <summary>
@@ -178,7 +176,7 @@ public class Font : IDisposable, IProvideKerning
 		if (fontPtr == IntPtr.Zero)
 			throw invalidFontException;
 
-		Platform.FontGetCharacter(fontPtr, glyphIndex, scale,
+		StbTrueType.GetCharacter(fontPtr, glyphIndex, scale,
 			out int width, out int height, out float advance, out float offsetX, out float offsetY, out int visible);
 
 		return new()
@@ -231,7 +229,7 @@ public class Font : IDisposable, IProvideKerning
 		unsafe
 		{
 			fixed (Color* ptr = destination)
-				Platform.FontGetPixels(fontPtr, new(ptr), character.GlyphIndex, character.Width, character.Height, character.Scale);
+				StbTrueType.GetPixels(fontPtr, new(ptr), character.GlyphIndex, character.Width, character.Height, character.Scale);
 		}
 
 		return true;
@@ -250,7 +248,7 @@ public class Font : IDisposable, IProvideKerning
 
 			if (fontPtr != IntPtr.Zero)
 			{
-				Platform.FontFree(fontPtr);
+				StbTrueType.Destroy(fontPtr);
 				fontPtr = IntPtr.Zero;
 			}
 

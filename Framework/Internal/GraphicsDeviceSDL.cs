@@ -1456,7 +1456,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 					sample_count = sampleCount,
 					sample_mask = 0,        // not actually used per SDL docs
 					enable_mask = false,    // not actually used per SDL docs
-					padding1 = 1,
+					enable_alpha_to_coverage = false,
 				},
 				depth_stencil_state = new()
 				{

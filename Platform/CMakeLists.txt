@@ -11,27 +11,6 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release)
 endif()
 
-# Setup Foster Platform Lib
-set(FOSTER_LIB_NAME FosterPlatform)
-add_library(${FOSTER_LIB_NAME} SHARED
-	include/foster_platform.h
-	src/foster_platform.c
-)
-target_include_directories(${FOSTER_LIB_NAME}
-	PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-	PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-)
-
-# Setup MSVC/Windows Flags
-if (MSVC)
-    target_compile_options(${FOSTER_LIB_NAME} PRIVATE /W3)
-    target_compile_options(${FOSTER_LIB_NAME} PRIVATE /WX)
-endif()
-if(WIN32)
-    target_compile_definitions(${FOSTER_LIB_NAME} PRIVATE _UNICODE UNICODE _CRT_SECURE_NO_WARNINGS)
-    target_compile_definitions(${FOSTER_LIB_NAME} PRIVATE NOMINMAX)
-endif ()
-
 # Get platform target
 if (FOSTER_OVERRIDE_TARGET)
 	set(FOSTER_TARGET ${FOSTER_OVERRIDE_TARGET})
@@ -64,24 +43,13 @@ if (NOT DEFINED FOSTER_SDL3_LIBS)
 	FetchContent_Declare(
 		SDL3
 		GIT_REPOSITORY https://github.com/libsdl-org/sdl
-		GIT_TAG release-3.2.26
+		GIT_TAG prerelease-3.3.4
 		GIT_PROGRESS TRUE
 	)
 	FetchContent_MakeAvailable(SDL3)
 	set(FOSTER_SDL3_LIBS SDL3-shared)
 	set(FOSTER_SDL3_INCLUDE ${SDL3_SOURCE_DIRS}/include)
 endif()
-
-# Output main lib to the libs folder
-set_target_properties(${FOSTER_LIB_NAME}
-	PROPERTIES
-	ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FOSTER_TARGET}"
-	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FOSTER_TARGET}"
-	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FOSTER_TARGET}"
-	LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FOSTER_TARGET}"
-	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FOSTER_TARGET}"
-	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/libs/${FOSTER_TARGET}"
-)
 
 # output SDL3 to the libs folder
 set_target_properties(${FOSTER_SDL3_LIBS}

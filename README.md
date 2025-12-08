@@ -17,12 +17,7 @@ Check out [Discussons](https://github.com/FosterFramework/Foster/discussions) or
 
 ### Dependencies
  - [dotnet 10.0](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) and [C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13)
- - [SDL3](https://github.com/libsdl-org/sdl) is the only external dependency, which is built and dynamically included by the Platform library.
-
-### Platform Library
- - The [Platform library](https://github.com/FosterFramework/Foster/tree/main/Platform) is a C library that implements native methods required to run the application.
- - It is automatically built for 64-bit Linux, MacOS, and Windows through [Github Actions](https://github.com/FosterFramework/Foster/actions/workflows/build-libs.yml).
- - To add support for other platforms you must build and include it in the [csproj](https://github.com/FosterFramework/Foster/blob/main/Framework/Foster.Framework.csproj#L27)
+ - [SDL3](https://github.com/libsdl-org/sdl) is the only external dependency. Prebuilt binaries are included for various platforms through Github Actions.
 
 ### Rendering
  - Rendering is implemented using [SDL_GPU](https://wiki.libsdl.org/SDL3/CategoryGPU).
