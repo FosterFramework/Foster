@@ -18,7 +18,6 @@ internal unsafe struct ImageData
 
     private const int Components = 4;
 
-    private readonly nint pixels;
     private readonly SDL_Surface* surface;
     private readonly GCHandle arrayHandle;
 
@@ -26,9 +25,9 @@ internal unsafe struct ImageData
     public readonly int Height;
     public readonly int SizeInBytes => Width * Height * Components;
 
-    public readonly Span<byte> Bytes => new((void*)pixels, SizeInBytes);
-    public readonly Span<Color> Pixels => new((void*)pixels, Width * Height);
-    public readonly nint Data => pixels;
+    public readonly Span<byte> Bytes => new((void*)Data, SizeInBytes);
+    public readonly Span<Color> Pixels => new((void*)Data, Width * Height);
+    public readonly nint Data => surface != null ? surface->pixels : nint.Zero;
 
     /// <summary>
     /// Decode PNG or QOI image Data from a Stream
@@ -71,7 +70,7 @@ internal unsafe struct ImageData
             if (surface == null || surface->pixels == nint.Zero || surface->w <= 0 || surface->h <= 0)
                 throw new Exception("Failed to decode PNG file");
 
-            // convert surface
+            // convert surface - we only support RGBA right now
             if (surface->format != SDL_PixelFormat.SDL_PIXELFORMAT_RGBA32)
             {
                 var newSurface = SDL_ConvertSurface((nint)surface, SDL_PixelFormat.SDL_PIXELFORMAT_RGBA32);
@@ -101,7 +100,7 @@ internal unsafe struct ImageData
             // we can use the surface as-is
             else
             {
-                return new ImageData(surface);
+                return new ImageData(surface, default);
             }
         }
     }
@@ -112,8 +111,10 @@ internal unsafe struct ImageData
     public static ImageData Rgba<T>(T[] rgba, int width, int height) where T : unmanaged
     {
         Debug.Assert(rgba.Length * sizeof(T) == width * height * Components);
+
         var handle = GCHandle.Alloc(rgba, GCHandleType.Pinned);
-        return new ImageData(handle, width, height);
+        var surface = SDL_CreateSurfaceFrom(width, height, SDL_PixelFormat.SDL_PIXELFORMAT_RGBA32, handle.AddrOfPinnedObject(), width * Components);
+        return new ImageData(surface, handle);
     }
 
     /// <summary>
@@ -121,29 +122,18 @@ internal unsafe struct ImageData
     /// </summary>
     public void Encode(Stream stream, Formats format)
     {
-        if (pixels == nint.Zero || Width <= 0 || Height <= 0)
+        if (Data == nint.Zero || Width <= 0 || Height <= 0)
             throw new Exception("Trying to Encode an invalid Image");
 
         if (format == Formats.QOI)
         {
-            Qoi.Encode(pixels, new() { Width = (uint)Width, Height = (uint)Height, Channels = 4, Colorspace = 0 });
+            Qoi.Encode(Data, new() { Width = (uint)Width, Height = (uint)Height, Channels = 4, Colorspace = 0 });
         }
         else if (format == Formats.PNG)
         {
-            // get surface
-            SDL_Surface* src;
-            if (surface != null)
-                src = surface;
-            else
-                src = SDL_CreateSurfaceFrom(Width, Height, SDL_PixelFormat.SDL_PIXELFORMAT_RGBA32, pixels, Width * Components);
-
             // write png
             var mem = SDL_IOFromDynamicMem();
-            SDL_SavePNG_IO(src, mem, false);
-
-            // destroy surface
-            if (src != surface)
-                SDL_DestroySurface((nint)src);
+            SDL_SavePNG_IO(surface, mem, false);
 
             // write data to stream
             var length = SDL_GetIOSize(mem);
@@ -157,25 +147,12 @@ internal unsafe struct ImageData
     }
 
     /// <summary>
-    /// Creates the Image from an Array GC Handle
-    /// </summary>
-    private ImageData(GCHandle handle, int width, int height)
-    {
-        arrayHandle = handle;
-        surface = null;
-        pixels = handle.AddrOfPinnedObject();
-        Width = width;
-        Height = height;
-    }
-
-    /// <summary>
     /// Creates the Image from an SDL Surface
     /// </summary>
-    private ImageData(SDL_Surface* surface)
+    private ImageData(SDL_Surface* surface, GCHandle handle)
     {
         this.surface = surface;
-        pixels = surface->pixels;
-        arrayHandle = default;
+        arrayHandle = handle;
         Width = surface->w;
         Height = surface->h;
     }
