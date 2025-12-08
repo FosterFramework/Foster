@@ -314,7 +314,7 @@ public sealed class Window : IDrawableTarget
 
 		Handle = SDL_CreateWindow(title, config.Width, config.Height, windowFlags);
 		if (Handle == IntPtr.Zero)
-			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateWindow));
+			throw App.CreateExceptionFromSDL(nameof(SDL_CreateWindow));
 
 		ID = SDL_GetWindowID(Handle);
 	}

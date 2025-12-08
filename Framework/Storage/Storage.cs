@@ -68,7 +68,7 @@ public sealed class Storage : StorageContainer
 			var start = data.SubFolders.Count;
 			data.CurrentPath = path;
 			if (!SDL_EnumerateStorageDirectory(data.StorageHandle, path, EnumerateCallback, userdata))
-				throw Platform.CreateExceptionFromSDL(nameof(SDL_EnumerateStorageDirectory));
+				throw App.CreateExceptionFromSDL(nameof(SDL_EnumerateStorageDirectory));
 			var end = data.SubFolders.Count;
 
 			if (data.Recursive)
@@ -86,9 +86,9 @@ public sealed class Storage : StorageContainer
 
 			string path;
 			if (!string.IsNullOrEmpty(data.CurrentPath))
-				path = $"{data.CurrentPath}/{Platform.ParseUTF8(new(fname))}";
+				path = $"{data.CurrentPath}/{Utf8.FromCStr(new(fname))}";
 			else
-				path = Platform.ParseUTF8(new(fname));
+				path = Utf8.FromCStr(new(fname));
 
 			// track subfolders if we're recursive
 			if (data.Recursive && IsDirectory(data.StorageHandle, path))
@@ -209,7 +209,7 @@ public sealed class Storage : StorageContainer
 			fixed (byte* source = buffer.GetBuffer())
 			{
 				if (!SDL_WriteStorageFile(Storage, Path, new nint(source), (ulong)buffer.Length))
-					throw Platform.CreateExceptionFromSDL(nameof(SDL_WriteStorageFile));
+					throw App.CreateExceptionFromSDL(nameof(SDL_WriteStorageFile));
 			}
 		}
 

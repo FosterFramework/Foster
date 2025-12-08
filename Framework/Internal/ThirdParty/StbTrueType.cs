@@ -2284,6 +2284,7 @@ internal static unsafe class StbTrueType
 		}
 		else if (numberOfContours < 0)
 		{
+			var mtx = stackalloc float[] { 1, 0, 0, 1, 0, 0 };
 			var more = 1;
 			var comp = data + g + 10;
 			num_vertices = 0;
@@ -2296,7 +2297,8 @@ internal static unsafe class StbTrueType
 				var i = 0;
 				stbtt_vertex* comp_verts = null;
 				stbtt_vertex* tmp = null;
-				var mtx = stackalloc float[] { 1, 0, 0, 1, 0, 0 };
+				mtx[0] = 1; mtx[1] = 0; mtx[2] = 0;
+				mtx[3] = 1; mtx[4] = 0; mtx[5] = 0;
 				float m = 0;
 				float n = 0;
 				flags = (ushort)ttSHORT(comp);

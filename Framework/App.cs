@@ -192,7 +192,7 @@ public abstract class App : IDisposable
 		mainThreadID = Environment.CurrentManagedThreadId;
 
 		// set SDL logging method
-		SDL_SetLogOutputFunction(Platform.HandleLogFromSDL, IntPtr.Zero);
+		SDL_SetLogOutputFunction(HandleLogFromSDL, IntPtr.Zero);
 
 		// by default allow controller presses while unfocused,
 		// let game decide if it should handle them
@@ -205,7 +205,7 @@ public abstract class App : IDisposable
 				SDL_InitFlags.SDL_INIT_JOYSTICK | SDL_InitFlags.SDL_INIT_GAMEPAD;
 
 			if (!SDL_Init(initFlags))
-				throw Platform.CreateExceptionFromSDL(nameof(SDL_Init));
+				throw App.CreateExceptionFromSDL(nameof(SDL_Init));
 		}
 
 		// Create Modules
@@ -213,7 +213,7 @@ public abstract class App : IDisposable
 		inputProvider = new(this);
 		Input = inputProvider.Input;
 		FileSystem = new(this);
-		GraphicsDevice = Platform.CreateGraphicsDevice(this, config.PreferredGraphicsDriver);
+		GraphicsDevice = new GraphicsDeviceSDL(this, config.PreferredGraphicsDriver);
 		GraphicsDevice.CreateDevice(config.Flags);
 		Window = new Window(this, GraphicsDevice, config);
 		GraphicsDevice.Startup(Window.Handle);
@@ -472,6 +472,32 @@ public abstract class App : IDisposable
 			default:
 				break;
 			}
+		}
+	}
+
+	/// <summary>
+	/// Creates an Exception with information from SDL_GetError()
+	/// </summary>
+	internal static Exception CreateExceptionFromSDL(string sdlMethod, string? fosterInfo = null)
+		=> new($"{(fosterInfo != null ? $"{fosterInfo}. " : "")}{sdlMethod} failed: {SDL_GetError()}");
+
+	// [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+	internal static unsafe void HandleLogFromSDL(IntPtr userdata, int category, SDL_LogPriority priority, byte* message)
+	{
+		switch (priority)
+		{
+			case SDL_LogPriority.SDL_LOG_PRIORITY_VERBOSE:
+			case SDL_LogPriority.SDL_LOG_PRIORITY_DEBUG:
+			case SDL_LogPriority.SDL_LOG_PRIORITY_INFO:
+				Log.Info(new nint(message));
+				break;
+			case SDL_LogPriority.SDL_LOG_PRIORITY_WARN:
+				Log.Warning(new nint(message));
+				break;
+			case SDL_LogPriority.SDL_LOG_PRIORITY_ERROR:
+			case SDL_LogPriority.SDL_LOG_PRIORITY_CRITICAL:
+				Log.Error(new nint(message));
+				break;
 		}
 	}
 }

@@ -246,7 +246,7 @@ public sealed class FileSystem
 			{
 				var list = new List<string>();
 				for (int i = 0; ptr[i] != null; i ++)
-					list.Add(Platform.ParseUTF8(new nint(ptr[i])));
+					list.Add(Utf8.FromCStr(new nint(ptr[i])));
 				paths = [..list];
 				result = DialogResult.Success;
 			}
@@ -267,8 +267,8 @@ public sealed class FileSystem
 			Span<SDL_DialogFileFilter> filtersUtf8 = stackalloc SDL_DialogFileFilter[properties.Filters.Length];
 			for (int i = 0; i < properties.Filters.Length; i ++)
 			{
-				filtersUtf8[i].name = (byte*)Platform.AllocateUTF8(properties.Filters[i].Name);
-				filtersUtf8[i].pattern = (byte*)Platform.AllocateUTF8(properties.Filters[i].Pattern);
+				filtersUtf8[i].name = (byte*)Utf8.Allocate(properties.Filters[i].Name);
+				filtersUtf8[i].pattern = (byte*)Utf8.Allocate(properties.Filters[i].Pattern);
 			}
 
 			// create a pointer to our user callback so that SDL can pass it around
@@ -299,8 +299,8 @@ public sealed class FileSystem
 			// clear UTF8 string memory
 			foreach (var it in filtersUtf8)
 			{
-				Platform.FreeUTF8(new nint(it.name));
-				Platform.FreeUTF8(new nint(it.pattern));
+				Utf8.Free(new nint(it.name));
+				Utf8.Free(new nint(it.pattern));
 			}
 		}
 

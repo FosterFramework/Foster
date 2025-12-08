@@ -28,8 +28,8 @@ public class DefaultResources
 	/// Default MSDF Font
 	/// </summary>
 	public MsdfFont MsdfFont => font ??= new(
-		new Image(Platform.ReadEmbeddedBytes($"Fonts/Roboto.png")),
-		Platform.ReadEmbeddedBytes($"Fonts/Roboto.json")
+		new Image(ReadEmbeddedBytes($"Fonts/Roboto.png")),
+		ReadEmbeddedBytes($"Fonts/Roboto.json")
 	);
 
 	/// <summary>
@@ -55,18 +55,22 @@ public class DefaultResources
 		return new Material(
 			vertexShader: new(device, new(
 				Stage: ShaderStage.Vertex,
-				Code: Platform.ReadEmbeddedBytes($"Shaders/{name}.vertex.{ext}"),
+				Code: ReadEmbeddedBytes($"Shaders/{name}.vertex.{ext}"),
 				SamplerCount: vertSamplers,
 				UniformBufferCount: vertUniformBuffers,
 				EntryPoint: "vertex_main"
 			), $"{name}Vertex"),
 			fragmentShader: new(device, new(
 				Stage: ShaderStage.Fragment,
-				Code: Platform.ReadEmbeddedBytes($"Shaders/{name}.fragment.{ext}"),
+				Code: ReadEmbeddedBytes($"Shaders/{name}.fragment.{ext}"),
 				SamplerCount: fragSamplers,
 				UniformBufferCount: fragUniformBuffers,
 				EntryPoint: "fragment_main"
 			), $"{name}Fragment")
 		);
 	}
+
+	public static byte[] ReadEmbeddedBytes(string name)
+		=> Calc.ReadEmbeddedBytes(typeof(DefaultResources).Assembly, name);
+
 }

@@ -179,7 +179,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			name: driverName!);
 
 		if (device == IntPtr.Zero)
-			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUDevice));
+			throw App.CreateExceptionFromSDL(nameof(SDL_CreateGPUDevice));
 		
 		if (flags.Has(AppFlags.MultiSampledBackBuffer))
 		{
@@ -216,7 +216,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		Log.Info($"Graphics Driver: SDL_GPU [{driverName}]");
 
 		if (!SDL_ClaimWindowForGPUDevice(device, window))
-			throw Platform.CreateExceptionFromSDL(nameof(SDL_ClaimWindowForGPUDevice));
+			throw App.CreateExceptionFromSDL(nameof(SDL_ClaimWindowForGPUDevice));
 
 		supportsMailbox = SDL_WindowSupportsGPUPresentMode(device, window,
 			SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX);
@@ -388,7 +388,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 		else
 		{
-			throw Platform.CreateExceptionFromSDL(nameof(SDL_WaitAndAcquireGPUSwapchainTexture));
+			throw App.CreateExceptionFromSDL(nameof(SDL_WaitAndAcquireGPUSwapchainTexture));
 		}
 
 		FlushCommands(stall: false);
@@ -456,7 +456,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (props != 0)
 			SDL_DestroyProperties(props);
 		if (texture == nint.Zero)
-			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUTexture));
+			throw App.CreateExceptionFromSDL(nameof(SDL_CreateGPUTexture));
 
 		// create a resolve texture if we're multisampled
 		ResourceHandle resolveTexture = default;
@@ -736,7 +736,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				SDL_DestroyProperties(props);
 
 			if (res.Buffer == nint.Zero)
-				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUBuffer), "Mesh Creation Failed");
+				throw App.CreateExceptionFromSDL(nameof(SDL_CreateGPUBuffer), "Mesh Creation Failed");
 			res.Capacity = size;
 		}
 
@@ -865,7 +865,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 			program = SDL_CreateGPUShader(device, info);
 			if (program == nint.Zero)
-				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUShader), $"Failed to create {shaderInfo.Stage} Shader");
+				throw App.CreateExceptionFromSDL(nameof(SDL_CreateGPUShader), $"Failed to create {shaderInfo.Stage} Shader");
 		}
 
 		return RegisterResource(new ShaderResource(this, program));
@@ -1491,7 +1491,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 			var pipeline = SDL_CreateGPUGraphicsPipeline(self.device, info);
 			if (pipeline == nint.Zero)
-				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUGraphicsPipeline));
+				throw App.CreateExceptionFromSDL(nameof(SDL_CreateGPUGraphicsPipeline));
 
 			// add pipelines to shaders to be tracked by them
 			vertRes.Pipelines.Add(hash);
@@ -1628,7 +1628,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			};
 			result = SDL_CreateGPUSampler(device, info);
 			if (result == nint.Zero)
-				throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateGPUSampler));
+				throw App.CreateExceptionFromSDL(nameof(SDL_CreateGPUSampler));
 			samplers[sampler] = result;
 		}
 

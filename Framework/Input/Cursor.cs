@@ -81,7 +81,7 @@ public sealed class Cursor : IDisposable
 			image.Pointer,
 			image.Width * sizeof(Color)));
 		if (surface == nint.Zero)
-			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateSurfaceFrom));
+			throw App.CreateExceptionFromSDL(nameof(SDL_CreateSurfaceFrom));
 
 		// create cursor, free surface
 		Handle = SDL_CreateColorCursor(surface, focusPoint.X, focusPoint.Y);
@@ -89,7 +89,7 @@ public sealed class Cursor : IDisposable
 
 		// validate that cursor was created successfully
 		if (Handle == nint.Zero)
-			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateColorCursor));
+			throw App.CreateExceptionFromSDL(nameof(SDL_CreateColorCursor));
 	}
 
 	/// <summary>
@@ -105,7 +105,7 @@ public sealed class Cursor : IDisposable
 
 		// validate that cursor was created successfully
 		if (Handle == nint.Zero)
-			throw Platform.CreateExceptionFromSDL(nameof(SDL_CreateSystemCursor));
+			throw App.CreateExceptionFromSDL(nameof(SDL_CreateSystemCursor));
 	}
 
 	~Cursor()
