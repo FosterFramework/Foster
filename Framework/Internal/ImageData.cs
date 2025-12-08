@@ -71,6 +71,14 @@ internal unsafe struct ImageData
             if (surface == null || surface->pixels == nint.Zero || surface->w <= 0 || surface->h <= 0)
                 throw new Exception("Failed to decode PNG file");
 
+            // convert surface
+            if (surface->format != SDL_PixelFormat.SDL_PIXELFORMAT_RGBA32)
+            {
+                var newSurface = SDL_ConvertSurface((nint)surface, SDL_PixelFormat.SDL_PIXELFORMAT_RGBA32);
+                SDL_DestroySurface((nint)surface);
+                surface = newSurface;
+            }
+
             // need to remove pitch, so allocate an array instead
             var stride = surface->w * Components;
             if (surface->pitch != stride)
