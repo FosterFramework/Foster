@@ -1513,6 +1513,15 @@ public class Batcher : IDisposable
 		Matrix = was;
 	}
 
+	public void ImageJustified(in Subtexture subtex, in Vector2 position, in Vector2 justify, in Color color)
+	{
+		var pos = position - subtex.Size * justify;
+		Quad(subtex.Texture,
+			pos + subtex.DrawCoords[0], pos + subtex.DrawCoords[1], pos + subtex.DrawCoords[2], pos + subtex.DrawCoords[3],
+			subtex.TexCoords[0], subtex.TexCoords[1], subtex.TexCoords[2], subtex.TexCoords[3],
+			color);
+	}
+
 	public void ImageStretch(in Subtexture subtex, in Rect rect, Color color)
 	{
 		Quad(subtex.Texture,
