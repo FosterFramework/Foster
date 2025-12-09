@@ -1522,6 +1522,15 @@ public class Batcher : IDisposable
 			color);
 	}
 
+	public void ImageJustified(in Subtexture subtex, in Vector2 position, in Vector2 justify, float scale, in Color color)
+	{
+		var pos = position - subtex.Size * scale * justify;
+		Quad(subtex.Texture,
+			pos + subtex.DrawCoords[0] * scale, pos + subtex.DrawCoords[1] * scale, pos + subtex.DrawCoords[2] * scale, pos + subtex.DrawCoords[3] * scale,
+			subtex.TexCoords[0], subtex.TexCoords[1], subtex.TexCoords[2], subtex.TexCoords[3],
+			color);
+	}
+
 	public void ImageStretch(in Subtexture subtex, in Rect rect, Color color)
 	{
 		Quad(subtex.Texture,
