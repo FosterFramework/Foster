@@ -3,7 +3,7 @@
 </p>
 
 # Foster
-Foster is a small cross-platform 2D game framework in C#.
+Foster is a small cross-platform 2D-focused game framework in C#.
 
 _★ very work in progress! likely to have frequent, breaking changes! please use at your own risk! ★_
 
@@ -17,7 +17,7 @@ Check out [Discussons](https://github.com/FosterFramework/Foster/discussions) or
 
 ### Dependencies
  - [dotnet 10.0](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) and [C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13)
- - [SDL3](https://github.com/libsdl-org/sdl) is the only external dependency. Prebuilt binaries are included for various platforms through Github Actions.
+ - [SDL3](https://github.com/libsdl-org/sdl), which has prebuilt binaries for various platforms through Github Actions.
 
 ### Rendering
  - Rendering is implemented using [SDL_GPU](https://wiki.libsdl.org/SDL3/CategoryGPU).
