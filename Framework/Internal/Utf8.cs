@@ -39,7 +39,4 @@ internal static partial class Utf8
 	/// </summary>
 	public static void Free(nint ptr)
 		=> Marshal.FreeHGlobal(ptr);
-
-
-
 }

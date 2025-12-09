@@ -899,7 +899,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				SDL_ReleaseGPUBuffer(device, buf.Buffer);
 			}
 			else if (it is ShaderResource sha)
-            {
+			{
 				ReleaseGraphicsPipelinesAssociatedWith(sha);
 				SDL_ReleaseGPUShader(device, sha.Shader);
 			}
