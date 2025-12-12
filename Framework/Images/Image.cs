@@ -135,6 +135,16 @@ public class Image : IDisposable
 	}
 
 	/// <summary>
+	/// Write the image to PNG
+	/// </summary>
+	public byte[] WritePng()
+	{
+		var mem = new MemoryStream();
+		data.Encode(mem, ImageData.Formats.PNG);
+		return mem.GetBuffer();
+	}
+
+	/// <summary>
 	/// Writes the image to a QOI file
 	/// </summary>
 	public void WriteQoi(string path)
