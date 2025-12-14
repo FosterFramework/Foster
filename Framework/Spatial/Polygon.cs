@@ -383,5 +383,5 @@ public class Polygon : IList<Vector2>, IList
 }
 
 [JsonSerializable(typeof(List<Vector2>))]
-[JsonSourceGenerationOptions(Converters = [typeof(JsonConverters.Vector2)])]
+[JsonSourceGenerationOptions(Converters = [typeof(JsonConverters.Vector2Converter)])]
 internal partial class PolygonVerticesJsonContext : JsonSerializerContext {}

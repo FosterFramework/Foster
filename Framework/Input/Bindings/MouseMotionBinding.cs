@@ -11,7 +11,7 @@ public sealed class MouseMotionBinding : Binding
 	/// <summary>
 	/// The Axis of Mouse Motion to track
 	/// </summary>
-	[JsonConverter(typeof(JsonConverters.Vector2))]
+	[JsonConverter(typeof(JsonConverters.Vector2Converter))]
 	public Vector2 Axis { get; set; }
 
 	/// <summary>
