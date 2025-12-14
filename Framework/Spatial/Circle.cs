@@ -173,47 +173,7 @@ public struct Circle : IProjectable, IEquatable<Circle>
 	public readonly override bool Equals(object? obj) => obj is Circle circle && circle == this;
 	public readonly override int GetHashCode() => HashCode.Combine(Position, Radius);
 
-	public class JsonConverter : JsonConverter<Circle>
-	{
-		public override Circle Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-		{
-			Circle value = new();
-			if (reader.TokenType != JsonTokenType.StartObject)
-				return value;
-
-			while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
-			{
-				if (reader.TokenType != JsonTokenType.PropertyName)
-					continue;
-
-				var component = reader.ValueSpan;
-				if (!reader.Read() || reader.TokenType != JsonTokenType.Number)
-				{
-					reader.Skip();
-					continue;
-				}
-
-				if (Calc.EqualsOrdinalIgnoreCaseUtf8(component, "x"u8))
-					value.Position.X = reader.GetSingle();
-				else if (Calc.EqualsOrdinalIgnoreCaseUtf8(component, "y"u8))
-					value.Position.Y = reader.GetSingle();
-				else if (Calc.EqualsOrdinalIgnoreCaseUtf8(component, "radius"u8))
-					value.Radius = reader.GetSingle();
-				else
-					reader.Skip();
-			}
-
-			return value;
-		}
-
-		public override void Write(Utf8JsonWriter writer, Circle value, JsonSerializerOptions options)
-		{
-			writer.WriteStartObject();
-			writer.WriteNumber("X", value.Position.X);
-			writer.WriteNumber("Y", value.Position.Y);
-			writer.WriteNumber("Radius", value.Radius);
-			writer.WriteEndObject();
-		}
-	}
+	public class JsonConverter()
+		: JsonConverters.FloatVectorJsonConverter<Circle>([["X"], ["Y"], ["Radius", "R"]]);
 }
 

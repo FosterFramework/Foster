@@ -2,13 +2,15 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Foster.Framework;
 
 /// <summary>
 /// A 2D Integer Rectangle
 /// </summary>
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Sequential), JsonConverter(typeof(JsonConverter))]
 public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<RectInt>
 {
 	/// <summary>
@@ -861,4 +863,6 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 	public static Rect operator *(in RectInt rect, in Vector2 scaler) => rect.Scale(scaler);
 	public static Rect operator /(in RectInt rect, in Vector2 scaler) => new Rect(rect.X / scaler.X, rect.Y / scaler.Y, rect.Width / scaler.X, rect.Height / scaler.Y).ValidateSize();
 
+	public class JsonConverter()
+		: JsonConverters.IntVectorJsonConverter<RectInt>([["X"], ["Y"], ["Width", "W"], ["Height", "H"]]);
 }

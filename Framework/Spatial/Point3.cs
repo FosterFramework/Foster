@@ -1,15 +1,16 @@
 ﻿using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
+using Foster.Framework.JsonConverters;
 
 namespace Foster.Framework;
 
 /// <summary>
 /// A 3D Integer Point
 /// </summary>
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Sequential), JsonConverter(typeof(JsonConverter))]
 public struct Point3
 {
-
 	public static readonly Point3 Zero = new(0, 0, 0);
 	public static readonly Point3 One = new(1, 1, 1);
 	public static readonly Point3 Left = new(-1, 0, 0);
@@ -76,4 +77,6 @@ public struct Point3
 	public static bool operator ==(Point3 a, Point3 b) => a.X == b.X && a.Y == b.Y && a.Z == b.Z;
 	public static bool operator !=(Point3 a, Point3 b) => a.X != b.X || a.Y != b.Y || a.Z != b.Z;
 
+	public class JsonConverter()
+		: IntVectorJsonConverter<Point3>([["X"], ["Y"], ["Z"]]);
 }
