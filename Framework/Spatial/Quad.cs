@@ -213,9 +213,6 @@ public struct Quad : IConvexShape, IEquatable<Quad>
 		};
 	}
 
-	[Obsolete("Use Quad.Bounds")]
-	public readonly Rect BoundingRect() => Bounds;
-
 	public readonly override bool Equals(object? obj) => obj is Quad other && this == other;
 	public readonly override int GetHashCode() => HashCode.Combine(a, b, c, d);
 

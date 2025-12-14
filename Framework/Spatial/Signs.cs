@@ -107,12 +107,6 @@ public readonly struct Signs(bool positive) : IEquatable<Signs>
 	/// </summary>
 	public Cardinal CardinalY => Cardinal.Down * this;
 
-	// TODO: remove once Facing is deleted
-#pragma warning disable 0618
-	public static implicit operator Facing(Signs sign) => new(sign.AsInt);
-	public static implicit operator Signs(Facing facing) => new(facing.Sign >= 0);
-#pragma warning restore 0618
-
 	public static Signs operator-(Signs a) => a.Negate;
 	public static Signs operator+(Signs a) => a;
 	public static bool operator ==(Signs a, Signs b) => a.AsInt == b.AsInt;

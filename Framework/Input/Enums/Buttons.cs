@@ -81,11 +81,5 @@ public enum Buttons
 	/// Left D-Pad Right
 	/// </summary>
 	Right = 14,
-
-	[Obsolete("Use Buttons.South")] A = 0,
-	[Obsolete("Use Buttons.East")]  B = 1,
-	[Obsolete("Use Buttons.West")]  X = 2,
-	[Obsolete("Use Buttons.North")] Y = 3,
-	[Obsolete("Use Buttons.Guide")] Select = 5,
 }
 

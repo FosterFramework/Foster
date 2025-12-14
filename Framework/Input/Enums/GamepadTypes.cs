@@ -20,18 +20,6 @@ public enum GamepadTypes
 	NintendoSwitchJoyconPair,
 }
 
-/// <summary>
-/// Known popular gamepad types
-/// </summary>
-[Obsolete("Use GamepadTypes or GamepadProviders instead")]
-public enum Gamepads
-{
-	Xbox,
-	DualShock4,
-	DualSense,
-	Nintendo
-}
-
 public static class GamepadTypesExt
 {
 	public static GamepadProviders Provider(this GamepadTypes type) => type switch

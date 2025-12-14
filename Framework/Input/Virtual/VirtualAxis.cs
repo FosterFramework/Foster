@@ -18,12 +18,6 @@ public sealed class VirtualAxis(Input input, string name, AxisBindingSet set, in
 	public List<AxisBindingSet.AxisEntry> Entries => Set.Entries;
 
 	/// <summary>
-	/// The Device Index
-	/// </summary>
-	[Obsolete("use ControllerIndex instead")]
-	public int Device { get => ControllerIndex; set => ControllerIndex = value; }
-
-	/// <summary>
 	/// Current Value of the Virtual Axis
 	/// </summary>
 	public float Value { get; private set; }

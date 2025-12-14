@@ -63,27 +63,6 @@ public struct DrawCommand
 	/// </summary>
 	public int InstanceCount = 1;
 
-	[Obsolete("Use IndexOffset")]
-	public int MeshIndexStart
-	{
-		readonly get => IndexOffset;
-		set => IndexOffset = value;
-	}
-
-	[Obsolete("Use IndexCount")]
-	public int MeshIndexCount
-	{
-		readonly get => IndexCount;
-		set => IndexCount = value;
-	}
-
-	[Obsolete("Use VertexOffset")]
-	public int MeshVertexOffset
-	{
-		readonly get => VertexOffset;
-		set => VertexOffset = value;
-	}
-
 	/// <summary>
 	/// The Render State Blend Mode
 	/// </summary>

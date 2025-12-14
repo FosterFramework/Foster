@@ -797,10 +797,6 @@ public class Batcher : IDisposable
 		Quad(dd, quad.D, quad.A, aa, color);
 	}
 
-	[Obsolete("Use QuadLine instead")]
-	public void QuadLines(in Vector2 a, in Vector2 b, in Vector2 c, in Vector2 d, float lineWeight, in Color color)
-		=> QuadLine(a, b, c, d, lineWeight, color);
-
 	#endregion
 
 	#region Triangle

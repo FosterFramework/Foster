@@ -80,20 +80,7 @@ public struct ConvexPolygon : IConvexShape, IEnumerable<Vector2>
 	public void RemoveAt(int index)
 		=> Vertices.RemoveAt(index);
 
-	[Obsolete("Use ConvexPolygon.Add")]
-	public void AddPoint(in Vector2 value)
-		=> Vertices.Add(value);
-
-	[Obsolete("Use ConvexPolygon.RemoveAt")]
-	public void RemovePointAt(int index)
-		=> Vertices.RemoveAt(index);
-
-	[Obsolete("Use ConvexPolygon.this[int index]")]
-	public void SetPoint(int index, Vector2 value)
-		=> Vertices[index] = value;
-
-	[Obsolete("Use ConvexPolygon.this[int index]")]
-	public readonly Vector2 GetPoint(int index)
+	readonly Vector2 IConvexShape.GetPoint(int index)
 		=> Vertices[index];
 
 	public Vector2 this[int index]

@@ -47,12 +47,6 @@ public enum AppFlags
 	/// Enables MultiSampling of the BackBuffer
 	/// </summary>
 	MultiSampledBackBuffer = 1 << 1,
-
-	/// <summary>
-	/// Enabled Graphics Debugging properties and validation
-	/// </summary>
-	[Obsolete("Use GraphicsDebugging")]
-	EnableGraphicsDebugging = 1 << 0,
 }
 
 /// <summary>

@@ -175,7 +175,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV |
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL |
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_MSL,
-			debug_mode: Calc.Has(flags, AppFlags.GraphicsDebugging),
+			debug_mode: flags.Has(AppFlags.GraphicsDebugging),
 			name: driverName!);
 
 		if (device == IntPtr.Zero)
@@ -1141,14 +1141,14 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (mask != ClearMask.None)
 		{
 			StackList8<Color>? colors = null;
-			if (Calc.Has(mask, ClearMask.Color))
+			if (mask.Has(ClearMask.Color))
 				colors = [..color[..Math.Min(MaxColorAttachments, color.Length)]];
 
 			BeginRenderPass(target, new()
 			{
 				Color = colors,
-				Depth = Calc.Has(mask, ClearMask.Depth) ? depth : null,
-				Stencil = Calc.Has(mask, ClearMask.Stencil) ? stencil : null
+				Depth = mask.Has(ClearMask.Depth) ? depth : null,
+				Stencil = mask.Has(ClearMask.Stencil) ? stencil : null
 			});
 		}
 	}
@@ -1576,10 +1576,10 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		SDL_GPUColorComponentFlags GetFlags(BlendMask mask)
 		{
 			SDL_GPUColorComponentFlags flags = default;
-			if (Calc.Has(mask, BlendMask.Red)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_R;
-			if (Calc.Has(mask, BlendMask.Green)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_G;
-			if (Calc.Has(mask, BlendMask.Blue)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_B;
-			if (Calc.Has(mask, BlendMask.Alpha)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_A;
+			if (mask.Has(BlendMask.Red)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_R;
+			if (mask.Has(BlendMask.Green)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_G;
+			if (mask.Has(BlendMask.Blue)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_B;
+			if (mask.Has(BlendMask.Alpha)) flags |= SDL_GPUColorComponentFlags.SDL_GPU_COLORCOMPONENT_A;
 			return flags;
 		}
 

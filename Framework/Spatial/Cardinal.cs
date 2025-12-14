@@ -112,12 +112,6 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 		_                       => throw new Exception(InvalidStateMessage)
 	};
 
-	// TODO: remove once Facing is deleted
-#pragma warning disable 0618
-	public static implicit operator Cardinal(Facing f) => f.Sign > 0 ? Right : Left;
-	public static Cardinal operator *(Cardinal a, Facing b) => b == Facing.Left ? a.Reverse : a;
-#pragma warning restore 0618
-
 	public static implicit operator Cardinal(int val) => new(val);
 	public static implicit operator Point2(Cardinal c) => c.Point;
 	public static bool operator ==(Cardinal a, Cardinal b) => a.Value == b.Value;

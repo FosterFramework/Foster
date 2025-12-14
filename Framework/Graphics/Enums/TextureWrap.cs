@@ -19,7 +19,4 @@ public enum TextureWrap
 	/// Sampling outside the texture clamps it
 	/// </summary>
 	Clamp,
-
-	[Obsolete("Use Clamp")] ClampToEdge = Clamp,
-	[Obsolete("Use Clamp")] ClampToBorder = Clamp,
 }

@@ -132,10 +132,6 @@ public struct Rng
 	/// </summary>
 	public short Short(short min, short max) => (short)(min + Short((short)(max - min)));
 
-	[Obsolete("Use SByte or U8")] public sbyte Byte() => (sbyte)U64();
-	[Obsolete("Use SByte or U8")] public sbyte Byte(sbyte max) => (sbyte)(max != 0 ? Math.Abs(SByte()) % max : 0);
-	[Obsolete("Use SByte or U8")] public sbyte Byte(sbyte min, sbyte max) => (sbyte)(min + SByte((sbyte)(max - min)));
-
 	/// <summary>
 	/// Get a random <see cref="sbyte"/> from all possible values
 	/// </summary>

@@ -63,12 +63,6 @@ public sealed class ControllerState(int index)
 	public GamepadProviders GamepadProvider => GamepadType.Provider();
 
 	/// <summary>
-	/// The Gamepad type, if known.
-	/// </summary>
-	[Obsolete("Use GamepadType or GamepadProvider instead")]
-	public Gamepads Gamepad => Gamepads.Xbox;
-
-	/// <summary>
 	/// Number of Buttons
 	/// </summary>
 	public int Buttons { get; private set; } = 0;

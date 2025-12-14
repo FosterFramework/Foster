@@ -852,11 +852,6 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 		=> new RectInt(rect.X / scaler.X, rect.Y / scaler.Y, rect.Width / scaler.X, rect.Height / scaler.Y).ValidateSize();
 	public static RectInt operator *(in RectInt rect, Cardinal rotation) => rect.Rotate(rotation);
 
-	// TODO: remove once Facing is deleted
-#pragma warning disable 0618
-	public static RectInt operator *(in RectInt rect, Facing flipX) => flipX == Facing.Right ? rect : rect.ScaleX(-1);
-#pragma warning restore 0618
-
 	public static Rect operator +(in RectInt a, in Vector2 b) => new(a.X + b.X, a.Y + b.Y, a.Width, a.Height);
 	public static Rect operator -(in RectInt a, in Vector2 b) => new(a.X - b.X, a.Y - b.Y, a.Width, a.Height);
 	public static Rect operator +(in Vector2 a, in RectInt b) => new(b.X + a.X, b.Y + a.Y, b.Width, b.Height);

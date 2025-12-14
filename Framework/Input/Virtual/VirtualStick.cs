@@ -19,12 +19,6 @@ public sealed class VirtualStick(Input input, string name, StickBindingSet set, 
 	public List<StickBindingSet.StickEntry> Entries => Set.Entries;
 
 	/// <summary>
-	/// The Device Index
-	/// </summary>
-	[Obsolete("use ControllerIndex instead")]
-	public int Device { get => ControllerIndex; set => ControllerIndex = value; }
-
-	/// <summary>
 	/// Current Value of the Virtual Stick
 	/// </summary>
 	public Vector2 Value { get; private set; }

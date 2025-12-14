@@ -12,15 +12,6 @@ public static class Log
 	/// </summary>
 	public delegate void Fn(ReadOnlySpan<char> text);
 
-	[Obsolete("Use Log.GetHistory")]
-	public static StringBuilder Logs => logs;
-	[Obsolete("Use Log.SetCallbacks")]
-	public static Fn? OnInfo { get => onInfo; set => onInfo = value; }
-	[Obsolete("Use Log.SetCallbacks")]
-	public static Fn? OnWarn { get => onWarn; set => onWarn = value; }
-	[Obsolete("Use Log.SetCallbacks")]
-	public static Fn? OnError { get => onError; set => onError = value; }
-
 	private static Fn? onInfo;
 	private static Fn? onWarn;
 	private static Fn? onError;

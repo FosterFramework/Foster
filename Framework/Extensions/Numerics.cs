@@ -4,11 +4,71 @@ using System.Runtime.Intrinsics;
 
 namespace Foster.Framework;
 
-/// <summary>
-/// <see cref="Vector2"/>, <see cref="Vector3"/>, <see cref="Vector4"/>, and <see cref="Vector128{T}"/> Extension Methods
-/// </summary>
-public static class VectorExt
+public static partial class Extensions
 {
+	#region Quaternion
+
+	extension(Quaternion q)
+	{
+		public Quaternion Conjugated()
+		{
+			Quaternion c = q;
+			c.X = -c.X;
+			c.Y = -c.Y;
+			c.Z = -c.Z;
+			return c;
+		}
+
+		public Quaternion LookAt(Vector3 direction, Vector3 up)
+		{
+			return Quaternion.CreateFromRotationMatrix(Matrix4x4.CreateLookAt(Vector3.Zero, direction, up));
+		}
+
+		public static Quaternion LookAt(Vector3 from, Vector3 to, Vector3 up)
+		{
+			return Quaternion.CreateFromRotationMatrix(Matrix4x4.CreateLookAt(from, to, up));
+		}
+	}
+
+	#endregion
+
+	#region Matrix3x3
+
+	extension(Matrix3x2 mat)
+	{
+		/// <summary>
+		/// Get the x-scale of the <see cref="Matrix3x2"/>. This will be incorrect if the matrix is rotated or skewed, but it's much cheaper than <see cref="get_XScale(Matrix3x2)"/>
+		/// </summary>
+		public float XScaleFast => mat.M11;
+
+		/// <summary>
+		/// Get the y-scale of the <see cref="Matrix3x2"/>. This will be incorrect if the matrix is rotated or skewed, but it's much cheaper than <see cref="get_YScale(Matrix3x2)"/>
+		/// </summary>
+		public float YScaleFast => mat.M22;
+
+		/// <summary>
+		/// Get the scale of the <see cref="Matrix3x2"/>. This will be incorrect if the matrix is rotated or skewed, but it's much cheaper than <see cref="get_Scale(Matrix3x2)"/>
+		/// </summary>
+		public Vector2 ScaleFast => new(mat.M11, mat.M22);
+
+		/// <summary>
+		/// Get the x-scale of the <see cref="Matrix3x2"/> (this is expensive as it requires a square root - you can use <see cref="get_XScaleFast(Matrix3x2)"/> if you know the matrix is not rotated or skewed)
+		/// </summary>
+		public float XScale => MathF.Sqrt(mat.M11 * mat.M11 + mat.M21 * mat.M21);
+
+		/// <summary>
+		/// Get the y-scale of the <see cref="Matrix3x2"/> (this is expensive as it requires a square root - you can use <see cref="get_YScaleFast(Matrix3x2)"/> if you know the matrix is not rotated or skewed)
+		/// </summary>
+		public float YScale => MathF.Sqrt(mat.M12 * mat.M12 + mat.M22 * mat.M22);
+
+		/// <summary>
+		/// Get the scale of the <see cref="Matrix3x2"/> (this is expensive as it requires two square roots - you can use <see cref="get_ScaleFast(Matrix3x2)"/> if you know the matrix is not rotated or skewed)
+		/// </summary>
+		public Vector2 Scale => new(mat.XScale, mat.YScale);
+	}
+
+	#endregion
+
 	#region Vector2
 
 	extension(Vector2 vector)
@@ -183,6 +243,13 @@ public static class VectorExt
 				Calc.Map(vector.X, fromBounds.X, fromBounds.X + fromBounds.Width, toBounds.X, toBounds.X + toBounds.Width),
 				Calc.Map(vector.Y, fromBounds.Y, fromBounds.Y + fromBounds.Height, toBounds.Y, toBounds.Y + toBounds.Height)
 			);
+
+		/// <summary>
+		/// Check if our magnitude is smaller than Vector b's
+		/// </summary>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool IsSmallerThan(in Vector2 b)
+			=> vector.LengthSquared() < b.LengthSquared();
 	}
 
 	#endregion
@@ -311,3 +378,4 @@ public static class VectorExt
 #endif
 	#endregion
 }
+

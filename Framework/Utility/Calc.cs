@@ -29,17 +29,17 @@ public static class Calc
 	/// <summary>
 	/// TAU (2-PI) in radians
 	/// </summary>
-	public const float TAU = MathF.PI * 2f;
+	public const float TAU = MathF.Tau;
 
 	/// <summary>
 	/// Converts Degrees to Radians
 	/// </summary>
-	public const float DegToRad = (MathF.PI * 2) / 360f;
+	public const float DegToRad = MathF.Tau / 360f;
 
 	/// <summary>
 	/// Converts Radians to Degrees
 	/// </summary>
-	public const float RadToDeg = 360f / (MathF.PI * 2);
+	public const float RadToDeg = 360f / MathF.Tau;
 
 	public const float Right = 0;
 	public const float Left = PI;
@@ -49,19 +49,6 @@ public static class Calc
 	public const float DownRight = PI * 0.25f;
 	public const float UpLeft = TAU - PI * 0.75f;
 	public const float DownLeft = PI * 0.75f;
-
-	#endregion
-
-	#region Enums
-
-	public static int EnumCount<T>() where T : struct, Enum
-		=> Enum.GetValues<T>().Length;
-
-	/// <summary>
-	/// Performantly convert an enum to int
-	/// </summary>
-	public static unsafe int EnumAsInt<TEnum>(TEnum enumValue) where TEnum : unmanaged, Enum
-		=> *(int*)(&enumValue);
 
 	#endregion
 
@@ -79,231 +66,6 @@ public static class Calc
 
 	public static T GiveMe<T>(int index, params ReadOnlySpan<T> choices)
 		=> choices[index];
-
-	#endregion
-
-	#region Bitwise Flags
-
-	#region byte
-
-	/// <summary>
-	/// Bitwise check if <paramref name="flags"/> has set any of the set bits in <paramref name="check"/>
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool Has(this byte flags, byte check)
-		=> (flags & check) != 0;
-
-	/// <summary>
-	/// Bitwise check if <paramref name="flags"/> has set all of the set bits in <paramref name="check"/>
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool HasAll(this byte flags, byte check)
-		=> (flags & check) == check;
-
-	/// <summary>
-	/// Return <paramref name="flags"/> after setting all the set bits in <paramref name="with"/>
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static byte With(this byte flags, byte with)
-		=> (byte)(flags | with);
-
-	/// <summary>
-	/// Return <paramref name="flags"/> after clearing all the set bits in <paramref name="without"/>
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static byte Without(this byte flags, byte without)
-		=> (byte)(flags & ~without);
-
-	/// <summary>
-	/// Return <paramref name="flags"/> after setting or clearing all the set bits in <paramref name="mask"/>, depending on the value of <paramref name="condition"/> (set if true, clear if false)
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static byte Mask(this byte flags, byte mask, bool condition)
-		=> condition ? flags.With(mask) : flags.Without(mask);
-
-	#endregion
-
-	#region ushort
-
-	/// <summary>
-	/// Bitwise check if <paramref name="flags"/> has set any of the set bits in <paramref name="check"/>
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool Has(this ushort flags, ushort check)
-		=> (flags & check) != 0;
-
-	/// <summary>
-	/// Bitwise check if <paramref name="flags"/> has set all of the set bits in <paramref name="check"/>
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool HasAll(this ushort flags, ushort check)
-		=> (flags & check) == check;
-
-	/// <summary>
-	/// Return <paramref name="flags"/> after setting all the set bits in <paramref name="with"/>
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ushort With(this ushort flags, ushort with)
-		=> (ushort)(flags | with);
-
-	/// <summary>
-	/// Return <paramref name="flags"/> after clearing all the set bits in <paramref name="without"/>
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ushort Without(this ushort flags, ushort without)
-		=> (ushort)(flags & ~without);
-
-	/// <summary>
-	/// Return <paramref name="flags"/> after setting or clearing all the set bits in <paramref name="mask"/>, depending on the value of <paramref name="condition"/> (set if true, clear if false)
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ushort Mask(this ushort flags, ushort mask, bool condition)
-		=> condition ? flags.With(mask) : flags.Without(mask);
-
-	#endregion
-
-	#region uint
-
-	/// <summary>
-	/// Bitwise check if <paramref name="flags"/> has set any of the set bits in <paramref name="check"/>
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool Has(this uint flags, uint check)
-		=> (flags & check) != 0;
-
-	/// <summary>
-	/// Bitwise check if <paramref name="flags"/> has set all of the set bits in <paramref name="check"/>
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool HasAll(this uint flags, uint check)
-		=> (flags & check) == check;
-
-	/// <summary>
-	/// Return <paramref name="flags"/> after setting all the set bits in <paramref name="with"/>
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static uint With(this uint flags, uint with)
-		=> flags | with;
-
-	/// <summary>
-	/// Return <paramref name="flags"/> after clearing all the set bits in <paramref name="without"/>
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static uint Without(this uint flags, uint without)
-		=> flags & ~without;
-
-	/// <summary>
-	/// Return <paramref name="flags"/> after setting or clearing all the set bits in <paramref name="mask"/>, depending on the value of <paramref name="condition"/> (set if true, clear if false)
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static uint Mask(this uint flags, uint mask, bool condition)
-		=> condition ? flags.With(mask) : flags.Without(mask);
-
-	#endregion
-
-	#region ulong
-
-	/// <summary>
-	/// Bitwise check if <paramref name="flags"/> has set any of the set bits in <paramref name="check"/>
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool Has(this ulong flags, ulong check)
-		=> (flags & check) != 0;
-
-	/// <summary>
-	/// Bitwise check if <paramref name="flags"/> has set all of the set bits in <paramref name="check"/>
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool HasAll(this ulong flags, ulong check)
-		=> (flags & check) == check;
-
-	/// <summary>
-	/// Return <paramref name="flags"/> after setting all the set bits in <paramref name="with"/>
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ulong With(this ulong flags, ulong with)
-		=> flags | with;
-
-	/// <summary>
-	/// Return <paramref name="flags"/> after clearing all the set bits in <paramref name="without"/>
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ulong Without(this ulong flags, ulong without)
-		=> flags & ~without;
-
-	/// <summary>
-	/// Return <paramref name="flags"/> after setting or clearing all the set bits in <paramref name="mask"/>, depending on the value of <paramref name="condition"/> (set if true, clear if false)
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ulong Mask(this ulong flags, ulong mask, bool condition)
-		=> condition ? flags.With(mask) : flags.Without(mask);
-
-	#endregion
-
-	#region enum
-
-	/// <summary>
-	/// Bitwise check if <paramref name="flags"/> has set any of the set bits in <paramref name="check"/>
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static unsafe bool Has<T>(this T flags, T check) where T : unmanaged, Enum
-		=> sizeof(T) switch
-		{
-			1 => (Unsafe.BitCast<T, byte>(flags) & Unsafe.BitCast<T, byte>(check)) > 0,
-			2 => (Unsafe.BitCast<T, ushort>(flags) & Unsafe.BitCast<T, ushort>(check)) > 0,
-			4 => (Unsafe.BitCast<T, uint>(flags) & Unsafe.BitCast<T, uint>(check)) > 0,
-			8 => (Unsafe.BitCast<T, ulong>(flags) & Unsafe.BitCast<T, ulong>(check)) > 0,
-			_ => throw new Exception("Size does not match a known Enum backing type."),
-		};
-
-	/// <summary>
-	/// Bitwise check if <paramref name="flags"/> has set all of the set bits in <paramref name="check"/>
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static unsafe bool HasAll<T>(this T flags, T check) where T : unmanaged, Enum
-		=> sizeof(T) switch
-		{
-			1 => (Unsafe.BitCast<T, byte>(flags) & Unsafe.BitCast<T, byte>(check)) == Unsafe.BitCast<T, byte>(check),
-			2 => (Unsafe.BitCast<T, ushort>(flags) & Unsafe.BitCast<T, ushort>(check)) == Unsafe.BitCast<T, ushort>(check),
-			4 => (Unsafe.BitCast<T, uint>(flags) & Unsafe.BitCast<T, uint>(check)) == Unsafe.BitCast<T, uint>(check),
-			8 => (Unsafe.BitCast<T, ulong>(flags) & Unsafe.BitCast<T, ulong>(check)) == Unsafe.BitCast<T, ulong>(check),
-			_ => throw new Exception("Size does not match a known Enum backing type."),
-		};
-
-	/// <summary>
-	/// Return <paramref name="flags"/> after setting all the set bits in <paramref name="with"/>
-	/// </summary>
-	public static unsafe T With<T>(this T flags, T with) where T : unmanaged, Enum
-		=> sizeof(T) switch
-		{
-			1 => Unsafe.BitCast<byte, T>((byte)(Unsafe.BitCast<T, byte>(flags) | Unsafe.BitCast<T, byte>(with))),
-			2 => Unsafe.BitCast<ushort, T>((ushort)(Unsafe.BitCast<T, ushort>(flags) | Unsafe.BitCast<T, ushort>(with))),
-			4 => Unsafe.BitCast<uint, T>(Unsafe.BitCast<T, uint>(flags) | Unsafe.BitCast<T, uint>(with)),
-			8 => Unsafe.BitCast<ulong, T>(Unsafe.BitCast<T, ulong>(flags) | Unsafe.BitCast<T, ulong>(with)),
-			_ => throw new Exception("Size does not match a known Enum backing type."),
-		};
-
-	/// <summary>
-	/// Return <paramref name="flags"/> after clearing all the set bits in <paramref name="without"/>
-	/// </summary>
-	public static unsafe T Without<T>(this T flags, T without) where T : unmanaged, Enum
-		=> sizeof(T) switch
-		{
-			1 => Unsafe.BitCast<byte, T>((byte)(Unsafe.BitCast<T, byte>(flags) & ~Unsafe.BitCast<T, byte>(without))),
-			2 => Unsafe.BitCast<ushort, T>((ushort)(Unsafe.BitCast<T, ushort>(flags) & ~Unsafe.BitCast<T, ushort>(without))),
-			4 => Unsafe.BitCast<uint, T>(Unsafe.BitCast<T, uint>(flags) & ~Unsafe.BitCast<T, uint>(without)),
-			8 => Unsafe.BitCast<ulong, T>(Unsafe.BitCast<T, ulong>(flags) & ~Unsafe.BitCast<T, ulong>(without)),
-			_ => throw new Exception("Size does not match a known Enum backing type."),
-		};
-
-	/// <summary>
-	/// Return <paramref name="flags"/> after setting or clearing all the set bits in <paramref name="mask"/>, depending on the value of <paramref name="condition"/> (set if true, clear if false)
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Mask<T>(this T flags, T mask, bool condition) where T : unmanaged, Enum
-		=> condition ? flags.With(mask) : flags.Without(mask);
-
-	#endregion
 
 	#endregion
 
@@ -780,13 +542,6 @@ public static class Calc
 	}
 
 	/// <summary>
-	/// Check if our magnitude is smaller than Vector b's
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool IsSmallerThan(this Vector2 a, in Vector2 b)
-		=> a.LengthSquared() < b.LengthSquared();
-
-	/// <summary>
 	/// Solve a quadratic equation, if possible
 	/// </summary>
 	public static (float, float)? SolveQuadratic(float a, float b, float c)
@@ -1005,20 +760,20 @@ public static class Calc
 
 	#endregion
 
-	#region float
+	#region Numbers
 
 	/// <summary>
 	/// Find the closest in the list to a value
 	/// </summary>
 	/// <returns>The index of the closest value, or -1 if the list is empty</returns>
-	public static int GetClosestValueIndex(this ReadOnlySpan<float> values, float to)
+	public static int GetClosestValueIndex<T>(this ReadOnlySpan<T> values, T to) where T : INumber<T>
 	{
 		int closestIndex = -1;
-		float closestDiff = 0;
+		T closestDiff = T.Zero;
 
 		for (int i = 0; i < values.Length; i++)
 		{
-			var diff = MathF.Abs(values[i] - to);
+			var diff = T.Abs(values[i] - to);
 			if (closestIndex == -1 || diff < closestDiff)
 			{
 				closestIndex = i;
@@ -1030,41 +785,17 @@ public static class Calc
 	}
 
 	/// <summary>
-	/// Find the closest in the list to a value
-	/// </summary>
-	/// <returns>The index of the closest value, or -1 if the list is empty</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int GetClosestValueIndex(this Span<float> values, float to)
-		=> GetClosestValueIndex((ReadOnlySpan<float>)values, to);
-
-	/// <summary>
-	/// Find the closest in the list to a value
-	/// </summary>
-	/// <returns>The index of the closest value, or -1 if the list is empty</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int GetClosestValueIndex(this float[] values, float to)
-		=> GetClosestValueIndex((ReadOnlySpan<float>)values, to);
-
-	/// <summary>
-	/// Find the closest in the list to a value
-	/// </summary>
-	/// <returns>The index of the closest value, or -1 if the list is empty</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int GetClosestValueIndex(this List<float> values, float to)
-		=> GetClosestValueIndex(CollectionsMarshal.AsSpan(values), to);
-
-	/// <summary>
 	/// Find the furthest in the list to a value
 	/// </summary>
 	/// <returns>The index of the furthest value, or -1 if the list is empty</returns>
-	public static int GetFurthestValueIndex(this ReadOnlySpan<float> values, float to)
+	public static int GetFurthestValueIndex<T>(this ReadOnlySpan<T> values, T to) where T : INumber<T>
 	{
 		int furthestIndex = -1;
-		float furthestDiff = 0;
+		T furthestDiff = T.Zero;
 
 		for (int i = 0; i < values.Length; i++)
 		{
-			var diff = MathF.Abs(values[i] - to);
+			var diff = T.Abs(values[i] - to);
 			if (furthestIndex == -1 || diff > furthestDiff)
 			{
 				furthestIndex = i;
@@ -1076,123 +807,51 @@ public static class Calc
 	}
 
 	/// <summary>
-	/// Find the furthest in the list to a value
-	/// </summary>
-	/// <returns>The index of the furthest value, or -1 if the list is empty</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int GetFurthestValueIndex(this Span<float> values, float to)
-		=> GetFurthestValueIndex((ReadOnlySpan<float>)values, to);
-
-	/// <summary>
-	/// Find the furthest in the list to a value
-	/// </summary>
-	/// <returns>The index of the furthest value, or -1 if the list is empty</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int GetFurthestValueIndex(this float[] values, float to)
-		=> GetFurthestValueIndex((ReadOnlySpan<float>)values, to);
-
-	/// <summary>
-	/// Find the furthest in the list to a value
-	/// </summary>
-	/// <returns>The index of the furthest value, or -1 if the list is empty</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int GetFurthestValueIndex(this List<float> values, float to)
-		=> GetFurthestValueIndex(CollectionsMarshal.AsSpan(values), to);
-
-	#endregion
-
-	#region int
-
-	/// <summary>
 	/// Find the closest in the list to a value
 	/// </summary>
 	/// <returns>The index of the closest value, or -1 if the list is empty</returns>
-	public static int GetClosestValueIndex(this ReadOnlySpan<int> values, int to)
-	{
-		int closestIndex = -1;
-		float closestDiff = 0;
-
-		for (int i = 0; i < values.Length; i++)
-		{
-			var diff = Math.Abs(values[i] - to);
-			if (closestIndex == -1 || diff < closestDiff)
-			{
-				closestIndex = i;
-				closestDiff = diff;
-			}
-		}
-
-		return closestIndex;
-	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetClosestValueIndex<T>(this Span<T> values, T to) where T : INumber<T>
+		=> GetClosestValueIndex((ReadOnlySpan<T>)values, to);
 
 	/// <summary>
 	/// Find the closest in the list to a value
 	/// </summary>
 	/// <returns>The index of the closest value, or -1 if the list is empty</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int GetClosestValueIndex(this Span<int> values, int to)
-		=> GetClosestValueIndex((ReadOnlySpan<int>)values, to);
+	public static int GetClosestValueIndex<T>(this T[] values, T to) where T : INumber<T>
+		=> GetClosestValueIndex((ReadOnlySpan<T>)values, to);
 
 	/// <summary>
 	/// Find the closest in the list to a value
 	/// </summary>
 	/// <returns>The index of the closest value, or -1 if the list is empty</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int GetClosestValueIndex(this int[] values, int to)
-		=> GetClosestValueIndex((ReadOnlySpan<int>)values, to);
-
-	/// <summary>
-	/// Find the closest in the list to a value
-	/// </summary>
-	/// <returns>The index of the closest value, or -1 if the list is empty</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int GetClosestValueIndex(this List<int> values, int to)
+	public static int GetClosestValueIndex<T>(this List<T> values, T to) where T : INumber<T>
 		=> GetClosestValueIndex(CollectionsMarshal.AsSpan(values), to);
 
 	/// <summary>
 	/// Find the furthest in the list to a value
 	/// </summary>
 	/// <returns>The index of the furthest value, or -1 if the list is empty</returns>
-	public static int GetFurthestValueIndex(this ReadOnlySpan<int> values, int to)
-	{
-		int furthestIndex = -1;
-		float furthestDiff = 0;
-
-		for (int i = 0; i < values.Length; i++)
-		{
-			var diff = Math.Abs(values[i] - to);
-			if (furthestIndex == -1 || diff > furthestDiff)
-			{
-				furthestIndex = i;
-				furthestDiff = diff;
-			}
-		}
-
-		return furthestIndex;
-	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int GetFurthestValueIndex<T>(this Span<T> values, T to) where T : INumber<T>
+		=> GetFurthestValueIndex((ReadOnlySpan<T>)values, to);
 
 	/// <summary>
 	/// Find the furthest in the list to a value
 	/// </summary>
 	/// <returns>The index of the furthest value, or -1 if the list is empty</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int GetFurthestValueIndex(this Span<int> values, int to)
-		=> GetFurthestValueIndex((ReadOnlySpan<int>)values, to);
+	public static int GetFurthestValueIndex<T>(this T[] values, T to) where T : INumber<T>
+		=> GetFurthestValueIndex((ReadOnlySpan<T>)values, to);
 
 	/// <summary>
 	/// Find the furthest in the list to a value
 	/// </summary>
 	/// <returns>The index of the furthest value, or -1 if the list is empty</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int GetFurthestValueIndex(this int[] values, int to)
-		=> GetFurthestValueIndex((ReadOnlySpan<int>)values, to);
-
-	/// <summary>
-	/// Find the furthest in the list to a value
-	/// </summary>
-	/// <returns>The index of the furthest value, or -1 if the list is empty</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int GetFurthestValueIndex(this List<int> values, int to)
+	public static int GetFurthestValueIndex<T>(this List<T> values, T to) where T : INumber<T>
 		=> GetFurthestValueIndex(CollectionsMarshal.AsSpan(values), to);
 
 	#endregion
@@ -1393,28 +1052,31 @@ public static class Calc
 
 	#endregion
 
-	#region float
+	#region Numbers
 
 	/// <summary>
 	/// Find the closest in the list to a value
 	/// </summary>
 	/// <returns>The closest value, or 0 if the list is empty</returns>
-	public static float GetClosestValue(this ReadOnlySpan<float> values, float to)
+	public static T GetClosestValue<T>(this ReadOnlySpan<T> values, T to) where T : INumber<T>
 	{
-		float? closest = null;
-		float closestDiff = 0;
+		if (values.Length <= 0)
+			return T.Zero;
 
-		foreach (var t in values)
+		T closest = values[0];
+		T closestDiff = T.Abs(values[0] - to);
+
+		for (int i = 1; i < values.Length; i ++)
 		{
-			var diff = MathF.Abs(t - to);
-			if (!closest.HasValue || diff < closestDiff)
+			var diff = T.Abs(values[i] - to);
+			if (diff < closestDiff)
 			{
-				closest = t;
+				closest = values[i];
 				closestDiff = diff;
 			}
 		}
 
-		return closest ?? 0;
+		return closest;
 	}
 
 	/// <summary>
@@ -1422,45 +1084,48 @@ public static class Calc
 	/// </summary>
 	/// <returns>The closest value, or 0 if the list is empty</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static float GetClosestValue(this Span<float> values, float to)
-		=> GetClosestValue((ReadOnlySpan<float>)values, to);
+	public static T GetClosestValue<T>(this Span<T> values, T to) where T : INumber<T>
+		=> GetClosestValue((ReadOnlySpan<T>)values, to);
 
 	/// <summary>
 	/// Find the closest in the list to a value
 	/// </summary>
 	/// <returns>The closest value, or 0 if the list is empty</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static float GetClosestValue(this float[] values, float to)
-		=> GetClosestValue((ReadOnlySpan<float>)values, to);
+	public static T GetClosestValue<T>(this T[] values, T to) where T : INumber<T>
+		=> GetClosestValue((ReadOnlySpan<T>)values, to);
 
 	/// <summary>
 	/// Find the closest in the list to a value
 	/// </summary>
 	/// <returns>The closest value, or 0 if the list is empty</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static float GetClosestValue(this List<float> values, float to)
+	public static T GetClosestValue<T>(this List<T> values, T to) where T : INumber<T>
 		=> GetClosestValue(CollectionsMarshal.AsSpan(values), to);
 
 	/// <summary>
 	/// Find the furthest in the list to a value
 	/// </summary>
 	/// <returns>The furthest value, or 0 if the list is empty</returns>
-	public static float GetFurthestValue(this ReadOnlySpan<float> values, float to)
+	public static T GetFurthestValue<T>(this ReadOnlySpan<T> values, T to) where T : INumber<T>
 	{
-		float? furthest = null;
-		float furthestDiff = 0;
+		if (values.Length <= 0)
+			return T.Zero;
 
-		foreach (var t in values)
+		T furthest = values[0];
+		T furthestDiff = T.Abs(values[0] - to);
+
+		for (int i = 1; i < values.Length; i ++)
 		{
-			var diff = MathF.Abs(t - to);
-			if (!furthest.HasValue || diff > furthestDiff)
+			var diff = T.Abs(values[i] - to);
+			if (diff > furthestDiff)
 			{
-				furthest = t;
+				furthest = values[i];
 				furthestDiff = diff;
 			}
 		}
 
-		return furthest ?? 0;
+		return furthest;
 	}
 
 	/// <summary>
@@ -1468,119 +1133,23 @@ public static class Calc
 	/// </summary>
 	/// <returns>The furthest value, or 0 if the list is empty</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static float GetFurthestValue(this Span<float> values, float to)
-		=> GetFurthestValue((ReadOnlySpan<float>)values, to);
+	public static T GetFurthestValue<T>(this Span<T> values, T to) where T : INumber<T>
+		=> GetFurthestValue((ReadOnlySpan<T>)values, to);
 
 	/// <summary>
 	/// Find the furthest in the list to a value
 	/// </summary>
 	/// <returns>The furthest value, or 0 if the list is empty</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static float GetFurthestValue(this float[] values, float to)
-		=> GetFurthestValue((ReadOnlySpan<float>)values, to);
+	public static T GetFurthestValue<T>(this T[] values, T to) where T : INumber<T>
+		=> GetFurthestValue((ReadOnlySpan<T>)values, to);
 
 	/// <summary>
 	/// Find the furthest in the list to a value
 	/// </summary>
 	/// <returns>The furthest value, or 0 if the list is empty</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static float GetFurthestValue(this List<float> values, float to)
-		=> GetFurthestValue(CollectionsMarshal.AsSpan(values), to);
-
-	#endregion
-
-	#region int
-
-	/// <summary>
-	/// Find the closest in the list to a value
-	/// </summary>
-	/// <returns>The closest value, or 0 if the list is empty</returns>
-	public static int GetClosestValue(this ReadOnlySpan<int> values, int to)
-	{
-		int? closest = null;
-		float closestDiff = 0;
-
-		foreach (var t in values)
-		{
-			var diff = Math.Abs(t - to);
-			if (!closest.HasValue || diff < closestDiff)
-			{
-				closest = t;
-				closestDiff = diff;
-			}
-		}
-
-		return closest ?? 0;
-	}
-
-	/// <summary>
-	/// Find the closest in the list to a value
-	/// </summary>
-	/// <returns>The closest value, or 0 if the list is empty</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int GetClosestValue(this Span<int> values, int to)
-		=> GetClosestValue((ReadOnlySpan<int>)values, to);
-
-	/// <summary>
-	/// Find the closest in the list to a value
-	/// </summary>
-	/// <returns>The closest value, or 0 if the list is empty</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int GetClosestValue(this int[] values, int to)
-		=> GetClosestValue((ReadOnlySpan<int>)values, to);
-
-	/// <summary>
-	/// Find the closest in the list to a value
-	/// </summary>
-	/// <returns>The closest value, or 0 if the list is empty</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int GetClosestValue(this List<int> values, int to)
-		=> GetClosestValue(CollectionsMarshal.AsSpan(values), to);
-
-	/// <summary>
-	/// Find the furthest in the list to a value
-	/// </summary>
-	/// <returns>The furthest value, or 0 if the list is empty</returns>
-	public static int GetFurthestValue(this ReadOnlySpan<int> values, int to)
-	{
-		int? furthest = null;
-		float furthestDiff = 0;
-
-		foreach (var t in values)
-		{
-			var diff = Math.Abs(t - to);
-			if (!furthest.HasValue || diff > furthestDiff)
-			{
-				furthest = t;
-				furthestDiff = diff;
-			}
-		}
-
-		return furthest ?? 0;
-	}
-
-	/// <summary>
-	/// Find the furthest in the list to a value
-	/// </summary>
-	/// <returns>The furthest value, or 0 if the list is empty</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int GetFurthestValue(this Span<int> values, int to)
-		=> GetFurthestValue((ReadOnlySpan<int>)values, to);
-
-	/// <summary>
-	/// Find the furthest in the list to a value
-	/// </summary>
-	/// <returns>The furthest value, or 0 if the list is empty</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int GetFurthestValue(this int[] values, int to)
-		=> GetFurthestValue((ReadOnlySpan<int>)values, to);
-
-	/// <summary>
-	/// Find the furthest in the list to a value
-	/// </summary>
-	/// <returns>The furthest value, or 0 if the list is empty</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int GetFurthestValue(this List<int> values, int to)
+	public static T GetFurthestValue<T>(this List<T> values, T to) where T : INumber<T>
 		=> GetFurthestValue(CollectionsMarshal.AsSpan(values), to);
 
 	#endregion
@@ -1998,6 +1567,7 @@ public static class Calc
 		// Couldn't find a suitable attribute
 		return false;
 	}
+
 	#endregion
 
 	#region Interpolation
