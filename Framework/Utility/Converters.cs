@@ -123,6 +123,7 @@ public abstract unsafe class VectorJsonConverter<T, TComponent>(
 			return default;
 
 		Span<TComponent> values = stackalloc TComponent[ComponentCount];
+		var count = 0;
 
 		while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
 		{
@@ -139,13 +140,19 @@ public abstract unsafe class VectorJsonConverter<T, TComponent>(
 				continue;
 			}
 
-			for (int i = 0; i < Components.Length; i ++)
+			for (int i = 0; i < ComponentCount; i ++)
 			for (int j = 0; j < Components[i].Length; j ++)
-				if (Components[i][j].Equals(component, StringComparison.OrdinalIgnoreCase))
+			{
+				 // start at count as we assume we're reading components successfully in order
+				var index = (i + count) % ComponentCount;
+
+				if (Components[index][j].Equals(component, StringComparison.OrdinalIgnoreCase))
 				{
-					values[i] = ReadComponent(ref reader);
+					values[index] = ReadComponent(ref reader);
+					count++;
 					goto NEXT;
 				}
+			}
 
 			reader.Skip();
 		NEXT:;
