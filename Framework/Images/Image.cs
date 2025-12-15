@@ -162,6 +162,16 @@ public class Image : IDisposable
 	}
 
 	/// <summary>
+	/// Write the image to QOI
+	/// </summary>
+	public byte[] WriteQoi()
+	{
+		var mem = new MemoryStream();
+		data.Encode(mem, ImageData.Formats.QOI);
+		return mem.GetBuffer();
+	}
+
+	/// <summary>
 	/// Get &amp; Set the color of a pixel.
 	/// </summary>
 	public Color this[int index]
