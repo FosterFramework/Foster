@@ -141,16 +141,18 @@ public abstract unsafe class VectorJsonConverter<T, TComponent>(
 			}
 
 			for (int i = 0; i < ComponentCount; i ++)
-			for (int j = 0; j < Components[i].Length; j ++)
 			{
-				 // start at count as we assume we're reading components successfully in order
+				// start at count as we assume we're reading components successfully in order
 				var index = (i + count) % ComponentCount;
 
-				if (Components[index][j].Equals(component, StringComparison.OrdinalIgnoreCase))
+				for (int j = 0; j < Components[index].Length; j ++)
 				{
-					values[index] = ReadComponent(ref reader);
-					count++;
-					goto NEXT;
+					if (Components[index][j].Equals(component, StringComparison.OrdinalIgnoreCase))
+					{
+						values[index] = ReadComponent(ref reader);
+						count++;
+						goto NEXT;
+					}
 				}
 			}
 

@@ -70,8 +70,7 @@ public static class Pool<[DAM(DAMT.PublicMethods)] T> where T : class, new()
 		// It has no non-generic interface like IList or IDictionary
 		if (typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(HashSet<>))
 		{
-			// TODO: should be nameof(HashSet<>.Clear) but that's apparently a preview feature
-			var method = typeof(T).GetMethod(nameof(HashSet<int>.Clear));
+			var method = typeof(T).GetMethod(nameof(HashSet<>.Clear));
 			if (method != null)
 				return (Action<T>)Delegate.CreateDelegate(typeof(Action<T>), method);
 		}
