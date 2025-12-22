@@ -479,12 +479,9 @@ public static class Calc
 	public static float AngleReflectOnY(float radians)
 		=> AngleWrap(HalfPI - (radians - HalfPI));
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool OnInterval(float value, float prevValue, float interval, float offset = 0)
-	{
-		var last = ((prevValue - offset) / interval);
-		var next = ((value - offset) / interval);
-		return last != next;
-	}
+		=> (int)((prevValue - offset) / interval) != (int)((value - offset) / interval);
 
 	public static int NextPowerOfTwo(int x)
 	{
