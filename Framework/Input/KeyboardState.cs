@@ -123,7 +123,7 @@ public sealed class KeyboardState
 			return true;
 
 		var stamp = timestamp[(int)key];
-		return Down(key) && (time.Elapsed - stamp).TotalSeconds > delay && Time.OnInterval(time, interval, stamp.TotalSeconds);
+		return Down(key) && (time.Elapsed - stamp).TotalSeconds > delay && time.OnInterval(interval, stamp.TotalSeconds);
 	}
 
 	/// <summary>

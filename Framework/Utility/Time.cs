@@ -50,34 +50,20 @@ public readonly record struct Time(
 		=> this with { RenderFrame = RenderFrame + 1 };
 
 	/// <summary>
-	/// Returns true when the elapsed time passes a given interval based on the delta time
+	/// Returns true when the <see cref="Time"/> passes a given <paramref name="interval"/>. Ex: with an <paramref name="interval"/> of 0.1, this will be true for one frame every 0.1 seconds
 	/// </summary>
+	/// <param name="interval">Interval to check whether we've crossed</param>
+	/// <param name="offset">Offset to the interval (so we can, in effect, start partway through an interval)</param>
 	public bool OnInterval(double interval, double offset = 0.0)
-		=> OnInterval(Elapsed.TotalSeconds, Delta, interval, offset);
+		=> Calc.OnInterval(Elapsed.TotalSeconds, Delta, interval, offset);
 
 	/// <summary>
-	/// Returns true when the elapsed time passes a given interval based on the delta time
+	/// Returns true when the <see cref="Time"/> is between the given <paramref name="interval"/>. Ex: an <paramref name="interval"/> of 0.1 will be false for 0.1 seconds, then true for 0.1 seconds, and then repeat.
 	/// </summary>
-	public static bool OnInterval(in Time time, double interval, double offset)
-		=> OnInterval(time.Elapsed.TotalSeconds, time.Delta, interval, offset);
-
-	/// <summary>
-	/// Returns true when the elapsed time passes a given interval based on the delta time
-	/// </summary>
-	public static bool OnInterval(double time, double delta, double interval, double offset)
-		=> Math.Floor((time - offset - delta) / interval) < Math.Floor((time - offset) / interval);
-
-	/// <summary>
-	/// Returns true when the elapsed time is between the given interval. Ex: an interval of 0.1 will be false for 0.1 seconds, then true for 0.1 seconds, and then repeat.
-	/// </summary>
-	public bool BetweenInterval(double interval, double offset = 0.0)
-		=> BetweenInterval(Elapsed.TotalSeconds, interval, offset);
-
-	/// <summary>
-	/// Returns true when the elapsed time is between the given interval. Ex: an interval of 0.1 will be false for 0.1 seconds, then true for 0.1 seconds, and then repeat.
-	/// </summary>
-	public static bool BetweenInterval(double time, double interval, double offset)
-		=> (time - offset) % (interval * 2) >= interval;
+	/// <param name="interval">Interval to check whether we're between</param>
+	/// <param name="offset">Offset to the interval (so we can, in effect, start partway through an interval)</param>
+	public bool BetweenInterval(double interval, double offset = 0)
+		=> Calc.BetweenInterval(Elapsed.TotalSeconds, interval, offset);
 
 	/// <summary>
 	/// Sine-wave a value between `from` and `to` with a period of `duration`.

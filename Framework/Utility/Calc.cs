@@ -24,7 +24,7 @@ public static class Calc
 	/// <summary>
 	/// Half PI in radians
 	/// </summary>
-	public const float HalfPI = MathF.PI / 2f;
+	public const float HalfPI = MathF.PI / 2;
 
 	/// <summary>
 	/// TAU (2-PI) in radians
@@ -479,9 +479,26 @@ public static class Calc
 	public static float AngleReflectOnY(float radians)
 		=> AngleWrap(HalfPI - (radians - HalfPI));
 
+	/// <summary>
+	/// Returns true every time the elapsed <paramref name="time"/> passes a given <paramref name="interval"/>. Ex: with an <paramref name="interval"/> of 0.1, this will be true for one frame every 0.1 seconds
+	/// </summary>
+	/// <param name="time">Elapsed time</param>
+	/// <param name="delta">Time since last frame</param>
+	/// <param name="interval">Interval to check whether we've crossed</param>
+	/// <param name="offset">Offset to the interval (so we can, in effect, start partway through an interval)</param>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool OnInterval(float value, float prevValue, float interval, float offset = 0)
-		=> (int)((prevValue - offset) / interval) != (int)((value - offset) / interval);
+	public static bool OnInterval(double time, double delta, double interval, double offset = 0)
+		=> Math.Floor((time - offset - delta) / interval) < Math.Floor((time - offset) / interval);
+
+	/// <summary>
+	/// Returns true when the elapsed <paramref name="time"/> is between the given <paramref name="interval"/>. Ex: with an <paramref name="interval"/> of 0.1, this will be false for 0.1 seconds, then true for 0.1 seconds, and then repeat.
+	/// </summary>
+	/// <param name="time">Elapsed time</param>
+	/// <param name="interval">Interval to check whether we're between</param>
+	/// <param name="offset">Offset to the interval (so we can, in effect, start partway through an interval)</param>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool BetweenInterval(double time, double interval, double offset = 0)
+		=> (time - offset) % (interval * 2) >= interval;
 
 	public static int NextPowerOfTwo(int x)
 	{

@@ -103,10 +103,10 @@ public sealed class VirtualAction(Input input, string name, ActionBindingSet set
 
 		if (Down && (time.Elapsed - Timestamp).TotalSeconds > RepeatDelay)
 		{
-			if (Time.OnInterval(
+			if (Calc.OnInterval(
 				(time.Elapsed - Timestamp).TotalSeconds - RepeatDelay,
 				time.Delta,
-				RepeatInterval, 0))
+				RepeatInterval))
 			{
 				Repeated = true;
 			}
