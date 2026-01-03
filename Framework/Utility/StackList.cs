@@ -134,6 +134,9 @@ public struct StackList4<T> : IEnumerable<T>, IList<T>
 		public bool MoveNext() => (++index) < list.Count;
 		public void Reset() => index = -1;
 	}
+
+	public static implicit operator ReadOnlySpan<T>(StackList4<T> list) => list.Span;
+	public static implicit operator Span<T>(StackList4<T> list) => list.Span;
 }
 
 public struct StackList8<T> : IEnumerable<T>, IList<T>
@@ -150,8 +153,8 @@ public struct StackList8<T> : IEnumerable<T>, IList<T>
 	public readonly int Capacity => TypeCapacity;
 	public readonly bool IsReadOnly => false;
 
-	public ReadOnlySpan<T> Span
-		=> MemoryMarshal.CreateReadOnlySpan(ref elements[0], Count);
+	public Span<T> Span
+		=> MemoryMarshal.CreateSpan(ref elements[0], Count);
 
 	public void Add(T value)
 	{
@@ -260,6 +263,9 @@ public struct StackList8<T> : IEnumerable<T>, IList<T>
 		public bool MoveNext() => (++index) < list.Count;
 		public void Reset() => index = -1;
 	}
+
+	public static implicit operator ReadOnlySpan<T>(StackList8<T> list) => list.Span;
+	public static implicit operator Span<T>(StackList8<T> list) => list.Span;
 }
 
 public struct StackList16<T> : IEnumerable<T>, IList<T>
@@ -276,8 +282,8 @@ public struct StackList16<T> : IEnumerable<T>, IList<T>
 	public readonly int Capacity => TypeCapacity;
 	public readonly bool IsReadOnly => false;
 
-	public ReadOnlySpan<T> Span
-		=> MemoryMarshal.CreateReadOnlySpan(ref elements[0], Count);
+	public Span<T> Span
+		=> MemoryMarshal.CreateSpan(ref elements[0], Count);
 
 	public void Add(T value)
 	{
@@ -386,6 +392,9 @@ public struct StackList16<T> : IEnumerable<T>, IList<T>
 		public bool MoveNext() => (++index) < list.Count;
 		public void Reset() => index = -1;
 	}
+
+	public static implicit operator ReadOnlySpan<T>(StackList16<T> list) => list.Span;
+	public static implicit operator Span<T>(StackList16<T> list) => list.Span;
 }
 
 public struct StackList32<T> : IEnumerable<T>, IList<T>
@@ -402,8 +411,8 @@ public struct StackList32<T> : IEnumerable<T>, IList<T>
 	public readonly int Capacity => TypeCapacity;
 	public readonly bool IsReadOnly => false;
 
-	public ReadOnlySpan<T> Span
-		=> MemoryMarshal.CreateReadOnlySpan(ref elements[0], Count);
+	public Span<T> Span
+		=> MemoryMarshal.CreateSpan(ref elements[0], Count);
 
 	public void Add(T value)
 	{
@@ -512,6 +521,9 @@ public struct StackList32<T> : IEnumerable<T>, IList<T>
 		public bool MoveNext() => (++index) < list.Count;
 		public void Reset() => index = -1;
 	}
+
+	public static implicit operator ReadOnlySpan<T>(StackList32<T> list) => list.Span;
+	public static implicit operator Span<T>(StackList32<T> list) => list.Span;
 }
 
 public struct StackList64<T> : IEnumerable<T>, IList<T>
@@ -528,8 +540,8 @@ public struct StackList64<T> : IEnumerable<T>, IList<T>
 	public readonly int Capacity => TypeCapacity;
 	public readonly bool IsReadOnly => false;
 
-	public ReadOnlySpan<T> Span
-		=> MemoryMarshal.CreateReadOnlySpan(ref elements[0], Count);
+	public Span<T> Span
+		=> MemoryMarshal.CreateSpan(ref elements[0], Count);
 
 	public void Add(T value)
 	{
@@ -638,4 +650,7 @@ public struct StackList64<T> : IEnumerable<T>, IList<T>
 		public bool MoveNext() => (++index) < list.Count;
 		public void Reset() => index = -1;
 	}
+
+	public static implicit operator ReadOnlySpan<T>(StackList64<T> list) => list.Span;
+	public static implicit operator Span<T>(StackList64<T> list) => list.Span;
 }
