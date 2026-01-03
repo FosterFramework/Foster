@@ -133,7 +133,7 @@ internal unsafe struct ImageData
 		{
 			// write png
 			var mem = SDL_IOFromDynamicMem();
-			SDL_SavePNG_IO(surface, mem, false);
+			SDL_SavePNG_IO(new nint(surface), mem, false);
 
 			// write data to stream
 			var length = SDL_GetIOSize(mem);
