@@ -80,7 +80,7 @@ public sealed class MouseState
 		return
 			Down(button) &&
 			(time.Elapsed - stamp).TotalSeconds > delay &&
-			Time.OnInterval(time, interval, stamp.TotalSeconds);
+			time.OnInterval(interval, stamp.TotalSeconds);
 	}
 
 	public bool LeftPressed => pressed[(int)MouseButtons.Left];

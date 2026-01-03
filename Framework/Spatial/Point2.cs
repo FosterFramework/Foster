@@ -52,6 +52,23 @@ public struct Point2(int x, int y) : IEquatable<Point2>
 	public readonly Vector2 Normalized() => new Vector2(X, Y).Normalized();
 
 	/// <summary>
+	/// Get the length of a <see cref="Point2"/> and return it as a normalized <see cref="Vector2"/> at the same time. Normalizing requires computing the length of the <see cref="Point2"/> anyways, so you can use this if you need both results and save yourself a square root.
+	/// </summary>
+	public Vector2 GetLengthAndNormalize(out float length, Vector2 fallbackValue = default)
+	{
+		if (this == Vector2.Zero)
+		{
+			length = 0;
+			return fallbackValue;
+		}
+		else
+		{
+			length = Length();
+			return this / length;
+		}
+	}
+
+	/// <summary>
 	/// Floors both axes of the <see cref="Point2"/> to the given interval
 	/// </summary>
 	public readonly Point2 FloorTo(int interval) => (this / interval) * interval;
