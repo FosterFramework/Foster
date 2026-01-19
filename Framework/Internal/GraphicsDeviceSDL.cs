@@ -227,7 +227,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			throw App.CreateExceptionFromSDL(nameof(SDL_ClaimWindowForGPUDevice));
 
 		// query supported present modes
-		supportsMailboxPresentMode =
+		supportsImmediatePresentMode =
 			SDL_WindowSupportsGPUPresentMode(device, window, SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE);
 		supportsMailboxPresentMode =
 			SDL_WindowSupportsGPUPresentMode(device, window, SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX);
