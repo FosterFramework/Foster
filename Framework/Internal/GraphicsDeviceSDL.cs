@@ -84,7 +84,8 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	private RectInt? renderPassViewport;
 
 	// supported feature set
-	private bool supportsMailbox;
+	private bool supportsMailboxPresentMode;
+	private bool supportsImmediatePresentMode;
 
 	// state
 	private GraphicsDriver driver;
@@ -131,14 +132,21 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			if (device == nint.Zero)
 				throw deviceNotCreated;
 
+			// get desired mode
+			var desired = value
+				? SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC
+				: SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE;
+
+			// desired mode isn't supported ... fallback, eventually to v-sync, as it's the only always supported mode
+			// https://wiki.libsdl.org/SDL3/SDL_GPUPresentMode#remarks
+			if (desired == SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE && !supportsImmediatePresentMode)
+				desired = SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX;
+			if (desired == SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX && !supportsMailboxPresentMode)
+				desired = SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC;
+
 			SDL_SetGPUSwapchainParameters(device, window,
 				swapchain_composition: SDL_GPUSwapchainComposition.SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
-				present_mode: (value, supportsMailbox) switch
-				{
-					(true, true) => SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX,
-					(true, false) => SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC,
-					(false, _) => SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE
-				}
+				present_mode: desired
 			);
 
 			vsyncEnabled = value;
@@ -218,8 +226,11 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (!SDL_ClaimWindowForGPUDevice(device, window))
 			throw App.CreateExceptionFromSDL(nameof(SDL_ClaimWindowForGPUDevice));
 
-		supportsMailbox = SDL_WindowSupportsGPUPresentMode(device, window,
-			SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX);
+		// query supported present modes
+		supportsMailboxPresentMode =
+			SDL_WindowSupportsGPUPresentMode(device, window, SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE);
+		supportsMailboxPresentMode =
+			SDL_WindowSupportsGPUPresentMode(device, window, SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX);
 
 		// we always have a command buffer ready
 		ResetCommandBufferState();
