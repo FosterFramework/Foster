@@ -504,6 +504,17 @@ public static class Calc
 	public static bool BetweenInterval(double time, double interval, double offset = 0)
 		=> (time - offset) % (interval * 2) >= interval;
 
+	/// <summary>
+	/// Returns true when the elapsed <paramref name="time"/> is between the given <paramref name="falseInterval"/> and <paramref name="trueInterval"/>. Ex: with a <paramref name="falseInterval"/> of 0.1 and <paramref name="trueInterval"/> of 0.2, this will be false for 0.1 seconds, then true for 0.2 seconds, and then repeat.
+	/// </summary>
+	/// <param name="time">Elapsed time</param>
+	/// <param name="falseInterval">Time to be false for</param>
+	/// <param name="trueInterval">Time to be true for</param>
+	/// <param name="offset">Offset to the interval (so we can, in effect, start partway through an interval)</param>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool BetweenInterval(double time, double falseInterval, double trueInterval, double offset)
+		=> (time - offset) % (falseInterval + trueInterval) >= falseInterval;
+
 	public static int NextPowerOfTwo(int x)
 	{
 		x--;
