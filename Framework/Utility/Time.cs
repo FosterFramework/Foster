@@ -1,4 +1,6 @@
 
+using System.Runtime.CompilerServices;
+
 namespace Foster.Framework;
 
 /// <summary>
@@ -46,6 +48,7 @@ public readonly record struct Time(
 	/// Advances the Render Frame
 	/// </summary>
 	/// <returns>The new Time struct</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Time AdvanceRenderFrame()
 		=> this with { RenderFrame = RenderFrame + 1 };
 
@@ -54,6 +57,7 @@ public readonly record struct Time(
 	/// </summary>
 	/// <param name="interval">Interval to check whether we've crossed</param>
 	/// <param name="offset">Offset to the interval (so we can, in effect, start partway through an interval)</param>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool OnInterval(double interval, double offset = 0.0)
 		=> Calc.OnInterval(Elapsed.TotalSeconds, Delta, interval, offset);
 
@@ -62,8 +66,19 @@ public readonly record struct Time(
 	/// </summary>
 	/// <param name="interval">Interval to check whether we're between</param>
 	/// <param name="offset">Offset to the interval (so we can, in effect, start partway through an interval)</param>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool BetweenInterval(double interval, double offset = 0)
 		=> Calc.BetweenInterval(Elapsed.TotalSeconds, interval, offset);
+
+	/// <summary>
+	/// Returns true when the <see cref="Time"/> is between the given <paramref name="falseInterval"/> and <paramref name="trueInterval"/>. Ex: with a <paramref name="falseInterval"/> of 0.1 and <paramref name="trueInterval"/> of 0.2, this will be false for 0.1 seconds, then true for 0.2 seconds, and then repeat.
+	/// </summary>
+	/// <param name="falseInterval">Time to be false for</param>
+	/// <param name="trueInterval">Time to be true for</param>
+	/// <param name="offset">Offset to the interval (so we can, in effect, start partway through an interval)</param>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public bool BetweenInterval(double falseInterval, double trueInterval, double offset)
+		=> Calc.BetweenInterval(Elapsed.TotalSeconds, falseInterval, trueInterval, offset);
 
 	/// <summary>
 	/// Sine-wave a value between `from` and `to` with a period of `duration`.
@@ -84,6 +99,7 @@ public readonly record struct Time(
 	/// Get this <see cref="Time"/> struct with our delta time multiplied by a scalar value.
 	/// This can be useful for features such as slowing down or speeding up time.
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Time MultiplyDelta(double multiplier)
 		=> new(Previous + DeltaTimeSpan * multiplier, Previous, Frame, RenderFrame);
 }
