@@ -244,7 +244,7 @@ public static class Calc
 			return -1;
 
 		int index = 0;
-		T val = list[0];
+		var val = list[0];
 
 		for (int i = 1; i < list.Length; i++)
 			if (list[i].CompareTo(val) < 0)
@@ -260,23 +260,23 @@ public static class Calc
 	/// Move toward a target value without passing it
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static float Approach(float from, float target, float amount)
-		=> from > target ? Math.Max(from - amount, target) : Math.Min(from + amount, target);
+	public static float Approach(float from, float target, float maxDelta)
+		=> from > target ? Math.Max(from - maxDelta, target) : Math.Min(from + maxDelta, target);
 
 	/// <summary>
 	/// Move toward a target value without passing it
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static float Approach(ref float from, float target, float amount)
-		=> from > target ? from = Math.Max(from - amount, target) : from = Math.Min(from + amount, target);
+	public static float Approach(ref float from, float target, float maxDelta)
+		=> from > target ? from = Math.Max(from - maxDelta, target) : from = Math.Min(from + maxDelta, target);
 
 	/// <summary>
 	/// Move toward a target value without passing it, and only if we have the opposite sign or lower magnitude
 	/// </summary>
-	public static float ApproachIfLower(float from, float target, float amount)
+	public static float ApproachIfLower(float from, float target, float maxDelta)
 	{
 		if (Math.Sign(from) != Math.Sign(target) || Math.Abs(from) < Math.Abs(target))
-			return Approach(from, target, amount);
+			return Approach(from, target, maxDelta);
 		else
 			return from;
 	}
@@ -284,27 +284,38 @@ public static class Calc
 	/// <summary>
 	/// Move toward a target value without passing it, and only if we have the opposite sign or lower magnitude
 	/// </summary>
-	public static float ApproachIfLower(ref float from, float target, float amount)
+	public static float ApproachIfLower(ref float from, float target, float maxDelta)
 	{
 		if (Math.Sign(from) != Math.Sign(target) || Math.Abs(from) < Math.Abs(target))
-			return Approach(ref from, target, amount);
+			return Approach(ref from, target, maxDelta);
 		else
 			return from;
 	}
 
-	public static Vector2 Approach(Vector2 from, Vector2 target, float amount)
+	public static Vector2 Approach(Vector2 from, Vector2 target, float maxDelta)
 	{
 		if (from == target)
 			return target;
 		else
 		{
 			var diff = target - from;
-			if (diff.LengthSquared() <= amount * amount)
+			if (diff.LengthSquared() <= maxDelta * maxDelta)
 				return target;
 			else
-				return from + diff.Normalized() * amount;
+				return from + diff.Normalized() * maxDelta;
 		}
 	}
+
+	/// <summary>
+	/// Move toward a target position by a up to a maximum amount, but only allow movement along an arbitrary axis
+	/// </summary>
+	/// <param name="from">Starting point</param>
+	/// <param name="target">Target point to move towards</param>
+	/// <param name="axisNormal">The axis we're allowed to move along</param>
+	/// <param name="maxDelta">The max travel distance</param>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vector2 ApproachAlongAxis(Vector2 from, Vector2 target, Vector2 axisNormal, float maxDelta)
+		=> Approach(from, from + axisNormal * Vector2.Dot(target - from, axisNormal), maxDelta);
 
 	public static Vector3 Approach(Vector3 from, Vector3 target, float amount)
 	{
