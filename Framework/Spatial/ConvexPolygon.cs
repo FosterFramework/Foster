@@ -149,6 +149,72 @@ public struct ConvexPolygon : IConvexShape, IEnumerable<Vector2>
 		return result;
 	}
 
+	/// <summary>
+	/// Creates a Convex Hull Polygon from a list of points
+	/// </summary>
+	public static ConvexPolygon CreateConvexHull(ReadOnlySpan<Vector2> points)
+	{
+		if (points.Length <= 1)
+			return default;
+
+		// get points, sorted with duplicated removed
+		Span<Vector2> pts = stackalloc Vector2[points.Length];
+		{
+			points.CopyTo(pts);
+			pts.Sort(static (a, b) =>
+			{
+				var x = a.X.CompareTo(b.X);
+				return x != 0 ? x : a.Y.CompareTo(b.Y);
+			});
+
+			// remove any duplicate points
+			var unique = 1;
+			for (var i = 1; i < pts.Length; i++)
+			{
+				if (pts[i].X != pts[unique - 1].X ||
+					pts[i].Y != pts[unique - 1].Y)
+					pts[unique++] = pts[i];
+			}
+
+			if (unique <= 1)
+				return default;
+
+			pts = pts[..unique];
+		}
+
+		// build hull
+		Span<Vector2> hull = stackalloc Vector2[pts.Length * 2];
+		{
+			var count = 0;
+
+			// lower hull
+			for (var i = 0; i < pts.Length; i++)
+			{
+				while (count >= 2 && Cross(hull[count - 2], hull[count - 1], pts[i]) <= 0)
+					count--;
+				hull[count++] = pts[i];
+			}
+
+			// upper hull
+			var lowerCount = count;
+			for (var i = pts.Length - 2; i >= 0; i--)
+			{
+				while (count > lowerCount && Cross(hull[count - 2], hull[count - 1], pts[i]) <= 0)
+					count--;
+				hull[count++] = pts[i];
+			}
+
+			// remove duplicate last point
+			count--;
+			hull = hull[..count];
+		}
+
+		return new ConvexPolygon(hull);
+
+		static float Cross(in Vector2 a, in Vector2 b, in Vector2 c)
+			=> (b.X - a.X) * (c.Y - a.Y) - (b.Y - a.Y) * (c.X - a.X);
+	}
+
 	public static bool operator ==(in ConvexPolygon a, in ConvexPolygon b)
 	{
 		if (a.Vertices.Count != b.Vertices.Count)
