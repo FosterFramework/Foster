@@ -23,7 +23,15 @@ public struct Quad : IConvexShape, IEquatable<Quad>
 		this.b = b;
 		this.c = c;
 		this.d = d;
-		normalAB = normalBC = normalCD = normalDA = Vector2.Zero;
+		normalsDirty = true;
+	}
+
+	public Quad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
+	{
+		a            = new Vector2(x1, y1);
+		b            = new Vector2(x2, y2);
+		c            = new Vector2(x3, y3);
+		d            = new Vector2(x4, y4);
 		normalsDirty = true;
 	}
 
@@ -145,14 +153,11 @@ public struct Quad : IConvexShape, IEquatable<Quad>
 	{
 		if (!normalsDirty)
 			return;
-		normalAB = (b - a).Normalized();
-		normalAB = new Vector2(-normalAB.Y, normalAB.X);
-		normalBC = (c - b).Normalized();
-		normalBC = new Vector2(-normalBC.Y, normalBC.X);
-		normalCD = (d - c).Normalized();
-		normalCD = new Vector2(-normalCD.Y, normalCD.X);
-		normalDA = (a - d).Normalized();
-		normalDA = new Vector2(-normalDA.Y, normalDA.X);
+
+		normalAB     = (b - a).Normalized().TurnRight();
+		normalBC     = (c - b).Normalized().TurnRight();
+		normalCD     = (d - c).Normalized().TurnRight();
+		normalDA     = (a - d).Normalized().TurnRight();
 		normalsDirty = false;
 	}
 
