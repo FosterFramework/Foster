@@ -36,6 +36,22 @@ public class Batcher : IDisposable
 	}
 
 	/// <summary>
+	/// Stencil State for the Sprite Batcher
+	/// </summary>
+	/// <param name="Enabled">If the Stencil Tests should be enabled</param>
+	/// <param name="State">Stencil State</param>
+	/// <param name="ReferenceValue">The value to reference in the stencil test</param>
+	/// <param name="WriteMask">The bits of the stencil values to be updated by the stencil test</param>
+	/// <param name="CompareMask">The bits of the stencil values to be used in the stencil test</param>
+	public readonly record struct Stencil(
+		bool Enabled,
+		StencilState State = default,
+		byte ReferenceValue = 0,
+		byte CompareMask = 0xFF,
+		byte WriteMask = 0xFF
+	);
+
+	/// <summary>
 	/// The GraphicsDevice this Batcher was created with
 	/// </summary>
 	public readonly GraphicsDevice GraphicsDevice;
@@ -93,6 +109,7 @@ public class Batcher : IDisposable
 	private readonly List<Material> materialsUsed = [];
 	private readonly Queue<Material> materialsPool = [];
 	private readonly Mesh<BatcherVertex, int> mesh;
+	private readonly Stack<Stencil?> stencilStack = [];
 
 	private Material? defaultMaterial;
 	private Color mode = new(255, 0, 0, 0);
@@ -116,6 +133,7 @@ public class Batcher : IDisposable
 		public Texture? Texture = texture;
 		public RectInt? Scissor = null;
 		public TextureSampler Sampler = sampler;
+		public Stencil? Stencil = null;
 		public int Offset = offset;
 		public int Elements = elements;
 	}
@@ -164,6 +182,7 @@ public class Batcher : IDisposable
 		layerStack.Clear();
 		samplerStack.Clear();
 		modeStack.Clear();
+		stencilStack.Clear();
 		FragmentStorageBuffers.Clear();
 		VertexStorageBuffers.Clear();
 
@@ -255,6 +274,7 @@ public class Batcher : IDisposable
 
 		var texture = batch.Texture != null && !batch.Texture.IsDisposed ? batch.Texture : null;
 		var mat = batch.Material ?? defaultMaterial ?? throw new Exception("Default Material has not been instantiated");
+		var stencil = batch.Stencil ?? new(Enabled: false);
 
 		// set Fragment Sampler 0 to the texture to be drawn
 		mat.Fragment.Samplers[0] = new(texture, batch.Sampler);
@@ -271,9 +291,15 @@ public class Batcher : IDisposable
 			IndexCount = batch.Elements * 3,
 			DepthWriteEnabled = false,
 			DepthTestEnabled = false,
+			StencilTestEnabled = stencil.Enabled,
+			BackStencilState = stencil.State,
+			FrontStencilState = stencil.State,
+			StencilWriteMask = stencil.WriteMask,
+			StencilCompareMask = stencil.CompareMask,
+			StencilReferenceValue = stencil.ReferenceValue,
 			CullMode = CullMode.None,
 			VertexStorageBuffers = VertexStorageBuffers,
-			FragmentStorageBuffers = FragmentStorageBuffers
+			FragmentStorageBuffers = FragmentStorageBuffers,
 		});
 	}
 
@@ -388,6 +414,23 @@ public class Batcher : IDisposable
 		}
 	}
 
+	private void SetStencil(Stencil? stencil)
+	{
+		if (currentBatch.Elements == 0)
+		{
+			currentBatch.Stencil = stencil;
+		}
+		else if (currentBatch.Stencil != stencil)
+		{
+			batches.Insert(currentBatchInsert, currentBatch);
+
+			currentBatch.Stencil = stencil;
+			currentBatch.Offset += currentBatch.Elements;
+			currentBatch.Elements = 0;
+			currentBatchInsert++;
+		}
+	}
+
 	/// <summary>
 	/// Pushes a relative draw layer, with lower values being rendered later (ie. above).
 	/// Note that this is not very performant and should generally be avoided.
@@ -495,6 +538,23 @@ public class Batcher : IDisposable
 	public void PopScissor()
 	{
 		SetScissor(scissorStack.Pop());
+	}
+
+	/// <summary>
+	/// Pushes a Stencil state to draw with.
+	/// </summary>
+	public void PushStencil(Stencil? stencil)
+	{
+		stencilStack.Push(currentBatch.Stencil);
+		SetStencil(stencil);
+	}
+
+	/// <summary>
+	/// Pops the current Stencil state
+	/// </summary>
+	public void PopStencil()
+	{
+		SetStencil(stencilStack.Pop());
 	}
 
 	/// <summary>

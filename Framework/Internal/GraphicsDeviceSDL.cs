@@ -1120,6 +1120,10 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			SDL_BindGPUFragmentStorageBuffers(renderPass, 0, buffers, (uint)buffers.Length);
 		}
 
+		// update stencil reference value
+		if (command.StencilTestEnabled)
+			SDL_SetGPUStencilReference(renderPass, command.StencilReferenceValue);
+
 		// perform draw
 		if (command.IndexBuffer != null)
 		{
@@ -1351,8 +1355,18 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			command.DepthCompare,
 			command.DepthTestEnabled,
 			command.DepthWriteEnabled,
+			command.StencilTestEnabled,
 			command.BlendMode
 		);
+
+		if (command.StencilTestEnabled)
+			hash = HashCode.Combine(
+				hash,
+				command.StencilCompareMask,
+				command.StencilWriteMask,
+				command.BackStencilState,
+				command.FrontStencilState
+			);
 
 		if (command.IndexBuffer != null)
 			hash = HashCode.Combine(hash, command.IndexBuffer.Format);
@@ -1471,25 +1485,24 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				},
 				depth_stencil_state = new()
 				{
-					compare_op = command.DepthCompare switch
-					{
-						DepthCompare.Always => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_ALWAYS,
-						DepthCompare.Never => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_NEVER,
-						DepthCompare.Less => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_LESS,
-						DepthCompare.Equal => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_EQUAL,
-						DepthCompare.LessOrEqual => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_LESS_OR_EQUAL,
-						DepthCompare.Greater => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_GREATER,
-						DepthCompare.NotEqual => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_NOT_EQUAL,
-						DepthCompare.GreatorOrEqual => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_GREATER_OR_EQUAL,
-						_ => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_NEVER
+					compare_op = GetCompareOp(command.DepthCompare),
+					back_stencil_state = new() {
+						fail_op = GetStencilOp(command.BackStencilState.FailOp),
+						pass_op = GetStencilOp(command.BackStencilState.FailOp),
+						depth_fail_op = GetStencilOp(command.BackStencilState.FailOp),
+						compare_op = GetCompareOp(command.BackStencilState.CompareOp),
 					},
-					back_stencil_state = default,
-					front_stencil_state = default,
-					compare_mask = 0xFF,
-					write_mask = 0xFF,
+					front_stencil_state = new() {
+						fail_op = GetStencilOp(command.FrontStencilState.FailOp),
+						pass_op = GetStencilOp(command.FrontStencilState.FailOp),
+						depth_fail_op = GetStencilOp(command.FrontStencilState.FailOp),
+						compare_op = GetCompareOp(command.FrontStencilState.CompareOp),
+					},
+					compare_mask = command.StencilCompareMask,
+					write_mask = command.StencilWriteMask,
 					enable_depth_test = command.DepthTestEnabled,
 					enable_depth_write = command.DepthWriteEnabled,
-					enable_stencil_test = false, // TODO: allow this
+					enable_stencil_test = command.StencilTestEnabled,
 				},
 				target_info = new()
 				{
@@ -1701,6 +1714,34 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT => true,
 		SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT => true,
 		_ => false
+	};
+
+	private static SDL_GPUStencilOp GetStencilOp(StencilOp op) => op switch
+	{
+		StencilOp.Invalid => SDL_GPUStencilOp.SDL_GPU_STENCILOP_INVALID,
+		StencilOp.Keep => SDL_GPUStencilOp.SDL_GPU_STENCILOP_KEEP,
+		StencilOp.Zero => SDL_GPUStencilOp.SDL_GPU_STENCILOP_ZERO,
+		StencilOp.Replace => SDL_GPUStencilOp.SDL_GPU_STENCILOP_REPLACE,
+		StencilOp.IncrementAndClamp => SDL_GPUStencilOp.SDL_GPU_STENCILOP_INCREMENT_AND_CLAMP,
+		StencilOp.DecrementAndClamp => SDL_GPUStencilOp.SDL_GPU_STENCILOP_DECREMENT_AND_CLAMP,
+		StencilOp.Invert => SDL_GPUStencilOp.SDL_GPU_STENCILOP_INVERT,
+		StencilOp.IncrementAndWrap => SDL_GPUStencilOp.SDL_GPU_STENCILOP_INCREMENT_AND_WRAP,
+		StencilOp.DecrementAndwrap => SDL_GPUStencilOp.SDL_GPU_STENCILOP_DECREMENT_AND_WRAP,
+		_ => throw new ArgumentException("Invalid Stencil Operation", nameof(op)),
+
+	};
+
+	private static SDL_GPUCompareOp GetCompareOp(DepthCompare op) => op switch
+	{
+		DepthCompare.Always => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_ALWAYS,
+		DepthCompare.Never => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_NEVER,
+		DepthCompare.Less => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_LESS,
+		DepthCompare.Equal => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_EQUAL,
+		DepthCompare.LessOrEqual => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_LESS_OR_EQUAL,
+		DepthCompare.Greater => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_GREATER,
+		DepthCompare.NotEqual => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_NOT_EQUAL,
+		DepthCompare.GreatorOrEqual => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_GREATER_OR_EQUAL,
+		_ => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_NEVER
 	};
 
 	private static SDL_FColor GetColor(Color color)

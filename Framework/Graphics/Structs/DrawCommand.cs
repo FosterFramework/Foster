@@ -79,6 +79,31 @@ public struct DrawCommand
 	public DepthCompare DepthCompare = DepthCompare.Less;
 
 	/// <summary>
+	/// The Stencil Operations for back-facing triangles
+	/// </summary>
+	public StencilState BackStencilState;
+
+	/// <summary>
+	/// The Stencil Operations for front-facing triangles
+	/// </summary>
+	public StencilState FrontStencilState;
+
+	/// <summary>
+	/// The bits of the stencil values to test against
+	/// </summary>
+	public byte StencilCompareMask = 0xFF;
+
+	/// <summary>
+	/// The bits of the stencil values to update
+	/// </summary>
+	public byte StencilWriteMask = 0xFF;
+
+	/// <summary>
+	/// The bits of the stencil reference value to update
+	/// </summary>
+	public byte StencilReferenceValue = 0;
+
+	/// <summary>
 	/// If the Depth Test is enabled
 	/// </summary>
 	public bool DepthTestEnabled = false;
@@ -87,6 +112,11 @@ public struct DrawCommand
 	/// If Writing to the Depth Buffer is enabled
 	/// </summary>
 	public bool DepthWriteEnabled = false;
+
+	/// <summary>
+	/// If the Stencil Test should be enabled
+	/// </summary>
+	public bool StencilTestEnabled = false;
 
 	/// <summary>
 	/// Render Viewport
