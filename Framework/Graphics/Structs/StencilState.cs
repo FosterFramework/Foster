@@ -13,4 +13,8 @@ public readonly record struct StencilState
 	StencilOp PassOp,
 	StencilOp DepthFailOp,
 	DepthCompare CompareOp
-);
+)
+{
+	public StencilState(StencilOp Op, DepthCompare Compare)
+		: this(Op, Op, Op, Compare) {}
+}
