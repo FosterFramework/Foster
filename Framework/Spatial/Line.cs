@@ -28,6 +28,18 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 
 	}
 
+	public Line(Vector2 from, float toX, float toY)
+		: this(from, new(toX, toY))
+	{
+
+	}
+
+	public Line(float fromX, float fromY, Vector2 to)
+		: this(new(fromX, fromY), to)
+	{
+
+	}
+
 	public readonly Vector2 GetAxis(int index)
 	{
 		var axis = (To - From).Normalized();
