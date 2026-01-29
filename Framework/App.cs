@@ -5,30 +5,81 @@ using static SDL3.SDL;
 
 namespace Foster.Framework;
 
-/// <summary>
-/// Application Information struct, to be provided to <seealso cref="App(in AppConfig)"/>
-/// <param name="ApplicationName">Application Name used for storing data and representing the Application</param>
-/// <param name="WindowTitle">What to display in the Window Title</param>
-/// <param name="Width">The Window Width</param>
-/// <param name="Height">The Window Height</param>
-/// <param name="Fullscreen">If the Window should default to Fullscreen</param>
-/// <param name="Resizable">If the Window should be resizable</param>
-/// <param name="UpdateMode">An optional default Update Mode to initialize the App with</param>
-/// <param name="PreferredGraphicsDriver">The preferred graphics driver, or None to use the platform-default</param>
-/// <param name="Flags">Optional App Initialization Flags</param>
-/// </summary>
 public readonly record struct AppConfig
-(
-	string ApplicationName,
-	string WindowTitle,
-	int Width,
-	int Height,
-	bool Fullscreen = false,
-	bool Resizable = true,
-	UpdateMode? UpdateMode = null,
-	GraphicsDriver PreferredGraphicsDriver = GraphicsDriver.None,
-	AppFlags Flags = AppFlags.None
-);
+{
+	/// <summary>Initializes a new instance of the <see cref="AppConfig"/> struct.</summary>
+	/// <param name="applicationName"><inheritdoc cref="ApplicationName" path="/summary/text()"/></param>
+	/// <param name="windowTitle"><inheritdoc cref="WindowTitle" path="/summary/text()"/></param>
+	/// <param name="width"><inheritdoc cref="Width" path="/summary/text()"/></param>
+	/// <param name="height"><inheritdoc cref="Height" path="/summary/text()"/></param>
+	/// <param name="fullscreen"><inheritdoc cref="Fullscreen" path="/summary/text()"/></param>
+	/// <param name="resizable"><inheritdoc cref="Resizable" path="/summary/text()"/></param>
+	/// <param name="updateMode"><inheritdoc cref="UpdateMode" path="/summary/text()"/></param>
+	/// <param name="preferredGraphicsDriver"><inheritdoc cref="PreferredGraphicsDriver" path="/summary/text()"/></param>
+	/// <param name="flags"><inheritdoc cref="Flags" path="/summary/text()"/></param>
+	/// <param name="noHeader"><inheritdoc cref="NoHeader" path="/summary/text()"/></param>
+	public AppConfig(
+		string applicationName,
+		string windowTitle,
+		int width,
+		int height,
+		bool fullscreen = false,
+		bool resizable = true,
+		UpdateMode? updateMode = null,
+		GraphicsDriver preferredGraphicsDriver = GraphicsDriver.None,
+		AppFlags flags = AppFlags.None,
+		bool noHeader = false
+	)
+	{
+		ApplicationName = applicationName;
+		WindowTitle = windowTitle;
+		Width = width;
+		Height = height;
+		Fullscreen = fullscreen;
+		Resizable = resizable;
+		UpdateMode = updateMode;
+		PreferredGraphicsDriver = preferredGraphicsDriver;
+		Flags = flags;
+		NoHeader = noHeader;
+	}
+
+	/// <summary>Application Name used for storing data and representing the Application</summary>
+	public string ApplicationName { get; }
+
+	/// <summary>What to display in the Window Title</summary>
+	public string WindowTitle { get; }
+
+	/// <summary>The Window Width</summary>
+	public int Width { get; }
+
+	/// <summary>The Window Height</summary>
+	public int Height { get; }
+
+	/// <summary>If the Window should default to Fullscreen</summary>
+	public bool Fullscreen { get; init; }
+
+	/// <summary>If the Window should be resizable</summary>
+	public bool Resizable { get; init; }
+
+	/// <summary>An optional default Update Mode to initialize the App with</summary>
+	public UpdateMode? UpdateMode { get; init; }
+
+	/// <summary>The preferred graphics driver, or None to use the platform-default</summary>
+	public GraphicsDriver PreferredGraphicsDriver { get; init; }
+
+	/// <summary>Optional App Initialization Flags</summary>
+	public AppFlags Flags { get; init; }
+
+	/// <summary>
+	/// Hide startup header logs e.g
+	/// <code>
+	/// Foster: v0.3.0
+	/// SDL: v3.4.0
+	/// ...
+	/// </code>
+	/// </summary>
+	public bool NoHeader { get; init; }
+}
 
 /// <summary>
 /// App Initialization Flags
@@ -163,7 +214,7 @@ public abstract class App : IDisposable
 	internal readonly Exception DisposedException = new("The Application is Disposed");
 
 	public App(string name, int width, int height)
-		: this(new(name, name, width, height)) {}
+		: this(new(name, name, width, height)) { }
 
 	public unsafe App(in AppConfig config)
 	{
@@ -175,6 +226,7 @@ public abstract class App : IDisposable
 			throw new Exception("Invalid Application Name");
 
 		// log info
+		if (!config.NoHeader)
 		{
 			var sdlv = SDL_GetVersion();
 			Log.Info($"Foster: v{FosterVersion.Major}.{FosterVersion.Minor}.{FosterVersion.Build}");
@@ -210,7 +262,7 @@ public abstract class App : IDisposable
 		GraphicsDevice = new GraphicsDeviceSDL(this, config.PreferredGraphicsDriver);
 		GraphicsDevice.CreateDevice(config.Flags);
 		Window = new Window(this, GraphicsDevice, config);
-		GraphicsDevice.Startup(Window.Handle);
+		GraphicsDevice.Startup(Window.Handle, in config);
 
 		// try to load default SDL gamepad mappings
 		Input.AddDefaultSDLGamepadMappings(AppContext.BaseDirectory);
@@ -418,53 +470,53 @@ public abstract class App : IDisposable
 		{
 			switch ((SDL_EventType)ev.type)
 			{
-			case SDL_EventType.SDL_EVENT_QUIT:
-				if (Running && !Exiting)
-				{
-					if (OnExitRequested != null)
-						OnExitRequested();
-					else
-						Exit();
-				}
-				break;
+				case SDL_EventType.SDL_EVENT_QUIT:
+					if (Running && !Exiting)
+					{
+						if (OnExitRequested != null)
+							OnExitRequested();
+						else
+							Exit();
+					}
+					break;
 
-			// input
-			case SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN:
-			case SDL_EventType.SDL_EVENT_MOUSE_BUTTON_UP:
-			case SDL_EventType.SDL_EVENT_MOUSE_WHEEL:
-			case SDL_EventType.SDL_EVENT_KEY_DOWN:
-			case SDL_EventType.SDL_EVENT_KEY_UP:
-			case SDL_EventType.SDL_EVENT_TEXT_INPUT:
-			case SDL_EventType.SDL_EVENT_JOYSTICK_ADDED:
-			case SDL_EventType.SDL_EVENT_JOYSTICK_REMOVED:
-			case SDL_EventType.SDL_EVENT_JOYSTICK_BUTTON_DOWN:
-			case SDL_EventType.SDL_EVENT_JOYSTICK_BUTTON_UP:
-			case SDL_EventType.SDL_EVENT_JOYSTICK_AXIS_MOTION:
-			case SDL_EventType.SDL_EVENT_GAMEPAD_ADDED:
-			case SDL_EventType.SDL_EVENT_GAMEPAD_REMOVED:
-			case SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_DOWN:
-			case SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_UP:
-			case SDL_EventType.SDL_EVENT_GAMEPAD_AXIS_MOTION:
-				inputProvider.OnEvent(ev);
-				break;
+				// input
+				case SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN:
+				case SDL_EventType.SDL_EVENT_MOUSE_BUTTON_UP:
+				case SDL_EventType.SDL_EVENT_MOUSE_WHEEL:
+				case SDL_EventType.SDL_EVENT_KEY_DOWN:
+				case SDL_EventType.SDL_EVENT_KEY_UP:
+				case SDL_EventType.SDL_EVENT_TEXT_INPUT:
+				case SDL_EventType.SDL_EVENT_JOYSTICK_ADDED:
+				case SDL_EventType.SDL_EVENT_JOYSTICK_REMOVED:
+				case SDL_EventType.SDL_EVENT_JOYSTICK_BUTTON_DOWN:
+				case SDL_EventType.SDL_EVENT_JOYSTICK_BUTTON_UP:
+				case SDL_EventType.SDL_EVENT_JOYSTICK_AXIS_MOTION:
+				case SDL_EventType.SDL_EVENT_GAMEPAD_ADDED:
+				case SDL_EventType.SDL_EVENT_GAMEPAD_REMOVED:
+				case SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+				case SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_UP:
+				case SDL_EventType.SDL_EVENT_GAMEPAD_AXIS_MOTION:
+					inputProvider.OnEvent(ev);
+					break;
 
-			case SDL_EventType.SDL_EVENT_WINDOW_FOCUS_GAINED:
-			case SDL_EventType.SDL_EVENT_WINDOW_FOCUS_LOST:
-			case SDL_EventType.SDL_EVENT_WINDOW_MOUSE_ENTER:
-			case SDL_EventType.SDL_EVENT_WINDOW_MOUSE_LEAVE:
-			case SDL_EventType.SDL_EVENT_WINDOW_RESIZED:
-			case SDL_EventType.SDL_EVENT_WINDOW_RESTORED:
-			case SDL_EventType.SDL_EVENT_WINDOW_MAXIMIZED:
-			case SDL_EventType.SDL_EVENT_WINDOW_MINIMIZED:
-			case SDL_EventType.SDL_EVENT_WINDOW_ENTER_FULLSCREEN:
-			case SDL_EventType.SDL_EVENT_WINDOW_LEAVE_FULLSCREEN:
-			case SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-				if (ev.window.windowID == Window.ID)
-					Window.OnEvent((SDL_EventType)ev.type);
-				break;
+				case SDL_EventType.SDL_EVENT_WINDOW_FOCUS_GAINED:
+				case SDL_EventType.SDL_EVENT_WINDOW_FOCUS_LOST:
+				case SDL_EventType.SDL_EVENT_WINDOW_MOUSE_ENTER:
+				case SDL_EventType.SDL_EVENT_WINDOW_MOUSE_LEAVE:
+				case SDL_EventType.SDL_EVENT_WINDOW_RESIZED:
+				case SDL_EventType.SDL_EVENT_WINDOW_RESTORED:
+				case SDL_EventType.SDL_EVENT_WINDOW_MAXIMIZED:
+				case SDL_EventType.SDL_EVENT_WINDOW_MINIMIZED:
+				case SDL_EventType.SDL_EVENT_WINDOW_ENTER_FULLSCREEN:
+				case SDL_EventType.SDL_EVENT_WINDOW_LEAVE_FULLSCREEN:
+				case SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+					if (ev.window.windowID == Window.ID)
+						Window.OnEvent((SDL_EventType)ev.type);
+					break;
 
-			default:
-				break;
+				default:
+					break;
 			}
 		}
 	}

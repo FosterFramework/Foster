@@ -38,8 +38,8 @@ public abstract class GraphicsDevice
 	public abstract bool VSync { get; set; }
 
 	/// <summary>
-    /// Built-in Default Materials
-    /// </summary>
+	/// Built-in Default Materials
+	/// </summary>
 	public DefaultResources Defaults { get; private set; }
 
 	internal GraphicsDevice(App app)
@@ -57,7 +57,7 @@ public abstract class GraphicsDevice
 
 	internal abstract void CreateDevice(in AppFlags flags);
 	internal abstract void DestroyDevice();
-	internal abstract void Startup(nint window);
+	internal abstract void Startup(nint window, in AppConfig config);
 	internal abstract void Shutdown();
 	internal abstract void Present();
 	internal abstract ResourceHandle CreateTexture(string? name, int width, int height, TextureFormat format, SampleCount sampleCount, nint? targetBinding);
@@ -122,7 +122,7 @@ public abstract class GraphicsDevice
 			throw new Exception("Attempting to render using an Index Count without an Index Buffer.");
 
 		// validate vertex buffers
-		for (int i = 0; i < command.VertexBuffers.Count; i ++)
+		for (int i = 0; i < command.VertexBuffers.Count; i++)
 		{
 			var it = command.VertexBuffers[i].Buffer;
 
@@ -137,13 +137,13 @@ public abstract class GraphicsDevice
 		}
 
 		// validate storage buffers
-		for (int i = 0; i < command.VertexStorageBuffers.Count; i ++)
+		for (int i = 0; i < command.VertexStorageBuffers.Count; i++)
 		{
 			var it = command.VertexStorageBuffers[i];
 			if (it == null || it.IsDisposed)
 				throw new Exception("Attempting to render a null or disposed Vertex Storage Buffer");
 		}
-		for (int i = 0; i < command.FragmentStorageBuffers.Count; i ++)
+		for (int i = 0; i < command.FragmentStorageBuffers.Count; i++)
 		{
 			var it = command.FragmentStorageBuffers[i];
 			if (it == null || it.IsDisposed)
@@ -172,14 +172,14 @@ public abstract class GraphicsDevice
 		}
 
 		// invalid viewport
-		if (command.Viewport is {} viewport && (viewport.Width <= 0 || viewport.Height <= 0))
+		if (command.Viewport is { } viewport && (viewport.Width <= 0 || viewport.Height <= 0))
 		{
 			Log.Warning("Attempting to render with an empty Viewport; Nothing will be drawn");
 			return;
 		}
 
 		// invalid scissor
-		if (command.Scissor is {} scissor && (scissor.Width <= 0 || scissor.Height <= 0))
+		if (command.Scissor is { } scissor && (scissor.Width <= 0 || scissor.Height <= 0))
 		{
 			Log.Warning("Attempting to render with an empty Scissor; Nothing will be drawn");
 			return;

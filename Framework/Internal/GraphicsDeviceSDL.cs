@@ -160,7 +160,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		this.preferred = preferred;
 		var sdlv = SDL_GetVersion();
 		version = new(sdlv / 1000000, (sdlv / 1000) % 1000, sdlv % 1000);
-		backbufferFormat = [( TextureFormat.Color, SampleCount.One )];
+		backbufferFormat = [(TextureFormat.Color, SampleCount.One)];
 	}
 
 	internal override void CreateDevice(in AppFlags flags)
@@ -188,15 +188,15 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		if (device == IntPtr.Zero)
 			throw App.CreateExceptionFromSDL(nameof(SDL_CreateGPUDevice));
-		
+
 		if (flags.Has(AppFlags.MultiSampledBackBuffer))
 		{
 			if (IsTextureMultiSampleSupported(TextureFormat.Color, SampleCount.Eight))
-				backbufferFormat = [( TextureFormat.Color, SampleCount.Eight )];
+				backbufferFormat = [(TextureFormat.Color, SampleCount.Eight)];
 			else if (IsTextureMultiSampleSupported(TextureFormat.Color, SampleCount.Four))
-				backbufferFormat = [( TextureFormat.Color, SampleCount.Four )];
+				backbufferFormat = [(TextureFormat.Color, SampleCount.Four)];
 			else if (IsTextureMultiSampleSupported(TextureFormat.Color, SampleCount.Two))
-				backbufferFormat = [( TextureFormat.Color, SampleCount.Two )];
+				backbufferFormat = [(TextureFormat.Color, SampleCount.Two)];
 		}
 	}
 
@@ -206,7 +206,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		device = nint.Zero;
 	}
 
-	internal override void Startup(nint window)
+	internal override void Startup(nint window, in AppConfig config)
 	{
 		this.window = window;
 
@@ -221,7 +221,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			_ => GraphicsDriver.None
 		};
 
-		Log.Info($"Graphics Driver: SDL_GPU [{driverName}]");
+		if (!config.NoHeader) Log.Info($"Graphics Driver: SDL_GPU [{driverName}]");
 
 		if (!SDL_ClaimWindowForGPUDevice(device, window))
 			throw App.CreateExceptionFromSDL(nameof(SDL_ClaimWindowForGPUDevice));
@@ -506,7 +506,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			throw deviceNotCreated;
 
 		var res = RequireResource<TextureResource>(handle);
-		
+
 		// search up for resolve texture if we're multisampled
 		if (res.MultiSampleResolve)
 		{
@@ -954,9 +954,12 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			renderPassViewport = nextViewport;
 			SDL_SetGPUViewport(renderPass, new()
 			{
-				x = nextViewport.X, y = nextViewport.Y,
-				w = nextViewport.Width, h = nextViewport.Height,
-				min_depth = 0, max_depth = 1
+				x = nextViewport.X,
+				y = nextViewport.Y,
+				w = nextViewport.Width,
+				h = nextViewport.Height,
+				min_depth = 0,
+				max_depth = 1
 			});
 		}
 
@@ -967,8 +970,10 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			renderPassScissor = nextScissor;
 			SDL_SetGPUScissor(renderPass, new()
 			{
-				x = nextScissor.X, y = nextScissor.Y,
-				w = nextScissor.Width, h = nextScissor.Height,
+				x = nextScissor.X,
+				y = nextScissor.Y,
+				w = nextScissor.Width,
+				h = nextScissor.Height,
 			});
 		}
 
@@ -1007,7 +1012,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		bool rebindVertexBuffers = renderPassVertexBuffers.Count != command.VertexBuffers.Count;
 		if (!rebindVertexBuffers)
 		{
-			for (int i = 0; i < command.VertexBuffers.Count; i ++)
+			for (int i = 0; i < command.VertexBuffers.Count; i++)
 			{
 				var vertexBuffer = RequireResource<BufferResource>(command.VertexBuffers[i].Buffer.Resource);
 				if (renderPassVertexBuffers[i] != vertexBuffer.Handle || vertexBuffer.Dirty)
@@ -1031,7 +1036,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			{
 				Span<SDL_GPUBufferBinding> vertexBinding = stackalloc SDL_GPUBufferBinding[command.VertexBuffers.Count];
 
-				for (int i = 0; i < command.VertexBuffers.Count; i ++)
+				for (int i = 0; i < command.VertexBuffers.Count; i++)
 				{
 					var res = RequireResource<BufferResource>(command.VertexBuffers[i].Buffer.Resource);
 					res.Dirty = false;
@@ -1060,7 +1065,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 			for (int i = 0; i < vertexInfo.SamplerCount; i++)
 			{
-				samplers[i].texture = 
+				samplers[i].texture =
 					(FindResource<TextureResource>(mat.Vertex.Samplers[i].Texture?.Resource) ??
 					RequireResource<TextureResource>(emptyDefaultTexture)).SamplerTexture;
 				samplers[i].sampler = GetSampler(mat.Vertex.Samplers[i].Sampler);
@@ -1077,7 +1082,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 			for (int i = 0; i < fragmentInfo.SamplerCount; i++)
 			{
-				samplers[i].texture = 
+				samplers[i].texture =
 					(FindResource<TextureResource>(mat.Fragment.Samplers[i].Texture?.Resource) ??
 					RequireResource<TextureResource>(emptyDefaultTexture)).SamplerTexture;
 				samplers[i].sampler = GetSampler(mat.Fragment.Samplers[i].Sampler);
@@ -1088,7 +1093,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		// Upload Vertex Uniforms
 		// TODO: only do this if Uniforms change
-		for (int i = 0; i < vertexInfo.UniformBufferCount; i ++)
+		for (int i = 0; i < vertexInfo.UniformBufferCount; i++)
 		{
 			fixed (byte* ptr = mat.Vertex.UniformBuffers[i])
 				SDL_PushGPUVertexUniformData(cmdRender, (uint)i, new nint(ptr), (uint)mat.Vertex.UniformBuffers[i].Length);
@@ -1096,7 +1101,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		// Upload Fragment Uniforms
 		// TODO: only do this if Uniforms change
-		for (int i = 0; i < fragmentInfo.UniformBufferCount; i ++)
+		for (int i = 0; i < fragmentInfo.UniformBufferCount; i++)
 		{
 			fixed (byte* ptr = mat.Fragment.UniformBuffers[i])
 				SDL_PushGPUFragmentUniformData(cmdRender, (uint)i, new nint(ptr), (uint)mat.Fragment.UniformBuffers[i].Length);
@@ -1106,7 +1111,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (command.VertexStorageBuffers.Count > 0)
 		{
 			Span<nint> buffers = stackalloc nint[command.VertexStorageBuffers.Count];
-			for (int i = 0; i < command.VertexStorageBuffers.Count; i ++)
+			for (int i = 0; i < command.VertexStorageBuffers.Count; i++)
 				buffers[i] = RequireResource<BufferResource>(command.VertexStorageBuffers[i].Resource).Buffer;
 			SDL_BindGPUVertexStorageBuffers(renderPass, 0, buffers, (uint)buffers.Length);
 		}
@@ -1115,7 +1120,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (command.FragmentStorageBuffers.Count > 0)
 		{
 			Span<nint> buffers = stackalloc nint[command.FragmentStorageBuffers.Count];
-			for (int i = 0; i < command.FragmentStorageBuffers.Count; i ++)
+			for (int i = 0; i < command.FragmentStorageBuffers.Count; i++)
 				buffers[i] = RequireResource<BufferResource>(command.FragmentStorageBuffers[i].Resource).Buffer;
 			SDL_BindGPUFragmentStorageBuffers(renderPass, 0, buffers, (uint)buffers.Length);
 		}
@@ -1157,7 +1162,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		{
 			StackList8<Color>? colors = null;
 			if (mask.Has(ClearMask.Color))
-				colors = [..color[..Math.Min(MaxColorAttachments, color.Length)]];
+				colors = [.. color[..Math.Min(MaxColorAttachments, color.Length)]];
 
 			BeginRenderPass(target, new()
 			{
@@ -1206,7 +1211,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			SDL_WaitForGPUFences(device, true, fences.Span, (uint)fences.Count);
 
 		// release gpu fences
-		for (int i = 0; i < fences.Count; i ++)
+		for (int i = 0; i < fences.Count; i++)
 			SDL_ReleaseGPUFence(device, fences[i]);
 	}
 
@@ -1421,7 +1426,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			}
 
 			var attrbIndex = 0;
-			for (int slot = 0; slot < command.VertexBuffers.Count; slot ++)
+			for (int slot = 0; slot < command.VertexBuffers.Count; slot++)
 			{
 				var it = command.VertexBuffers[slot].Buffer;
 				var instanceRate = command.VertexBuffers[slot].InstanceInputRate;
@@ -1486,13 +1491,15 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				depth_stencil_state = new()
 				{
 					compare_op = GetCompareOp(command.DepthCompare),
-					back_stencil_state = new() {
+					back_stencil_state = new()
+					{
 						fail_op = GetStencilOp(command.BackStencilState.FailOp),
 						pass_op = GetStencilOp(command.BackStencilState.FailOp),
 						depth_fail_op = GetStencilOp(command.BackStencilState.FailOp),
 						compare_op = GetCompareOp(command.BackStencilState.CompareOp),
 					},
-					front_stencil_state = new() {
+					front_stencil_state = new()
+					{
 						fail_op = GetStencilOp(command.FrontStencilState.FailOp),
 						pass_op = GetStencilOp(command.FrontStencilState.FailOp),
 						depth_fail_op = GetStencilOp(command.FrontStencilState.FailOp),
@@ -1663,22 +1670,22 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	{
 		return (type, normalized) switch
 		{
-			(VertexType.Float, _)       => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT,
-			(VertexType.Float2, _)      => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-			(VertexType.Float3, _)      => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-			(VertexType.Float4, _)      => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
-			(VertexType.Byte4, false)   => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_BYTE4,
-			(VertexType.Byte4, true)    => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_BYTE4_NORM,
-			(VertexType.UByte4, false)  => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4,
-			(VertexType.UByte4, true)   => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM,
-			(VertexType.Short2, false)  => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT2,
-			(VertexType.Short2, true)   => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT2_NORM,
+			(VertexType.Float, _) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT,
+			(VertexType.Float2, _) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+			(VertexType.Float3, _) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+			(VertexType.Float4, _) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+			(VertexType.Byte4, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_BYTE4,
+			(VertexType.Byte4, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_BYTE4_NORM,
+			(VertexType.UByte4, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4,
+			(VertexType.UByte4, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM,
+			(VertexType.Short2, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT2,
+			(VertexType.Short2, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT2_NORM,
 			(VertexType.UShort2, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT2,
-			(VertexType.UShort2, true)  => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT2_NORM,
-			(VertexType.Short4, false)  => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT4,
-			(VertexType.Short4, true)   => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT4_NORM,
+			(VertexType.UShort2, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT2_NORM,
+			(VertexType.Short4, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT4,
+			(VertexType.Short4, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_SHORT4_NORM,
 			(VertexType.UShort4, false) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT4,
-			(VertexType.UShort4, true)  => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT4_NORM,
+			(VertexType.UShort4, true) => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_USHORT4_NORM,
 
 			_ => throw new ArgumentException("Invalid Vertex Format", nameof(type)),
 		};
