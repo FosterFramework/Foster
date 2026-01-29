@@ -16,7 +16,7 @@ There is a [Samples](https://github.com/FosterFramework/Samples) repo which cont
 Check out [Discussons](https://github.com/FosterFramework/Foster/discussions) or [Discord](https://discord.gg/K7tdFuP3Bg) to get involved.
 
 ### Dependencies
- - [dotnet 10.0](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) and [C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13)
+ - [dotnet 10.0](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) and [C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
  - [SDL3](https://github.com/libsdl-org/sdl), which has prebuilt binaries for various platforms through Github Actions.
 
 ### Rendering
