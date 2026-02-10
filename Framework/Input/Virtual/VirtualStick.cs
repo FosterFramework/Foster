@@ -59,6 +59,21 @@ public sealed class VirtualStick(Input input, string name, StickBindingSet set, 
 		}
 	}
 
+	/// <summary>
+	/// Manually set the state of this <see cref="VirtualAxis"/> for this frame from a single Vector2
+	/// </summary>
+	public void ManualUpdate(in Time time, Vector2 value)
+	{
+		var prevIntValue = IntValue;
+
+		Value        = value;
+		IntValue     = new(MathF.Sign(Value.X), MathF.Sign(Value.Y));
+		PressedLeft  = IntValue.X < 0 && prevIntValue.X >= 0;
+		PressedRight = IntValue.X > 0 && prevIntValue.X <= 0;
+		PressedUp    = IntValue.Y < 0 && prevIntValue.Y >= 0;
+		PressedDown  = IntValue.Y > 0 && prevIntValue.Y <= 0;
+	}
+
 	public void Clear()
 	{
 		Value = Vector2.Zero;

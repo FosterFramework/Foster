@@ -20,6 +20,11 @@ public abstract class VirtualInput : IDisposable
 	/// </summary>
 	public abstract int ControllerIndex { get; set; }
 
+	/// <summary>
+	/// <see cref="Update"/> is only called if this is true
+	/// </summary>
+	public bool Active = true;
+
 	public bool IsDisposed { get; private set; }
 
 	internal VirtualInput(Input input, string name, int controllerIndex)

@@ -114,6 +114,28 @@ public sealed class VirtualAction(Input input, string name, ActionBindingSet set
 	}
 
 	/// <summary>
+	/// Manually set the state of this <see cref="VirtualAction"/> for this frame from a single bool
+	/// </summary>
+	public void ManualUpdate(in Time time, bool down)
+	{
+		Pressed  = down && !Down;
+		if (Pressed)
+		{
+			PressConsumed = false;
+			Timestamp     = time.Elapsed;
+		}
+
+		Released = !down && Down;
+		Down     = down;
+
+		Repeated = down && (time.Elapsed - Timestamp).TotalSeconds > RepeatDelay
+			&& Calc.OnInterval(
+				(time.Elapsed - Timestamp).TotalSeconds - RepeatDelay,
+				time.Delta,
+				RepeatInterval);
+	}
+
+	/// <summary>
 	/// Consumes the press, and <see cref="Pressed"/> will return false until the next Press
 	/// </summary>
 	/// <returns>True if there was a Press to consume</returns>

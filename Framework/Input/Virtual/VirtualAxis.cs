@@ -46,7 +46,7 @@ public sealed class VirtualAxis(Input input, string name, AxisBindingSet set, in
 	/// The Sign of the press this frame (or 0 if not pressed this frame)
 	/// </summary>
 	public int PressedSign { get; private set; }
-	
+
 	public override int ControllerIndex { get; set; }
 
 	public VirtualAxis(Input input, string name, int controllerIndex = 0)
@@ -57,6 +57,22 @@ public sealed class VirtualAxis(Input input, string name, AxisBindingSet set, in
 		Value = Set.Value(Input, ControllerIndex);
 		IntValue = MathF.Sign(Value);
 		PressedSign = Set.PressedSign(Input, ControllerIndex);
+	}
+
+	/// <summary>
+	/// Manually set the state of this <see cref="VirtualAxis"/> for this frame from a single float
+	/// </summary>
+	public void ManualUpdate(in Time time, float value)
+	{
+		var prevIntValue = IntValue;
+
+		Value    = value;
+		IntValue = MathF.Sign(Value);
+
+		if (IntValue != 0 && IntValue != prevIntValue)
+			PressedSign = IntValue;
+		else
+			PressedSign = 0;
 	}
 
 	public void Clear()

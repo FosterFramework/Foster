@@ -338,7 +338,10 @@ public sealed class Input
 		{
 			var it = virtualInputs[i];
 			if (it.TryGetTarget(out var target))
-				target.Update(time);
+			{
+				if (target.Active)
+					target.Update(time);
+			}
 			else
 				virtualInputs.RemoveAt(i);
 		}
