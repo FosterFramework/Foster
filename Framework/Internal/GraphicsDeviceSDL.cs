@@ -119,6 +119,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 	private readonly GraphicsDriver preferred;
 	private readonly Version version;
+	private AppFlags flags;
 
 	public override GraphicsDriver Driver => driver;
 
@@ -198,6 +199,8 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			else if (IsTextureMultiSampleSupported(TextureFormat.Color, SampleCount.Two))
 				backbufferFormat = [( TextureFormat.Color, SampleCount.Two )];
 		}
+
+		this.flags = flags;
 	}
 
 	internal override void DestroyDevice()
@@ -221,7 +224,8 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			_ => GraphicsDriver.None
 		};
 
-		Log.Info($"Graphics Driver: SDL_GPU [{driverName}]");
+		if (!flags.Has(AppFlags.NoHeaderLog))
+			Log.Info($"Graphics Driver: SDL_GPU [{driverName}]");
 
 		if (!SDL_ClaimWindowForGPUDevice(device, window))
 			throw App.CreateExceptionFromSDL(nameof(SDL_ClaimWindowForGPUDevice));

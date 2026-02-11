@@ -47,6 +47,11 @@ public enum AppFlags
 	/// Enables MultiSampling of the BackBuffer
 	/// </summary>
 	MultiSampledBackBuffer = 1 << 1,
+
+	/// <summary>
+	/// Doesn't log Foster's header (version number, gpu, SDL version, etc)
+	/// </summary>
+	NoHeaderLog = 1 << 2,
 }
 
 /// <summary>
@@ -175,6 +180,7 @@ public abstract class App : IDisposable
 			throw new Exception("Invalid Application Name");
 
 		// log info
+		if (!config.Flags.Has(AppFlags.NoHeaderLog))
 		{
 			var sdlv = SDL_GetVersion();
 			Log.Info($"Foster: v{FosterVersion.Major}.{FosterVersion.Minor}.{FosterVersion.Build}");
