@@ -1041,6 +1041,10 @@ public class Batcher : IDisposable
 		}
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void RectLine(in Vector2 position, in Vector2 size, float lineWeight, Color color)
+		=> RectLine(new Rect(position, size), lineWeight, color);
+
 	public void RectDashed(Rect rect, float lineWeight, in Color color, float dashLength, float dashOffset)
 	{
 		rect = rect.Inflate(-lineWeight / 2);
