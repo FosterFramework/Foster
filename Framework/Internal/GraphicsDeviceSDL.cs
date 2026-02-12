@@ -609,7 +609,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			textureUploadBufferOffset += (uint)length;
 	}
 
-	internal override void GetTextureData(ResourceHandle handle, nint data, int length)
+	internal override void GetTextureData(ResourceHandle handle, nint data, int length, RectInt sourceRegion)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
@@ -620,7 +620,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		// search up for the resolve texture
 		if (res.MultiSampleResolve)
 		{
-			GetTextureData(res.MultiSampleResolve, data, length);
+			GetTextureData(res.MultiSampleResolve, data, length, sourceRegion);
 			return;
 		}
 
@@ -658,19 +658,21 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 						texture = res.Texture,
 						layer = 0,
 						mip_level = 0,
-						x = 0,
-						y = 0,
+						x = (uint)sourceRegion.X,
+						y = (uint)sourceRegion.Y,
 						z = 0,
-						w = (uint)res.Width,
-						h = (uint)res.Height,
+						w = (uint)sourceRegion.Width,
+						h = (uint)sourceRegion.Height,
 						d = 1
 					},
 					destination: new()
 					{
 						transfer_buffer = textureDownloadBuffer,
 						offset = 0,
-						pixels_per_row = (uint)res.Width, // TODO: FNA3D uses 0?
-						rows_per_layer = (uint)res.Height, // TODO: FNA3D uses 0?
+						// if 0 is passed here, width & height of source region are used as default values
+						// see: https://wiki.libsdl.org/SDL3/SDL_GPUTextureTransferInfo
+						pixels_per_row = 0,
+						rows_per_layer = 0,
 					}
 				);
 			}
