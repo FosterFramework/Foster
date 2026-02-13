@@ -124,6 +124,10 @@ public sealed class VirtualAction(Input input, string name, ActionBindingSet set
 			PressConsumed = false;
 			Timestamp     = time.Elapsed;
 		}
+		else if (!PressConsumed && Timestamp > TimeSpan.Zero && (time.Elapsed - Timestamp).TotalSeconds < Buffer)
+		{
+			Pressed = true;
+		}
 
 		Released = !down && Down;
 		Down     = down;
