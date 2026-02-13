@@ -25,12 +25,12 @@ public readonly record struct Time(
 	/// <summary>
 	/// The Time, in a TimeSpan format, since the previous Update
 	/// </summary>
-	public TimeSpan DeltaTimeSpan => Elapsed - Previous;
+	public readonly TimeSpan DeltaTimeSpan = Elapsed - Previous;
 
 	/// <summary>
 	/// Total time in Seconds (shorthand to Elapsed.TotalSeconds)
 	/// </summary>
-	public double Seconds => Elapsed.TotalSeconds;
+	public readonly double Seconds = Elapsed.TotalSeconds;
 
 	/// <summary>
 	/// Advances <see cref="Elapsed"/> by the given delta value, increments <see cref="Frame"/> and assigns <see cref="Delta"/>.<br/>
