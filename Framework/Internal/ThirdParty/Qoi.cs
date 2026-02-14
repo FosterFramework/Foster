@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Foster.Framework;
 
@@ -23,31 +24,24 @@ internal static class Qoi
 	private const int QOI_SRGB =   0;
 	private const int QOI_LINEAR = 1;
 	
-	private const int QOI_OP_INDEX  = 0x00; /* 00xxxxxx */
-	private const int QOI_OP_DIFF   = 0x40; /* 01xxxxxx */
-	private const int QOI_OP_LUMA   = 0x80; /* 10xxxxxx */
-	private const int QOI_OP_RUN    = 0xc0; /* 11xxxxxx */
-	private const int QOI_OP_RGB    = 0xfe; /* 11111110 */
-	private const int QOI_OP_RGBA   = 0xff; /* 11111111 */
-	private const int QOI_MASK_2    = 0xc0; /* 11000000 */
-	private const int QOI_HEADER_SIZE =  14;
-
-	private const uint QOI_MAGIC = (((uint)'q') << 24 | ((uint)'o') << 16 | ((uint)'i') <<  8 | ((uint)'f'));
+	private const byte QOI_OP_INDEX  = 0x00; /* 00xxxxxx */
+	private const byte QOI_OP_DIFF   = 0x40; /* 01xxxxxx */
+	private const byte QOI_OP_LUMA   = 0x80; /* 10xxxxxx */
+	private const byte QOI_OP_RUN    = 0xc0; /* 11xxxxxx */
+	private const byte QOI_OP_RGB    = 0xfe; /* 11111110 */
+	private const byte QOI_OP_RGBA   = 0xff; /* 11111111 */
+	private const byte QOI_MASK_2    = 0xc0; /* 11000000 */
+	private const int  QOI_HEADER_SIZE =  14;
 	private const uint QOI_PIXELS_MAX = 400000000;
 
+	private static readonly byte[] magic = [ (byte)'q', (byte)'o', (byte)'i', (byte)'f' ];
 	private static readonly byte[] padding = [0,0,0,0,0,0,0,1];
 
-	public static unsafe bool IsFormat(ReadOnlySpan<byte> data)
+	public static bool IsFormat(ReadOnlySpan<byte> data)
 	{
-		fixed (byte* ptr = data)
-			return IsFormat((nint)ptr, data.Length);
-	}
-
-	public static unsafe bool IsFormat(nint data, int length)
-	{
-		if (length <= 4)
+		if (data.Length < magic.Length)
 			return false;
-		return *(uint*)data == QOI_MAGIC;
+		return data[..magic.Length].SequenceEqual(magic);
 	}
 
 	public static unsafe byte[] Encode(nint data, in Desc desc)
@@ -72,9 +66,9 @@ internal static class Qoi
 		p = 0;
 		var bytes = new byte[max_size];
 
-		Write32(bytes, &p, QOI_MAGIC);
-		Write32(bytes, &p, desc.Width);
-		Write32(bytes, &p, desc.Height);
+		Write(bytes, ref p, magic);
+		Write32(bytes, ref p, desc.Width);
+		Write32(bytes, ref p, desc.Height);
 		bytes[p++] = desc.Channels;
 		bytes[p++] = desc.Colorspace;
 
@@ -184,8 +178,6 @@ internal static class Qoi
 	{
 		desc = default;
 
-		byte* bytes;
-		uint header_magic;
 		Span<Rgba> index = stackalloc Rgba[64];
 		Rgba px;
 		int px_len, chunks_len, px_pos;
@@ -196,18 +188,19 @@ internal static class Qoi
 			size < QOI_HEADER_SIZE + padding.Length
 		) return [];
 
-		bytes = (byte*)data;
+		var bytes = new ReadOnlySpan<byte>((byte*)data, size);
+		if (!bytes[..magic.Length].SequenceEqual(magic))
+			return [];
+		p += magic.Length;
 
-		header_magic = Read32(bytes, &p);
-		desc.Width = Read32(bytes, &p);
-		desc.Height = Read32(bytes, &p);
+		desc.Width = Read32(bytes, ref p);
+		desc.Height = Read32(bytes, ref p);
 		desc.Channels = bytes[p++];
 		desc.Colorspace = bytes[p++];
 
 		if (desc.Width == 0 || desc.Height == 0 ||
 			desc.Channels < 3 || desc.Channels > 4 ||
 			desc.Colorspace > 1 ||
-			header_magic != QOI_MAGIC ||
 			desc.Height >= QOI_PIXELS_MAX / desc.Width
 		) return [];
 
@@ -230,7 +223,7 @@ internal static class Qoi
 				run--;
 			}
 			else if (p < chunks_len) {
-				int b1 = bytes[p++];
+				byte b1 = bytes[p++];
 
 				if (b1 == QOI_OP_RGB) {
 					px.R = bytes[p++];
@@ -262,7 +255,7 @@ internal static class Qoi
 					run = (b1 & 0x3f);
 				}
 
-				index[ColorHash(px) % 64] = px;
+				index[ColorHash(px) & (64 - 1)] = px;
 			}
 
 			pixels[px_pos + 0] = px.R;
@@ -276,23 +269,30 @@ internal static class Qoi
 
 		return pixels;
 	}
-
+	
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-	private static unsafe void Write32(byte[] bytes, int* p, uint v)
+	private static void Write(byte[] bytes, ref int p, ReadOnlySpan<byte> buffer)
 	{
-		bytes[(*p)++] = (byte)((0xff000000 & v) >> 24);
-		bytes[(*p)++] = (byte)((0x00ff0000 & v) >> 16);
-		bytes[(*p)++] = (byte)((0x0000ff00 & v) >> 8);
-		bytes[(*p)++] = (byte)((0x000000ff & v));
+		buffer.CopyTo(bytes.AsSpan(p));
+		p += buffer.Length;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-	private static unsafe uint Read32(byte* bytes, int* p)
+	private static void Write32(byte[] bytes, ref int p, uint v)
 	{
-		uint a = bytes[(*p)++];
-		uint b = bytes[(*p)++];
-		uint c = bytes[(*p)++];
-		uint d = bytes[(*p)++];
+		bytes[p++] = (byte)((0xff000000 & v) >> 24);
+		bytes[p++] = (byte)((0x00ff0000 & v) >> 16);
+		bytes[p++] = (byte)((0x0000ff00 & v) >> 8);
+		bytes[p++] = (byte)((0x000000ff & v));
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	private static unsafe uint Read32(ReadOnlySpan<byte> bytes, ref int p)
+	{
+		uint a = bytes[p++];
+		uint b = bytes[p++];
+		uint c = bytes[p++];
+		uint d = bytes[p++];
 		return a << 24 | b << 16 | c << 8 | d;
 	}
 

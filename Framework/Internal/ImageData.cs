@@ -127,7 +127,8 @@ internal unsafe struct ImageData
 
 		if (format == Formats.QOI)
 		{
-			Qoi.Encode(Data, new() { Width = (uint)Width, Height = (uint)Height, Channels = 4, Colorspace = 0 });
+			var data = Qoi.Encode(Data, new() { Width = (uint)Width, Height = (uint)Height, Channels = 4, Colorspace = 0 });
+			stream.Write(data);
 		}
 		else if (format == Formats.PNG)
 		{
