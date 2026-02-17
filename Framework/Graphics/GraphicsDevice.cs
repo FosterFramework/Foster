@@ -61,8 +61,8 @@ public abstract class GraphicsDevice
 	internal abstract void Shutdown();
 	internal abstract void Present();
 	internal abstract ResourceHandle CreateTexture(string? name, int width, int height, TextureFormat format, SampleCount sampleCount, nint? targetBinding);
-	internal abstract void SetTextureData(ResourceHandle texture, nint data, int length);
-	internal abstract void GetTextureData(ResourceHandle texture, nint data, int length);
+	internal abstract void SetTextureData(ResourceHandle texture, nint data, int length, RectInt destRegion);
+	internal abstract void GetTextureData(ResourceHandle texture, nint data, int length, RectInt sourceRegion);
 	internal abstract ResourceHandle CreateTarget(int width, int height);
 	internal abstract ResourceHandle CreateShader(string? name, in ShaderCreateInfo shaderInfo);
 	internal abstract ResourceHandle CreateBuffer(string? name, BufferType type, IndexFormat format);

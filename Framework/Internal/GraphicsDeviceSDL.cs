@@ -189,7 +189,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		if (device == IntPtr.Zero)
 			throw App.CreateExceptionFromSDL(nameof(SDL_CreateGPUDevice));
-		
+
 		if (flags.Has(AppFlags.MultiSampledBackBuffer))
 		{
 			if (IsTextureMultiSampleSupported(TextureFormat.Color, SampleCount.Eight))
@@ -265,7 +265,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		{
 			emptyDefaultTexture = CreateTexture("Fallback", 1, 1, TextureFormat.R8G8B8A8, SampleCount.One, null);
 			var data = stackalloc Color[1] { 0xe82979 };
-			SetTextureData(emptyDefaultTexture, new nint(data), 4);
+			SetTextureData(emptyDefaultTexture, new nint(data), 4, RectInt.Identity);
 		}
 
 		// get backbuffer
@@ -501,7 +501,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		return handle;
 	}
 
-	internal override void SetTextureData(ResourceHandle handle, nint data, int length)
+	internal override void SetTextureData(ResourceHandle handle, nint data, int length, RectInt destRegion)
 	{
 		static uint RoundToAlignment(uint value, uint alignment)
 			=> alignment * ((value + alignment - 1) / alignment);
@@ -510,11 +510,11 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			throw deviceNotCreated;
 
 		var res = RequireResource<TextureResource>(handle);
-		
+
 		// search up for resolve texture if we're multisampled
 		if (res.MultiSampleResolve)
 		{
-			SetTextureData(res.MultiSampleResolve, data, length);
+			SetTextureData(res.MultiSampleResolve, data, length, destRegion);
 			return;
 		}
 
@@ -581,19 +581,21 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				{
 					transfer_buffer = transferBuffer,
 					offset = transferOffset,
-					pixels_per_row = (uint)res.Width, // TODO: FNA3D uses 0?
-					rows_per_layer = (uint)res.Height, // TODO: FNA3D uses 0?
+					// if 0 is passed here, width & height of destination region are used as default values
+					// see: https://wiki.libsdl.org/SDL3/SDL_GPUTextureTransferInfo
+					pixels_per_row = 0,
+					rows_per_layer = 0,
 				},
 				destination: new()
 				{
 					texture = res.Texture,
 					layer = 0,
 					mip_level = 0,
-					x = 0,
-					y = 0,
+					x = (uint)destRegion.X,
+					y = (uint)destRegion.Y,
 					z = 0,
-					w = (uint)res.Width,
-					h = (uint)res.Height,
+					w = (uint)destRegion.Width,
+					h = (uint)destRegion.Height,
 					d = 1
 				},
 				cycle: false
@@ -607,7 +609,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			textureUploadBufferOffset += (uint)length;
 	}
 
-	internal override void GetTextureData(ResourceHandle handle, nint data, int length)
+	internal override void GetTextureData(ResourceHandle handle, nint data, int length, RectInt sourceRegion)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
@@ -618,7 +620,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		// search up for the resolve texture
 		if (res.MultiSampleResolve)
 		{
-			GetTextureData(res.MultiSampleResolve, data, length);
+			GetTextureData(res.MultiSampleResolve, data, length, sourceRegion);
 			return;
 		}
 
@@ -656,19 +658,21 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 						texture = res.Texture,
 						layer = 0,
 						mip_level = 0,
-						x = 0,
-						y = 0,
+						x = (uint)sourceRegion.X,
+						y = (uint)sourceRegion.Y,
 						z = 0,
-						w = (uint)res.Width,
-						h = (uint)res.Height,
+						w = (uint)sourceRegion.Width,
+						h = (uint)sourceRegion.Height,
 						d = 1
 					},
 					destination: new()
 					{
 						transfer_buffer = textureDownloadBuffer,
 						offset = 0,
-						pixels_per_row = (uint)res.Width, // TODO: FNA3D uses 0?
-						rows_per_layer = (uint)res.Height, // TODO: FNA3D uses 0?
+						// if 0 is passed here, width & height of source region are used as default values
+						// see: https://wiki.libsdl.org/SDL3/SDL_GPUTextureTransferInfo
+						pixels_per_row = 0,
+						rows_per_layer = 0,
 					}
 				);
 			}
@@ -1064,7 +1068,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 			for (int i = 0; i < vertexInfo.SamplerCount; i++)
 			{
-				samplers[i].texture = 
+				samplers[i].texture =
 					(FindResource<TextureResource>(mat.Vertex.Samplers[i].Texture?.Resource) ??
 					RequireResource<TextureResource>(emptyDefaultTexture)).SamplerTexture;
 				samplers[i].sampler = GetSampler(mat.Vertex.Samplers[i].Sampler);
@@ -1081,7 +1085,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 			for (int i = 0; i < fragmentInfo.SamplerCount; i++)
 			{
-				samplers[i].texture = 
+				samplers[i].texture =
 					(FindResource<TextureResource>(mat.Fragment.Samplers[i].Texture?.Resource) ??
 					RequireResource<TextureResource>(emptyDefaultTexture)).SamplerTexture;
 				samplers[i].sampler = GetSampler(mat.Fragment.Samplers[i].Sampler);

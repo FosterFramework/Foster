@@ -95,36 +95,56 @@ public class Texture : IGraphicResource
 	/// <summary>
 	/// Sets the Texture data from the given buffer
 	/// </summary>
-	public unsafe void SetData<T>(ReadOnlySpan<T> data) where T : struct
+	public void SetData<T>(ReadOnlySpan<T> data) where T : struct
+		=> SetData(data, new RectInt(0, 0, Width, Height));
+
+	/// <summary>
+	/// Sets the Texture data in a region from the given buffer
+	/// </summary>
+	public unsafe void SetData<T>(ReadOnlySpan<T> data, RectInt destRegion) where T : struct
 	{
 		if (IsDisposed)
 			throw new Exception("Resource is Disposed");
 
-		if (Unsafe.SizeOf<T>() * data.Length < MemorySize)
-			throw new Exception("Data Buffer is smaller than the Size of the Texture");
+		if (destRegion.Left < 0 || destRegion.Top < 0 || destRegion.Bottom > Height || destRegion.Right > Width)
+			throw new Exception("Destination region is out of range");
+
+		int dataLength = Unsafe.SizeOf<T>() * data.Length;
+
+		if (dataLength < destRegion.Width * destRegion.Height * Format.Size())
+			throw new Exception("Data Buffer is smaller than the Size of the Texture Destination");
 
 		fixed (byte* ptr = MemoryMarshal.AsBytes(data))
 		{
-			int length = Unsafe.SizeOf<T>()  * data.Length;
-			GraphicsDevice.SetTextureData(Resource, new nint(ptr), length);
+			GraphicsDevice.SetTextureData(Resource, new nint(ptr), dataLength, destRegion);
 		}
 	}
 
 	/// <summary>
 	/// Writes the Texture data to the given buffer
 	/// </summary>
-	public unsafe void GetData<T>(Span<T> data) where T : struct
+	public void GetData<T>(Span<T> data) where T : struct
+		=> GetData(data, new RectInt(0, 0, Width, Height));
+
+	/// <summary>
+	/// Writes the Texture data from a region to the given buffer
+	/// </summary>
+	public unsafe void GetData<T>(Span<T> data, RectInt sourceRegion) where T : struct
 	{
 		if (IsDisposed)
 			throw new Exception("Resource is Disposed");
 
-		if (Unsafe.SizeOf<T>() * data.Length < MemorySize)
-			throw new Exception("Data Buffer is smaller than the Size of the Texture");
+		if (sourceRegion.Left < 0 || sourceRegion.Top < 0 || sourceRegion.Bottom > Height || sourceRegion.Right > Width)
+			throw new Exception("Source region is out of range");
+
+		int dataLength = Unsafe.SizeOf<T>() * data.Length;
+
+		if (dataLength < sourceRegion.Width * sourceRegion.Height * Format.Size())
+			throw new Exception("Data Buffer is smaller than the Size of the Texture Source");
 
 		fixed (byte* ptr = MemoryMarshal.AsBytes(data))
 		{
-			int length = Unsafe.SizeOf<T>() * data.Length;
-			GraphicsDevice.GetTextureData(Resource, new nint(ptr), length);
+			GraphicsDevice.GetTextureData(Resource, new nint(ptr), dataLength, sourceRegion);
 		}
 	}
 
