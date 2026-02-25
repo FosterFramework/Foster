@@ -115,6 +115,21 @@ public static class Calc
 		=> v * v;
 
 	/// <summary>
+	/// Get the difference between the closest multiple of <paramref name="interval"/> and the <paramref name="value"/>
+	/// </summary>
+	public static float DifferenceFromInterval(float value, float interval)
+	{
+		var val = value % interval;
+		if (val < 0)
+			val += interval;
+
+		if (val < interval / 2)
+			return -val;
+		else
+			return interval - val;
+	}
+
+	/// <summary>
 	/// Get the area of a triangle
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
