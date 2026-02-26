@@ -64,6 +64,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	private const uint TransferBufferSize = 16 * 1024 * 1024; // 16MB
 	private const uint MaxUploadCycleCount = 4;
 	private const int MaxColorAttachments = 8;
+	private const string BackbufferName = "Foster Backbuffer";
 	private (TextureFormat Format, SampleCount SampleCount)[] backbufferFormat;
 
 	// object pointers
@@ -271,7 +272,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		// get backbuffer
 		SDL_GetWindowSizeInPixels(window, out backbufferSize.X, out backbufferSize.Y);
 		backbufferSize = Point2.Max(Point2.One, backbufferSize);
-		backbuffer = new(this, backbufferSize.X, backbufferSize.Y, backbufferFormat);
+		backbuffer = new(this, backbufferSize.X, backbufferSize.Y, backbufferFormat, BackbufferName);
 
 		// default to 3 frames in flight
 		SDL_SetGPUAllowedFramesInFlight(device, 3);
@@ -391,13 +392,13 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				if (backbuffer == null || backbuffer.Width < backbufferSize.X || backbuffer.Height < backbufferSize.Y)
 				{
 					backbuffer?.Dispose();
-					backbuffer = new(this, backbufferSize.X + 64, backbufferSize.Y + 64, backbufferFormat);
+					backbuffer = new(this, backbufferSize.X + 64, backbufferSize.Y + 64, backbufferFormat, BackbufferName);
 				}
 				// resize buffer if it's too large
 				else if (backbuffer.Width > backbufferSize.X + 128 || backbuffer.Height > backbufferSize.Y + 128)
 				{
 					backbuffer?.Dispose();
-					backbuffer = new(this, backbufferSize.X, backbufferSize.Y, backbufferFormat);
+					backbuffer = new(this, backbufferSize.X, backbufferSize.Y, backbufferFormat, BackbufferName);
 				}
 			}
 		}
