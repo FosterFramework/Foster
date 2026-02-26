@@ -403,7 +403,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 		else
 		{
-			throw App.CreateExceptionFromSDL(nameof(SDL_WaitAndAcquireGPUSwapchainTexture));
+			Log.Warning(App.CreateErrorMessageFromSDL(nameof(SDL_WaitAndAcquireGPUSwapchainTexture)));
 		}
 
 		FlushCommands(stall: false);
