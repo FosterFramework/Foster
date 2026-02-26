@@ -174,8 +174,6 @@ public abstract class App : IDisposable
 	{
 		this.config = config;
 
-		if (config.Width <= 0 || config.Height <= 0)
-			throw new Exception("Width or height is <= 0");
 		if (string.IsNullOrEmpty(config.ApplicationName) || string.IsNullOrWhiteSpace(config.ApplicationName))
 			throw new Exception("Invalid Application Name");
 
@@ -479,7 +477,13 @@ public abstract class App : IDisposable
 	/// Creates an Exception with information from SDL_GetError()
 	/// </summary>
 	internal static Exception CreateExceptionFromSDL(string sdlMethod, string? fosterInfo = null)
-		=> new($"{(fosterInfo != null ? $"{fosterInfo}. " : "")}{sdlMethod} failed: {SDL_GetError()}");
+		=> new(CreateErrorMessageFromSDL(sdlMethod, fosterInfo));
+
+	/// <summary>
+	/// Creates an error string with information from SDL_GetError()
+	/// </summary>
+	internal static string CreateErrorMessageFromSDL(string sdlMethod, string? fosterInfo = null)
+		=> $"{(fosterInfo != null ? $"{fosterInfo}. " : "")}{sdlMethod} failed: {SDL_GetError()}";
 
 	// [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
 	internal static unsafe void HandleLogFromSDL(IntPtr userdata, int category, SDL_LogPriority priority, byte* message)
