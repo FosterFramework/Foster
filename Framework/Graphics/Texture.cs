@@ -148,6 +148,32 @@ public class Texture : IGraphicResource
 		}
 	}
 
+	/// <summary>
+	/// Blits the contents of this Texture to another Texture
+	/// </summary>
+	public void Blit(RectInt sourceRect, Texture destination, RectInt destinationRect, TextureFilter filter)
+	{
+		GraphicsDevice.BlitTexture(Resource, sourceRect, destination.Resource, destinationRect, filter);
+	}
+
+	/// <summary>
+	/// Blits the contents of this Texture to another Texture
+	/// </summary>
+	public void Blit(Texture destination, TextureFilter filter)
+	{
+		Blit(new(Size), destination, new(destination.Size), filter);
+	}
+
+	/// <summary>
+	/// Clones this Texture and creates a new one with the same pixel data
+	/// </summary>
+	public Texture Clone()
+	{
+		var clone = new Texture(GraphicsDevice, Width, Height, Format);
+		Blit(clone, TextureFilter.Nearest);
+		return clone;
+	}
+
 	public void Dispose()
 	{
 		Dispose(true);

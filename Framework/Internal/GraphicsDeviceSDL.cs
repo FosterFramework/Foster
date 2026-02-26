@@ -690,6 +690,48 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 	}
 
+	internal override void BlitTexture(ResourceHandle sourceTexture, RectInt sourceRegion, ResourceHandle destTexture, RectInt destRegion, TextureFilter filter)
+	{
+		// TODO:
+		// Without this, the texture won't necessarily fully upload?
+		FlushCommands(stall: false);
+
+		var src = RequireResource<TextureResource>(sourceTexture);
+		var dst = RequireResource<TextureResource>(destTexture);
+
+		// validate texture regions; don't let them go out of bounds since we cast to uint
+		sourceRegion = sourceRegion.GetIntersection(new RectInt(0, 0, src.Width, src.Height));
+		destRegion = destRegion.GetIntersection(new RectInt(0, 0, dst.Width, dst.Height));
+
+		SDL_BlitGPUTexture(cmdRender, new()
+		{
+			source = new()
+			{
+				texture = src.SamplerTexture,
+				mip_level = 0,
+				layer_or_depth_plane = 0,
+				x = (uint)sourceRegion.X,
+				y = (uint)sourceRegion.Y,
+				w = (uint)sourceRegion.Width,
+				h = (uint)sourceRegion.Height
+			},
+			destination = new()
+			{
+				texture = dst.Texture,
+				mip_level = 0,
+				layer_or_depth_plane = 0,
+				x = (uint)destRegion.X,
+				y = (uint)destRegion.Y,
+				w = (uint)destRegion.Width,
+				h = (uint)destRegion.Height
+			},
+			load_op = SDL_GPULoadOp.SDL_GPU_LOADOP_DONT_CARE,
+			flip_mode = SDL_FlipMode.SDL_FLIP_NONE,
+			filter = GetFilter(filter),
+			cycle = true
+		});
+	}
+
 	internal override ResourceHandle CreateTarget(int width, int height)
 	{
 		return RegisterResource(new TargetResource(this));
@@ -1642,17 +1684,10 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		if (!samplers.TryGetValue(sampler, out var result))
 		{
-			var filter = sampler.Filter switch
-			{
-				TextureFilter.Nearest => SDL_GPUFilter.SDL_GPU_FILTER_NEAREST,
-				TextureFilter.Linear => SDL_GPUFilter.SDL_GPU_FILTER_LINEAR,
-				_ => throw new ArgumentException("Invalid Texture Filter", nameof(sampler)),
-			};
-
 			SDL_GPUSamplerCreateInfo info = new()
 			{
-				min_filter = filter,
-				mag_filter = filter,
+				min_filter = GetFilter(sampler.Filter),
+				mag_filter = GetFilter(sampler.Filter),
 				address_mode_u = GetWrapMode(sampler.WrapX),
 				address_mode_v = GetWrapMode(sampler.WrapY),
 				address_mode_w = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
@@ -1667,6 +1702,13 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		return result;
 	}
+
+	private static SDL_GPUFilter GetFilter(TextureFilter filter) => filter switch
+	{
+		TextureFilter.Nearest => SDL_GPUFilter.SDL_GPU_FILTER_NEAREST,
+		TextureFilter.Linear => SDL_GPUFilter.SDL_GPU_FILTER_LINEAR,
+		_ => throw new ArgumentException("Invalid Texture Filter", nameof(filter)),
+	};
 
 	private static SDL_GPUVertexElementFormat GetVertexFormat(VertexType type, bool normalized)
 	{
