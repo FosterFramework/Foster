@@ -935,21 +935,24 @@ public class Batcher : IDisposable
 		if (lineWeight <= 0)
 			return;
 
-		// TODO:
-		// Detect if the thickness of the line fills the entire shape
-		// (in which case, draw a triangle instead)
-
 		var len_ab = (a - b).Length();
 		var len_bc = (b - c).Length();
 		var len_ca = (c - a).Length();
+		var incenter = ((len_bc * a) + (len_ca * b) + (len_ab * c)) / (len_bc + len_ca + len_ab);
 
-		var off_ab = ((b - a) / len_ab).TurnLeft() * lineWeight;
-		var off_bc = ((c - b) / len_bc).TurnLeft() * lineWeight;
-		var off_ca = ((a - c) / len_ca).TurnLeft() * lineWeight;
+		var project = new Line(a, b).ClosestPoint(incenter);
+		var dist = (project - incenter).Length();
+		var scale = 1 - Calc.Clamp(lineWeight / dist);
 
-		var aa = Intersection(c + off_ca, a + off_ca, a + off_ab, b + off_ab);
-		var bb = Intersection(a + off_ab, b + off_ab, b + off_bc, c + off_bc);
-		var cc = Intersection(b + off_bc, c + off_bc, c + off_ca, a + off_ca);
+		if (scale == 0)
+		{
+			Triangle(a, b, c, color);
+			return;
+		}
+
+		var aa = ((a - incenter) * scale) + incenter;
+		var bb = ((b - incenter) * scale) + incenter;
+		var cc = ((c - incenter) * scale) + incenter;
 
 		Quad(aa, a, b, bb, color);
 		Quad(bb, b, c, cc, color);
