@@ -25,7 +25,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <NativeLibsDir>$(ProjectDir)..\Platform\libs\</NativeLibsDir>
+    <NativeLibsDir>$(ProjectDir)Internal\Native\</NativeLibsDir>
   </PropertyGroup>
 
   <PropertyGroup Condition="($(RuntimeIdentifier) == '' and $([MSBuild]::IsOSPlatform('Linux'))) or $(RuntimeIdentifier) == 'linux-x64'">
