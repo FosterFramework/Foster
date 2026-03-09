@@ -59,7 +59,7 @@ public class Mesh : IGraphicResource
 	/// <summary>
 	/// The Mesh's Instance Format
 	/// </summary>
-	public VertexFormat InstanceFormat => VertexBuffer?.Format ?? default;
+	public VertexFormat InstanceFormat => InstanceBuffer?.Format ?? default;
 
 	/// <summary>
 	/// The Mesh's Index Format
