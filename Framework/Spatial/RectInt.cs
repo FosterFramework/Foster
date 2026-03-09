@@ -787,7 +787,7 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 	{
 		public PointEnumerator GetEnumerator() => new(rect);
 		IEnumerator<Point2> IEnumerable<Point2>.GetEnumerator() => new PointEnumerator(rect);
-		IEnumerator IEnumerable.GetEnumerator() => new EdgeEnumerator(rect);
+		IEnumerator IEnumerable.GetEnumerator() => new PointEnumerator(rect);
 	}
 
 	public struct PointEnumerator(RectInt rect) : IEnumerator<Point2>

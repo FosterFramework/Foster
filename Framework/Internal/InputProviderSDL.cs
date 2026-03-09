@@ -225,7 +225,7 @@ internal sealed class InputProviderSDL(App app) : InputProvider
 			}
 		case SDL_EventType.SDL_EVENT_GAMEPAD_AXIS_MOTION:
 			{
-				var id = ev.gbutton.which;
+				var id = ev.gaxis.which;
 				float value = ev.gaxis.value >= 0
 					? ev.gaxis.value / 32767.0f
 					: ev.gaxis.value / 32768.0f;

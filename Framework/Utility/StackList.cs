@@ -36,7 +36,7 @@ public struct StackList4<T> : IEnumerable<T>, IList<T>
 
 	public void Resize(int count)
 	{
-		if (count >= Capacity)
+		if (count > Capacity)
 			throw new Exception("Exceeding Capacity of StackList");
 		this.count = count;
 	}

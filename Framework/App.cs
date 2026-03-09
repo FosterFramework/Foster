@@ -397,7 +397,7 @@ public abstract class App : IDisposable
 			// Do not allow any update to take longer than our maximum.
 			if (fixedAccumulator > update.FixedMaxTime)
 			{
-				Time.Advance(fixedAccumulator - update.FixedMaxTime);
+				Time = Time.Advance(fixedAccumulator - update.FixedMaxTime);
 				fixedAccumulator = update.FixedMaxTime;
 			}
 

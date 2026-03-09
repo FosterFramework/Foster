@@ -237,8 +237,8 @@ public static class Calc
 		if (list.Length == 0)
 			return -1;
 
-		int index = 0;
-		T val = list[0];
+		var index = 0;
+		var val = list[0];
 
 		for (int i = 1; i < list.Length; i++)
 			if (list[i].CompareTo(val) < 0)
@@ -258,11 +258,11 @@ public static class Calc
 		if (list.Length == 0)
 			return -1;
 
-		int index = 0;
+		var index = 0;
 		var val = list[0];
 
 		for (int i = 1; i < list.Length; i++)
-			if (list[i].CompareTo(val) < 0)
+			if (list[i].CompareTo(val) > 0)
 			{
 				index = i;
 				val = list[i];

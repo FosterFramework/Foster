@@ -10,5 +10,5 @@ public enum StencilOp
 	DecrementAndClamp = 5,
 	Invert = 6,
 	IncrementAndWrap = 7,
-	DecrementAndwrap = 8,
+	DecrementAndWrap = 8,
 }

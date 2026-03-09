@@ -13,5 +13,5 @@ public enum DepthCompare
 	LessOrEqual,
 	Greater,
 	NotEqual,
-	GreatorOrEqual
+	GreaterOrEqual
 }
