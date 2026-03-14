@@ -131,16 +131,46 @@ public class IndexBuffer<T>(GraphicsDevice graphicsDevice, string? name = null)
 }
 
 /// <summary>
-/// Holds Storage Elements for drawing
+/// Holds Storage Elements for drawing (read-only in shaders)
 /// </summary>
-public class StorageBuffer(GraphicsDevice graphicsDevice, int elementSizeInBytes, string? name = null)
-	: GraphicsBuffer(graphicsDevice, elementSizeInBytes, GraphicsDevice.BufferType.Storage, null, name) {}
+public class StorageBuffer : GraphicsBuffer
+{
+	public StorageBuffer(GraphicsDevice graphicsDevice, int elementSizeInBytes, string? name = null)
+		: base(graphicsDevice, elementSizeInBytes, GraphicsDevice.BufferType.Storage, null, name) {}
+
+	internal StorageBuffer(GraphicsDevice graphicsDevice, int elementSizeInBytes, GraphicsDevice.BufferType type, string? name)
+		: base(graphicsDevice, elementSizeInBytes, type, null, name) {}
+}
 
 /// <summary>
-/// Holds Storage Elements for drawing
+/// Holds Storage Elements for drawing (read-only in shaders)
 /// </summary>
 public class StorageBuffer<T>(GraphicsDevice graphicsDevice, string? name = null)
 	: StorageBuffer(graphicsDevice, Marshal.SizeOf<T>(), name) where T : unmanaged
+{
+	/// <summary>
+	/// Uploads data to the buffer, and resizes it if required.
+	/// </summary>
+	public unsafe void Upload(in ReadOnlySpan<T> data, int offset = 0)
+	{
+		fixed (T* ptr = data)
+			Upload(new nint(ptr), data.Length, offset);
+	}
+}
+
+/// <summary>
+/// Holds Storage Elements that can be read and written to by compute shaders.
+/// Can also be read by non-compute shaders as a storage buffer.
+/// </summary>
+public class ComputeStorageBuffer(GraphicsDevice graphicsDevice, int elementSizeInBytes, string? name = null)
+	: StorageBuffer(graphicsDevice, elementSizeInBytes, GraphicsDevice.BufferType.Compute, name) {}
+
+/// <summary>
+/// Holds Storage Elements that can be read and written to by compute shaders.
+/// Can also be read by non-compute shaders as a storage buffer.
+/// </summary>
+public class ComputeStorageBuffer<T>(GraphicsDevice graphicsDevice, string? name = null)
+	: ComputeStorageBuffer(graphicsDevice, Marshal.SizeOf<T>(), name) where T : unmanaged
 {
 	/// <summary>
 	/// Uploads data to the buffer, and resizes it if required.

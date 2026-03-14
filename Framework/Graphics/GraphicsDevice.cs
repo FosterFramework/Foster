@@ -52,7 +52,8 @@ public abstract class GraphicsDevice
 	{
 		Vertex,
 		Index,
-		Storage
+		Storage,
+		Compute
 	}
 
 	internal abstract void CreateDevice(in AppFlags flags);
@@ -60,16 +61,17 @@ public abstract class GraphicsDevice
 	internal abstract void Startup(nint window);
 	internal abstract void Shutdown();
 	internal abstract void Present();
-	internal abstract ResourceHandle CreateTexture(string? name, int width, int height, TextureFormat format, SampleCount sampleCount, nint? targetBinding);
+	internal abstract ResourceHandle CreateTexture(string? name, int width, int height, TextureFormat format, TextureFlags flags, SampleCount sampleCount, nint? targetBinding);
 	internal abstract void SetTextureData(ResourceHandle texture, nint data, int length, RectInt destRegion);
 	internal abstract void GetTextureData(ResourceHandle texture, nint data, int length, RectInt sourceRegion);
 	internal abstract void BlitTexture(ResourceHandle sourceTexture, RectInt sourceRegion, ResourceHandle destTexture, RectInt destRegion, TextureFilter filter);
 	internal abstract ResourceHandle CreateTarget(int width, int height);
-	internal abstract ResourceHandle CreateShader(string? name, in ShaderCreateInfo shaderInfo);
+	internal abstract ResourceHandle CreateShader(Shader shader, byte[] code, string entryPoint);
 	internal abstract ResourceHandle CreateBuffer(string? name, BufferType type, IndexFormat format);
 	internal abstract void UploadBufferData(ResourceHandle buffer, nint data, int dataSize, int dataDestOffset);
 	internal abstract void DestroyResource(ResourceHandle resource);
 	internal abstract void PerformDraw(DrawCommand command);
+	internal abstract void PerformDispatch(ComputeCommand command);
 	internal abstract void Clear(IDrawableTarget target, ReadOnlySpan<Color> color, float depth, int stencil, ClearMask mask);
 
 	/// <summary>
@@ -91,15 +93,14 @@ public abstract class GraphicsDevice
 		// context. Opting to throw exceptions for more obvious user-errors, where as invalid state
 		// that is more dynamic is just a warning.
 
-		var mat = command.Material ?? throw new Exception("Attempting to render with a null Material");
 		var target = command.Target;
 
 		// invalid shader state
-		if (mat.Vertex.Shader == null || mat.Vertex.Shader.IsDisposed)
+		if (command.VertexShader == null || command.VertexShader.IsDisposed)
 			throw new Exception("Attempting to render a null or disposed Vertex Shader");
 
 		// invalid shader state
-		if (mat.Fragment.Shader == null || mat.Fragment.Shader.IsDisposed)
+		if (command.FragmentShader == null || command.FragmentShader.IsDisposed)
 			throw new Exception("Attempting to render a null or disposed Fragment Shader");
 
 		// invalid target state
@@ -187,5 +188,39 @@ public abstract class GraphicsDevice
 		}
 
 		PerformDraw(command);
+	}
+
+	/// <summary>
+	/// Performs a compute dispatch command
+	/// </summary>
+	public void Dispatch(ComputeCommand command)
+	{
+		if (command.Shader == null || command.Shader.IsDisposed)
+			throw new Exception("Attempting to dispatch with a null or disposed Shader");
+
+		if (command.Shader.Stage != ShaderStage.Compute)
+			throw new Exception("Attempting to dispact a Compute command with a Shader that is not a Compute shader");
+
+		if (command.GroupCountX <= 0 || command.GroupCountY <= 0 || command.GroupCountZ <= 0)
+		{
+			Log.Warning("Attempting to dispatch with a group count of 0; Nothing will be dispatched");
+			return;
+		}
+
+		for (int i = 0; i < command.ReadOnlyStorageBuffers.Count; i++)
+		{
+			var it = command.ReadOnlyStorageBuffers[i];
+			if (it == null || it.IsDisposed)
+				throw new Exception("Attempting to dispatch with a null or disposed read-only Storage Buffer");
+		}
+
+		for (int i = 0; i < command.ReadWriteStorageBuffers.Count; i++)
+		{
+			var it = command.ReadWriteStorageBuffers[i];
+			if (it == null || it.IsDisposed)
+				throw new Exception("Attempting to dispatch with a null or disposed read-write Storage Buffer");
+		}
+
+		PerformDispatch(command);
 	}
 }

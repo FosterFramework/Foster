@@ -62,26 +62,29 @@ public class Texture : IGraphicResource
 
 	private bool disposed;
 
-	public Texture(GraphicsDevice graphicsDevice, int width, int height, TextureFormat format = TextureFormat.Color, string? name = null)
-		: this(graphicsDevice, width, height, format, SampleCount.One, targetBinding: null, name) {}
+	public Texture(GraphicsDevice graphicsDevice, int width, int height, TextureFormat format = TextureFormat.Color, TextureFlags flags = TextureFlags.None, string? name = null)
+		: this(graphicsDevice, width, height, format, flags, SampleCount.One, targetBinding: null, name) {}
 
-	public Texture(GraphicsDevice graphicsDevice, int width, int height, ReadOnlySpan<Color> pixels, string? name = null)
-		: this(graphicsDevice, width, height, TextureFormat.Color, name) => SetData<Color>(pixels);
+	public Texture(GraphicsDevice graphicsDevice, int width, int height, ReadOnlySpan<Color> pixels, TextureFlags flags = TextureFlags.None, string? name = null)
+		: this(graphicsDevice, width, height, TextureFormat.Color, flags, name) => SetData<Color>(pixels);
 
-	public Texture(GraphicsDevice graphicsDevice, int width, int height, ReadOnlySpan<byte> pixels, string? name = null)
-		: this(graphicsDevice, width, height, TextureFormat.Color, name) => SetData<byte>(pixels);
+	public Texture(GraphicsDevice graphicsDevice, int width, int height, ReadOnlySpan<byte> pixels, TextureFlags flags = TextureFlags.None, string? name = null)
+		: this(graphicsDevice, width, height, TextureFormat.Color, flags, name) => SetData<byte>(pixels);
+
+	public Texture(GraphicsDevice graphicsDevice, Image image, TextureFlags flags, string? name = null)
+		: this(graphicsDevice, image.Width, image.Height, TextureFormat.Color, flags, name) => SetData<Color>(image.Data);
 
 	public Texture(GraphicsDevice graphicsDevice, Image image, string? name = null)
-		: this(graphicsDevice, image.Width, image.Height, TextureFormat.Color, name) => SetData<Color>(image.Data);
+		: this(graphicsDevice, image.Width, image.Height, TextureFormat.Color, TextureFlags.None, name) => SetData<Color>(image.Data);
 
-	internal Texture(GraphicsDevice graphicsDevice, int width, int height, TextureFormat format, SampleCount sampleCount, Target? targetBinding, string? name)
+	internal Texture(GraphicsDevice graphicsDevice, int width, int height, TextureFormat format, TextureFlags flags, SampleCount sampleCount, Target? targetBinding, string? name)
 	{
 		GraphicsDevice = graphicsDevice;
 
 		if (width <= 0 || height <= 0)
 			throw new Exception("Texture must have a size larger than 0");
 
-		Resource = graphicsDevice.CreateTexture(name, width, height, format, sampleCount, targetBinding?.Resource);
+		Resource = graphicsDevice.CreateTexture(name, width, height, format, flags, sampleCount, targetBinding?.Resource);
 		Name = name ?? string.Empty;
 		Width = width;
 		Height = height;

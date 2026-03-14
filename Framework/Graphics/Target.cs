@@ -5,7 +5,7 @@ namespace Foster.Framework;
 /// </summary>
 public class Target : IGraphicResource, IDrawableTarget
 {
-	private static readonly (TextureFormat, SampleCount)[] defaultFormats = [ (TextureFormat.Color, SampleCount.One) ];
+	private static readonly (TextureFormat, TextureFlags, SampleCount)[] defaultFormats = [ (TextureFormat.Color, TextureFlags.None, SampleCount.One) ];
 
 	/// <summary>
 	/// The GraphicsDevice this Texture was created in
@@ -59,16 +59,16 @@ public class Target : IGraphicResource, IDrawableTarget
 	/// <summary>
 	/// Constructs a Target with the given Attachments
 	/// </summary>
-	public Target(GraphicsDevice graphicsDevice, int width, int height, in ReadOnlySpan<TextureFormat> attachments, string? name = null)
-		: this(graphicsDevice, width, height, GetAttachments(attachments), name) {}
+	public Target(GraphicsDevice graphicsDevice, int width, int height, in ReadOnlySpan<TextureFormat> attachments, TextureFlags flags = TextureFlags.None, string? name = null)
+		: this(graphicsDevice, width, height, GetAttachments(attachments, flags), name) {}
 
 	/// <summary>
 	/// Constructs a Target with the given Attachments
 	/// </summary>
-	public Target(GraphicsDevice graphicsDevice, int width, int height, in ReadOnlySpan<(TextureFormat Format, SampleCount SampleCount)> attachments, string? name = null)
+	public Target(GraphicsDevice graphicsDevice, int width, int height, in ReadOnlySpan<(TextureFormat Format, TextureFlags Flags, SampleCount SampleCount)> attachments, string? name = null)
 		: this(graphicsDevice, width, height, GetAttachments(attachments), name) {}
 
-	private Target(GraphicsDevice graphicsDevice, int width, int height, in StackList16<(TextureFormat Format, SampleCount SampleCount)> attachments, string? name = null)
+	private Target(GraphicsDevice graphicsDevice, int width, int height, in StackList16<(TextureFormat Format, TextureFlags Flags, SampleCount SampleCount)> attachments, string? name = null)
 	{
 		if (width <= 0 || height <= 0)
 			throw new ArgumentException("Target width and height must be larger than 0");
@@ -86,21 +86,21 @@ public class Target : IGraphicResource, IDrawableTarget
 		for (int i = 0; i < attachments.Count; i ++)
 		{
 			var attachmentName = !string.IsNullOrEmpty(name) ? $"{Name}-Attachment{i}" : null;
-			Attachments[i] = new Texture(graphicsDevice, width, height, attachments[i].Format, attachments[i].SampleCount, this, attachmentName);
+			Attachments[i] = new Texture(graphicsDevice, width, height, attachments[i].Format, attachments[i].Flags, attachments[i].SampleCount, this, attachmentName);
 		}
 	}
 
 	~Target() => Dispose();
 
-	private static StackList16<(TextureFormat Format, SampleCount SampleCount)> GetAttachments(in ReadOnlySpan<TextureFormat> values)
+	private static StackList16<(TextureFormat Format, TextureFlags Flags, SampleCount SampleCount)> GetAttachments(in ReadOnlySpan<TextureFormat> values, TextureFlags flags)
 	{
-		StackList16<(TextureFormat, SampleCount)> result = [];
+		StackList16<(TextureFormat, TextureFlags, SampleCount)> result = [];
 		for (int i = 0; i < values.Length; i ++)
-			result.Add((values[i], SampleCount.One));
+			result.Add((values[i], flags, SampleCount.One));
 		return result;
 	}
 
-	private static StackList16<(TextureFormat Format, SampleCount SampleCount)> GetAttachments(in ReadOnlySpan<(TextureFormat, SampleCount)> values)
+	private static StackList16<(TextureFormat Format, TextureFlags Flags, SampleCount SampleCount)> GetAttachments(in ReadOnlySpan<(TextureFormat, TextureFlags, SampleCount)> values)
 		=> [..values];
 
 	/// <summary>

@@ -65,13 +65,13 @@ public class Batcher : IDisposable
 	/// Optional Vertex Storage Buffers to pass to the Draw Command.<br/>
 	/// Calling <see cref="Clear"/> will also clear these.
 	/// </summary>
-	public StackList4<StorageBuffer> VertexStorageBuffers;
+	public StackList4<StorageBuffer?> VertexStorageBuffers;
 
 	/// <summary>
 	/// Optional Fragment Storage Buffers to pass to the Draw Command.<br/>
 	/// Calling <see cref="Clear"/> will also clear these.
 	/// </summary>
-	public StackList4<StorageBuffer> FragmentStorageBuffers;
+	public StackList4<StorageBuffer?> FragmentStorageBuffers;
 
 	/// <summary>
 	/// The current Scissor Value of the Batcher

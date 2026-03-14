@@ -13,5 +13,10 @@ public enum ShaderStage
     /// <summary>
     /// Shader is used for the Fragment stage
     /// </summary>
-    Fragment
+    Fragment,
+
+    /// <summary>
+    /// Shader is used for the Compute stage
+    /// </summary>
+    Compute
 }

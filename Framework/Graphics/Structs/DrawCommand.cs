@@ -12,9 +12,34 @@ public struct DrawCommand
 	public IDrawableTarget Target;
 
 	/// <summary>
-	/// Material to use
+	/// Fragment Shader to draw with
 	/// </summary>
-	public Material Material;
+	public Shader? FragmentShader;
+
+	/// <summary>
+	/// Vertex Shader to draw with
+	/// </summary>
+	public Shader? VertexShader;
+
+	/// <summary>
+	/// Fragment Texture Samplers
+	/// </summary>
+	public StackList16<BoundSampler> FragmentSamplers;
+
+	/// <summary>
+	/// Vertex Texture Samplers
+	/// </summary>
+	public StackList16<BoundSampler> VertexSamplers;
+
+	/// <summary>
+	/// Fragment Uniform Buffer Data
+	/// </summary>
+	public StackList8<UniformBuffer?> FragmentUniformBuffers;
+
+	/// <summary>
+	/// Vertex Uniform Buffer Data
+	/// </summary>
+	public StackList8<UniformBuffer?> VertexUniformBuffers;
 
 	/// <summary>
 	/// Vertex Buffers to use and their associated input rate.
@@ -24,12 +49,12 @@ public struct DrawCommand
 	/// <summary>
 	/// Vertex Buffers to use
 	/// </summary>
-	public StackList4<StorageBuffer> VertexStorageBuffers;
+	public StackList4<StorageBuffer?> VertexStorageBuffers;
 
 	/// <summary>
 	/// Fragment storage Buffers to use
 	/// </summary>
-	public StackList4<StorageBuffer> FragmentStorageBuffers;
+	public StackList4<StorageBuffer?> FragmentStorageBuffers;
 
 	/// <summary>
 	/// Index Buffer to use. Set <see cref="IndexCount"/> for the number of indices to draw.
@@ -132,11 +157,8 @@ public struct DrawCommand
 	/// Creates a Draw Command based on the given mesh and material
 	/// </summary>
 	public DrawCommand(IDrawableTarget target, Mesh mesh, Material material)
-		: this()
+		: this(target, material)
 	{
-		Target = target;
-		Material = material;
-
 		if (mesh.InstanceBuffer != null)
 		{
 			VertexBuffers = [
@@ -164,12 +186,24 @@ public struct DrawCommand
 	}
 
 	public DrawCommand(IDrawableTarget target, VertexBuffer vertexBuffer, Material material)
+		: this(target, material)
+	{
+		VertexBuffers = [ (vertexBuffer, false) ];
+		VertexCount = vertexBuffer.Count;
+	}
+
+	public DrawCommand(IDrawableTarget target, Material material)
 		: this()
 	{
 		Target = target;
-		Material = material;
-		VertexBuffers = [ (vertexBuffer, false) ];
-		VertexCount = vertexBuffer.Count;
+
+		FragmentShader = material.Fragment.Shader;
+		FragmentSamplers = [..material.Fragment.Samplers];
+		FragmentUniformBuffers = [..material.Fragment.UniformBuffers];
+
+		VertexShader = material.Vertex.Shader;
+		VertexSamplers = [..material.Vertex.Samplers];
+		VertexUniformBuffers = [..material.Vertex.UniformBuffers];
 	}
 
 	public readonly void Submit(GraphicsDevice graphicsDevice)

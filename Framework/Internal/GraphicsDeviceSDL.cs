@@ -58,6 +58,12 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		public readonly ConcurrentBag<int> Pipelines = [];
 	}
 
+	private class ComputeResource(GraphicsDeviceSDL graphicsDevice, nint pipeline)
+		: Resource(graphicsDevice)
+	{
+		public readonly nint Pipeline = pipeline;
+	}
+
 	private record struct ClearInfo(StackList8<Color>? Color, float? Depth, int? Stencil);
 
 	private const int MaxFramesInFlight = 3;
@@ -65,7 +71,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	private const uint MaxUploadCycleCount = 4;
 	private const int MaxColorAttachments = 8;
 	private const string BackbufferName = "Foster Backbuffer";
-	private (TextureFormat Format, SampleCount SampleCount)[] backbufferFormat;
+	private (TextureFormat Format, TextureFlags Flags, SampleCount SampleCount)[] backbufferFormat;
 
 	// object pointers
 	private nint device;
@@ -101,6 +107,8 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	private readonly ConcurrentDictionary<int, nint> pipelines = [];
 	private readonly ConcurrentDictionary<nint, Resource> resources = [];
 	private ResourceHandle emptyDefaultTexture;
+	private ResourceHandle emptyDefaultComputeStorageTexture;
+	private ResourceHandle emptyDefaultBuffer;
 	private long nextResourceId;
 
 	// texture/mesh transfer buffers
@@ -162,7 +170,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		this.preferred = preferred;
 		var sdlv = SDL_GetVersion();
 		version = new(sdlv / 1000000, (sdlv / 1000) % 1000, sdlv % 1000);
-		backbufferFormat = [( TextureFormat.Color, SampleCount.One )];
+		backbufferFormat = [( TextureFormat.Color, TextureFlags.None, SampleCount.One )];
 	}
 
 	internal override void CreateDevice(in AppFlags flags)
@@ -194,11 +202,11 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (flags.Has(AppFlags.MultiSampledBackBuffer))
 		{
 			if (IsTextureMultiSampleSupported(TextureFormat.Color, SampleCount.Eight))
-				backbufferFormat = [( TextureFormat.Color, SampleCount.Eight )];
+				backbufferFormat = [( TextureFormat.Color, TextureFlags.None, SampleCount.Eight )];
 			else if (IsTextureMultiSampleSupported(TextureFormat.Color, SampleCount.Four))
-				backbufferFormat = [( TextureFormat.Color, SampleCount.Four )];
+				backbufferFormat = [( TextureFormat.Color, TextureFlags.None, SampleCount.Four )];
 			else if (IsTextureMultiSampleSupported(TextureFormat.Color, SampleCount.Two))
-				backbufferFormat = [( TextureFormat.Color, SampleCount.Two )];
+				backbufferFormat = [( TextureFormat.Color, TextureFlags.None, SampleCount.Two )];
 		}
 
 		this.flags = flags;
@@ -264,9 +272,18 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		// default texture we fall back to rendering if passed a material with a missing texture
 		{
-			emptyDefaultTexture = CreateTexture("Fallback", 1, 1, TextureFormat.R8G8B8A8, SampleCount.One, null);
 			var data = stackalloc Color[1] { 0xe82979 };
+			emptyDefaultTexture = CreateTexture("Fallback", 1, 1, TextureFormat.R8G8B8A8, default, SampleCount.One, null);
+			emptyDefaultComputeStorageTexture = CreateTexture("StorageFallback", 1, 1, TextureFormat.R8G8B8A8, TextureFlags.ComputeRead | TextureFlags.ComputeWrite, SampleCount.One, null);
 			SetTextureData(emptyDefaultTexture, new nint(data), 4, RectInt.Identity);
+			SetTextureData(emptyDefaultComputeStorageTexture, new nint(data), 4, RectInt.Identity);
+		}
+
+		// default buffer we fall back to rendering if shader expects buffers the user didn't supply
+		{
+			var data = stackalloc byte[1] { 0 };
+			emptyDefaultBuffer = CreateBuffer("Fallback", BufferType.Storage, default);
+			UploadBufferData(emptyDefaultBuffer, new nint(data), 1, 0);
 		}
 
 		// get backbuffer
@@ -291,7 +308,11 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		// destroy default texture
 		DestroyResource(emptyDefaultTexture);
+		DestroyResource(emptyDefaultComputeStorageTexture);
+		DestroyResource(emptyDefaultBuffer);
 		emptyDefaultTexture = nint.Zero;
+		emptyDefaultComputeStorageTexture = nint.Zero;
+		emptyDefaultBuffer = nint.Zero;
 
 		// destroy resources
 		while (!resources.IsEmpty)
@@ -428,7 +449,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		return SDL_GPUTextureSupportsSampleCount(device, GetTextureFormat(format), GetSampleCount(sampleCount));
 	}
 
-	internal override ResourceHandle CreateTexture(string? name, int width, int height, TextureFormat format, SampleCount sampleCount, nint? targetBinding)
+	internal override ResourceHandle CreateTexture(string? name, int width, int height, TextureFormat format, TextureFlags flags, SampleCount sampleCount, nint? targetBinding)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
@@ -467,6 +488,12 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				info.usage |= SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
 		}
 
+		// compute flags
+		if (flags.Has(TextureFlags.ComputeRead))
+			info.usage |= SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_READ;
+		if (flags.Has(TextureFlags.ComputeWrite))
+			info.usage |= SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_WRITE;
+
 		// try to create texture on GPU
 		nint texture = SDL_CreateGPUTexture(device, info);
 		if (props != 0)
@@ -479,7 +506,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (sampleCount != SampleCount.One)
 		{
 			var resolveName = name != null ? $"Resolve-{name}" : null;
-			resolveTexture = CreateTexture(resolveName, width, height, format, SampleCount.One, targetBinding);
+			resolveTexture = CreateTexture(resolveName, width, height, format, flags, SampleCount.One, targetBinding);
 		}
 
 		// create resulting texture resource
@@ -744,6 +771,10 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			BufferType.Vertex => SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_VERTEX,
 			BufferType.Index => SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_INDEX,
 			BufferType.Storage => SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+			BufferType.Compute =>
+				SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ |
+				SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE |
+				SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
 			_ => throw new NotImplementedException()
 		}, format);
 
@@ -887,7 +918,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 	}
 
-	internal override ResourceHandle CreateShader(string? name, in ShaderCreateInfo shaderInfo)
+	internal override ResourceHandle CreateShader(Shader shader, byte[] shaderCode, string entryPoint)
 	{
 		if (device == nint.Zero)
 			throw deviceNotCreated;
@@ -900,37 +931,95 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			_ => SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
 		};
 
-		var entryPoint = Encoding.UTF8.GetBytes(shaderInfo.EntryPoint);
-		nint program;
+		var entryPointUtf8 = Encoding.UTF8.GetBytes(entryPoint);
 
-		// create shader program
-		fixed (byte* entryPointPtr = entryPoint)
-		fixed (byte* code = shaderInfo.Code)
+		if (shader.Stage == ShaderStage.Compute)
 		{
-			SDL_GPUShaderCreateInfo info = new()
+			nint pipeline;
+
+			fixed (byte* entryPointPtr = entryPointUtf8)
+			fixed (byte* code = shaderCode)
 			{
-				code_size = (nuint)shaderInfo.Code.Length,
-				code = code,
-				entrypoint = entryPointPtr,
-				format = format,
-				stage = shaderInfo.Stage switch
+				uint props = 0;
+				if (!string.IsNullOrEmpty(shader.Name))
 				{
-					ShaderStage.Vertex => SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX,
-					ShaderStage.Fragment => SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT,
-					_ => throw new NotImplementedException()
-				},
-				num_samplers = (uint)shaderInfo.SamplerCount,
-				num_storage_textures = 0,
-				num_storage_buffers = (uint)shaderInfo.StorageBufferCount,
-				num_uniform_buffers = (uint)shaderInfo.UniformBufferCount,
-			};
+					props = SDL_CreateProperties();
+					SDL_SetStringProperty(props, SDL_PROP_GPU_COMPUTEPIPELINE_CREATE_NAME_STRING, shader.Name);
+				}
 
-			program = SDL_CreateGPUShader(device, info);
-			if (program == nint.Zero)
-				throw App.CreateExceptionFromSDL(nameof(SDL_CreateGPUShader), $"Failed to create {shaderInfo.Stage} Shader");
+				SDL_GPUComputePipelineCreateInfo info = new()
+				{
+					code_size = (nuint)shaderCode.Length,
+					code = code,
+					entrypoint = entryPointPtr,
+					format = format,
+					num_samplers = (uint)shader.SamplerCount,
+					num_readonly_storage_textures = (uint)shader.ReadOnlyStorageTextureCount,
+					num_readonly_storage_buffers = (uint)shader.ReadOnlyStorageBufferCount,
+					num_readwrite_storage_textures = (uint)shader.ReadWriteStorageTextureCount,
+					num_readwrite_storage_buffers = (uint)shader.ReadWriteStorageBufferCount,
+					num_uniform_buffers = (uint)shader.UniformBufferCount,
+					threadcount_x = (uint)shader.ThreadCountX,
+					threadcount_y = (uint)shader.ThreadCountY,
+					threadcount_z = (uint)shader.ThreadCountZ,
+					props = props
+				};
+
+				pipeline = SDL_CreateGPUComputePipeline(device, info);
+
+				if (props != 0)
+					SDL_DestroyProperties(props);
+
+				if (pipeline == nint.Zero)
+					throw App.CreateExceptionFromSDL(nameof(SDL_CreateGPUComputePipeline), "Failed to create Compute Shader");
+			}
+
+			return RegisterResource(new ComputeResource(this, pipeline));
 		}
+		else
+		{
+			nint program;
 
-		return RegisterResource(new ShaderResource(this, program));
+			fixed (byte* entryPointPtr = entryPointUtf8)
+			fixed (byte* code = shaderCode)
+			{
+				uint props = 0;
+				if (!string.IsNullOrEmpty(shader.Name))
+				{
+					props = SDL_CreateProperties();
+					SDL_SetStringProperty(props, SDL_PROP_GPU_SHADER_CREATE_NAME_STRING, shader.Name);
+				}
+
+				SDL_GPUShaderCreateInfo info = new()
+				{
+					code_size = (nuint)shaderCode.Length,
+					code = code,
+					entrypoint = entryPointPtr,
+					format = format,
+					stage = shader.Stage switch
+					{
+						ShaderStage.Vertex => SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX,
+						ShaderStage.Fragment => SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT,
+						_ => throw new NotImplementedException()
+					},
+					num_samplers = (uint)shader.SamplerCount,
+					num_storage_textures = 0,
+					num_storage_buffers = (uint)shader.StorageBufferCount,
+					num_uniform_buffers = (uint)shader.UniformBufferCount,
+					props = props
+				};
+
+				program = SDL_CreateGPUShader(device, info);
+
+				if (props != 0)
+					SDL_DestroyProperties(props);
+
+				if (program == nint.Zero)
+					throw App.CreateExceptionFromSDL(nameof(SDL_CreateGPUShader), $"Failed to create {shader.Stage} Shader");
+			}
+
+			return RegisterResource(new ShaderResource(this, program));
+		}
 	}
 
 	private ResourceHandle RegisterResource(Resource it)
@@ -965,6 +1054,10 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				ReleaseGraphicsPipelinesAssociatedWith(sha);
 				SDL_ReleaseGPUShader(device, sha.Shader);
 			}
+			else if (it is ComputeResource comp)
+			{
+				SDL_ReleaseGPUComputePipeline(device, comp.Pipeline);
+			}
 		}
 	}
 
@@ -989,14 +1082,13 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (device == nint.Zero)
 			throw deviceNotCreated;
 
-		var mat = command.Material;
-		var vertexShader = mat.Vertex.Shader!;
-		var fragmentShader = mat.Fragment.Shader!;
-		var target = command.Target;
-
 		// try to start a render pass
+		var target = command.Target;
 		if (!BeginRenderPass(target, default))
 			return;
+
+		var vertexShader = command.VertexShader!;
+		var fragmentShader = command.FragmentShader!;
 
 		// set viewport
 		var nextViewport = command.Viewport ?? new RectInt(0, 0, renderPassTargetSize.X, renderPassTargetSize.Y);
@@ -1069,7 +1161,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			}
 		}
 
-		// bind buffers
+		// bind vertex buffers
 		if (rebindVertexBuffers)
 		{
 			renderPassVertexBuffers.Clear();
@@ -1100,74 +1192,93 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			}
 		}
 
-		var vertexInfo = vertexShader.CreateInfo;
-		var fragmentInfo = fragmentShader.CreateInfo;
-
 		// bind vertex samplers
-		// TODO: only do this if Samplers change
-		if (vertexInfo.SamplerCount > 0)
+		// TODO: only do this if Samplers change?
+		if (vertexShader.SamplerCount > 0)
 		{
-			Span<SDL_GPUTextureSamplerBinding> samplers = stackalloc SDL_GPUTextureSamplerBinding[vertexInfo.SamplerCount];
+			Span<SDL_GPUTextureSamplerBinding> samplers = stackalloc SDL_GPUTextureSamplerBinding[vertexShader.SamplerCount];
 
-			for (int i = 0; i < vertexInfo.SamplerCount; i++)
+			for (int i = 0; i < vertexShader.SamplerCount; i++)
 			{
+				var value = i < command.VertexSamplers.Count ? command.VertexSamplers[i] : default;
 				samplers[i].texture =
-					(FindResource<TextureResource>(mat.Vertex.Samplers[i].Texture?.Resource) ??
-					RequireResource<TextureResource>(emptyDefaultTexture)).SamplerTexture;
-				samplers[i].sampler = GetSampler(mat.Vertex.Samplers[i].Sampler);
+					FindResource<TextureResource>(value.Texture?.Resource)?.SamplerTexture ??
+					RequireResource<TextureResource>(emptyDefaultTexture).SamplerTexture;
+				samplers[i].sampler = GetSampler(value.Sampler);
 			}
 
-			SDL_BindGPUVertexSamplers(renderPass, 0, samplers, (uint)vertexInfo.SamplerCount);
+			SDL_BindGPUVertexSamplers(renderPass, 0, samplers, (uint)vertexShader.SamplerCount);
 		}
 
 		// bind fragment samplers
-		// TODO: only do this if Samplers change
-		if (fragmentInfo.SamplerCount > 0)
+		// TODO: only do this if Samplers change?
+		if (fragmentShader.SamplerCount > 0)
 		{
-			Span<SDL_GPUTextureSamplerBinding> samplers = stackalloc SDL_GPUTextureSamplerBinding[fragmentInfo.SamplerCount];
+			Span<SDL_GPUTextureSamplerBinding> samplers = stackalloc SDL_GPUTextureSamplerBinding[fragmentShader.SamplerCount];
 
-			for (int i = 0; i < fragmentInfo.SamplerCount; i++)
+			for (int i = 0; i < fragmentShader.SamplerCount; i++)
 			{
+				var value = i < command.FragmentSamplers.Count ? command.FragmentSamplers[i] : default;
 				samplers[i].texture =
-					(FindResource<TextureResource>(mat.Fragment.Samplers[i].Texture?.Resource) ??
-					RequireResource<TextureResource>(emptyDefaultTexture)).SamplerTexture;
-				samplers[i].sampler = GetSampler(mat.Fragment.Samplers[i].Sampler);
+					FindResource<TextureResource>(value.Texture?.Resource)?.SamplerTexture ??
+					RequireResource<TextureResource>(emptyDefaultTexture).SamplerTexture;
+				samplers[i].sampler = GetSampler(value.Sampler);
 			}
 
-			SDL_BindGPUFragmentSamplers(renderPass, 0, samplers, (uint)fragmentInfo.SamplerCount);
+			SDL_BindGPUFragmentSamplers(renderPass, 0, samplers, (uint)fragmentShader.SamplerCount);
 		}
 
+		// TODO: only do this if Uniforms change?
 		// Upload Vertex Uniforms
-		// TODO: only do this if Uniforms change
-		for (int i = 0; i < vertexInfo.UniformBufferCount; i ++)
+		for (int i = 0; i < vertexShader.UniformBufferCount; i ++)
 		{
-			fixed (byte* ptr = mat.Vertex.UniformBuffers[i])
-				SDL_PushGPUVertexUniformData(cmdRender, (uint)i, new nint(ptr), (uint)mat.Vertex.UniformBuffers[i].Length);
+			if (i >= command.VertexUniformBuffers.Count || command.VertexUniformBuffers[i] is not {} unibuf)
+				continue;
+
+			var buf = unibuf.Get();
+			fixed (byte* ptr = buf)
+				SDL_PushGPUVertexUniformData(cmdRender, (uint)i, new nint(ptr), (uint)buf.Length);
 		}
 
+		// TODO: only do this if Uniforms change?
 		// Upload Fragment Uniforms
-		// TODO: only do this if Uniforms change
-		for (int i = 0; i < fragmentInfo.UniformBufferCount; i ++)
+		for (int i = 0; i < fragmentShader.UniformBufferCount; i ++)
 		{
-			fixed (byte* ptr = mat.Fragment.UniformBuffers[i])
-				SDL_PushGPUFragmentUniformData(cmdRender, (uint)i, new nint(ptr), (uint)mat.Fragment.UniformBuffers[i].Length);
+			if (i >= command.FragmentUniformBuffers.Count || command.FragmentUniformBuffers[i] is not {} unibuf)
+				continue;
+
+			var buf = unibuf.Get();
+			fixed (byte* ptr = buf)
+				SDL_PushGPUFragmentUniformData(cmdRender, (uint)i, new nint(ptr), (uint)buf.Length);
 		}
 
+		// TODO: if the user doesn't supply enough storage buffers, should we throw?
 		// bind vertex storage buffers
-		if (command.VertexStorageBuffers.Count > 0)
+		if (vertexShader.StorageBufferCount > 0)
 		{
-			Span<nint> buffers = stackalloc nint[command.VertexStorageBuffers.Count];
-			for (int i = 0; i < command.VertexStorageBuffers.Count; i ++)
-				buffers[i] = RequireResource<BufferResource>(command.VertexStorageBuffers[i].Resource).Buffer;
+			Span<nint> buffers = stackalloc nint[vertexShader.StorageBufferCount];
+			for (int i = 0; i < vertexShader.StorageBufferCount; i ++)
+			{
+				if (i < command.VertexStorageBuffers.Count && command.VertexStorageBuffers[i] is {} buf)
+					buffers[i] = RequireResource<BufferResource>(buf.Resource).Buffer;
+				else
+					buffers[i] = RequireResource<BufferResource>(emptyDefaultBuffer).Buffer;
+			}
 			SDL_BindGPUVertexStorageBuffers(renderPass, 0, buffers, (uint)buffers.Length);
 		}
 
+		// TODO: if the user doesn't supply enough storage buffers, should we throw?
 		// bind fragment storage buffers
-		if (command.FragmentStorageBuffers.Count > 0)
+		if (fragmentShader.StorageBufferCount > 0)
 		{
-			Span<nint> buffers = stackalloc nint[command.FragmentStorageBuffers.Count];
-			for (int i = 0; i < command.FragmentStorageBuffers.Count; i ++)
-				buffers[i] = RequireResource<BufferResource>(command.FragmentStorageBuffers[i].Resource).Buffer;
+			Span<nint> buffers = stackalloc nint[fragmentShader.StorageBufferCount];
+			for (int i = 0; i < fragmentShader.StorageBufferCount; i ++)
+			{
+				if (i < command.FragmentStorageBuffers.Count && command.FragmentStorageBuffers[i] is {} buf)
+					buffers[i] = RequireResource<BufferResource>(buf.Resource).Buffer;
+				else
+					buffers[i] = RequireResource<BufferResource>(emptyDefaultBuffer).Buffer;
+			}
 			SDL_BindGPUFragmentStorageBuffers(renderPass, 0, buffers, (uint)buffers.Length);
 		}
 
@@ -1197,6 +1308,140 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				first_instance: 0
 			);
 		}
+	}
+
+	internal override void PerformDispatch(ComputeCommand command)
+	{
+		if (device == nint.Zero)
+			throw deviceNotCreated;
+
+		// end any existing renderpass
+		EndRenderPass();
+
+		var shader = command.Shader!;
+		var computePipeline = RequireResource<ComputeResource>(shader.Resource);
+		var computePass = nint.Zero;
+
+		// TODO: can this be cached? so as to not have to restart it every compute dispatch?
+		// begin compute pass with read-write storage buffer bindings
+		{
+			Span<SDL_GPUStorageTextureReadWriteBinding> rwTextureBindings = stackalloc SDL_GPUStorageTextureReadWriteBinding[shader.ReadWriteStorageTextureCount];
+			Span<SDL_GPUStorageBufferReadWriteBinding> rwBufferBindings = stackalloc SDL_GPUStorageBufferReadWriteBinding[shader.ReadWriteStorageBufferCount];
+
+			for (int i = 0; i < shader.ReadWriteStorageTextureCount; i++)
+			{
+				if (i >= command.ReadWriteStorageTextures.Count || command.ReadWriteStorageTextures[i] is not {} buf)
+				{
+					rwTextureBindings[i] = new() { texture = nint.Zero };
+					continue;
+				}
+
+				rwTextureBindings[i] = new()
+				{
+					texture = RequireResource<TextureResource>(buf.Resource).SamplerTexture,
+					cycle = true
+				};
+			}
+
+			for (int i = 0; i < shader.ReadWriteStorageBufferCount; i++)
+			{
+				if (i >= command.ReadWriteStorageBuffers.Count || command.ReadWriteStorageBuffers[i] is not {} buf)
+				{
+					rwBufferBindings[i] = new() { buffer = nint.Zero };
+					continue;
+				}
+
+				rwBufferBindings[i] = new()
+				{
+					buffer = RequireResource<BufferResource>(buf.Resource).Buffer,
+					cycle = true
+				};
+			}
+
+			computePass = SDL_BeginGPUComputePass(
+				cmdRender,
+				rwTextureBindings,
+				(uint)shader.ReadWriteStorageTextureCount,
+				rwBufferBindings,
+				(uint)shader.ReadWriteStorageBufferCount
+			);
+
+			if (computePass == nint.Zero)
+			{
+				Log.Warning("Failed to begin GPU compute pass");
+				return;
+			}
+		}
+
+		// bind compute pipeline
+		SDL_BindGPUComputePipeline(computePass, computePipeline.Pipeline);
+
+		// bind samplers
+		if (shader.SamplerCount > 0)
+		{
+			Span<SDL_GPUTextureSamplerBinding> samplers = stackalloc SDL_GPUTextureSamplerBinding[shader.SamplerCount];
+
+			for (int i = 0; i < shader.SamplerCount; i++)
+			{
+				var value = i < command.Samplers.Count ? command.Samplers[i] : default;
+				samplers[i].texture =
+					FindResource<TextureResource>(value.Texture?.Resource)?.SamplerTexture ??
+					RequireResource<TextureResource>(emptyDefaultTexture).SamplerTexture;
+				samplers[i].sampler = GetSampler(value.Sampler);
+			}
+
+			SDL_BindGPUComputeSamplers(computePass, 0, samplers, (uint)shader.SamplerCount);
+		}
+
+		// push uniform data
+		for (int i = 0; i < shader.UniformBufferCount; i ++)
+		{
+			if (i >= command.UniformBuffers.Count || command.UniformBuffers[i] is not {} unibuf)
+				continue;
+
+			var buf = unibuf.Get();
+			fixed (byte* ptr = buf)
+				SDL_PushGPUComputeUniformData(cmdRender, (uint)i, new nint(ptr), (uint)buf.Length);
+		}
+
+		// bind storage textures
+		if (shader.ReadOnlyStorageTextureCount > 0)
+		{
+			Span<nint> textures = stackalloc nint[shader.ReadOnlyStorageTextureCount];
+			for (int i = 0; i < shader.ReadOnlyStorageTextureCount; i ++)
+			{
+				if (i < command.ReadOnlyStorageTextures.Count && command.ReadOnlyStorageTextures[i] is {} tex)
+					textures[i] = RequireResource<TextureResource>(tex.Resource).SamplerTexture;
+				else
+					textures[i] = RequireResource<TextureResource>(emptyDefaultComputeStorageTexture).SamplerTexture;
+			}
+			SDL_BindGPUComputeStorageBuffers(computePass, 0, textures, (uint)textures.Length);
+		}
+
+		// TODO: if the user doesn't supply enough storage buffers, should we throw?
+		// bind storage buffers
+		if (shader.ReadOnlyStorageBufferCount > 0)
+		{
+			Span<nint> buffers = stackalloc nint[shader.ReadOnlyStorageBufferCount];
+			for (int i = 0; i < shader.ReadOnlyStorageBufferCount; i ++)
+			{
+				if (i < command.ReadOnlyStorageBuffers.Count && command.ReadOnlyStorageBuffers[i] is {} buf)
+					buffers[i] = RequireResource<BufferResource>(buf.Resource).Buffer;
+				else
+					buffers[i] = RequireResource<BufferResource>(emptyDefaultBuffer).Buffer;
+			}
+			SDL_BindGPUComputeStorageBuffers(computePass, 0, buffers, (uint)buffers.Length);
+		}
+
+		// dispatch
+		SDL_DispatchGPUCompute(
+			computePass,
+			(uint)command.GroupCountX,
+			(uint)command.GroupCountY,
+			(uint)command.GroupCountZ
+		);
+
+		SDL_EndGPUComputePass(computePass);
 	}
 
 	internal override void Clear(IDrawableTarget target, ReadOnlySpan<Color> color, float depth, int stencil, ClearMask mask)
@@ -1400,8 +1645,8 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	{
 		// build a big hashcode of everything in use
 		var hash = HashCode.Combine(
-			command.Material.Vertex.Shader!.Resource,
-			command.Material.Fragment.Shader!.Resource,
+			command.VertexShader!.Resource,
+			command.FragmentShader!.Resource,
 			command.CullMode,
 			command.DepthCompare,
 			command.DepthTestEnabled,
@@ -1434,8 +1679,8 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		{
 			var self = args.Item1;
 			var command = args.Item2;
-			var vertRes = self.RequireResource<ShaderResource>(command.Material.Vertex.Shader!.Resource);
-			var fragRes = self.RequireResource<ShaderResource>(command.Material.Fragment.Shader!.Resource);
+			var vertRes = self.RequireResource<ShaderResource>(command.VertexShader!.Resource);
+			var fragRes = self.RequireResource<ShaderResource>(command.FragmentShader!.Resource);
 			var vertexAttributeCount = 0;
 			foreach (var vb in command.VertexBuffers)
 				vertexAttributeCount += vb.Buffer.Format.Elements.Count;
