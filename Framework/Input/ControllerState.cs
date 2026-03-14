@@ -129,7 +129,7 @@ public sealed class ControllerState(int index)
 
 		if (Down(button))
 		{
-			var stamp = Timestamp(button) / 1000.0;
+			var stamp = Timestamp(button);
 			return (time.Elapsed - stamp).TotalSeconds > delay && time.OnInterval(interval, stamp.TotalSeconds);
 		}
 

@@ -164,7 +164,7 @@ public sealed class Storage : StorageContainer
 	public override bool Remove(string path)
 	{
 		if (!writable)
-			throw new Exception($"{nameof(CreateDirectory)} Failed: the storage can not be written to");
+			throw new Exception($"{nameof(Remove)} Failed: the storage can not be written to");
 		path = Calc.NormalizePath(path);
 		return handle != nint.Zero && SDL_RemoveStoragePath(handle, path);
 	}
@@ -172,7 +172,7 @@ public sealed class Storage : StorageContainer
 	public override Stream Create(string path)
 	{
 		if (!writable)
-			throw new Exception($"{nameof(CreateDirectory)} Failed: the storage can not be written to");
+			throw new Exception($"{nameof(Create)} Failed: the storage can not be written to");
 		path = Calc.NormalizePath(path);
 		return new UserStream(path, handle);
 	}

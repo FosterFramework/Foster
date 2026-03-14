@@ -21,7 +21,7 @@ public struct LineInt(Point2 from, Point2 to) : IConvexShape, IEquatable<LineInt
 		{
 			var rect = new RectInt(Calc.Min(From.X, To.X), Calc.Min(From.Y, To.Y), 0, 0);
 			rect.Width = Calc.Max(From.X, To.X) - rect.X;
-			rect.Height = Calc.Max(From.X + To.X, To.Y) - rect.Y;
+			rect.Height = Calc.Max(From.Y, To.Y) - rect.Y;
 			return rect;
 		}
 	}

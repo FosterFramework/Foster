@@ -305,7 +305,7 @@ public struct ConvexPolygon : IConvexShape, IEnumerable<Vector2>
 
 	public struct TriangleEnumerator(ConvexPolygon convexPolygon)
 	{
-		private int index = -1;
+		private int index = 0;
 
 		public Triangle Current { get; private set; }
 

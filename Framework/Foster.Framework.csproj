@@ -1,60 +1,48 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Library</OutputType>
     <TargetFramework>net10.0</TargetFramework>
-	<RuntimeIdentifiers>win-x64;osx-x64;linux-x64</RuntimeIdentifiers>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <OutputType>Library</OutputType>
+
     <Title>Foster</Title>
     <Product>Foster</Product>
     <Version>0.3.0</Version>
     <Authors>Noel Berry</Authors>
-    <Description>A small 2D cross-platform Game Framework</Description>
+    <Description>A small cross-platform 2D-focused Game Framework</Description>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/FosterFramework/Foster</RepositoryUrl>
+
     <PackageId>FosterFramework</PackageId>
     <PackageProjectUrl>https://github.com/FosterFramework/Foster</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageOutputPath>$(SolutionDir)artifacts/</PackageOutputPath>
+    
     <IsAotCompatible>true</IsAotCompatible>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>CS1591</NoWarn>
-  </PropertyGroup>
 
-  <PropertyGroup>
     <NativeLibsDir>$(ProjectDir)Internal\Native\</NativeLibsDir>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="($(RuntimeIdentifier) == '' and $([MSBuild]::IsOSPlatform('Linux'))) or $(RuntimeIdentifier) == 'linux-x64'">
-    <IsLinux>true</IsLinux>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="($(RuntimeIdentifier) == '' and $([MSBuild]::IsOSPlatform('Windows'))) or $(RuntimeIdentifier) == 'win-x64'">
-    <IsWindows>true</IsWindows>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="($(RuntimeIdentifier) == '' and $([MSBuild]::IsOSPlatform('OSX'))) or $(RuntimeIdentifier) == 'osx-x64'">
-    <IsMacOS>true</IsMacOS>
   </PropertyGroup>
 
   <ItemGroup>
     <Content Include="$(NativeLibsDir)win-x64\**" Visible="false">
-      <CopyToOutputDirectory Condition="'$(IsWindows)' == 'true'">PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="('$(RuntimeIdentifier)' == '' and $([MSBuild]::IsOSPlatform('Windows'))) or '$(RuntimeIdentifier)' == 'win-x64'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\win-x64\native</PackagePath>
       <Pack>True</Pack>
       <Link>%(Filename)%(Extension)</Link>
     </Content>
     <Content Include="$(NativeLibsDir)linux-x64\**" Visible="false">
-      <CopyToOutputDirectory Condition="'$(IsLinux)' == 'true'">PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="('$(RuntimeIdentifier)' == '' and $([MSBuild]::IsOSPlatform('Linux'))) or '$(RuntimeIdentifier)' == 'linux-x64'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\linux-x64\native</PackagePath>
       <Pack>True</Pack>
       <Link>%(Filename)%(Extension)</Link>
     </Content>
     <Content Include="$(NativeLibsDir)osx\**" Visible="false">
-      <CopyToOutputDirectory Condition="'$(IsMacOS)' == 'true'">PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="('$(RuntimeIdentifier)' == '' and $([MSBuild]::IsOSPlatform('OSX'))) or '$(RuntimeIdentifier)' == 'osx-x64'">PreserveNewest</CopyToOutputDirectory>
       <PackagePath>runtimes\osx\native</PackagePath>
       <Pack>True</Pack>
       <Link>%(Filename)%(Extension)</Link>

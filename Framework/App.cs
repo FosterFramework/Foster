@@ -222,6 +222,10 @@ public abstract class App : IDisposable
 
 	~App() => Dispose(false);
 
+	/// <summary>
+	/// Disposes the Application resources. May be called after <see cref="Run"/>,
+	/// but not during any <see cref="App"/> callbacks (<see cref="Startup"/>, <see cref="Update"/>, <see cref="Render"/>, <see cref="Shutdown"/>)
+	/// </summary>
 	public void Dispose()
 	{
 		Dispose(true);
@@ -287,26 +291,34 @@ public abstract class App : IDisposable
 		fixedAccumulator = TimeSpan.Zero;
 		timer.Restart();
 
-		// poll events once, so input has controller state before Startup
-		PollEvents();
-		inputProvider.Update(Time);
-		Window.Show();
-		Startup();
+		// wrap in a try/finally so if anything here throws, Dispose
+		// won't then also throw due to the Application still "Running"
+		try
+		{
+			// poll events once, so input has controller state before Startup
+			PollEvents();
+			inputProvider.Update(Time);
+			Window.Show();
+			Startup();
 
-		// begin normal game loop
-		while (!Exiting)
-			Tick();
+			// begin normal game loop
+			while (!Exiting)
+				Tick();
 
-		// make sure all queued main thread actions have been run
-		while (mainThreadQueue.TryDequeue(out var action))
-			action.Invoke();
+			// make sure all queued main thread actions have been run
+			while (mainThreadQueue.TryDequeue(out var action))
+				action.Invoke();
 
-		// shutdown
-		Shutdown();
-		Window.Hide();
-		inputProvider.CloseDevices();
-		Running = false;
-		Exiting = false;
+			// shutdown
+			Shutdown();
+			Window.Hide();
+			inputProvider.CloseDevices();
+		}
+		finally
+		{
+			Running = false;
+			Exiting = false;
+		}
 	}
 
 	/// <summary>
@@ -385,7 +397,7 @@ public abstract class App : IDisposable
 			// Do not allow any update to take longer than our maximum.
 			if (fixedAccumulator > update.FixedMaxTime)
 			{
-				Time.Advance(fixedAccumulator - update.FixedMaxTime);
+				Time = Time.Advance(fixedAccumulator - update.FixedMaxTime);
 				fixedAccumulator = update.FixedMaxTime;
 			}
 

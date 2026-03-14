@@ -1784,14 +1784,14 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 					compare_op = GetCompareOp(command.DepthCompare),
 					back_stencil_state = new() {
 						fail_op = GetStencilOp(command.BackStencilState.FailOp),
-						pass_op = GetStencilOp(command.BackStencilState.FailOp),
-						depth_fail_op = GetStencilOp(command.BackStencilState.FailOp),
+						pass_op = GetStencilOp(command.BackStencilState.PassOp),
+						depth_fail_op = GetStencilOp(command.BackStencilState.DepthFailOp),
 						compare_op = GetCompareOp(command.BackStencilState.CompareOp),
 					},
 					front_stencil_state = new() {
 						fail_op = GetStencilOp(command.FrontStencilState.FailOp),
-						pass_op = GetStencilOp(command.FrontStencilState.FailOp),
-						depth_fail_op = GetStencilOp(command.FrontStencilState.FailOp),
+						pass_op = GetStencilOp(command.FrontStencilState.PassOp),
+						depth_fail_op = GetStencilOp(command.FrontStencilState.DepthFailOp),
 						compare_op = GetCompareOp(command.FrontStencilState.CompareOp),
 					},
 					compare_mask = command.StencilCompareMask,
@@ -2022,7 +2022,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		StencilOp.DecrementAndClamp => SDL_GPUStencilOp.SDL_GPU_STENCILOP_DECREMENT_AND_CLAMP,
 		StencilOp.Invert => SDL_GPUStencilOp.SDL_GPU_STENCILOP_INVERT,
 		StencilOp.IncrementAndWrap => SDL_GPUStencilOp.SDL_GPU_STENCILOP_INCREMENT_AND_WRAP,
-		StencilOp.DecrementAndwrap => SDL_GPUStencilOp.SDL_GPU_STENCILOP_DECREMENT_AND_WRAP,
+		StencilOp.DecrementAndWrap => SDL_GPUStencilOp.SDL_GPU_STENCILOP_DECREMENT_AND_WRAP,
 		_ => throw new ArgumentException("Invalid Stencil Operation", nameof(op)),
 
 	};
@@ -2036,7 +2036,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		DepthCompare.LessOrEqual => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_LESS_OR_EQUAL,
 		DepthCompare.Greater => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_GREATER,
 		DepthCompare.NotEqual => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_NOT_EQUAL,
-		DepthCompare.GreatorOrEqual => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_GREATER_OR_EQUAL,
+		DepthCompare.GreaterOrEqual => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_GREATER_OR_EQUAL,
 		_ => SDL_GPUCompareOp.SDL_GPU_COMPAREOP_NEVER
 	};
 
