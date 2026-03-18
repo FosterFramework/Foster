@@ -7,168 +7,106 @@ namespace Foster.Framework;
 /// </summary>
 public struct Quad : IConvexShape, IEquatable<Quad>
 {
-	private Vector2 a;
-	private Vector2 b;
-	private Vector2 c;
-	private Vector2 d;
-	private Vector2 normalAB;
-	private Vector2 normalBC;
-	private Vector2 normalCD;
-	private Vector2 normalDA;
-	private bool normalsDirty;
+	public Vector2 A;
+	public Vector2 B;
+	public Vector2 C;
+	public Vector2 D;
 
 	public Quad(Vector2 a, Vector2 b, Vector2 c, Vector2 d)
 	{
-		this.a = a;
-		this.b = b;
-		this.c = c;
-		this.d = d;
-		normalsDirty = true;
+		A = a;
+		B = b;
+		C = c;
+		D = d;
 	}
 
 	public Quad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
 	{
-		a            = new Vector2(x1, y1);
-		b            = new Vector2(x2, y2);
-		c            = new Vector2(x3, y3);
-		d            = new Vector2(x4, y4);
-		normalsDirty = true;
+		A = new(x1, y1);
+		B = new(x2, y2);
+		C = new(x3, y3);
+		D = new(x4, y4);
 	}
 
 	public Quad(in Rect rect)
-		: this(rect.TopLeft, rect.TopRight, rect.BottomRight, rect.BottomLeft) {}
-
-	public Vector2 A
+		: this(rect.TopLeft, rect.TopRight, rect.BottomRight, rect.BottomLeft)
 	{
-		readonly get => a;
-		set
-		{
-			if (a != value)
-			{
-				a = value;
-				normalsDirty = true;
-			}
-		}
+
 	}
 
-	public Vector2 B
-	{
-		readonly get => b;
-		set
-		{
-			if (b != value)
-			{
-				b = value;
-				normalsDirty = true;
-			}
-		}
-	}
+	/// <summary>
+	/// Get the normal of the edge from <see cref="A"/> to <see cref="B"/>. Normals will be away from edges if winding is clockwise.
+	/// </summary>
+	public readonly Vector2 NormalAB => (B - A).Normalized().TurnLeft();
 
-	public Vector2 C
-	{
-		readonly get => c;
-		set
-		{
-			if (c != value)
-			{
-				c = value;
-				normalsDirty = true;
-			}
-		}
-	}
+	/// <summary>
+	/// Get the normal of the edge from <see cref="B"/> to <see cref="C"/>. Normals will be away from edges if winding is clockwise.
+	/// </summary>
+	public readonly Vector2 NormalBC => (C - B).Normalized().TurnLeft();
 
-	public Vector2 D
-	{
-		readonly get => d;
-		set
-		{
-			if (d != value)
-			{
-				d = value;
-				normalsDirty = true;
-			}
-		}
-	}
+	/// <summary>
+	/// Get the normal of the edge from <see cref="C"/> to <see cref="D"/>. Normals will be away from edges if winding is clockwise.
+	/// </summary>
+	public readonly Vector2 NormalCD => (D - C).Normalized().TurnLeft();
 
-	public Vector2 NormalAB
-	{
-		get
-		{
-			UpdateNormals();
-			return normalAB;
-		}
-	}
+	/// <summary>
+	/// Get the normal of the edge from <see cref="D"/> to <see cref="A"/>. Normals will be away from edges if winding is clockwise.
+	/// </summary>
+	public readonly Vector2 NormalDA => (A - D).Normalized().TurnLeft();
 
-	public Vector2 NormalBC
-	{
-		get
-		{
-			UpdateNormals();
-			return normalBC;
-		}
-	}
-
-	public Vector2 NormalCD
-	{
-		get
-		{
-			UpdateNormals();
-			return normalCD;
-		}
-	}
-
-	public Vector2 NormalDA
-	{
-		get
-		{
-			UpdateNormals();
-			return normalDA;
-		}
-	}
-
+	/// <summary>
+	/// Get the edge from <see cref="A"/> to <see cref="B"/>
+	/// </summary>
 	public readonly Line AB => new(A, B);
+
+	/// <summary>
+	/// Get the edge from <see cref="B"/> to <see cref="C"/>
+	/// </summary>
 	public readonly Line BC => new(B, C);
+
+	/// <summary>
+	/// Get the edge from <see cref="C"/> to <see cref="D"/>
+	/// </summary>
 	public readonly Line CD => new(C, D);
+
+	/// <summary>
+	/// Get the edge from <see cref="D"/> to <see cref="A"/>
+	/// </summary>
 	public readonly Line DA => new(D, A);
 
+	/// <summary>
+	/// Get the axis-aligned bounds of the <see cref="Quad"/>
+	/// </summary>
 	public readonly Rect Bounds
 	{
 		get
 		{
 			var bounds = new Rect
 			{
-				X = Math.Min(a.X, Math.Min(b.X, Math.Min(c.X, d.X))),
-				Y = Math.Min(a.Y, Math.Min(b.Y, Math.Min(c.Y, d.Y)))
+				X = Math.Min(A.X, Math.Min(B.X, Math.Min(C.X, D.X))),
+				Y = Math.Min(A.Y, Math.Min(B.Y, Math.Min(C.Y, D.Y)))
 			};
-			bounds.Width = Math.Max(a.X, Math.Max(b.X, Math.Max(c.X, d.X))) - bounds.X;
-			bounds.Height = Math.Max(a.Y, Math.Max(b.Y, Math.Max(c.Y, d.Y))) - bounds.Y;
+			bounds.Width = Math.Max(A.X, Math.Max(B.X, Math.Max(C.X, D.X))) - bounds.X;
+			bounds.Height = Math.Max(A.Y, Math.Max(B.Y, Math.Max(C.Y, D.Y))) - bounds.Y;
 			return bounds;
 		}
 	}
 
+	/// <summary>
+	/// Get the centerpoint of the <see cref="Quad"/>'s bounds
+	/// </summary>
 	public readonly Vector2 Center => Bounds.Center;
-	public readonly Vector2 Average => (a + b + c + d) / 4f;
 
-	private void UpdateNormals()
-	{
-		if (!normalsDirty)
-			return;
+	/// <summary>
+	/// Get the average of the 4 points of the <see cref="Quad"/>
+	/// </summary>
+	public readonly Vector2 Average => (A + B + C + D) / 4f;
 
-		normalAB     = (b - a).Normalized().TurnRight();
-		normalBC     = (c - b).Normalized().TurnRight();
-		normalCD     = (d - c).Normalized().TurnRight();
-		normalDA     = (a - d).Normalized().TurnRight();
-		normalsDirty = false;
-	}
-
-	public Quad Translate(in Vector2 amount)
-	{
-		A += amount;
-		B += amount;
-		C += amount;
-		D += amount;
-		return this;
-	}
+	/// <summary>
+	/// Get a new <see cref="Quad"/> translated by an <paramref name="amount"/>
+	/// </summary>
+	public readonly Quad Translated(in Vector2 amount)
+		=> new(A + amount, B + amount, C + amount, D + amount);
 
 	public readonly void Project(in Vector2 axis, out float min, out float max)
 	{
@@ -205,21 +143,18 @@ public struct Quad : IConvexShape, IEquatable<Quad>
 
 	public readonly int Axes => 4;
 
-	public Vector2 GetAxis(int index)
-	{
-		UpdateNormals();
-		return index switch
+	public readonly Vector2 GetAxis(int index)
+		=> index switch
 		{
-			0 => new Vector2(-normalAB.Y, normalAB.X),
-			1 => new Vector2(-normalBC.Y, normalBC.X),
-			2 => new Vector2(-normalCD.Y, normalCD.X),
-			3 => new Vector2(-normalDA.Y, normalDA.X),
+			0 => (B - A).Normalized(),
+			1 => (C - B).Normalized(),
+			2 => (D - C).Normalized(),
+			3 => (A - D).Normalized(),
 			_ => throw new IndexOutOfRangeException(),
 		};
-	}
 
 	public readonly override bool Equals(object? obj) => obj is Quad other && this == other;
-	public readonly override int GetHashCode() => HashCode.Combine(a, b, c, d);
+	public readonly override int GetHashCode() => HashCode.Combine(A, B, C, D);
 
 	public static Quad Transform(Vector2 a, Vector2 b, Vector2 c, Vector2 d, Matrix3x2 matrix, bool maintainWinding = false)
 		=> Transform(new Quad(a, b, c, d), matrix, maintainWinding);
@@ -232,17 +167,17 @@ public struct Quad : IConvexShape, IEquatable<Quad>
 
 		if (reverse)
 			return new(
-				Vector2.Transform(quad.d, matrix),
-				Vector2.Transform(quad.c, matrix),
-				Vector2.Transform(quad.b, matrix),
-				Vector2.Transform(quad.a, matrix)
+				Vector2.Transform(quad.D, matrix),
+				Vector2.Transform(quad.C, matrix),
+				Vector2.Transform(quad.B, matrix),
+				Vector2.Transform(quad.A, matrix)
 				);
 		else
 			return new(
-				Vector2.Transform(quad.a, matrix),
-				Vector2.Transform(quad.b, matrix),
-				Vector2.Transform(quad.c, matrix),
-				Vector2.Transform(quad.d, matrix)
+				Vector2.Transform(quad.A, matrix),
+				Vector2.Transform(quad.B, matrix),
+				Vector2.Transform(quad.C, matrix),
+				Vector2.Transform(quad.D, matrix)
 				);
 	}
 
@@ -252,12 +187,12 @@ public struct Quad : IConvexShape, IEquatable<Quad>
 	public static Quad operator -(Quad lhs, Vector2 rhs) => new(lhs.A - rhs, lhs.B - rhs, lhs.C - rhs, lhs.D - rhs);
 	public static Quad operator +(Quad lhs, Quad rhs) => new(lhs.A + rhs.A, lhs.B + rhs.B, lhs.C + rhs.C, lhs.D + rhs.D);
 	public static Quad operator -(Quad lhs, Quad rhs) => new(lhs.A - rhs.A, lhs.B - rhs.B, lhs.C - rhs.C, lhs.D - rhs.D);
-	public static bool operator ==(Quad lhs, Quad rhs) => lhs.a == rhs.a && lhs.b == rhs.b && lhs.c == rhs.c && lhs.d == rhs.d;
-	public static bool operator !=(Quad lhs, Quad rhs) => lhs.a != rhs.a || lhs.b != rhs.b || lhs.c != rhs.c || lhs.d != rhs.d;
+	public static bool operator ==(Quad lhs, Quad rhs) => lhs.A == rhs.A && lhs.B == rhs.B && lhs.C == rhs.C && lhs.D == rhs.D;
+	public static bool operator !=(Quad lhs, Quad rhs) => lhs.A != rhs.A || lhs.B != rhs.B || lhs.C != rhs.C || lhs.D != rhs.D;
 
 	public static implicit operator Quad(in Rect rect) => new(rect.TopLeft, rect.TopRight, rect.BottomRight, rect.BottomLeft);
 
-	public bool Equals(Quad other) => a.Equals(other.a) && b.Equals(other.b) && c.Equals(other.c) && d.Equals(other.d);
+	public readonly bool Equals(Quad other) => A.Equals(other.A) && B.Equals(other.B) && C.Equals(other.C) && D.Equals(other.D);
 
 	#region Enumerate Lines
 
