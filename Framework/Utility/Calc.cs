@@ -412,22 +412,40 @@ public static class Calc
 	public static float Clamp(ref float value) => value = MathF.Min(MathF.Max(value, 0), 1);
 
 	/// <summary>
-	/// Shorthand to MathF.Round but returns an Integer
+	/// Shorthand to <see cref="MathF.Round(float)"/> but returns an Integer
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static int Round(float v) => (int)MathF.Round(v);
 
 	/// <summary>
-	/// Shorthand to MathF.Floor but returns an Integer
+	/// Shorthand to <see cref="Math.Round(double)"/> but returns an Integer
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int Round(double v) => (int)Math.Round(v);
+
+	/// <summary>
+	/// Shorthand to <see cref="MathF.Floor(float)"/> but returns an Integer
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static int Floor(float v) => (int)MathF.Floor(v);
 
 	/// <summary>
-	/// Shorthand to MathF.Ceiling but returns an Integer
+	/// Shorthand to <see cref="Math.Floor(double)"/> but returns an Integer
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int Floor(double v) => (int)Math.Floor(v);
+
+	/// <summary>
+	/// Shorthand to <see cref="MathF.Ceiling(float)"/> but returns an Integer
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static int Ceil(float v) => (int)MathF.Ceiling(v);
+
+	/// <summary>
+	/// Shorthand to <see cref="Math.Ceiling(double)"/> but returns an Integer
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int Ceil(double v) => (int)Math.Ceiling(v);
 
 	/// <summary>
 	/// Converts a value from 0 to 1, to 0 to 1 to 0
