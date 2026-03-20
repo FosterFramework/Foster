@@ -223,6 +223,11 @@ public struct Rng
 	public float Angle() => Float(Calc.TAU);
 
 	/// <summary>
+	/// Get a random <see cref="float"/> between -<paramref name="spread"/>/2 (inclusive) and <paramref name="spread"/>/2 (exclusive)
+	/// </summary>
+	public float Spread(float spread) => Float() * spread - spread / 2;
+
+	/// <summary>
 	/// Get a random normalized Vector2
 	/// </summary>
 	public Vector2 Vec2() => Calc.AngleToVector(Angle());
