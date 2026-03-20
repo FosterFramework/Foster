@@ -97,6 +97,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	// state
 	private GraphicsDriver driver;
 	private bool vsyncEnabled;
+	private SDL_GPUPresentMode? vsyncCachedValue;
 
 	// render buffer, drawn to before being applied to the swapchain
 	private Target? backbuffer;
@@ -154,10 +155,15 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			if (desired == SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX && !supportsMailboxPresentMode)
 				desired = SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC;
 
-			SDL_SetGPUSwapchainParameters(device, window,
-				swapchain_composition: SDL_GPUSwapchainComposition.SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
-				present_mode: desired
-			);
+			// this operation is slow, so only do it if we have a change to perform
+			if (vsyncCachedValue != desired)
+			{
+				SDL_SetGPUSwapchainParameters(device, window,
+					swapchain_composition: SDL_GPUSwapchainComposition.SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
+					present_mode: desired
+				);
+				vsyncCachedValue = desired;
+			}
 
 			vsyncEnabled = value;
 		}
