@@ -1496,7 +1496,7 @@ public static class Calc
 	/// .NET Core doesn't always hash string values the same (it can seed it based on the running instance)
 	/// So this is to get a static value for every same string
 	/// </summary>
-	public static ulong StaticStringHashUlong(ReadOnlySpan<char> value)
+	public static ulong StaticStringHashUInt64(ReadOnlySpan<char> value)
 	{
 		unchecked
 		{
@@ -1511,7 +1511,7 @@ public static class Calc
 	/// .NET Core doesn't always hash string values the same (it can seed it based on the running instance)
 	/// So this is to get a static value for every same string
 	/// </summary>
-	public static ulong StaticStringHashUlong(ReadOnlySpan<byte> value)
+	public static ulong StaticStringHashUInt64(ReadOnlySpan<byte> value)
 	{
 		unchecked
 		{
