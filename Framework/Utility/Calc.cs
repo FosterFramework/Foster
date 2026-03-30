@@ -1471,19 +1471,53 @@ public static class Calc
 		unchecked
 		{
 			int hash = 5381;
-			for (int i = 0; i < value.Length; i++)
-				hash = ((hash << 5) + hash) + value[i];
+			foreach (var t in value)
+				hash = (hash << 5) + hash + t;
 			return hash;
 		}
 	}
 
+	/// <summary>
+	/// .NET Core doesn't always hash string values the same (it can seed it based on the running instance)
+	/// So this is to get a static value for every same string
+	/// </summary>
 	public static int StaticStringHash(ReadOnlySpan<byte> value)
 	{
 		unchecked
 		{
 			int hash = 5381;
-			for (int i = 0; i < value.Length; i++)
-				hash = ((hash << 5) + hash) + value[i];
+			foreach (var t in value)
+				hash = (hash << 5) + hash + t;
+			return hash;
+		}
+	}
+
+	/// <summary>
+	/// .NET Core doesn't always hash string values the same (it can seed it based on the running instance)
+	/// So this is to get a static value for every same string
+	/// </summary>
+	public static ulong StaticStringHashUInt64(ReadOnlySpan<char> value)
+	{
+		unchecked
+		{
+			ulong hash = 104729U;
+			foreach (var t in value)
+				hash = (hash << 7) + hash + t;
+			return hash;
+		}
+	}
+
+	/// <summary>
+	/// .NET Core doesn't always hash string values the same (it can seed it based on the running instance)
+	/// So this is to get a static value for every same string
+	/// </summary>
+	public static ulong StaticStringHashUInt64(ReadOnlySpan<byte> value)
+	{
+		unchecked
+		{
+			ulong hash = 104729U;
+			foreach (var t in value)
+				hash = (hash << 7) + hash + t;
 			return hash;
 		}
 	}

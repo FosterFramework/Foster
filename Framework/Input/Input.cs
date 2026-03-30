@@ -384,4 +384,19 @@ public sealed class Input
 
 		return false;
 	}
+
+	/// <summary>
+	/// Returns whether a controller has received any input more recently than the keyboard has
+	/// </summary>
+	public bool IsControllerInUse
+	{
+		get
+		{
+			var keyboard = Keyboard.InputTimestamp;
+			foreach (var c in Controllers)
+				if (c.InputTimestamp > keyboard)
+					return true;
+			return false;
+		}
+	}
 }
