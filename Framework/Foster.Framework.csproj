@@ -24,6 +24,7 @@
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>CS1591</NoWarn>
+    <IsRidAgnostic>false</IsRidAgnostic>
 
     <NativeLibsDir>$(ProjectDir)Internal\Native\</NativeLibsDir>
   </PropertyGroup>
