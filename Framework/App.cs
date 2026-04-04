@@ -163,6 +163,7 @@ public abstract class App : IDisposable
 	private readonly ConcurrentQueue<Action> mainThreadQueue = [];
 	private readonly InputProviderSDL inputProvider;
 	private string? userPath = null;
+	private readonly SDL_EventFilter eventFilter;
 
 	internal readonly Exception NotRunningException = new("The Application is not Running");
 	internal readonly Exception DisposedException = new("The Application is Disposed");
@@ -205,6 +206,10 @@ public abstract class App : IDisposable
 			if (!SDL_Init(initFlags))
 				throw App.CreateExceptionFromSDL(nameof(SDL_Init));
 		}
+
+		// setup event watcher
+		eventFilter = EventWatcher;
+		SDL_AddEventWatch(eventFilter, nint.Zero);
 
 		// Create Modules
 		UpdateMode = config.UpdateMode ?? UpdateMode.FixedStep(60);
@@ -417,11 +422,26 @@ public abstract class App : IDisposable
 		}
 
 		// render
+		// TODO: should rendering be up to the user to check?
+		// should they be allowed to render while in the background?
 		{
 			Time = Time.AdvanceRenderFrame();
 			Render();
 			GraphicsDevice.Present();
 		}
+	}
+
+	private unsafe bool EventWatcher(nint userdata, SDL_Event* eventPtr)
+	{
+		var type = (SDL_EventType)eventPtr->type;
+
+		if (type == SDL_EventType.SDL_EVENT_DID_ENTER_FOREGROUND ||
+			type == SDL_EventType.SDL_EVENT_WILL_ENTER_FOREGROUND ||
+			type == SDL_EventType.SDL_EVENT_DID_ENTER_BACKGROUND ||
+			type == SDL_EventType.SDL_EVENT_WILL_ENTER_BACKGROUND)
+			GraphicsDevice.OnEvent(type);
+
+		return true;
 	}
 
 	private void PollEvents()

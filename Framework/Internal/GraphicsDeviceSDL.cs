@@ -98,6 +98,9 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	private GraphicsDriver driver;
 	private bool vsyncEnabled;
 	private SDL_GPUPresentMode? vsyncCachedValue;
+	private bool isWindowReclaimPending;
+	private bool isWindowClaimed;
+	private bool isInBackground;
 
 	// render buffer, drawn to before being applied to the swapchain
 	private Target? backbuffer;
@@ -244,6 +247,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 		if (!SDL_ClaimWindowForGPUDevice(device, window))
 			throw App.CreateExceptionFromSDL(nameof(SDL_ClaimWindowForGPUDevice));
+		isWindowClaimed = true;
 
 		// query supported present modes
 		supportsImmediatePresentMode =
@@ -373,68 +377,119 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		EndCopyPass();
 		EndRenderPass();
 
-		// copy buffer to swap chain
-		if (SDL_WaitAndAcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
+		// don't present to the screen if we're not visible
+		if (isInBackground)
 		{
-			if (scTex != nint.Zero && scW > 0 && scH > 0 && backbufferSize.X > 0 && backbufferSize.Y > 0 && backbuffer != null)
-			{
-				SDL_GPUBlitInfo blit = new()
-				{
-					source = new()
-					{
-						texture = RequireResource<TextureResource>(backbuffer.Attachments[0].Resource).SamplerTexture,
-						mip_level = 0,
-						layer_or_depth_plane = 0,
-						x = 0,
-						y = 0,
-						w = Math.Min(scW, (uint)backbuffer.Width),
-						h = Math.Min(scH, (uint)backbuffer.Height)
-					},
-					destination = new()
-					{
-						texture = scTex,
-						mip_level = 0,
-						layer_or_depth_plane = 0,
-						x = 0,
-						y = 0,
-						w = Math.Min(scW, (uint)backbuffer.Width),
-						h = Math.Min(scH, (uint)backbuffer.Height)
-					},
-					load_op = SDL_GPULoadOp.SDL_GPU_LOADOP_DONT_CARE,
-					flip_mode = SDL_FlipMode.SDL_FLIP_NONE,
-					filter = SDL_GPUFilter.SDL_GPU_FILTER_NEAREST,
-					cycle = false
-				};
-
-				SDL_BlitGPUTexture(cmdRender, blit);
-			}
-
-			// update buffer size (if non-zero)
-			if (scW > 0 && scH > 0)
-			{
-				backbufferSize = new Point2((int)scW, (int)scH);
-
-				// intentionally resizing the buffer a bit larger so we're not
-				// constantly recreating buffers as the window is dragged/scaled
-				if (backbuffer == null || backbuffer.Width < backbufferSize.X || backbuffer.Height < backbufferSize.Y)
-				{
-					backbuffer?.Dispose();
-					backbuffer = new(this, backbufferSize.X + 64, backbufferSize.Y + 64, backbufferFormat, BackbufferName);
-				}
-				// resize buffer if it's too large
-				else if (backbuffer.Width > backbufferSize.X + 128 || backbuffer.Height > backbufferSize.Y + 128)
-				{
-					backbuffer?.Dispose();
-					backbuffer = new(this, backbufferSize.X, backbufferSize.Y, backbufferFormat, BackbufferName);
-				}
-			}
+			FlushCommands(stall: false);
+			return;
 		}
-		else
+
+		// on some platforms, like Android, it's possible to lose the underlying surface when
+		// we move the app to the background. account for that, and reclaim the window when we resume.
+		if (isWindowReclaimPending)
+		{
+			FlushCommands(stall: false);
+			ReclaimWindow();
+			return;
+		}
+
+		// get the swap chain
+		if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
 		{
 			Log.Warning(App.CreateErrorMessageFromSDL(nameof(SDL_WaitAndAcquireGPUSwapchainTexture)));
+			FlushCommands(stall: false);
+			return;
 		}
 
+		// blit backbuffer to swapchain
+		if (scTex != nint.Zero && scW > 0 && scH > 0 && backbufferSize.X > 0 && backbufferSize.Y > 0 && backbuffer != null)
+		{
+			SDL_GPUBlitInfo blit = new()
+			{
+				source = new()
+				{
+					texture = RequireResource<TextureResource>(backbuffer.Attachments[0].Resource).SamplerTexture,
+					mip_level = 0,
+					layer_or_depth_plane = 0,
+					x = 0,
+					y = 0,
+					w = Math.Min(scW, (uint)backbuffer.Width),
+					h = Math.Min(scH, (uint)backbuffer.Height)
+				},
+				destination = new()
+				{
+					texture = scTex,
+					mip_level = 0,
+					layer_or_depth_plane = 0,
+					x = 0,
+					y = 0,
+					w = Math.Min(scW, (uint)backbuffer.Width),
+					h = Math.Min(scH, (uint)backbuffer.Height)
+				},
+				load_op = SDL_GPULoadOp.SDL_GPU_LOADOP_DONT_CARE,
+				flip_mode = SDL_FlipMode.SDL_FLIP_NONE,
+				filter = SDL_GPUFilter.SDL_GPU_FILTER_NEAREST,
+				cycle = false
+			};
+
+			SDL_BlitGPUTexture(cmdRender, blit);
+		}
+
+		// update buffer size (if non-zero swapchain size)
+		if (scW > 0 && scH > 0)
+		{
+			backbufferSize = new Point2((int)scW, (int)scH);
+
+			// intentionally resizing the buffer a bit larger so we're not
+			// constantly recreating buffers as the window is dragged/scaled
+			if (backbuffer == null || backbuffer.Width < backbufferSize.X || backbuffer.Height < backbufferSize.Y)
+			{
+				backbuffer?.Dispose();
+				backbuffer = new(this, backbufferSize.X + 64, backbufferSize.Y + 64, backbufferFormat, BackbufferName);
+			}
+			// resize buffer if it's too large
+			else if (backbuffer.Width > backbufferSize.X + 128 || backbuffer.Height > backbufferSize.Y + 128)
+			{
+				backbuffer?.Dispose();
+				backbuffer = new(this, backbufferSize.X, backbufferSize.Y, backbufferFormat, BackbufferName);
+			}
+		}
+
+		// submit and present to screen
 		FlushCommands(stall: false);
+	}
+
+	internal override void OnEvent(SDL_EventType type)
+	{
+		if (type == SDL_EventType.SDL_EVENT_WILL_ENTER_BACKGROUND)
+		{
+			isWindowReclaimPending = true;
+			isInBackground = true;
+		}
+
+		if (type == SDL_EventType.SDL_EVENT_DID_ENTER_FOREGROUND)
+		{
+			isInBackground = false;
+		}
+	}
+
+	private void ReclaimWindow()
+	{
+		SDL_WaitForGPUIdle(device);
+
+		if (isWindowClaimed)
+		{
+			isWindowClaimed = false;
+			SDL_ReleaseWindowFromGPUDevice(device, window);
+		}
+
+		if (SDL_ClaimWindowForGPUDevice(device, window))
+		{
+			isWindowClaimed = true;
+			isWindowReclaimPending = false;
+		}
+		else
+			Log.Warning(App.CreateErrorMessageFromSDL(nameof(SDL_ClaimWindowForGPUDevice)));
 	}
 
 	public override bool IsTextureFormatSupported(TextureFormat format)

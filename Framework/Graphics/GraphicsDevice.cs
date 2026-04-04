@@ -61,6 +61,8 @@ public abstract class GraphicsDevice
 	internal abstract void Startup(nint window);
 	internal abstract void Shutdown();
 	internal abstract void Present();
+	internal abstract void OnEvent(SDL3.SDL.SDL_EventType type);
+
 	internal abstract ResourceHandle CreateTexture(string? name, int width, int height, TextureFormat format, TextureFlags flags, SampleCount sampleCount, nint? targetBinding);
 	internal abstract void SetTextureData(ResourceHandle texture, nint data, int length, RectInt destRegion);
 	internal abstract void GetTextureData(ResourceHandle texture, nint data, int length, RectInt sourceRegion);
