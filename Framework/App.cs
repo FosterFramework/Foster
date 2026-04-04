@@ -31,6 +31,22 @@ public readonly record struct AppConfig
 );
 
 /// <summary>
+/// Application-level events that will be notified through <see cref="App.OnEvent"/>
+/// </summary>
+public enum AppEvents
+{
+	/// <summary>
+	/// When the Application enters the Background (usually on mobile devices)
+	/// </summary>
+	EnterBackground,
+
+	/// <summary>
+	/// When the Application enters the Foreground (usually on mobile devices)
+	/// </summary>
+	EnterForeground
+}
+
+/// <summary>
 /// App Initialization Flags
 /// </summary>
 [Flags]
@@ -120,6 +136,12 @@ public abstract class App : IDisposable
 	/// If the Application is Disposed
 	/// </summary>
 	public bool Disposed { get; private set; } = false;
+
+	/// <summary>
+	/// When an Application Event is called.
+	/// Note that these are not necessarilyc called from the main thread.
+	/// </summary>
+	public event Action<AppEvents>? OnEvent;
 
 	/// <summary>
 	/// Gets the path to the User Directory, which is the location where you should
@@ -440,6 +462,12 @@ public abstract class App : IDisposable
 			type == SDL_EventType.SDL_EVENT_DID_ENTER_BACKGROUND ||
 			type == SDL_EventType.SDL_EVENT_WILL_ENTER_BACKGROUND)
 			GraphicsDevice.OnEvent(type);
+
+		if (type == SDL_EventType.SDL_EVENT_DID_ENTER_FOREGROUND)
+			OnEvent?.Invoke(AppEvents.EnterForeground);
+
+		if (type == SDL_EventType.SDL_EVENT_WILL_ENTER_BACKGROUND)
+			OnEvent?.Invoke(AppEvents.EnterBackground);
 
 		return true;
 	}
