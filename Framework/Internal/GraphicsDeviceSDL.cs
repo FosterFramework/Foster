@@ -64,6 +64,19 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		public readonly nint Pipeline = pipeline;
 	}
 
+	private class WindowState(uint id, nint handle)
+	{
+		public readonly uint ID = id;
+		public readonly nint Handle = handle;
+		public bool ReclaimPending;
+		public bool Claimed;
+		public Target? Backbuffer;
+		public Point2 BackbufferSize;
+		public bool SupportsMailboxPresentMode;
+		public bool SupportsImmediatePresentMode;
+		public SDL_GPUPresentMode? PresentMode;
+	}
+
 	private record struct ClearInfo(StackList8<Color>? Color, float? Depth, int? Stencil);
 
 	private const int MaxFramesInFlight = 3;
@@ -75,7 +88,6 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 
 	// object pointers
 	private nint device;
-	private nint window;
 	private nint cmdUpload;
 	private nint cmdRender;
 	private nint renderPass;
@@ -90,21 +102,11 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	private RectInt? renderPassScissor;
 	private RectInt? renderPassViewport;
 
-	// supported feature set
-	private bool supportsMailboxPresentMode;
-	private bool supportsImmediatePresentMode;
-
 	// state
 	private GraphicsDriver driver;
 	private bool vsyncEnabled;
-	private SDL_GPUPresentMode? vsyncCachedValue;
-	private bool isWindowReclaimPending;
-	private bool isWindowClaimed;
-	private bool isInBackground;
-
-	// render buffer, drawn to before being applied to the swapchain
-	private Target? backbuffer;
-	private Point2 backbufferSize;
+	private bool inBackground;
+	private readonly Dictionary<uint, WindowState> windows = [];
 
 	// tracked / allocated resources
 	private readonly Dictionary<TextureSampler, nint> samplers = [];
@@ -146,29 +148,9 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			if (device == nint.Zero)
 				throw deviceNotCreated;
 
-			// get desired mode
-			var desired = value
-				? SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC
-				: SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE;
-
-			// desired mode isn't supported ... fallback, eventually to v-sync, as it's the only always supported mode
-			// https://wiki.libsdl.org/SDL3/SDL_GPUPresentMode#remarks
-			if (desired == SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE && !supportsImmediatePresentMode)
-				desired = SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX;
-			if (desired == SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX && !supportsMailboxPresentMode)
-				desired = SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC;
-
-			// this operation is slow, so only do it if we have a change to perform
-			if (vsyncCachedValue != desired)
-			{
-				SDL_SetGPUSwapchainParameters(device, window,
-					swapchain_composition: SDL_GPUSwapchainComposition.SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
-					present_mode: desired
-				);
-				vsyncCachedValue = desired;
-			}
-
 			vsyncEnabled = value;
+			foreach (var state in windows.Values)
+				UpdateWindowPresentMode(state, value);
 		}
 	}
 
@@ -187,7 +169,9 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		if (device != nint.Zero)
 			throw new Exception("GPU Device is already created");
 
-		string? driverName = preferred switch
+		this.flags = flags;
+
+		string? requestedDriverName = preferred switch
 		{
 			GraphicsDriver.None => null,
 			GraphicsDriver.Private => "private",
@@ -203,10 +187,20 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL |
 				SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_MSL,
 			debug_mode: flags.Has(AppFlags.GraphicsDebugging),
-			name: driverName!);
+			name: requestedDriverName!);
 
 		if (device == IntPtr.Zero)
 			throw App.CreateExceptionFromSDL(nameof(SDL_CreateGPUDevice));
+
+		var driverName = SDL_GetGPUDeviceDriver(device);
+		driver = driverName switch
+		{
+			"private" => GraphicsDriver.Private,
+			"vulkan" => GraphicsDriver.Vulkan,
+			"direct3d12" => GraphicsDriver.D3D12,
+			"metal" => GraphicsDriver.Metal,
+			_ => GraphicsDriver.None
+		};
 
 		if (flags.Has(AppFlags.MultiSampledBackBuffer))
 		{
@@ -218,42 +212,8 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 				backbufferFormat = [( TextureFormat.Color, TextureFlags.None, SampleCount.Two )];
 		}
 
-		this.flags = flags;
-	}
-
-	internal override void DestroyDevice()
-	{
-		SDL_DestroyGPUDevice(device);
-		device = nint.Zero;
-	}
-
-	internal override void Startup(nint window)
-	{
-		this.window = window;
-
-		// provider user what driver is being used
-		var driverName = SDL_GetGPUDeviceDriver(device);
-		driver = driverName switch
-		{
-			"private" => GraphicsDriver.Private,
-			"vulkan" => GraphicsDriver.Vulkan,
-			"direct3d12" => GraphicsDriver.D3D12,
-			"metal" => GraphicsDriver.Metal,
-			_ => GraphicsDriver.None
-		};
-
 		if (!flags.Has(AppFlags.NoHeaderLog))
 			Log.Info($"Graphics Driver: SDL_GPU [{driverName}]");
-
-		if (!SDL_ClaimWindowForGPUDevice(device, window))
-			throw App.CreateExceptionFromSDL(nameof(SDL_ClaimWindowForGPUDevice));
-		isWindowClaimed = true;
-
-		// query supported present modes
-		supportsImmediatePresentMode =
-			SDL_WindowSupportsGPUPresentMode(device, window, SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE);
-		supportsMailboxPresentMode =
-			SDL_WindowSupportsGPUPresentMode(device, window, SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX);
 
 		// we always have a command buffer ready
 		ResetCommandBufferState();
@@ -296,16 +256,76 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			UploadBufferData(emptyDefaultBuffer, new nint(data), 1, 0);
 		}
 
-		// get backbuffer
-		SDL_GetWindowSizeInPixels(window, out backbufferSize.X, out backbufferSize.Y);
-		backbufferSize = Point2.Max(Point2.One, backbufferSize);
-		backbuffer = new(this, backbufferSize.X, backbufferSize.Y, backbufferFormat, BackbufferName);
-
 		// default to 3 frames in flight
 		SDL_SetGPUAllowedFramesInFlight(device, 3);
+	}
 
-		// default to vsync on
-		VSync = true;
+	internal override void DestroyDevice()
+	{
+		SDL_DestroyGPUDevice(device);
+		device = nint.Zero;
+	}
+
+	internal override void WindowCreated(Window window)
+	{
+		var state = windows[window.ID] = new WindowState(window.ID, window.Handle);
+
+		if (!SDL_ClaimWindowForGPUDevice(device, window.Handle))
+			throw App.CreateExceptionFromSDL(nameof(SDL_ClaimWindowForGPUDevice));
+
+		state.Claimed = true;
+		state.ReclaimPending = false;
+
+		// query supported present modes
+		state.SupportsImmediatePresentMode =
+			SDL_WindowSupportsGPUPresentMode(device, state.Handle, SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE);
+		state.SupportsMailboxPresentMode =
+			SDL_WindowSupportsGPUPresentMode(device, state.Handle, SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX);
+
+		// get backbuffer
+		SDL_GetWindowSizeInPixels(state.Handle, out state.BackbufferSize.X, out state.BackbufferSize.Y);
+		state.BackbufferSize = Point2.Max(Point2.One, state.BackbufferSize);
+		state.Backbuffer = new(this, state.BackbufferSize.X, state.BackbufferSize.Y, backbufferFormat, BackbufferName);
+
+		// setup v-sync for this window
+		UpdateWindowPresentMode(state, vsyncEnabled);
+	}
+
+	internal override void WindowDestroyed(Window window)
+	{
+		if (windows.Remove(window.ID, out var state))
+		{
+			if (state.Claimed)
+			{
+				SDL_ReleaseWindowFromGPUDevice(device, window.Handle);
+				state.Claimed = false;
+			}
+		}
+	}
+
+	private void UpdateWindowPresentMode(WindowState state, bool vsyncEnabled)
+	{
+		// get desired mode
+		var desired = vsyncEnabled
+			? SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC
+			: SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE;
+
+		// desired mode isn't supported ... fallback, eventually to v-sync, as it's the only always supported mode
+		// https://wiki.libsdl.org/SDL3/SDL_GPUPresentMode#remarks
+		if (desired == SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_IMMEDIATE && !state.SupportsImmediatePresentMode)
+			desired = SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX;
+		if (desired == SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_MAILBOX && !state.SupportsMailboxPresentMode)
+			desired = SDL_GPUPresentMode.SDL_GPU_PRESENTMODE_VSYNC;
+
+		// this operation is slow, so only do it if we have a change to perform
+		if (state.PresentMode != desired)
+		{
+			SDL_SetGPUSwapchainParameters(device, state.Handle,
+				swapchain_composition: SDL_GPUSwapchainComposition.SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
+				present_mode: desired
+			);
+			state.PresentMode = desired;
+		}
 	}
 
 	internal override void Shutdown()
@@ -360,10 +380,11 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 			samplers.Clear();
 		}
 
-		SDL_ReleaseWindowFromGPUDevice(device, window);
+		// all windows should be destroyed by this point
+		if (windows.Count > 0)
+			throw new Exception("Windows were not gracefully destroyed");
 
 		// clear state
-		window = nint.Zero;
 		cmdUpload = nint.Zero;
 		cmdRender = nint.Zero;
 		renderPass = nint.Zero;
@@ -378,43 +399,79 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		EndRenderPass();
 
 		// don't present to the screen if we're not visible
-		if (isInBackground)
+		if (inBackground)
 		{
 			FlushCommands(stall: false);
 			return;
 		}
 
+		// present each window
+		foreach (var state in windows.Values)
+			PresentWindow(state);
+
+		// submit and present to screen
+		FlushCommands(stall: false);
+
+		// reclaim any pending windows
+		foreach (var state in windows.Values)
+		{
+			if (state.ReclaimPending)
+				ReclaimWindow(state);
+		}
+	}
+
+	internal override void OnEvent(SDL_EventType type)
+	{
+		if (type == SDL_EventType.SDL_EVENT_WILL_ENTER_BACKGROUND)
+		{
+			// free window's backbuffers while they are hidden
+			foreach (var state in windows.Values)
+			{
+				state.Backbuffer?.Dispose();
+				state.Backbuffer = null;
+				state.ReclaimPending = true;
+			}
+			inBackground = true;
+		}
+
+		if (type == SDL_EventType.SDL_EVENT_DID_ENTER_FOREGROUND)
+		{
+			inBackground = false;
+		}
+	}
+
+	private void PresentWindow(WindowState state)
+	{
 		// on some platforms, like Android, it's possible to lose the underlying surface when
-		// we move the app to the background. account for that, and reclaim the window when we resume.
-		if (isWindowReclaimPending)
-		{
-			FlushCommands(stall: false);
-			ReclaimWindow();
+		// we move the app to the background. Account for that, and reclaim the window when we resume.
+		if (state.ReclaimPending)
 			return;
-		}
 
-		// get the swap chain
-		if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdRender, window, out var scTex, out var scW, out var scH))
+		// if the window is hidden, we do not draw to it
+		if ((SDL_GetWindowFlags(state.Handle) & SDL_WindowFlags.SDL_WINDOW_HIDDEN) != 0)
+			return;
+
+		// get the swapchain for this window
+		if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdRender, state.Handle, out var scTex, out var scW, out var scH))
 		{
 			Log.Warning(App.CreateErrorMessageFromSDL(nameof(SDL_WaitAndAcquireGPUSwapchainTexture)));
-			FlushCommands(stall: false);
 			return;
 		}
 
 		// blit backbuffer to swapchain
-		if (scTex != nint.Zero && scW > 0 && scH > 0 && backbufferSize.X > 0 && backbufferSize.Y > 0 && backbuffer != null)
+		if (scTex != nint.Zero && scW > 0 && scH > 0 && state.BackbufferSize.X > 0 && state.BackbufferSize.Y > 0 && state.Backbuffer != null)
 		{
 			SDL_GPUBlitInfo blit = new()
 			{
 				source = new()
 				{
-					texture = RequireResource<TextureResource>(backbuffer.Attachments[0].Resource).SamplerTexture,
+					texture = RequireResource<TextureResource>(state.Backbuffer.Attachments[0].Resource).SamplerTexture,
 					mip_level = 0,
 					layer_or_depth_plane = 0,
 					x = 0,
 					y = 0,
-					w = Math.Min(scW, (uint)backbuffer.Width),
-					h = Math.Min(scH, (uint)backbuffer.Height)
+					w = Math.Min(scW, (uint)state.Backbuffer.Width),
+					h = Math.Min(scH, (uint)state.Backbuffer.Height)
 				},
 				destination = new()
 				{
@@ -423,8 +480,8 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 					layer_or_depth_plane = 0,
 					x = 0,
 					y = 0,
-					w = Math.Min(scW, (uint)backbuffer.Width),
-					h = Math.Min(scH, (uint)backbuffer.Height)
+					w = Math.Min(scW, (uint)state.Backbuffer.Width),
+					h = Math.Min(scH, (uint)state.Backbuffer.Height)
 				},
 				load_op = SDL_GPULoadOp.SDL_GPU_LOADOP_DONT_CARE,
 				flip_mode = SDL_FlipMode.SDL_FLIP_NONE,
@@ -438,55 +495,38 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		// update buffer size (if non-zero swapchain size)
 		if (scW > 0 && scH > 0)
 		{
-			backbufferSize = new Point2((int)scW, (int)scH);
+			state.BackbufferSize = new Point2((int)scW, (int)scH);
 
 			// intentionally resizing the buffer a bit larger so we're not
 			// constantly recreating buffers as the window is dragged/scaled
-			if (backbuffer == null || backbuffer.Width < backbufferSize.X || backbuffer.Height < backbufferSize.Y)
+			if (state.Backbuffer == null || state.Backbuffer.Width < state.BackbufferSize.X || state.Backbuffer.Height < state.BackbufferSize.Y)
 			{
-				backbuffer?.Dispose();
-				backbuffer = new(this, backbufferSize.X + 64, backbufferSize.Y + 64, backbufferFormat, BackbufferName);
+				state.Backbuffer?.Dispose();
+				state.Backbuffer = new(this, state.BackbufferSize.X + 64, state.BackbufferSize.Y + 64, backbufferFormat, BackbufferName);
 			}
 			// resize buffer if it's too large
-			else if (backbuffer.Width > backbufferSize.X + 128 || backbuffer.Height > backbufferSize.Y + 128)
+			else if (state.Backbuffer.Width > state.BackbufferSize.X + 128 || state.Backbuffer.Height > state.BackbufferSize.Y + 128)
 			{
-				backbuffer?.Dispose();
-				backbuffer = new(this, backbufferSize.X, backbufferSize.Y, backbufferFormat, BackbufferName);
+				state.Backbuffer?.Dispose();
+				state.Backbuffer = new(this, state.BackbufferSize.X, state.BackbufferSize.Y, backbufferFormat, BackbufferName);
 			}
 		}
-
-		// submit and present to screen
-		FlushCommands(stall: false);
 	}
 
-	internal override void OnEvent(SDL_EventType type)
-	{
-		if (type == SDL_EventType.SDL_EVENT_WILL_ENTER_BACKGROUND)
-		{
-			isWindowReclaimPending = true;
-			isInBackground = true;
-		}
-
-		if (type == SDL_EventType.SDL_EVENT_DID_ENTER_FOREGROUND)
-		{
-			isInBackground = false;
-		}
-	}
-
-	private void ReclaimWindow()
+	private void ReclaimWindow(WindowState state)
 	{
 		SDL_WaitForGPUIdle(device);
 
-		if (isWindowClaimed)
+		if (state.Claimed)
 		{
-			isWindowClaimed = false;
-			SDL_ReleaseWindowFromGPUDevice(device, window);
+			state.Claimed = false;
+			SDL_ReleaseWindowFromGPUDevice(device, state.Handle);
 		}
 
-		if (SDL_ClaimWindowForGPUDevice(device, window))
+		if (SDL_ClaimWindowForGPUDevice(device, state.Handle))
 		{
-			isWindowClaimed = true;
-			isWindowReclaimPending = false;
+			state.Claimed = true;
+			state.ReclaimPending = false;
 		}
 		else
 			Log.Warning(App.CreateErrorMessageFromSDL(nameof(SDL_ClaimWindowForGPUDevice)));
@@ -1895,9 +1935,12 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 		}
 
 		// get backbuffer target
-		if (drawableTarget.Surface is Window && backbuffer != null)
+		if (drawableTarget.Surface is Window window &&
+			!window.IsDestroyed &&
+			windows.TryGetValue(window.ID, out var state) &&
+			state.Backbuffer is {} backbuffer)
 		{
-			size = backbufferSize;
+			size = state.BackbufferSize;
 			return backbuffer;
 		}
 

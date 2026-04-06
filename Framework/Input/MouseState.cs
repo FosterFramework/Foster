@@ -16,7 +16,7 @@ public sealed class MouseState
 	public TimeSpan InputTimestamp { get; private set; }
 
 	/// <summary>
-	/// Mouse position, relative to the window, in Pixel Coordinates.
+	/// Mouse position, relative to the Main <see cref="App.Window"/>, in Pixel Coordinates.
 	/// </summary>
 	public Vector2 Position;
 

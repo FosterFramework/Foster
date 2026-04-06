@@ -26,6 +26,11 @@ public sealed class Window : IDrawableTarget
 	public GraphicsDevice GraphicsDevice { get; }
 
 	/// <summary>
+	/// If this Window is Destroyed
+	/// </summary>
+	public bool IsDestroyed { get; private set; }
+
+	/// <summary>
 	/// The Window Title
 	/// </summary>
 	public string Title
@@ -132,7 +137,7 @@ public sealed class Window : IDrawableTarget
 	}
 
 	/// <summary>
-	/// Gets the Size of the Display that the Application Window is currently in.
+	/// Gets the Size of the Display that the Window is currently in.
 	/// </summary>
 	public unsafe Point2 DisplaySize
 	{
@@ -149,7 +154,7 @@ public sealed class Window : IDrawableTarget
 	}
 
 	/// <summary>
-	/// Gets the Content Scale for the Application Window.
+	/// Gets the Content Scale for the Window.
 	/// </summary>
 	public Vector2 ContentScale
 	{
@@ -164,6 +169,21 @@ public sealed class Window : IDrawableTarget
 				return new(WidthInPixels / (float)Width, HeightInPixels / (float)Height);
 			}
 			return Vector2.One * scale;
+		}
+	}
+
+	/// <summary>
+	/// Calculates the mouse position relative to the Window, in Pixel Coordinates.
+	/// </summary>
+	public Vector2 MousePosition
+	{
+		get
+		{
+			// use global mouse position so we can get it as it moves outside the window
+			SDL_GetGlobalMouseState(out var mouseX, out var mouseY);
+
+			// scale it to the pixel coords
+			return (new Vector2(mouseX, mouseY) - Position) / (Vector2)Size * (Vector2)SizeInPixels;
 		}
 	}
 
@@ -228,7 +248,7 @@ public sealed class Window : IDrawableTarget
 	}
 
 	/// <summary>
-	/// Returns whether the Application Window is currently Focused or not.
+	/// Returns whether the Window is currently Focused or not.
 	/// </summary>
 	public bool Focused
 	{
@@ -293,48 +313,63 @@ public sealed class Window : IDrawableTarget
 
 	/// <summary>
 	/// What action(s) to perform when the user requests for the Window to close.
-	/// If not assigned, the default behavior will call <see cref="App.Exit"/>.
+	/// If not assigned, the default behavior will call <see cref="App.Exit"/> on the <see cref="App.Window"/>,
+	/// or <see cref="Destroy"/> on other windows.
 	/// </summary>
 	public Action? OnCloseRequested;
 
-	internal Window(App app, GraphicsDevice graphicsDevice, in AppConfig config)
+	/// <summary>
+	/// Creates a new Window
+	/// </summary>
+	public Window(App app, string title, int width, int height, bool fullscreen = false, bool resizable = true)
 	{
 		this.app = app;
-		title = config.WindowTitle;
-		GraphicsDevice = graphicsDevice;
+		this.title = title;
+		GraphicsDevice = app.GraphicsDevice;
 
 		var windowFlags =
-			SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY |
-			SDL_WindowFlags.SDL_WINDOW_HIDDEN;
-
-		if (config.Fullscreen)
+			SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY;
+		if (!app.Running)
+			windowFlags |= SDL_WindowFlags.SDL_WINDOW_HIDDEN;
+		if (fullscreen)
 			windowFlags |= SDL_WindowFlags.SDL_WINDOW_FULLSCREEN;
-		if (config.Resizable)
+		if (resizable)
 			windowFlags |= SDL_WindowFlags.SDL_WINDOW_RESIZABLE;
 
-		Handle = SDL_CreateWindow(title, config.Width, config.Height, windowFlags);
-		if (Handle == IntPtr.Zero)
+		Handle = SDL_CreateWindow(title, width, height, windowFlags);
+		if (Handle == nint.Zero)
 			throw App.CreateExceptionFromSDL(nameof(SDL_CreateWindow));
-
 		ID = SDL_GetWindowID(Handle);
+
+		app.WindowCreated(this);
 	}
 
 	/// <summary>
-	/// Sets whether the Mouse Cursor should be visible while over the Application Window
+	/// Destroys the Window.
+	/// If this is the <see cref="App.Window"/>, this will call <see cref="App.Exit"/>.
 	/// </summary>
-	public void SetMouseVisible(bool enabled)
+	public void Destroy()
 	{
-		if (enabled == SDL_CursorVisible())
-			return;
-
-		// TODO:
-		// Should this method be here? It seems like it's maybe application-specific
-		// instead of unique to a given window.
-
-		var result = enabled ? SDL_ShowCursor() : SDL_HideCursor();
-		if (!result)
-			Log.Warning($"Failed to set Mouse visibility: {SDL_GetError()}");
+		if (!IsDestroyed)
+		{
+			app.WindowMarkedForDestruction(this);
+			if (app.Window == this)
+				app.Exit();
+			IsDestroyed = true;
+		}
 	}
+
+	internal void Destroyed()
+	{
+		Handle = nint.Zero;
+	}
+
+	/// <summary>
+	/// Sets whether the Mouse Cursor should be visible while over the Window
+	/// </summary>
+	[Obsolete("Use Application SetMouseVisible instead")]
+	public void SetMouseVisible(bool enabled)
+		=> app.SetMouseVisible(enabled);
 
 	/// <summary>
 	/// Sets whether the Mouse is in Relative Mode.
@@ -481,8 +516,10 @@ public sealed class Window : IDrawableTarget
 		case SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED:
 			if (OnCloseRequested != null)
 				OnCloseRequested.Invoke();
-			else
+			else if (app.Window == this)
 				app.Exit();
+			else
+				Destroy();
 			break;
 		}
 	}
@@ -493,18 +530,11 @@ public sealed class Window : IDrawableTarget
 		SDL_SetWindowFullscreenMode(Handle, ref Unsafe.NullRef<SDL_DisplayMode>());
 		SDL_SetWindowBordered(Handle, true);
 		SDL_RaiseWindow(Handle);
-		SDL_ShowCursor();
 	}
 
 	internal void Hide()
 	{
 		SDL_HideWindow(Handle);
-	}
-
-	internal void Close()
-	{
-		SDL_DestroyWindow(Handle);
-		Handle = nint.Zero;
 	}
 
 	private void ApplyTitle()

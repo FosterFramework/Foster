@@ -58,8 +58,9 @@ public abstract class GraphicsDevice
 
 	internal abstract void CreateDevice(in AppFlags flags);
 	internal abstract void DestroyDevice();
-	internal abstract void Startup(nint window);
 	internal abstract void Shutdown();
+	internal abstract void WindowCreated(Window window);
+	internal abstract void WindowDestroyed(Window window);
 	internal abstract void Present();
 	internal abstract void OnEvent(SDL3.SDL.SDL_EventType type);
 

@@ -44,26 +44,14 @@ internal sealed class InputProviderSDL(App app) : InputProvider
 
 	public override void Update(in Time time)
 	{
-		// get window properties
-		var windowSize = new Point2(App.Window.Width, App.Window.Height);
-		var windowSizeInPx = new Point2(App.Window.WidthInPixels, App.Window.HeightInPixels);
-		var windowPos = new Point2();
-		SDL_GetWindowPosition(App.Window.Handle, out windowPos.X, out windowPos.Y);
-
-		// use global mouse position so we can get it as it moves outside the window
-		var mouse = new Vector2();
-		SDL_GetGlobalMouseState(out mouse.X, out mouse.Y);
-		mouse -= windowPos;
-
-		// scale it to the pixel coords
-		mouse = mouse / windowSize * windowSizeInPx;
+		var mouse = App.Window.MousePosition;
 		var delta = mouse - lastMouse;
 
 		// get mouse delta if we're in relative mouse mode
 		if (SDL_GetWindowRelativeMouseMode(App.Window.Handle))
 		{
 			SDL_GetRelativeMouseState(out float dx, out float dy);
-			delta = new Vector2(dx, dy) / windowSize * windowSizeInPx;
+			delta = new Vector2(dx, dy) / App.Window.Size * App.Window.SizeInPixels;
 		}
 
 		// add new event if moved

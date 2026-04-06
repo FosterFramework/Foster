@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using static SDL3.SDL;
 
@@ -103,9 +105,14 @@ public abstract class App : IDisposable
 	public UpdateMode UpdateMode;
 
 	/// <summary>
-	/// The Application Window
+	/// The Main Application Window
 	/// </summary>
 	public readonly Window Window;
+
+	/// <summary>
+	/// All Windows open in the Application
+	/// </summary>
+	public readonly ReadOnlyCollection<Window> Windows;
 
 	/// <summary>
 	/// The Input Module
@@ -186,6 +193,8 @@ public abstract class App : IDisposable
 	private readonly InputProviderSDL inputProvider;
 	private string? userPath = null;
 	private readonly SDL_EventFilter eventFilter;
+	private readonly List<Window> windows = [];
+	private readonly Queue<Window> windowDestroyingQueue = [];
 
 	internal readonly Exception NotRunningException = new("The Application is not Running");
 	internal readonly Exception DisposedException = new("The Application is Disposed");
@@ -196,6 +205,7 @@ public abstract class App : IDisposable
 	public unsafe App(in AppConfig config)
 	{
 		this.config = config;
+		Windows = new(windows);
 
 		if (string.IsNullOrEmpty(config.ApplicationName) || string.IsNullOrWhiteSpace(config.ApplicationName))
 			throw new Exception("Invalid Application Name");
@@ -226,7 +236,7 @@ public abstract class App : IDisposable
 				SDL_InitFlags.SDL_INIT_JOYSTICK | SDL_InitFlags.SDL_INIT_GAMEPAD;
 
 			if (!SDL_Init(initFlags))
-				throw App.CreateExceptionFromSDL(nameof(SDL_Init));
+				throw CreateExceptionFromSDL(nameof(SDL_Init));
 		}
 
 		// setup event watcher
@@ -240,8 +250,7 @@ public abstract class App : IDisposable
 		FileSystem = new(this);
 		GraphicsDevice = new GraphicsDeviceSDL(this, config.PreferredGraphicsDriver);
 		GraphicsDevice.CreateDevice(config.Flags);
-		Window = new Window(this, GraphicsDevice, config);
-		GraphicsDevice.Startup(Window.Handle);
+		Window = new Window(this, config.WindowTitle, config.Width, config.Height, config.Fullscreen, config.Resizable);
 
 		// try to load default SDL gamepad mappings
 		Input.AddDefaultSDLGamepadMappings(AppContext.BaseDirectory);
@@ -268,8 +277,11 @@ public abstract class App : IDisposable
 
 			if (disposing)
 			{
+				for (int i = windows.Count - 1; i >= 0; i --)
+					windows[i].Destroy();
+				DestroyWaitingWindows();
+
 				GraphicsDevice.Shutdown();
-				Window.Close();
 				GraphicsDevice.DestroyDevice();
 				inputProvider.CloseDevices();
 				mainThreadQueue.Clear();
@@ -325,7 +337,8 @@ public abstract class App : IDisposable
 			// poll events once, so input has controller state before Startup
 			PollEvents();
 			inputProvider.Update(Time);
-			Window.Show();
+			foreach (var window in windows)
+				window.Show();
 			Startup();
 
 			// begin normal game loop
@@ -338,7 +351,8 @@ public abstract class App : IDisposable
 
 			// shutdown
 			Shutdown();
-			Window.Hide();
+			foreach (var window in windows)
+				window.Hide();
 			inputProvider.CloseDevices();
 		}
 		finally
@@ -374,6 +388,45 @@ public abstract class App : IDisposable
 			action();
 		else
 			mainThreadQueue.Enqueue(action);
+	}
+
+	/// <summary>
+	/// Sets whether the Mouse Cursor should be visible while over any of the Windows
+	/// </summary>
+	public void SetMouseVisible(bool enabled)
+	{
+		if (enabled == SDL_CursorVisible())
+			return;
+
+		var result = enabled ? SDL_ShowCursor() : SDL_HideCursor();
+		if (!result)
+			Log.Warning($"Failed to set Mouse visibility: {SDL_GetError()}");
+	}
+
+	internal void WindowCreated(Window window)
+	{
+		windows.Add(window);
+		GraphicsDevice.WindowCreated(window);
+	}
+
+	internal void WindowMarkedForDestruction(Window window)
+	{
+		if (!window.IsDestroyed)
+		{
+			if (!windowDestroyingQueue.Contains(window))
+				windowDestroyingQueue.Enqueue(window);
+			windows.Remove(window);
+		}
+	}
+
+	internal void DestroyWaitingWindows()
+	{
+		while (windowDestroyingQueue.TryDequeue(out var window))
+		{
+			GraphicsDevice.WindowDestroyed(window);
+			SDL_DestroyWindow(window.Handle);
+			window.Destroyed();
+		}
 	}
 
 	private void Tick()
@@ -451,6 +504,9 @@ public abstract class App : IDisposable
 			Render();
 			GraphicsDevice.Present();
 		}
+
+		// destroy any queued windows
+		DestroyWaitingWindows();
 	}
 
 	private unsafe bool EventWatcher(nint userdata, SDL_Event* eventPtr)
@@ -523,8 +579,12 @@ public abstract class App : IDisposable
 			case SDL_EventType.SDL_EVENT_WINDOW_ENTER_FULLSCREEN:
 			case SDL_EventType.SDL_EVENT_WINDOW_LEAVE_FULLSCREEN:
 			case SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-				if (ev.window.windowID == Window.ID)
-					Window.OnEvent((SDL_EventType)ev.type);
+				foreach (var window in windows)
+					if (window.ID == ev.window.windowID)
+					{
+						window.OnEvent((SDL_EventType)ev.type);
+						break;
+					}
 				break;
 
 			default:
