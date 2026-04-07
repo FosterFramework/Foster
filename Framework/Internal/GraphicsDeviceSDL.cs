@@ -136,7 +136,7 @@ internal unsafe class GraphicsDeviceSDL(App app, GraphicsDriver preferred) : Gra
 	private AppFlags flags;
 
 	public override GraphicsDriver Driver => driver;
-	
+
 	public override bool VSync
 	{
 		get => vsyncEnabled;
@@ -502,6 +502,12 @@ internal unsafe class GraphicsDeviceSDL(App app, GraphicsDriver preferred) : Gra
 		}
 	}
 
+	/// <summary>
+	/// TODO: Remove when SDL updates
+	/// This is required due to a bug in the Android SDL backend.
+	/// It has been fixed, but waiting for an SDL release:
+	/// https://github.com/libsdl-org/SDL/issues/15322
+	/// </summary>
 	private void ReclaimWindow(WindowState state)
 	{
 		SDL_WaitForGPUIdle(device);
