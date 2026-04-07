@@ -82,6 +82,21 @@ public class Material
 			for (int i = 0; i < MaxUniformBuffers; i ++)
 				UniformBuffers[i].CopyTo(to.UniformBuffers[i]);
 		}
+
+		public bool EqualTo(Stage other)
+		{
+			if (Shader != other.Shader)
+				return false;
+
+			if (!Samplers.SequenceEqual(other.Samplers))
+				return false;
+
+			for (int i = 0; i < UniformBuffers.Length; i ++)
+				if (!UniformBuffers[i].EqualTo(other.UniformBuffers[i]))
+					return false;
+
+			return true;
+		}
 	}
 
 	/// <summary>
@@ -130,5 +145,13 @@ public class Material
 		var clone = new Material();
 		CopyTo(clone);
 		return clone;	
+	}
+
+	public bool EqualTo(Material other)
+	{
+		if (this == other)
+			return true;
+
+		return Vertex.EqualTo(other.Vertex) && Fragment.EqualTo(other.Fragment);		
 	}
 }

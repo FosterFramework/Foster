@@ -312,6 +312,7 @@ public class Batcher : IDisposable
 		if (currentBatch.Texture == null || currentBatch.Elements == 0)
 		{
 			currentBatch.Texture = texture;
+			TryToMergeBatch();
 		}
 		else if (currentBatch.Texture != texture)
 		{
@@ -329,6 +330,7 @@ public class Batcher : IDisposable
 		if (currentBatch.Sampler == sampler || currentBatch.Elements == 0)
 		{
 			currentBatch.Sampler = sampler;
+			TryToMergeBatch();
 		}
 		else if (currentBatch.Sampler != sampler)
 		{
@@ -361,6 +363,7 @@ public class Batcher : IDisposable
 
 		currentBatch.Layer = layer;
 		currentBatchInsert = insert;
+		TryToMergeBatch();
 	}
 
 	private void SetMaterial(Material? material)
@@ -368,6 +371,7 @@ public class Batcher : IDisposable
 		if (currentBatch.Elements == 0)
 		{
 			currentBatch.Material = material;
+			TryToMergeBatch();
 		}
 		else if (currentBatch.Material != material)
 		{
@@ -385,6 +389,7 @@ public class Batcher : IDisposable
 		if (currentBatch.Elements == 0)
 		{
 			currentBatch.Blend = blend;
+			TryToMergeBatch();
 		}
 		else if (currentBatch.Blend != blend)
 		{
@@ -402,6 +407,7 @@ public class Batcher : IDisposable
 		if (currentBatch.Elements == 0)
 		{
 			currentBatch.Scissor = scissor;
+			TryToMergeBatch();
 		}
 		else if (currentBatch.Scissor != scissor)
 		{
@@ -419,6 +425,7 @@ public class Batcher : IDisposable
 		if (currentBatch.Elements == 0)
 		{
 			currentBatch.Stencil = stencil;
+			TryToMergeBatch();
 		}
 		else if (currentBatch.Stencil != stencil)
 		{
@@ -428,6 +435,32 @@ public class Batcher : IDisposable
 			currentBatch.Offset += currentBatch.Elements;
 			currentBatch.Elements = 0;
 			currentBatchInsert++;
+		}
+	}
+
+	/// <summary>
+	/// If we popped some state, and then pushed on the same state, we want to
+	/// merge those draw calls back into one, instead of splitting them.
+	/// </summary>
+	private void TryToMergeBatch()
+	{
+		var index = currentBatchInsert - 1;
+		if (index >= 0 && index < batches.Count && currentBatch.Elements <= 0)
+		{
+			var prev = batches[index];
+			var curr = currentBatch;
+
+			if (prev.Texture == curr.Texture &&
+				prev.Blend == curr.Blend &&
+				prev.Scissor == curr.Scissor &&
+				prev.Sampler == curr.Sampler &&
+				prev.Stencil == curr.Stencil &&
+				(prev.Material == curr.Material || (prev.Material != null && curr.Material != null && prev.Material.EqualTo(curr.Material))))
+			{
+				currentBatch = prev;
+				currentBatchInsert--;
+				batches.RemoveAt(index);
+			}
 		}
 	}
 

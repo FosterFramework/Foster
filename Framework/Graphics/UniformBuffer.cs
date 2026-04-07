@@ -67,4 +67,11 @@ public class UniformBuffer
 		Array.Copy(bytes, to.bytes, bytes.Length);
 		to.count = count;
 	}
+
+	public bool EqualTo(UniformBuffer other)
+	{
+		return
+			count == other.count &&		
+			bytes.AsSpan(0, count).SequenceEqual(other.bytes.AsSpan(0, count));
+	}
 }
