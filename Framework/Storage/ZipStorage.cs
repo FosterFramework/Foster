@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 namespace Foster.Framework;
 
 /// <summary>
-/// ZipArchive implementation of a <see cref="StorageContainer"/>
+/// A Storage Container that reads data from a <see cref="ZipArchive"/>.
 /// </summary>
 public class ZipStorage : StorageContainer
 {
@@ -13,7 +13,7 @@ public class ZipStorage : StorageContainer
 	/// as the Asset Loader will load things in various threads.
 	/// </summary>
 	private readonly ThreadLocal<ZipArchive> zip;
-	private readonly Dictionary<string, string> entries = new(StringComparer.OrdinalIgnoreCase);
+	private readonly Dictionary<string, string> entries = [];
 
 	public override bool Writable => false;
 
@@ -83,7 +83,6 @@ public class ZipStorage : StorageContainer
 			}
 
 			entries.TryAdd(path, it.FullName);
-			Console.WriteLine(path);
 		}
 	}
 

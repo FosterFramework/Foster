@@ -1,7 +1,7 @@
 namespace Foster.Framework;
 
 /// <summary>
-/// Wraps a <see cref="StorageContainer"/> with a relative directory, such that files are relative to the provided path.
+/// Wraps a <see cref="StorageContainer"/> with a relative directory.
 /// </summary>
 public class RelativeStorage(StorageContainer storage, string path) : StorageContainer
 {
