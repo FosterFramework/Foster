@@ -195,6 +195,7 @@ public abstract class App : IDisposable
 	private readonly SDL_EventFilter eventFilter;
 	private readonly List<Window> windows = [];
 	private readonly Queue<Window> windowDestroyingQueue = [];
+	private Cursor? currentCursor;
 
 	internal readonly Exception NotRunningException = new("The Application is not Running");
 	internal readonly Exception DisposedException = new("The Application is Disposed");
@@ -401,6 +402,30 @@ public abstract class App : IDisposable
 		var result = enabled ? SDL_ShowCursor() : SDL_HideCursor();
 		if (!result)
 			Log.Warning($"Failed to set Mouse visibility: {SDL_GetError()}");
+	}
+
+	/// <summary>
+	/// Sets the Mouse Cursor. If null, resets the Cursor to the default OS cursor.
+	/// </summary>
+	public void SetMouseCursor(Cursor? cursor)
+	{
+		if (currentCursor == cursor)
+			return;
+
+		if (cursor == null)
+		{
+			currentCursor = null;
+			SDL_SetCursor(SDL_GetDefaultCursor());
+			return;
+		}
+
+		if (cursor.Disposed)
+			throw new Exception("Using an invalid cursor!");
+
+		if (SDL_SetCursor(cursor.Handle))
+			currentCursor = cursor;
+		else
+			Log.Warning($"Failed to set Mouse Cursor: {SDL_GetError()}");
 	}
 
 	internal void WindowCreated(Window window)

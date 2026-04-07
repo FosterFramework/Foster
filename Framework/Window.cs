@@ -16,11 +16,6 @@ public sealed class Window : IDrawableTarget
 	object? IDrawableTarget.Surface => this;
 
 	/// <summary>
-	/// Holds a reference to the current cursor in use, to avoid it getting collected.
-	/// </summary>
-	private Cursor? currentCursor;
-
-	/// <summary>
 	/// The Renderer associated with this Window
 	/// </summary>
 	public GraphicsDevice GraphicsDevice { get; }
@@ -401,26 +396,9 @@ public sealed class Window : IDrawableTarget
 	/// <summary>
 	/// Sets the Mouse Cursor. If null, resets the Cursor to the default OS cursor.
 	/// </summary>
+	[Obsolete("Use App.SetMouseCursor")]
 	public void SetMouseCursor(Cursor? cursor)
-	{
-		if (currentCursor == cursor)
-			return;
-
-		if (cursor == null)
-		{
-			currentCursor = null;
-			SDL_SetCursor(SDL_GetDefaultCursor());
-			return;
-		}
-
-		if (cursor.Disposed)
-			throw new Exception("Using an invalid cursor!");
-
-		if (SDL_SetCursor(cursor.Handle))
-			currentCursor = cursor;
-		else
-			Log.Warning($"Failed to set Mouse Cursor: {SDL_GetError()}");
-	}
+		=> app.SetMouseCursor(cursor);
 
 	/// <summary>
 	/// This will enable Text input in the Window, by populating keyboard
