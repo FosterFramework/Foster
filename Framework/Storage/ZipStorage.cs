@@ -83,6 +83,7 @@ public class ZipStorage : StorageContainer
 			}
 
 			entries.TryAdd(path, it.FullName);
+			Console.WriteLine(path);
 		}
 	}
 
@@ -122,8 +123,13 @@ public class ZipStorage : StorageContainer
 
 		foreach (var entry in entries)
 		{
-			if (pattern != null && !pattern.IsMatch(entry.Key))
-				continue;
+			if (pattern != null)
+			{
+				var relative = Calc.NormalizePath(Path.GetRelativePath(path, entry.Key));
+				if (pattern != null && !pattern.IsMatch(relative))
+					continue;
+			}
+			
 			if (!entry.Key.StartsWith(path, StringComparison.OrdinalIgnoreCase))
 				continue;
 			if (entry.Key.Equals(path, StringComparison.OrdinalIgnoreCase))
