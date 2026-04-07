@@ -23,11 +23,6 @@ public abstract class GraphicsDevice
 	public readonly App App;
 
 	/// <summary>
-	/// If the underlying Graphics Driver considers 0,0 to be the bottom left.
-	/// </summary>
-	public abstract bool OriginBottomLeft { get; }
-
-	/// <summary>
 	/// If the GraphicsDevice has been disposed
 	/// </summary>
 	public abstract bool Disposed { get; }

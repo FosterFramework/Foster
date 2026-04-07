@@ -5,7 +5,7 @@ using static SDL3.SDL;
 
 namespace Foster.Framework;
 
-internal unsafe class GraphicsDeviceSDL : GraphicsDevice
+internal unsafe class GraphicsDeviceSDL(App app, GraphicsDriver preferred) : GraphicsDevice(app)
 {
 	private class Resource(GraphicsDeviceSDL graphicsDevice)
 	{
@@ -84,7 +84,7 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	private const uint MaxUploadCycleCount = 4;
 	private const int MaxColorAttachments = 8;
 	private const string BackbufferName = "Foster Backbuffer";
-	private (TextureFormat Format, TextureFlags Flags, SampleCount SampleCount)[] backbufferFormat;
+	private (TextureFormat Format, TextureFlags Flags, SampleCount SampleCount)[] backbufferFormat = [(TextureFormat.Color, TextureFlags.None, SampleCount.One)];
 
 	// object pointers
 	private nint device;
@@ -132,14 +132,11 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	private readonly Exception deviceNotCreated = new("GPU Device has not been created");
 	private readonly Exception deviceWasDestroyed = new("This Resource was created with a previous GPU Device which has been destroyed");
 
-	private readonly GraphicsDriver preferred;
-	private readonly Version version;
+	private readonly GraphicsDriver preferred = preferred;
 	private AppFlags flags;
 
 	public override GraphicsDriver Driver => driver;
-
-	public override bool OriginBottomLeft => false;
-
+	
 	public override bool VSync
 	{
 		get => vsyncEnabled;
@@ -155,14 +152,6 @@ internal unsafe class GraphicsDeviceSDL : GraphicsDevice
 	}
 
 	public override bool Disposed => device == nint.Zero;
-
-	public GraphicsDeviceSDL(App app, GraphicsDriver preferred) : base(app)
-	{
-		this.preferred = preferred;
-		var sdlv = SDL_GetVersion();
-		version = new(sdlv / 1000000, (sdlv / 1000) % 1000, sdlv % 1000);
-		backbufferFormat = [( TextureFormat.Color, TextureFlags.None, SampleCount.One )];
-	}
 
 	internal override void CreateDevice(in AppFlags flags)
 	{
