@@ -1751,23 +1751,39 @@ public class Batcher : IDisposable
 		}
 	}
 
+	/// <summary>
+	/// Appends a list of vertices with indices to the Batcher.
+	/// </summary>
+	public void Vertices(ReadOnlySpan<BatcherVertex> vertices, ReadOnlySpan<int> indices, bool applyMatrix = true)
+	{
+		Request(vertices.Length, indices.Length, out var dstVertices, out var dstIndices, out int vertexOffset);
+
+		if (Matrix != Matrix3x2.Identity && applyMatrix)
+		{
+			for (int i = 0; i < vertices.Length; i ++)
+				dstVertices[i] = vertices[i] with { Pos = Vector2.Transform(vertices[i].Pos, Matrix) };
+		}
+		else
+		{
+			vertices.CopyTo(dstVertices);
+		}
+		
+		for (int i = 0; i < indices.Length; i ++)
+			dstIndices[i] = indices[i] + vertexOffset;
+	}
+
+	/// <summary>
+	/// Appends a list of vertices with indices to the Batcher.
+	/// </summary>
+	public void Vertices(Texture? texture, ReadOnlySpan<BatcherVertex> vertices, ReadOnlySpan<int> indices)
+	{
+		SetTexture(texture);
+		Vertices(vertices, indices);
+	}
+
 	#endregion
 
 	#region Internal Utils
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-	private void Append(in ReadOnlySpan<BatcherVertex> vertices, in ReadOnlySpan<int> indices)
-	{
-		// get spans to insert data
-		Request(vertices.Length, indices.Length, out var vertexDest, out var indexDest, out var vertexStart);
-
-		// copy vertices over
-		vertices.CopyTo(vertexDest);
-
-		// copy indices over but update them from relative offsets to the offsets in the buffer
-		for (int i = 0; i < indices.Length; i ++)
-			indexDest[i] = vertexStart + indices[i];
-	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	private void Request(int vertexAppendCount, int indexAppendCount, out Span<BatcherVertex> vertices, out Span<int> indices, out int vertexOffset)
