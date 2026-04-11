@@ -16,7 +16,7 @@ internal static unsafe class StbTrueType
 {
 	#region Public (internal) API
 
-	public static unsafe nint Create(nint data)
+	public static nint Create(nint data)
 	{
 		if (stbtt_GetNumberOfFonts((byte*)data) <= 0)
 			return nint.Zero;
@@ -32,7 +32,7 @@ internal static unsafe class StbTrueType
 		return (nint)info;
 	}
 
-	public static unsafe void GetMetrics(nint font, out int ascent, out int descent, out int linegap)
+	public static void GetMetrics(nint font, out int ascent, out int descent, out int linegap)
 	{
 		int a, d, l;
 		stbtt_GetFontVMetrics((stbtt_fontinfo*)font, &a, &d, &l);
@@ -41,16 +41,16 @@ internal static unsafe class StbTrueType
 		linegap = l;
 	}
 
-	public static unsafe int GetGlyphIndex(nint font, int codepoint)
+	public static int GetGlyphIndex(nint font, int codepoint)
 		=> stbtt_FindGlyphIndex((stbtt_fontinfo*)font, codepoint);
 
-	public static unsafe float GetScale(nint font, float size)
+	public static float GetScale(nint font, float size)
 		=> stbtt_ScaleForMappingEmToPixels((stbtt_fontinfo*)font, size);
 
-	public static unsafe float GetKerning(nint font, int glyph1, int glyph2, float scale)
+	public static float GetKerning(nint font, int glyph1, int glyph2, float scale)
 		=> stbtt_GetGlyphKernAdvance((stbtt_fontinfo*)font, glyph1, glyph2) * scale;
 
-	public static unsafe void GetCharacter(nint font, int glyph, float scale, out int width, out int height, out float advance, out float offsetX, out float offsetY, out int visible)
+	public static void GetCharacter(nint font, int glyph, float scale, out int width, out int height, out float advance, out float offsetX, out float offsetY, out int visible)
 	{
 		stbtt_fontinfo* info = (stbtt_fontinfo*)font;
 
@@ -67,7 +67,7 @@ internal static unsafe class StbTrueType
 		visible = (width > 0 && height > 0 && stbtt_IsGlyphEmpty(info, glyph) == 0) ? 1 : 0;
 	}
 
-	public static unsafe void GetPixels(nint font, nint dest, int glyph, int width, int height, float scale)
+	public static void GetPixels(nint font, nint dest, int glyph, int width, int height, float scale, bool premultiply = true)
 	{
 		byte* dst = (byte*)dest;
 		stbtt_fontinfo* info = (stbtt_fontinfo*)font;
@@ -79,14 +79,14 @@ internal static unsafe class StbTrueType
 		int len = width * height;
 		for (int a = (len - 1) * 4, b = (len - 1); b >= 0; a -= 4, b -= 1)
 		{
-			dst[a + 0] = dst[b];
-			dst[a + 1] = dst[b];
-			dst[a + 2] = dst[b];
+			dst[a + 0] = (byte)(premultiply ? dst[b] : 255);
+			dst[a + 1] = (byte)(premultiply ? dst[b] : 255);
+			dst[a + 2] = (byte)(premultiply ? dst[b] : 255);
 			dst[a + 3] = dst[b];
 		}
 	}
 
-	public static unsafe void Destroy(nint font)
+	public static void Destroy(nint font)
 	{
 		Marshal.FreeHGlobal(font);
 	}
@@ -518,6 +518,12 @@ internal static unsafe class StbTrueType
 		}
 
 		return 0;
+	}
+
+	static float stbtt_ScaleForPixelHeight(stbtt_fontinfo* info, float height)
+	{
+		int fheight = ttSHORT(info->data + info->hhea + 4) - ttSHORT(info->data + info->hhea + 6);
+		return (float) height / fheight;
 	}
 
 	static float stbtt_ScaleForMappingEmToPixels(stbtt_fontinfo* info, float pixels)

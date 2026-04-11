@@ -94,7 +94,7 @@ public class SpriteFont : IDisposable
 	private readonly Dictionary<KerningPair, float> kerning = [];
 	private readonly List<Texture> generatedTextures = [];
 
-	public SpriteFont(GraphicsDevice graphicsDevice, Font font, float size, ReadOnlySpan<int> codepoints, bool premultiplyAlpha = true)
+	public SpriteFont(GraphicsDevice graphicsDevice, Font font, float size, ReadOnlySpan<int> codepoints, bool premultiplyAlpha = true, bool pixelPerfect = false)
 	{
 		GraphicsDevice = graphicsDevice;
 		KerningProvider = font;
@@ -106,23 +106,23 @@ public class SpriteFont : IDisposable
 		LineGap = font.LineGap * fontScale;
 
 		if (codepoints.Length > 0)
-			AddCharacters(font, codepoints, size, premultiplyAlpha);
+			AddCharacters(font, codepoints, size, premultiplyAlpha, pixelPerfect);
 	}
 
-	public SpriteFont(GraphicsDevice graphicsDevice, Font font, float size, bool premultiplyAlpha = true)
-		: this(graphicsDevice, font, size, Ascii, premultiplyAlpha) {}
+	public SpriteFont(GraphicsDevice graphicsDevice, Font font, float size, bool premultiplyAlpha = true, bool pixelPerfect = false)
+		: this(graphicsDevice, font, size, Ascii, premultiplyAlpha, pixelPerfect) {}
 
-	public SpriteFont(GraphicsDevice graphicsDevice, string path, float size, ReadOnlySpan<int> codepoints, bool premultiplyAlpha = true)
-		: this(graphicsDevice, new Font(path), size, codepoints, premultiplyAlpha) { }
+	public SpriteFont(GraphicsDevice graphicsDevice, string path, float size, ReadOnlySpan<int> codepoints, bool premultiplyAlpha = true, bool pixelPerfect = false)
+		: this(graphicsDevice, new Font(path), size, codepoints, premultiplyAlpha, pixelPerfect) { }
 
-	public SpriteFont(GraphicsDevice graphicsDevice, string path, float size, bool premultiplyAlpha = true)
-		: this(graphicsDevice, new Font(path), size, Ascii, premultiplyAlpha) { }
+	public SpriteFont(GraphicsDevice graphicsDevice, string path, float size, bool premultiplyAlpha = true, bool pixelPerfect = false)
+		: this(graphicsDevice, new Font(path), size, Ascii, premultiplyAlpha, pixelPerfect) { }
 
-	public SpriteFont(GraphicsDevice graphicsDevice, Stream stream, float size, ReadOnlySpan<int> codepoints, bool premultiplyAlpha = true)
-		: this(graphicsDevice, new Font(stream), size, codepoints, premultiplyAlpha) { }
+	public SpriteFont(GraphicsDevice graphicsDevice, Stream stream, float size, ReadOnlySpan<int> codepoints, bool premultiplyAlpha = true, bool pixelPerfect = false)
+		: this(graphicsDevice, new Font(stream), size, codepoints, premultiplyAlpha, pixelPerfect) { }
 
-	public SpriteFont(GraphicsDevice graphicsDevice, Stream stream, float size, bool premultiplyAlpha = true)
-		: this(graphicsDevice, new Font(stream), size, Ascii, premultiplyAlpha) { }
+	public SpriteFont(GraphicsDevice graphicsDevice, Stream stream, float size, bool premultiplyAlpha = true, bool pixelPerfect = false)
+		: this(graphicsDevice, new Font(stream), size, Ascii, premultiplyAlpha, pixelPerfect) { }
 
 	public SpriteFont(GraphicsDevice graphicsDevice, float size = 16)
 	{
@@ -384,7 +384,7 @@ public class SpriteFont : IDisposable
 	/// Adds characters from a font to the SpriteFont.
 	/// Note that this will render new characters and can be quite slow.
 	/// </summary>
-	public void AddCharacters(Font font, ReadOnlySpan<int> codepoints, float? size = null, bool premultiplyAlpha = true)
+	public void AddCharacters(Font font, ReadOnlySpan<int> codepoints, float? size = null, bool premultiplyAlpha = true, bool pixelPerfect = false)
 	{
 		var scale = font.GetScale(size ?? Size);
 		var buffers = new ThreadLocal<Color[]>();
@@ -423,7 +423,17 @@ public class SpriteFont : IDisposable
 				}
 				
 				// blit char
-				font.GetPixels(ch, buffer);
+				font.GetPixels(ch, buffer, premultiplyAlpha);
+
+				// force pixels to be fully white or fully transparect
+				if (pixelPerfect)
+				{
+					for (int i = 0; i < buffer.Length; i ++)
+						if (buffer[i].A < 128)
+							buffer[i] = Color.Transparent;
+						else
+							buffer[i] = Color.White;
+				}
 
 				// append to packer
 				lock(packer)
@@ -439,11 +449,7 @@ public class SpriteFont : IDisposable
 		var result = packer.Pack();
 		var textureIndex = generatedTextures.Count;
 		foreach (var page in result.Pages)
-		{
-			if (premultiplyAlpha)
-				page.Premultiply();
 			generatedTextures.Add(new(GraphicsDevice, page));
-		}
 
 		// update character subtextures
 		foreach (var it in result.Entries)

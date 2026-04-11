@@ -194,28 +194,28 @@ public class Font : IDisposable, IProvideKerning
 	/// <summary>
 	/// Renders the given character to an Image and returns it
 	/// </summary>
-	public Image? GetImage(char ch, float scale)
+	public Image? GetImage(char ch, float scale, bool premultiply = true)
 	{
-		return GetImage(GetCharacter(ch, scale));
+		return GetImage(GetCharacter(ch, scale), premultiply);
 	}
 
 	/// <summary>
 	/// Renders a character to an Image and returns it
 	/// </summary>
-	public Image? GetImage(in Character character)
+	public Image? GetImage(in Character character, bool premultiply = true)
 	{
 		if (!character.Visible)
 			return null;
 
 		var img = new Image(character.Width, character.Height);
-		GetPixels(character, img.Data);
+		GetPixels(character, img.Data, premultiply);
 		return img;
 	}
 
 	/// <summary>
 	/// Renders a character to the given Color buffer.
 	/// </summary>
-	public bool GetPixels(in Character character, Span<Color> destination)
+	public bool GetPixels(in Character character, Span<Color> destination, bool premultiply = true)
 	{
 		if (fontPtr == IntPtr.Zero)
 			throw invalidFontException;
@@ -229,7 +229,7 @@ public class Font : IDisposable, IProvideKerning
 		unsafe
 		{
 			fixed (Color* ptr = destination)
-				StbTrueType.GetPixels(fontPtr, new(ptr), character.GlyphIndex, character.Width, character.Height, character.Scale);
+				StbTrueType.GetPixels(fontPtr, new(ptr), character.GlyphIndex, character.Width, character.Height, character.Scale, premultiply);
 		}
 
 		return true;
