@@ -60,22 +60,34 @@ public static class Pool<[DAM(DAMT.PublicMethods)] T> where T : class, new()
 	private static Action<T> CreateDefaultClear()
 	{
 		if (typeof(T).IsAssignableTo(typeof(IList)))
-			return static (it) => ((IList)it).Clear();
+			return static it => ((IList)it).Clear();
 		if (typeof(T).IsAssignableTo(typeof(IDictionary)))
-			return static (it) => ((IDictionary)it).Clear();
+			return static it => ((IDictionary)it).Clear();
 		if (typeof(T).IsAssignableTo(typeof(IPoolable)))
-			return static (it) => ((IPoolable)it).Recycle();
+			return static it => ((IPoolable)it).Recycle();
 
-		// this is all done just so that HashSet automatically clears
-		// It has no non-generic interface like IList or IDictionary
-		if (typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(HashSet<>))
-		{
-			var method = typeof(T).GetMethod(nameof(HashSet<>.Clear));
-			if (method != null)
-				return (Action<T>)Delegate.CreateDelegate(typeof(Action<T>), method);
-		}
+		// make some other collection types automatically clear (more complex because they don't have a simple common base type)
+		if (typeof(T).IsGenericType)
+			if (typeof(T).GetGenericTypeDefinition() == typeof(HashSet<>))
+			{
+				var method = typeof(T).GetMethod(nameof(HashSet<>.Clear));
+				if (method != null)
+					return (Action<T>)Delegate.CreateDelegate(typeof(Action<T>), method);
+			}
+			else if (typeof(T).GetGenericTypeDefinition() == typeof(Queue<>))
+			{
+				var method = typeof(T).GetMethod(nameof(Queue<>.Clear));
+				if (method != null)
+					return (Action<T>)Delegate.CreateDelegate(typeof(Action<T>), method);
+			}
+			else if (typeof(T).GetGenericTypeDefinition() == typeof(Stack<>))
+			{
+				var method = typeof(T).GetMethod(nameof(Stack<>.Clear));
+				if (method != null)
+					return (Action<T>)Delegate.CreateDelegate(typeof(Action<T>), method);
+			}
 
-		return static (it) => { };
+		return static _ => { };
 	}
 }
 
