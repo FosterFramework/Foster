@@ -104,6 +104,11 @@ public struct DrawCommand
 	public DepthCompare DepthCompare = DepthCompare.Less;
 
 	/// <summary>
+	/// The Fill Mode used when drawing
+	/// </summary>
+	public FillMode FillMode = FillMode.Fill;
+
+	/// <summary>
 	/// The Stencil Operations for back-facing triangles
 	/// </summary>
 	public StencilState BackStencilState;

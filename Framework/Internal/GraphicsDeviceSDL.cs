@@ -1744,10 +1744,15 @@ internal unsafe class GraphicsDeviceSDL(App app, GraphicsDriver preferred) : Gra
 			command.VertexShader!.Resource,
 			command.FragmentShader!.Resource,
 			command.CullMode,
+			command.FillMode,
 			command.DepthCompare,
 			command.DepthTestEnabled,
 			command.DepthWriteEnabled,
-			command.StencilTestEnabled,
+			command.StencilTestEnabled
+		);
+
+		hash = HashCode.Combine(
+			hash,
 			command.BlendMode
 		);
 
@@ -1857,7 +1862,12 @@ internal unsafe class GraphicsDeviceSDL(App app, GraphicsDriver preferred) : Gra
 				primitive_type = SDL_GPUPrimitiveType.SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
 				rasterizer_state = new()
 				{
-					fill_mode = SDL_GPUFillMode.SDL_GPU_FILLMODE_FILL,
+					fill_mode = command.FillMode switch
+					{
+						FillMode.Fill => SDL_GPUFillMode.SDL_GPU_FILLMODE_FILL,
+						FillMode.Line => SDL_GPUFillMode.SDL_GPU_FILLMODE_LINE,
+						_ => throw new NotImplementedException()
+					},
 					cull_mode = command.CullMode switch
 					{
 						CullMode.None => SDL_GPUCullMode.SDL_GPU_CULLMODE_NONE,
