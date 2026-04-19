@@ -166,6 +166,19 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 	public readonly bool Intersects(in Line other)
 		=> Intersects(other, out _);
 
+	/// <summary>
+	/// Check if the line intersects any of the edges of the quad
+	/// </summary>
+	public readonly bool Intersects(in Quad quad, out Vector2 point)
+	{
+		foreach (var line in quad.Lines)
+			if (Intersects(line, out point))
+				return true;
+
+		point = default;
+		return false;
+	}
+
 	public readonly bool Intersects(in Rect other, out Vector2 point)
 	{
 		foreach (var line in other.Edges)
