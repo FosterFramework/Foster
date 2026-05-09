@@ -421,7 +421,7 @@ public class SpriteFont : IDisposable
 					buffer = new Color[ch.Width * ch.Height * 2];
 					buffers.Value = buffer;
 				}
-				
+
 				// blit char
 				font.GetPixels(ch, buffer, premultiplyAlpha);
 
@@ -453,7 +453,7 @@ public class SpriteFont : IDisposable
 
 		// update character subtextures
 		foreach (var it in result.Entries)
-			characters[it.Index] = characters[it.Index] with { 
+			characters[it.Index] = characters[it.Index] with {
 				Subtexture = new (generatedTextures[textureIndex + it.Page], it.Source, it.Frame)
 			};
 	}
@@ -586,6 +586,64 @@ public class SpriteFont : IDisposable
 				last = ch.Codepoint;
 				at.X += ch.Advance;
 				i += step - 1;
+			}
+		}
+
+		if (Sampler != null)
+			batch.PopSampler();
+
+		if (Material != null)
+			batch.PopMaterial();
+
+		batch.PopMatrix();
+	}
+
+	public void DrawSineWave(Batcher batch, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, float size, Color color, float sineStart, float sineStep, Vector2 sineOffset)
+	{
+		batch.PushMatrix(position, Vector2.One * (size / Size), 0f);
+
+		if (Matrix3x2.Invert(batch.Matrix, out var mat))
+			sineOffset = Vector2.TransformNormal(sineOffset, mat);
+
+		float sine = sineStart;
+		var last = 0;
+
+		var at = new Vector2(0, Ascent);
+		if (justify.X != 0)
+			at.X -= justify.X * WidthOfLine(text);
+		if (justify.Y != 0)
+			at.Y -= justify.Y * HeightOf(text);
+
+		if (Material != null)
+			batch.PushMaterial(Material);
+
+		if (Sampler != null)
+			batch.PushSampler(Sampler.Value);
+
+		for (int i = 0; i < text.Length; i++)
+		{
+			if (text[i] == '\n')
+			{
+				at.X = 0;
+				if (justify.X != 0 && i < text.Length - 1)
+					at.X -= justify.X * WidthOfLine(text[(i + 1)..]);
+				at.Y += LineHeight;
+				last =  0;
+				continue;
+			}
+
+			if (TryGetCharacter(text[i..], out var ch, out var step))
+			{
+				if (last != 0)
+					at.X += GetKerning(last, ch.Codepoint);
+
+				if (ch.Subtexture.Texture != null)
+					batch.Image(ch.Subtexture, at + ch.Offset + sineOffset * MathF.Sin(sine), color);
+
+				last =  ch.Codepoint;
+				at.X += ch.Advance;
+				i    += step - 1;
+				sine += sineStep;
 			}
 		}
 
