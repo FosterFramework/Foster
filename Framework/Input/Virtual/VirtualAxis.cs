@@ -18,6 +18,16 @@ public sealed class VirtualAxis(Input input, string name, AxisBindingSet set, in
 	public List<AxisBindingSet.AxisEntry> Entries => Set.Entries;
 
 	/// <summary>
+	/// How long before invoking the first Repeated signal
+	/// </summary>
+	public float RepeatDelay;
+
+	/// <summary>
+	/// How frequently to invoke a Repeated signal
+	/// </summary>
+	public float RepeatInterval;
+
+	/// <summary>
 	/// Current Value of the Virtual Axis
 	/// </summary>
 	public float Value { get; private set; }
@@ -47,16 +57,45 @@ public sealed class VirtualAxis(Input input, string name, AxisBindingSet set, in
 	/// </summary>
 	public int PressedSign { get; private set; }
 
+	/// <summary>
+	/// The last time the axis was pressed, but not by repeating
+	/// </summary>
+	public TimeSpan LastPressTimestamp { get; private set; }
+
+	/// <summary>
+	/// If the Axis was repeated this frame, which resulted in a press registering
+	/// </summary>
+	public bool Repeated { get; private set; }
+
 	public override int ControllerIndex { get; set; }
+
+	private int lastDownSign;
 
 	public VirtualAxis(Input input, string name, int controllerIndex = 0)
 		: this(input, name, new(), controllerIndex) {}
 
 	internal override void Update(in Time time)
 	{
-		Value = Set.Value(Input, ControllerIndex);
-		IntValue = MathF.Sign(Value);
+		Value       = Set.Value(Input, ControllerIndex);
+		IntValue    = MathF.Sign(Value);
 		PressedSign = Set.PressedSign(Input, ControllerIndex);
+
+		// repeating logic
+		Repeated = false;
+		if (IntValue == 0)
+			lastDownSign = 0;
+		else if (PressedSign != 0)
+		{
+			lastDownSign = PressedSign;
+			LastPressTimestamp = time.Elapsed;
+		}
+		else if (lastDownSign == IntValue && PressedSign == 0 && lastDownSign != 0
+		&& RepeatInterval > 0 && (time.Elapsed - LastPressTimestamp).TotalSeconds > RepeatDelay)
+			if (Calc.OnInterval((time.Elapsed - LastPressTimestamp).TotalSeconds - RepeatDelay, time.Delta, RepeatInterval))
+			{
+				PressedSign = lastDownSign;
+				Repeated    = true;
+			}
 	}
 
 	/// <summary>
@@ -73,6 +112,23 @@ public sealed class VirtualAxis(Input input, string name, AxisBindingSet set, in
 			PressedSign = IntValue;
 		else
 			PressedSign = 0;
+
+		// repeating logic
+		Repeated = false;
+		if (IntValue == 0)
+			lastDownSign = 0;
+		else if (PressedSign != 0)
+		{
+			lastDownSign      = PressedSign;
+			LastPressTimestamp = time.Elapsed;
+		}
+		else if (lastDownSign == IntValue && lastDownSign != 0 && RepeatInterval > 0
+		&& (time.Elapsed - LastPressTimestamp).TotalSeconds > RepeatDelay)
+			if (Calc.OnInterval((time.Elapsed - LastPressTimestamp).TotalSeconds - RepeatDelay, time.Delta, RepeatInterval))
+			{
+				PressedSign = lastDownSign;
+				Repeated    = true;
+			}
 	}
 
 	public void Clear()

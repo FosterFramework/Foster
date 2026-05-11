@@ -42,7 +42,7 @@ public sealed class AxisBindingSet
 	/// <summary>
 	/// Axis Binding Pairs
 	/// </summary>
-	public List<AxisEntry> Entries { get; private set; } = [];
+	public List<AxisEntry> Entries { get; private init; } = [];
 
 	public AxisBindingSet() {}
 
@@ -148,7 +148,7 @@ public sealed class AxisBindingSet
 		{
 			if (!input.IsIncluded(pair.Masks))
 				continue;
-				
+
 			var negative = pair.Negative.GetState(input, device);
 			var positive = pair.Positive.GetState(input, device);
 			var nextValue = pair.Overlap.Resolve(negative, positive);
@@ -178,18 +178,18 @@ public sealed class AxisBindingSet
 				negative = default;
 			if (!positive.Pressed)
 				positive = default;
-			
+
 			var nextValue = pair.Overlap.Resolve(negative, positive);
 			if (MathF.Abs(nextValue) > MathF.Abs(value))
 				value = nextValue;
 		}
 
-		return Math.Sign(value);
+		return MathF.Sign(value);
 	}
 
 	public class JsonConverter : JsonConverter<AxisBindingSet>
 	{
-		public override AxisBindingSet? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		public override AxisBindingSet Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 			=> new() { Entries = JsonSerializer.Deserialize(ref reader, ListAxisBindingSetEntriesJsonContext.Default.ListAxisEntry) ?? [] };
 
 		public override void Write(Utf8JsonWriter writer, AxisBindingSet value, JsonSerializerOptions options)
@@ -198,4 +198,4 @@ public sealed class AxisBindingSet
 }
 
 [JsonSerializable(typeof(List<AxisBindingSet.AxisEntry>))]
-internal partial class ListAxisBindingSetEntriesJsonContext : JsonSerializerContext {}
+internal partial class ListAxisBindingSetEntriesJsonContext : JsonSerializerContext;

@@ -72,9 +72,9 @@ public sealed class VirtualAction(Input input, string name, ActionBindingSet set
 	public float ValueNoDeadzone { get; private set; }
 
 	/// <summary>
-	/// The time since the Action was last pressed
+	/// The last time the Action was pressed, but not by repeating
 	/// </summary>
-	public TimeSpan Timestamp { get; private set; }
+	public TimeSpan LastPressTimestamp { get; private set; }
 
 	public override int ControllerIndex { get; set; }
 
@@ -94,23 +94,17 @@ public sealed class VirtualAction(Input input, string name, ActionBindingSet set
 		if (Pressed)
 		{
 			PressConsumed = false;
-			Timestamp = time.Elapsed;
+			LastPressTimestamp = time.Elapsed;
 		}
-		else if (!PressConsumed && Timestamp > TimeSpan.Zero && (time.Elapsed - Timestamp).TotalSeconds < Buffer)
+		else if (!PressConsumed && LastPressTimestamp > TimeSpan.Zero && (time.Elapsed - LastPressTimestamp).TotalSeconds < Buffer)
 		{
 			Pressed = true;
 		}
 
-		if (Down && (time.Elapsed - Timestamp).TotalSeconds > RepeatDelay)
-		{
-			if (Calc.OnInterval(
-				(time.Elapsed - Timestamp).TotalSeconds - RepeatDelay,
-				time.Delta,
-				RepeatInterval))
-			{
-				Repeated = true;
-			}
-		}
+		// repeating logic
+		if (!Pressed && Down && RepeatInterval > 0 && (time.Elapsed - LastPressTimestamp).TotalSeconds > RepeatDelay)
+			if (Calc.OnInterval((time.Elapsed - LastPressTimestamp).TotalSeconds - RepeatDelay, time.Delta, RepeatInterval))
+				Pressed = Repeated = true;
 	}
 
 	/// <summary>
@@ -122,9 +116,9 @@ public sealed class VirtualAction(Input input, string name, ActionBindingSet set
 		if (Pressed)
 		{
 			PressConsumed = false;
-			Timestamp     = time.Elapsed;
+			LastPressTimestamp     = time.Elapsed;
 		}
-		else if (!PressConsumed && Timestamp > TimeSpan.Zero && (time.Elapsed - Timestamp).TotalSeconds < Buffer)
+		else if (!PressConsumed && LastPressTimestamp > TimeSpan.Zero && (time.Elapsed - LastPressTimestamp).TotalSeconds < Buffer)
 		{
 			Pressed = true;
 		}
@@ -132,11 +126,10 @@ public sealed class VirtualAction(Input input, string name, ActionBindingSet set
 		Released = !down && Down;
 		Down     = down;
 
-		Repeated = down && (time.Elapsed - Timestamp).TotalSeconds > RepeatDelay
-			&& Calc.OnInterval(
-				(time.Elapsed - Timestamp).TotalSeconds - RepeatDelay,
-				time.Delta,
-				RepeatInterval);
+		// repeating logic
+		if (!Pressed && down && RepeatInterval > 0 && (time.Elapsed - LastPressTimestamp).TotalSeconds > RepeatDelay
+		&& Calc.OnInterval((time.Elapsed - LastPressTimestamp).TotalSeconds - RepeatDelay, time.Delta, RepeatInterval))
+			Pressed = Repeated = true;
 	}
 
 	/// <summary>
