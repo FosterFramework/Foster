@@ -46,8 +46,8 @@ public class VirtualDevice : VirtualInput, IDisposable
 	/// used than the Keyboard. This can be useful to detect whether you should show
 	/// keyboard prompts or controller prompts
 	/// </summary>
-	public bool IsGamepadLatest => 
-		Input.Controllers[ControllerIndex].IsGamepad && 
+	public bool IsGamepadLatest =>
+		Input.Controllers[ControllerIndex].IsGamepad &&
 		Input.Controllers[ControllerIndex].InputTimestamp > Input.Keyboard.InputTimestamp;
 
 	public override int ControllerIndex
@@ -69,6 +69,17 @@ public class VirtualDevice : VirtualInput, IDisposable
 
 	~VirtualDevice()
 		=> Dispose(false);
+
+	/// <summary>
+	/// Get the first <see cref="VirtualInput"/> in this device with the name, if any exists. Case sensitive.
+	/// </summary>
+	public VirtualInput? GetByInputName(ReadOnlySpan<char> name)
+	{
+		foreach (var input in inputs)
+			if (name.SequenceEqual(input.Name.AsSpan()))
+				return input;
+		return null;
+	}
 
 	/// <summary>
 	/// Adds a Virtual Action to this Device
@@ -154,7 +165,7 @@ public class VirtualDevice : VirtualInput, IDisposable
 		{
 			var latest = 0;
 			for (int i = 1; i < Input.Controllers.Length; i ++)
-				if (Input.Controllers[i].IsGamepad && 
+				if (Input.Controllers[i].IsGamepad &&
 					Input.Controllers[i].InputTimestamp > Input.Controllers[latest].InputTimestamp)
 					latest = i;
 			UpdateControllerIndex(latest);
@@ -175,7 +186,7 @@ public class VirtualDevice : VirtualInput, IDisposable
 	/// Called when the Controller at our Index is disconnected
 	/// </summary>
 	protected internal virtual void ControllerDisconnected() {}
-	
+
 	protected override void Dispose(bool disposing)
 	{
 		if (disposing)
