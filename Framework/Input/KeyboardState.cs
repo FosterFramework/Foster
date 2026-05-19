@@ -75,8 +75,8 @@ public sealed class KeyboardState
 	/// </summary>
 	public bool Pressed(ReadOnlySpan<Keys> keys)
 	{
-		for (int i = 0; i < keys.Length; i++)
-			if (pressed[(int)keys[i]])
+		foreach (var t in keys)
+			if (pressed[(int)t])
 				return true;
 
 		return false;
@@ -87,8 +87,8 @@ public sealed class KeyboardState
 	/// </summary>
 	public bool Down(ReadOnlySpan<Keys> keys)
 	{
-		for (int i = 0; i < keys.Length; i++)
-			if (down[(int)keys[i]])
+		foreach (var t in keys)
+			if (down[(int)t])
 				return true;
 
 		return false;
@@ -99,15 +99,15 @@ public sealed class KeyboardState
 	/// </summary>
 	public bool Released(ReadOnlySpan<Keys> keys)
 	{
-		for (int i = 0; i < keys.Length; i++)
-			if (released[(int)keys[i]])
+		foreach (var t in keys)
+			if (released[(int)t])
 				return true;
 
 		return false;
 	}
 
 	/// <summary>
-	/// Checks if the given key was Repeated
+	/// Checks if the given key was Repeated, as defined by the static <see cref="Input.RepeatDelay"/> and <see cref="Input.RepeatInterval"/>
 	/// </summary>
 	public bool Repeated(Keys key)
 	{
@@ -318,7 +318,7 @@ public sealed class KeyboardState
 
 	internal void OnKey(int keyIndex, bool keyPressed, in TimeSpan time)
 	{
-		if (keyIndex >= 0 && keyIndex < MaxKeys)
+		if (keyIndex is >= 0 and < MaxKeys)
 		{
 			if (keyPressed)
 			{
