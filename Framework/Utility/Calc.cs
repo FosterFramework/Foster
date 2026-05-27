@@ -1578,25 +1578,18 @@ public static class Calc
 		return i;
 	}
 
-	public static string NormalizePath(string a, string b)
-	{
-		return NormalizePath(Path.Join(a, b));
-	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static string NormalizePath(string a, string b) => NormalizePath(Path.Join(a, b));
 
-	public static string NormalizePath(string a, string b, string c)
-	{
-		return NormalizePath(Path.Join(a, b, c));
-	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static string NormalizePath(string a, string b, string c) => NormalizePath(Path.Join(a, b, c));
 
-	public static string NormalizePath(string path)
+	public static unsafe string NormalizePath(string path)
 	{
-		unsafe
-		{
-			Span<char> temp = stackalloc char[path.Length];
-			for (int i = 0; i < path.Length; i++)
-				temp[i] = path[i];
-			return NormalizePath(temp).ToString();
-		}
+		Span<char> temp = stackalloc char[path.Length];
+		for (int i = 0; i < path.Length; i++)
+			temp[i] = path[i];
+		return NormalizePath(temp).ToString();
 	}
 
 	public static Span<char> NormalizePath(Span<char> path)
@@ -1619,10 +1612,9 @@ public static class Calc
 		return path[..length];
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ReadOnlySpan<byte> ToBytes<T>(Span<T> span) where T : struct
-	{
-		return MemoryMarshal.Cast<T, byte>(span);
-	}
+		=> MemoryMarshal.Cast<T, byte>(span);
 
 	public static bool TryFirst<T>(this List<T> list, Func<T, bool> predicate, [NotNullWhen(true)] out T? match) where T : class
 	{
@@ -1637,6 +1629,7 @@ public static class Calc
 		return false;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void Swap<T>(ref T a, ref T b)
 		=> (b, a) = (a, b);
 
