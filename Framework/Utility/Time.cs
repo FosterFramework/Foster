@@ -86,25 +86,23 @@ public readonly record struct Time(
 		=> Calc.BetweenInterval(Elapsed.TotalSeconds, falseInterval, trueInterval, offset);
 
 	/// <summary>
-	/// Cycle through returning each element of <paramref name="options"/> based on elapsed <paramref name="time"/>, moving to the next value after every <paramref name="interval"/> second until we reach the end of <paramref name="options"/> and then looping back to the start.
+	/// Cycle through returning each element of <paramref name="options"/> based on elapsed time, moving to the next value after every <paramref name="interval"/> seconds until we reach the end of <paramref name="options"/> and then looping back to the start.
 	/// </summary>
-	/// <param name="time">The current elapsed time in seconds</param>
 	/// <param name="interval">The interval time in seconds for each individual option to be chosen for</param>
 	/// <param name="offset">Offset to the interval in seconds (so we can, in effect, start partway through an interval)</param>
 	/// <param name="options">The return values to cycle through</param>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T IntervalCycle<T>(double time, double interval, double offset, params ReadOnlySpan<T> options)
-		=> Calc.IntervalCycle(time, interval, offset, options);
+	public T CycleInterval<T>(double interval, double offset, params ReadOnlySpan<T> options)
+		=> Calc.CycleInterval(Elapsed.TotalSeconds, interval, offset, options);
 
 	/// <summary>
-	/// Cycle through returning each element of <paramref name="options"/> based on elapsed <paramref name="time"/>, moving to the next value after every <paramref name="interval"/> second until we reach the end of <paramref name="options"/> and then looping back to the start.
+	/// Cycle through returning each element of <paramref name="options"/> based on elapsed time, moving to the next value after every <paramref name="interval"/> seconds until we reach the end of <paramref name="options"/> and then looping back to the start.
 	/// </summary>
-	/// <param name="time">The current elapsed time in seconds</param>
 	/// <param name="interval">The interval time in seconds for each individual option to be chosen for</param>
 	/// <param name="options">The return values to cycle through</param>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T IntervalCycle<T>(double time, double interval, params ReadOnlySpan<T> options)
-		=> Calc.IntervalCycle(time, interval, options);
+	public T CycleInterval<T>(double interval, params ReadOnlySpan<T> options)
+		=> Calc.CycleInterval(Elapsed.TotalSeconds, interval, options);
 
 	/// <summary>
 	/// Sine-wave a value between `from` and `to` with a period of `duration`.

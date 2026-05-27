@@ -560,25 +560,25 @@ public static class Calc
 		=> (time - offset) % (falseInterval + trueInterval) >= falseInterval;
 
 	/// <summary>
-	/// Cycle through returning each element of <paramref name="options"/> based on elapsed <paramref name="time"/>, moving to the next value after every <paramref name="interval"/> second until we reach the end of <paramref name="options"/> and then looping back to the start.
+	/// Cycle through returning each element of <paramref name="options"/> based on elapsed <paramref name="time"/>, moving to the next value after every <paramref name="interval"/> seconds until we reach the end of <paramref name="options"/> and then looping back to the start.
 	/// </summary>
 	/// <param name="time">The current elapsed time in seconds</param>
 	/// <param name="interval">The interval time in seconds for each individual option to be chosen for</param>
 	/// <param name="offset">Offset to the interval in seconds (so we can, in effect, start partway through an interval)</param>
 	/// <param name="options">The return values to cycle through</param>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T IntervalCycle<T>(double time, double interval, double offset, params ReadOnlySpan<T> options)
-		=> options[(int)((time - offset) % interval) % options.Length];
+	public static T CycleInterval<T>(double time, double interval, double offset, params ReadOnlySpan<T> options)
+		=> options[(int)((time - offset) / interval) % options.Length];
 
 	/// <summary>
-	/// Cycle through returning each element of <paramref name="options"/> based on elapsed <paramref name="time"/>, moving to the next value after every <paramref name="interval"/> second until we reach the end of <paramref name="options"/> and then looping back to the start.
+	/// Cycle through returning each element of <paramref name="options"/> based on elapsed <paramref name="time"/>, moving to the next value after every <paramref name="interval"/> seconds until we reach the end of <paramref name="options"/> and then looping back to the start.
 	/// </summary>
 	/// <param name="time">The current elapsed time in seconds</param>
 	/// <param name="interval">The interval time in seconds for each individual option to be chosen for</param>
 	/// <param name="options">The return values to cycle through</param>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T IntervalCycle<T>(double time, double interval, params ReadOnlySpan<T> options)
-		=> options[(int)(time % interval) % options.Length];
+	public static T CycleInterval<T>(double time, double interval, params ReadOnlySpan<T> options)
+		=> options[(int)(time / interval) % options.Length];
 
 	public static int NextPowerOfTwo(int x)
 	{
