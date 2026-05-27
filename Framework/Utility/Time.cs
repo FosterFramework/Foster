@@ -60,8 +60,8 @@ public readonly record struct Time(
 	/// <summary>
 	/// Returns true when the <see cref="Time"/> passes a given <paramref name="interval"/>. Ex: with an <paramref name="interval"/> of 0.1, this will be true for one frame every 0.1 seconds
 	/// </summary>
-	/// <param name="interval">Interval to check whether we've crossed</param>
-	/// <param name="offset">Offset to the interval (so we can, in effect, start partway through an interval)</param>
+	/// <param name="interval">Interval to check whether we've crossed, in seconds</param>
+	/// <param name="offset">Offset to the interval in seconds (so we can, in effect, start partway through an interval)</param>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool OnInterval(double interval, double offset = 0.0)
 		=> Calc.OnInterval(Elapsed.TotalSeconds, Delta, interval, offset);
@@ -69,8 +69,8 @@ public readonly record struct Time(
 	/// <summary>
 	/// Returns true when the <see cref="Time"/> is between the given <paramref name="interval"/>. Ex: an <paramref name="interval"/> of 0.1 will be false for 0.1 seconds, then true for 0.1 seconds, and then repeat.
 	/// </summary>
-	/// <param name="interval">Interval to check whether we're between</param>
-	/// <param name="offset">Offset to the interval (so we can, in effect, start partway through an interval)</param>
+	/// <param name="interval">Interval to check whether we're between, in seconds</param>
+	/// <param name="offset">Offset to the interval in seconds (so we can, in effect, start partway through an interval)</param>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool BetweenInterval(double interval, double offset = 0)
 		=> Calc.BetweenInterval(Elapsed.TotalSeconds, interval, offset);
@@ -78,12 +78,33 @@ public readonly record struct Time(
 	/// <summary>
 	/// Returns true when the <see cref="Time"/> is between the given <paramref name="falseInterval"/> and <paramref name="trueInterval"/>. Ex: with a <paramref name="falseInterval"/> of 0.1 and <paramref name="trueInterval"/> of 0.2, this will be false for 0.1 seconds, then true for 0.2 seconds, and then repeat.
 	/// </summary>
-	/// <param name="falseInterval">Time to be false for</param>
-	/// <param name="trueInterval">Time to be true for</param>
-	/// <param name="offset">Offset to the interval (so we can, in effect, start partway through an interval)</param>
+	/// <param name="falseInterval">Time to be false for, in seconds</param>
+	/// <param name="trueInterval">Time to be true for, in seconds</param>
+	/// <param name="offset">Offset to the interval in seconds (so we can, in effect, start partway through an interval)</param>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool BetweenInterval(double falseInterval, double trueInterval, double offset)
 		=> Calc.BetweenInterval(Elapsed.TotalSeconds, falseInterval, trueInterval, offset);
+
+	/// <summary>
+	/// Cycle through returning each element of <paramref name="options"/> based on elapsed <paramref name="time"/>, moving to the next value after every <paramref name="interval"/> second until we reach the end of <paramref name="options"/> and then looping back to the start.
+	/// </summary>
+	/// <param name="time">The current elapsed time in seconds</param>
+	/// <param name="interval">The interval time in seconds for each individual option to be chosen for</param>
+	/// <param name="offset">Offset to the interval in seconds (so we can, in effect, start partway through an interval)</param>
+	/// <param name="options">The return values to cycle through</param>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T IntervalCycle<T>(double time, double interval, double offset, params ReadOnlySpan<T> options)
+		=> Calc.IntervalCycle(time, interval, offset, options);
+
+	/// <summary>
+	/// Cycle through returning each element of <paramref name="options"/> based on elapsed <paramref name="time"/>, moving to the next value after every <paramref name="interval"/> second until we reach the end of <paramref name="options"/> and then looping back to the start.
+	/// </summary>
+	/// <param name="time">The current elapsed time in seconds</param>
+	/// <param name="interval">The interval time in seconds for each individual option to be chosen for</param>
+	/// <param name="options">The return values to cycle through</param>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T IntervalCycle<T>(double time, double interval, params ReadOnlySpan<T> options)
+		=> Calc.IntervalCycle(time, interval, options);
 
 	/// <summary>
 	/// Sine-wave a value between `from` and `to` with a period of `duration`.
@@ -91,8 +112,8 @@ public readonly record struct Time(
 	/// </summary>
 	/// <param name="from">Sine wave from</param>
 	/// <param name="to">Sine wave to</param>
-	/// <param name="duration">Duration, in seconds, of the period of the SineWave</param>
-	/// <param name="offsetPercent">Offset time by a percentage of the Duration</param>
+	/// <param name="duration">Duration in seconds of the period of the SineWave</param>
+	/// <param name="offsetPercent">Offset time as a percentage of the Duration</param>
 	public float SineWave(float from, float to, double duration, float offsetPercent = 0)
 	{
 		var dur = TimeSpan.FromSeconds(duration);
