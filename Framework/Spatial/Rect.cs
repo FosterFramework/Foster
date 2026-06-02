@@ -282,6 +282,25 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 	public readonly bool Contains(in Rect rect)
 		=> Left <= rect.Left && Top <= rect.Top && Bottom >= rect.Bottom && Right >= rect.Right;
 
+	/// <summary>
+	/// Get the <see cref="Vector2"/> representing the difference between our closest edge and the point.
+	/// (0, 0) if the point is within the rectangle.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Vector2 Difference(in Vector2 point)
+	=> new(
+		point.X < X
+			? point.X - X
+			: point.X > Right
+				? point.X - Right
+				: 0,
+		point.Y < Y
+			? point.Y - Y
+			: point.Y > Bottom
+				? point.Y - Bottom
+				: 0
+		);
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly bool Overlaps(in Rect against)
 		=> X + Width > against.X && Y + Height > against.Y && X < against.X + against.Width && Y < against.Y + against.Height;
