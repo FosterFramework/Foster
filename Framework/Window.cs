@@ -457,6 +457,23 @@ public sealed class Window : IDrawableTarget
 		SDL_RaiseWindow(Handle);
 	}
 
+    public enum DialogType
+    {
+        Info,
+        Warning,
+        Error
+    }
+
+    public void ShowDialog(DialogType type, string dialogTitle, string message)
+    {
+        SDL_ShowSimpleMessageBox(type switch
+        {
+            DialogType.Error => SDL_MessageBoxFlags.SDL_MESSAGEBOX_ERROR,
+            DialogType.Warning => SDL_MessageBoxFlags.SDL_MESSAGEBOX_WARNING,
+            _ => SDL_MessageBoxFlags.SDL_MESSAGEBOX_INFORMATION
+        }, dialogTitle, message, Handle);
+    }
+
 	internal void OnEvent(SDL_EventType ev)
 	{
 		switch (ev)
