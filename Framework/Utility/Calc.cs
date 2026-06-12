@@ -448,29 +448,41 @@ public static class Calc
 	public static int Ceil(double v) => (int)Math.Ceiling(v);
 
 	/// <summary>
-	/// Converts a value from 0 to 1, to 0 to 1 to 0
+	/// Remaps <paramref name="value"/> from 0 to 1, to: 0 to 1 to 0
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float YoYo(float value)
-	{
-		if (value <= .5f)
-			return value * 2;
-		else
-			return 1 - ((value - .5f) * 2);
-	}
+		=> value <= .5f
+			? value * 2
+			: 1 - (value - .5f) * 2;
 
 	/// <summary>
-	/// Remaps a value from min-max, to newMin-newMax
+	/// Remaps a value from <paramref name="min"/>-<paramref name="max"/>, to <paramref name="newMin"/>-<paramref name="newMax"/>
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Map(float val, float min, float max, float newMin = 0, float newMax = 1)
 		=> ((val - min) / (max - min)) * (newMax - newMin) + newMin;
 
 	/// <summary>
-	/// Remaps a value from min-max, to newMin-newMax, but clamps the value within the given range
+	/// Remaps a value from <paramref name="min"/>-<paramref name="max"/>, to <paramref name="newMin"/>-<paramref name="newMax"/>
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static float Map(float val, float min, float max, float newMin, float newMax, Ease.Easer easer)
+		=> easer((val - min) / (max - min)) * (newMax - newMin) + newMin;
+
+	/// <summary>
+	/// Remaps a value from <paramref name="min"/>-<paramref name="max"/>, to <paramref name="newMin"/>-<paramref name="newMax"/>, and clamps the value within the given range
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float ClampedMap(float val, float min, float max, float newMin = 0, float newMax = 1)
 		=> Clamp((val - min) / (max - min), 0, 1) * (newMax - newMin) + newMin;
+
+	/// <summary>
+	/// Remaps a value from <paramref name="min"/>-<paramref name="max"/>, to <paramref name="newMin"/>-<paramref name="newMax"/>, and clamps the value within the given range
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static float ClampedMap(float val, float min, float max, float newMin, float newMax, Ease.Easer easer)
+		=> easer(Clamp((val - min) / (max - min), 0, 1)) * (newMax - newMin) + newMin;
 
 	/// <summary>
 	/// Remaps the given Sin(radians) value
