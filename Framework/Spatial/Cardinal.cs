@@ -112,6 +112,13 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 		_                       => throw new Exception(InvalidStateMessage)
 	};
 
+	/// <summary>
+	/// Get whether the other <see cref="Cardinal"/> is perpendicular to this one.
+	/// Ie. if one is on the horizontal axis and the other is on the vertical
+	/// </summary>
+	public bool IsPerpendicular(Cardinal other)
+		=> (Horizontal && other.Vertical) || (Vertical && other.Horizontal);
+
 	public static implicit operator Cardinal(int val) => new(val);
 	public static implicit operator Point2(Cardinal c) => c.Point;
 	public static bool operator ==(Cardinal a, Cardinal b) => a.Value == b.Value;
