@@ -119,45 +119,68 @@ public abstract unsafe class VectorJsonConverter<T, TComponent>(
 
 	public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
-		if (reader.TokenType != JsonTokenType.StartObject)
-			return default;
-
 		Span<TComponent> values = stackalloc TComponent[ComponentCount];
-		var count = 0;
 
-		while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
+		// parse as array
+		if (reader.TokenType == JsonTokenType.StartArray)
 		{
-			if (reader.TokenType != JsonTokenType.PropertyName)
-			{
-				reader.Skip();
-				continue;
-			}
+			var index = 0;
 
-			var component = reader.GetString();
-			if (!reader.Read() || reader.TokenType != JsonTokenType.Number)
+			while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
 			{
-				reader.Skip();
-				continue;
-			}
-
-			for (int i = 0; i < ComponentCount; i ++)
-			{
-				// start at count as we assume we're reading components successfully in order
-				var index = (i + count) % ComponentCount;
-
-				for (int j = 0; j < Components[index].Length; j ++)
+				if (index >= ComponentCount || reader.TokenType != JsonTokenType.Number)
 				{
-					if (Components[index][j].Equals(component, StringComparison.OrdinalIgnoreCase))
+					reader.Skip();
+					continue;
+				}
+
+				values[index++] = ReadComponent(ref reader);
+			}
+		}
+
+		// parse as object with fields
+		else if (reader.TokenType == JsonTokenType.StartObject)
+		{
+			var count = 0;
+
+			while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
+			{
+				if (reader.TokenType != JsonTokenType.PropertyName)
+				{
+					reader.Skip();
+					continue;
+				}
+
+				var component = reader.GetString();
+				if (!reader.Read() || reader.TokenType != JsonTokenType.Number)
+				{
+					reader.Skip();
+					continue;
+				}
+
+				for (int i = 0; i < ComponentCount; i ++)
+				{
+					// start at count as we assume we're reading components successfully in order
+					var index = (i + count) % ComponentCount;
+
+					for (int j = 0; j < Components[index].Length; j ++)
 					{
-						values[index] = ReadComponent(ref reader);
-						count++;
-						goto NEXT;
+						if (Components[index][j].Equals(component, StringComparison.OrdinalIgnoreCase))
+						{
+							values[index] = ReadComponent(ref reader);
+							count++;
+							goto NEXT;
+						}
 					}
 				}
-			}
 
-			reader.Skip();
-		NEXT:;
+				reader.Skip();
+			NEXT:;
+			}
+		}
+		else
+		{
+			return default;
 		}
 		
 		return MemoryMarshal.Cast<TComponent, T>(values)[0];
