@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 namespace Foster.Framework;
 
 /// <summary>
-/// Lightweight random number generator
+/// Random number generator. This is intended for simple lightweight use-cases in hot loops and is not thoroughly tested.
 /// </summary>
 public struct Rng
 {
@@ -96,7 +96,7 @@ public struct Rng
 	/// <summary>
 	/// Get a random <see cref="long"/> between 0 (inclusive) and <paramref name="max"/> (exclusive)
 	/// </summary>
-	public long Long(long max) => max != 0 ? Math.Abs(Long()) % max : 0;
+	public long Long(long max) => max > 0 ? (long)(U64() % (ulong)max) : 0;
 
 	/// <summary>
 	/// Get a random <see cref="long"/> between <paramref name="min"/> (inclusive) and <paramref name="max"/> (exclusive)
@@ -111,7 +111,7 @@ public struct Rng
 	/// <summary>
 	/// Get a random <see cref="int"/> between 0 (inclusive) and <paramref name="max"/> (exclusive)
 	/// </summary>
-	public int Int(int max) => max != 0 ? Math.Abs(Int()) % max : 0;
+	public int  Int(int  max) => max > 0 ? (int)(U32() % (uint)max) : 0;
 
 	/// <summary>
 	/// Get a random <see cref="int"/> between <paramref name="min"/> (inclusive) and <paramref name="max"/> (exclusive)
