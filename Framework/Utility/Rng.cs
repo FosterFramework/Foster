@@ -111,7 +111,7 @@ public struct Rng
 	/// <summary>
 	/// Get a random <see cref="int"/> between 0 (inclusive) and <paramref name="max"/> (exclusive)
 	/// </summary>
-	public int  Int(int  max) => max > 0 ? (int)(U32() % (uint)max) : 0;
+	public int Int(int  max) => max > 0 ? (int)(U32() % (uint)max) : 0;
 
 	/// <summary>
 	/// Get a random <see cref="int"/> between <paramref name="min"/> (inclusive) and <paramref name="max"/> (exclusive)
