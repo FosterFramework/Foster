@@ -150,10 +150,30 @@ public struct Point2(int x, int y) : IEquatable<Point2>
 	public static Point2 Min(Point2 a, Point2 b) => new(Math.Min(a.X, b.X), Math.Min(a.Y, b.Y));
 	public static Point2 Min(Point2 a, Point2 b, Point2 c) => new(Calc.Min(a.X, b.X, c.X), Calc.Min(a.Y, b.Y, c.Y));
 	public static Point2 Min(Point2 a, Point2 b, Point2 c, Point2 d) => new(Calc.Min(a.X, b.X, c.X, d.X), Calc.Min(a.Y, b.Y, c.Y, d.Y));
+	public static Point2 Min(params ReadOnlySpan<Point2> points)
+	{
+		if (points.Length <= 0)
+			return Zero;
+
+		var result = points[0];
+		for (int i = 1; i < points.Length; i ++)
+			result = new(Math.Min(result.X, points[i].X), Math.Min(result.Y, points[i].Y));
+		return result;
+	}
 
 	public static Point2 Max(Point2 a, Point2 b) => new(Math.Max(a.X, b.X), Math.Max(a.Y, b.Y));
 	public static Point2 Max(Point2 a, Point2 b, Point2 c) => new(Calc.Max(a.X, b.X, c.X), Calc.Max(a.Y, b.Y, c.Y));
 	public static Point2 Max(Point2 a, Point2 b, Point2 c, Point2 d) => new(Calc.Max(a.X, b.X, c.X, d.X), Calc.Max(a.Y, b.Y, c.Y, d.Y));
+	public static Point2 Max(params ReadOnlySpan<Point2> points)
+	{
+		if (points.Length <= 0)
+			return Zero;
+
+		var result = points[0];
+		for (int i = 1; i < points.Length; i ++)
+			result = new(Math.Max(result.X, points[i].X), Math.Max(result.Y, points[i].Y));
+		return result;
+	}
 
 	public static int ManhattanDist(in Point2 a, in Point2 b) =>
 		Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y);
