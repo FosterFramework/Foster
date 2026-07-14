@@ -41,7 +41,6 @@ public static class Log
 			Console.Out.WriteLine(message);
 	}
 
-
 	/// <summary>
 	/// Append a UTF8 string to the Log
 	/// </summary>
@@ -58,6 +57,21 @@ public static class Log
 		{
 			Info(Encoding.UTF8.GetString(utf8));
 		}
+	}
+
+	/// <summary>
+	/// Append a span of arbitrary objects converted to strings to the Log
+	/// </summary>
+	public static void Info<T>(ReadOnlySpan<T> span)
+	{
+		Console.Out.Write("[ ");
+		for (int i = 0; i < span.Length; i++)
+		{
+			Console.Out.Write(span[i]?.ToString() ?? "null");
+			if (i < span.Length - 1)
+				Console.Out.Write(", ");
+		}
+		Console.Out.WriteLine(" ]");
 	}
 
 	/// <summary>
