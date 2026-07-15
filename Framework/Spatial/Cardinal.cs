@@ -153,6 +153,16 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 	}
 
 	/// <summary>
+	/// Returns a <see cref="Cardinal"/> from a <see cref="Signs"/>, interpreted as an x-axis sign
+	/// </summary>
+	public static Cardinal FromSignX(Signs x) => x == Signs.Positive ? Right : Left;
+
+	/// <summary>
+	/// Returns a <see cref="Cardinal"/> from a <see cref="Signs"/>, interpreted as a y-axis sign
+	/// </summary>
+	public static Cardinal FromSignY(Signs y) => y == Signs.Positive ? Down : Up;
+
+	/// <summary>
 	/// Returns a <see cref="Cardinal"/> from a unit <see cref="Vector2"/>
 	/// </summary>
 	public static Cardinal FromVector(Vector2 dir)
