@@ -5,9 +5,18 @@ using static SDL3.SDL;
 namespace Foster.Framework;
 
 /// <summary>
-/// Default Storage implementation, for Title and User Storage.
+/// Content Storage for Title (Application) and User (Save Data) Storage.
+/// <br/><br/>
+/// This should be used for all Title and User data for cross-platform/console
+/// compatibility. You should not use the default <see cref="System.IO"/> operations
+/// for loading and saving content unless you are creating a PC-only application,
+/// and even then it is discouraged.
+/// <br/><br/>
+/// To create Content Storage, use <see cref="FileSystem.OpenTitleStorage(Action{ContentStorage})"/>
+/// and <see cref="FileSystem.OpenUserStorage(Action{ContentStorage})"/> through
+/// <see cref="App.FileSystem"/>.
 /// </summary>
-public sealed class Storage : StorageContainer
+public sealed class ContentStorage : StorageContainer
 {
 	private nint handle;
 	private readonly bool writable;
@@ -16,24 +25,24 @@ public sealed class Storage : StorageContainer
 
 	internal bool Ready => SDL_StorageReady(handle);
 
-	private Storage(nint handle, bool writable)
+	private ContentStorage(nint handle, bool writable)
 	{
 		this.handle = handle;
 		this.writable = writable;
 	}
 
-	~Storage() =>Dispose(false);
+	~ContentStorage() =>Dispose(false);
 
-	internal static Storage OpenUserStorage(string name)
+	internal static ContentStorage OpenUserStorage(string name)
 	{
 		var handle = SDL_OpenUserStorage(string.Empty, name, 0);
-		return new Storage(handle, true);
+		return new ContentStorage(handle, true);
 	}
 
-	internal static Storage OpenTitleStorage(string? path)
+	internal static ContentStorage OpenTitleStorage(string? path)
 	{
 		var handle = SDL_OpenTitleStorage(path!, 0);
-		return new Storage(handle, false);
+		return new ContentStorage(handle, false);
 	}
 
 	public override bool DirectoryExists(string path)

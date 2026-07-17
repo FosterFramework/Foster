@@ -163,7 +163,7 @@ public abstract class App : IDisposable
 	/// to mount and read/write data.<br/>
 	/// <br/>
 	/// If you intend to target non-desktop platforms, you should implement user data
-	/// through the <see cref="FileSystem.OpenUserStorage(Action{Storage})"/> API via <see cref="FileSystem"/>
+	/// through the <see cref="FileSystem.OpenUserStorage(Action{ContentStorage})"/> API via <see cref="FileSystem"/>
 	/// </summary>
 	public string UserPath
 	{
