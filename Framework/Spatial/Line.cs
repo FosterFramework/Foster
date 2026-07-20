@@ -1,13 +1,15 @@
 ﻿using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Foster.Framework;
 
 /// <summary>
 /// A 2D Floating-Point Line
 /// </summary>
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Sequential), JsonConverter(typeof(JsonConverter))]
 public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 {
 	public Vector2 From = from;
@@ -236,5 +238,33 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 	public bool Equals(Line other) => From.Equals(other.From) && To.Equals(other.To);
 	public override bool Equals(object? obj) => obj is Line other && Equals(other);
 	public override int GetHashCode() => HashCode.Combine(From, To);
+
+	public class JsonConverter : JsonConverter<Line>
+	{
+		public override Line Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		{
+			if (reader.TokenType != JsonTokenType.StartArray)
+				return default;
+
+			var index = 0;
+			Span<float> values = stackalloc float[4];
+
+			while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+			{
+				if (index >= values.Length || reader.TokenType != JsonTokenType.Number)
+				{
+					reader.Skip();
+					continue;
+				}
+
+				values[index++] = reader.GetSingle();
+			}
+
+			return new(new(values[0], values[1]), new(values[2], values[3]));
+		}
+
+		public override void Write(Utf8JsonWriter writer, Line value, JsonSerializerOptions options)
+			=> writer.WriteRawValue($"[{value.From.X}, {value.From.Y}, {value.To.X}, {value.To.Y}]");
+	}
 }
 

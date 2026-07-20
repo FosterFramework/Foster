@@ -331,13 +331,13 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 	}
 
 	/// <summary>
-	/// Return the sector that the point falls within (see diagram in comments below). A result of zero indicates a point inside the rectangle
+	/// Return the sector that the point falls within (see diagram in comments below). A result of 0b0000 indicates a point inside the rectangle<br/>
+	///<c>0101 | 0100 | 0110</c><br/>
+	///<c>-----+------+-----</c><br/>
+	///<c>0001 | 0000 | 0010</c><br/>
+	///<c>-----+------+-----</c><br/>
+	///<c>1001 | 1000 | 1010</c>
 	/// </summary>
-	//  0101 | 0100 | 0110
-	// ------+------+------
-	//  0001 | 0000 | 0010
-	// ------+------+------
-	//  1001 | 1000 | 1010
 	public readonly byte GetPointSector(in Vector2 pt)
 	{
 		byte sector = 0;
