@@ -627,7 +627,7 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 		=> new(justify.X * -size.X, justify.Y * -size.Y, size.X, size.Y);
 
 	/// <summary>
-	/// Get the rect with positive width and height that stretches from point a to point b
+	/// Get the <see cref="Rect"/> with positive width and height that stretches from point a to point b
 	/// </summary>
 	public static Rect Between(in Vector2 a, in Vector2 b)
 	{
@@ -637,6 +637,37 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 		rect.Y = a.Y < b.Y ? a.Y : b.Y;
 		rect.Width = (a.X > b.X ? a.X : b.X) - rect.X;
 		rect.Height = (a.Y > b.Y ? a.Y : b.Y) - rect.Y;
+
+		return rect;
+	}
+
+	/// <summary>
+	/// Get the smallest <see cref="Rect"/> with positive width and height that contains all of the points
+	/// </summary>
+	public static Rect Containing(params ReadOnlySpan<Vector2> points)
+	{
+		if (points.Length == 0)
+			return default;
+
+		Rect rect = new(points[0], Vector2.Zero);
+		for (int i = 1; i < points.Length; i++)
+		{
+			if (points[i].X < rect.X)
+			{
+				rect.Width += rect.X - points[i].X;
+				rect.X = points[i].X;
+			}
+			else if (points[i].X > rect.Right)
+				rect.Width += points[i].X - rect.Right;
+
+			if (points[i].Y < rect.Y)
+			{
+				rect.Height += rect.Y - points[i].Y;
+				rect.Y     =  points[i].Y;
+			}
+			else if (points[i].Y > rect.Bottom)
+				rect.Height += points[i].Y - rect.Bottom;
+		}
 
 		return rect;
 	}
