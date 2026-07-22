@@ -29,14 +29,14 @@ public static partial class Extensions
 		/// </summary>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public T With(T with)
-			=> (T)(flags | with);
+			=> flags | with;
 
 		/// <summary>
 		/// Return <paramref name="flags"/> after clearing all the set bits in <paramref name="without"/>
 		/// </summary>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public T Without(T without)
-			=> (T)(flags & ~without);
+			=> flags & ~without;
 
 		/// <summary>
 		/// Return <paramref name="flags"/> after setting or clearing all the set bits in <paramref name="mask"/>, depending on the value of <paramref name="condition"/> (set if true, clear if false)
