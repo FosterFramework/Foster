@@ -27,6 +27,11 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 	public static readonly Cardinal West  = new(LeftValue);
 	public static readonly Cardinal North = new(UpValue);
 
+	/// <summary>
+	/// All of the possible values of <see cref="Cardinal"/>s, starting with <see cref="Right"/> and proceeding clockwise
+	/// </summary>
+	public static readonly IReadOnlyList<Cardinal> All = [ Right, Down, Left, Up ];
+
 	public readonly int Value;
 
 	public Cardinal(int val)
@@ -207,25 +212,10 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 	/// </summary>
 	public static Cardinal FromString(string value)
 	{
-		if (value.Equals("Right", StringComparison.OrdinalIgnoreCase)) return Right;
 		if (value.Equals("Left", StringComparison.OrdinalIgnoreCase)) return Left;
 		if (value.Equals("Up", StringComparison.OrdinalIgnoreCase)) return Up;
 		if (value.Equals("Down", StringComparison.OrdinalIgnoreCase)) return Down;
-		return default;
-	}
-
-	/// <summary>
-	/// Enumerate the possible values of <see cref="Cardinal"/>s, starting with <see cref="Right"/> and proceeding clockwise
-	/// </summary>
-	public static IEnumerable<Cardinal> All
-	{
-		get
-		{
-			yield return Right;
-			yield return Down;
-			yield return Left;
-			yield return Up;
-		}
+		return Right;
 	}
 
 	public class JsonConverter : JsonConverter<Cardinal>
