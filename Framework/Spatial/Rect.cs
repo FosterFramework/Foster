@@ -411,7 +411,7 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 			// below & right of rect
 			0b1010 => BottomRight,
 			// inside rect
-			_      => Calc.Smallest(point.X - X, X + Width - point.X, point.Y - Y, Y + Height - point.Y) switch
+			_      => Calc.IndexOfSmallest(point.X - X, X + Width - point.X, point.Y - Y, Y + Height - point.Y) switch
 			{
 				// left edge
 				0 => point with { X = X },

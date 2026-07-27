@@ -506,7 +506,7 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 			// below & right of rect
 			0b1010 => BottomRight,
 			// inside rect
-			_      => Calc.Smallest(point.X - X, X + Width - point.X, point.Y - Y, Y + Height - point.Y) switch
+			_      => Calc.IndexOfSmallest(point.X - X, X + Width - point.X, point.Y - Y, Y + Height - point.Y) switch
 			{
 				// left edge
 				0 => point with { X = X },
@@ -540,7 +540,7 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 			// below & right of rect
 			0b1010 => BottomRight,
 			// inside rect
-			_      => Calc.Smallest(point.X - X, X + Width - point.X, point.Y - Y, Y + Height - point.Y) switch
+			_      => Calc.IndexOfSmallest(point.X - X, X + Width - point.X, point.Y - Y, Y + Height - point.Y) switch
 			{
 				// left edge
 				0 => point with { X = X },

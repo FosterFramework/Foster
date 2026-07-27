@@ -230,9 +230,9 @@ public static class Calc
 		=> Vector2.Max(Vector2.Max(a, b), c);
 
 	/// <summary>
-	/// Get the index of the element in the list that is smallest. If multiple entries are equal, the one that appears first is chosen. Returns -1 if the list is empty.
+	/// Get the index of the element in <paramref name="list"/> that is smallest. If multiple entries are equal, the one that appears first is chosen. Returns -1 if <paramref name="list"/> is empty.
 	/// </summary>
-	public static int Smallest<T>(params ReadOnlySpan<T> list) where T : IComparable<T>
+	public static int IndexOfSmallest<T>(params ReadOnlySpan<T> list) where T : IComparable<T>
 	{
 		if (list.Length == 0)
 			return -1;
@@ -251,9 +251,9 @@ public static class Calc
 	}
 
 	/// <summary>
-	/// Get the index of the element in the list that is largest. If multiple entries are equal, the one that appears first is chosen. Returns -1 if the list is empty.
+	/// Get the index of the element in <paramref name="list"/> that is largest. If multiple entries are equal, the one that appears first is chosen. Returns -1 if <paramref name="list"/> is empty.
 	/// </summary>
-	public static int Largest<T>(params ReadOnlySpan<T> list) where T : IComparable<T>
+	public static int IndexOfLargest<T>(params ReadOnlySpan<T> list) where T : IComparable<T>
 	{
 		if (list.Length == 0)
 			return -1;
@@ -272,41 +272,23 @@ public static class Calc
 	}
 
 	/// <summary>
-	/// Move toward a target value without passing it
+	/// Move toward a <paramref name="target"/> value by no more than <paramref name="maxDelta"/>, without passing the <paramref name="target"/>
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Approach(float from, float target, float maxDelta)
 		=> from > target ? Math.Max(from - maxDelta, target) : Math.Min(from + maxDelta, target);
 
 	/// <summary>
-	/// Move toward a target value without passing it
+	/// Move toward a <paramref name="target"/> value by no more than <paramref name="maxDelta"/>, without passing the <paramref name="target"/>
 	/// </summary>
+	/// <returns>True if we reached the <paramref name="target"/> value</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static float Approach(ref float from, float target, float maxDelta)
-		=> from > target ? from = Math.Max(from - maxDelta, target) : from = Math.Min(from + maxDelta, target);
+	public static bool Approach(ref float from, float target, float maxDelta)
+		=> (from > target ? from = Math.Max(from - maxDelta, target) : from = Math.Min(from + maxDelta, target)) == target;
 
 	/// <summary>
-	/// Move toward a target value without passing it, and only if we have the opposite sign or lower magnitude
+	/// Move a <see cref="Vector2"/> toward a <paramref name="target"/> position, moving no further than <paramref name="maxDelta"/>
 	/// </summary>
-	public static float ApproachIfLower(float from, float target, float maxDelta)
-	{
-		if (Math.Sign(from) != Math.Sign(target) || Math.Abs(from) < Math.Abs(target))
-			return Approach(from, target, maxDelta);
-		else
-			return from;
-	}
-
-	/// <summary>
-	/// Move toward a target value without passing it, and only if we have the opposite sign or lower magnitude
-	/// </summary>
-	public static float ApproachIfLower(ref float from, float target, float maxDelta)
-	{
-		if (Math.Sign(from) != Math.Sign(target) || Math.Abs(from) < Math.Abs(target))
-			return Approach(ref from, target, maxDelta);
-		else
-			return from;
-	}
-
 	public static Vector2 Approach(Vector2 from, Vector2 target, float maxDelta)
 	{
 		if (from == target)
@@ -322,6 +304,30 @@ public static class Calc
 	}
 
 	/// <summary>
+	/// Move a <see cref="Vector2"/> toward a <paramref name="target"/> position, moving no further than <paramref name="maxDelta"/>
+	/// </summary>
+	/// <returns>True if we reached the <paramref name="target"/> position</returns>
+	public static bool Approach(ref Vector2 from, Vector2 target, float maxDelta)
+	{
+		if (from == target)
+			return true;
+		else
+		{
+			var diff = target - from;
+			if (diff.LengthSquared() <= maxDelta * maxDelta)
+			{
+				from = target;
+				return true;
+			}
+			else
+			{
+				from += diff.Normalized() * maxDelta;
+				return false;
+			}
+		}
+	}
+
+	/// <summary>
 	/// Move toward a target position by a up to a maximum amount, but only allow movement along an arbitrary axis
 	/// </summary>
 	/// <param name="from">Starting point</param>
@@ -331,35 +337,6 @@ public static class Calc
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 ApproachAlongAxis(Vector2 from, Vector2 target, Vector2 axisNormal, float maxDelta)
 		=> Approach(from, from + axisNormal * Vector2.Dot(target - from, axisNormal), maxDelta);
-
-	public static Vector3 Approach(Vector3 from, Vector3 target, float amount)
-	{
-		if (from == target)
-			return target;
-		else
-		{
-			var diff = target - from;
-			if (diff.LengthSquared() <= amount * amount)
-				return target;
-			else
-				return from + diff.Normalized() * amount;
-		}
-	}
-
-
-	public static Vector2 Approach(ref Vector2 from, Vector2 target, float amount)
-	{
-		if (from == target)
-			return target;
-		else
-		{
-			var diff = target - from;
-			if (diff.LengthSquared() <= amount * amount)
-				return from = target;
-			else
-				return from += diff.Normalized() * amount;
-		}
-	}
 
 	public static Vector2 RotateToward(Vector2 dir, Vector2 target, float maxAngleDelta, float maxMagnitudeDelta)
 	{
@@ -373,6 +350,47 @@ public static class Calc
 			len = Approach(len, target.Length(), maxMagnitudeDelta);
 
 		return AngleToVector(angle, len);
+	}
+
+	/// <summary>
+	/// Move a <see cref="Vector3"/> toward a <paramref name="target"/> position, moving no further than <paramref name="maxDelta"/>
+	/// </summary>
+	public static Vector3 Approach(Vector3 from, Vector3 target, float maxDelta)
+	{
+		if (from == target)
+			return target;
+		else
+		{
+			var diff = target - from;
+			if (diff.LengthSquared() <= maxDelta * maxDelta)
+				return target;
+			else
+				return from + diff.Normalized() * maxDelta;
+		}
+	}
+
+	/// <summary>
+	/// Move a <see cref="Vector3"/> toward a <paramref name="target"/> position, moving no further than <paramref name="maxDelta"/>
+	/// </summary>
+	/// <returns>True if we reached the <paramref name="target"/> position</returns>
+	public static bool Approach(ref Vector3 from, Vector3 target, float maxDelta)
+	{
+		if (from == target)
+			return true;
+		else
+		{
+			var diff = target - from;
+			if (diff.LengthSquared() <= maxDelta * maxDelta)
+			{
+				from = target;
+				return true;
+			}
+			else
+			{
+				from += diff.Normalized() * maxDelta;
+				return false;
+			}
+		}
 	}
 
 	/// <summary>
