@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -427,6 +428,128 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 			return false;
 		}
 	}
+
+	/// <summary>
+	/// Get the closest point on the <see cref="RectInt"/> to the <paramref name="point"/>.
+	/// If the point is inside the <see cref="RectInt"/>, its value is returned.
+	/// </summary>
+	public readonly Point2 ClosestPoint(in Point2 point)
+		=> GetPointSector(point) switch
+		{
+			// left of rect
+			0b0001 => point with { X = X },
+			// right of rect
+			0b0010 => point with { X = X + Width },
+			// above rect
+			0b0100 => point with { Y = Y },
+			// below rect
+			0b1000 => point with { Y = Y + Height },
+			// above & left of rect
+			0b0101 => TopLeft,
+			// above & right of rect
+			0b0110 => TopRight,
+			// below & left of rect
+			0b1001 => BottomLeft,
+			// below & right of rect
+			0b1010 => BottomRight,
+			// inside rect
+			_      => point,
+		};
+
+	/// <summary>
+	/// Get the closest point on the <see cref="RectInt"/> to the <paramref name="point"/>.
+	/// If the point is inside the <see cref="RectInt"/>, its value is returned.
+	/// </summary>
+	public readonly Vector2 ClosestPoint(in Vector2 point)
+		=> GetPointSector(point) switch
+		{
+			// left of rect
+			0b0001 => point with { X = X },
+			// right of rect
+			0b0010 => point with { X = X + Width },
+			// above rect
+			0b0100 => point with { Y = Y },
+			// below rect
+			0b1000 => point with { Y = Y + Height },
+			// above & left of rect
+			0b0101 => TopLeft,
+			// above & right of rect
+			0b0110 => TopRight,
+			// below & left of rect
+			0b1001 => BottomLeft,
+			// below & right of rect
+			0b1010 => BottomRight,
+			// inside rect
+			_      => point,
+		};
+
+	/// <summary>
+	/// Get the closest along the edges of the <see cref="RectInt"/> to the <paramref name="point"/>.
+	/// </summary>
+	public readonly Point2 ClosestPointOnEdges(in Point2 point)
+		=> GetPointSector(point) switch
+		{
+			// left of rect
+			0b0001 => point with { X = X },
+			// right of rect
+			0b0010 => point with { X = X + Width },
+			// above rect
+			0b0100 => point with { Y = Y },
+			// below rect
+			0b1000 => point with { Y = Y + Height },
+			// above & left of rect
+			0b0101 => TopLeft,
+			// above & right of rect
+			0b0110 => TopRight,
+			// below & left of rect
+			0b1001 => BottomLeft,
+			// below & right of rect
+			0b1010 => BottomRight,
+			// inside rect
+			_      => Calc.Smallest(point.X - X, X + Width - point.X, point.Y - Y, Y + Height - point.Y) switch
+			{
+				// left edge
+				0 => point with { X = X },
+				1 => point with { X = X + Width },
+				2 => point with { Y = Y },
+				3 => point with { Y = Y + Height },
+				_ => throw new UnreachableException(),
+			}
+		};
+
+	/// <summary>
+	/// Get the closest along the edges of the <see cref="RectInt"/> to the <paramref name="point"/>.
+	/// </summary>
+	public readonly Vector2 ClosestPointOnEdges(in Vector2 point)
+		=> GetPointSector(point) switch
+		{
+			// left of rect
+			0b0001 => point with { X = X },
+			// right of rect
+			0b0010 => point with { X = X + Width },
+			// above rect
+			0b0100 => point with { Y = Y },
+			// below rect
+			0b1000 => point with { Y = Y + Height },
+			// above & left of rect
+			0b0101 => TopLeft,
+			// above & right of rect
+			0b0110 => TopRight,
+			// below & left of rect
+			0b1001 => BottomLeft,
+			// below & right of rect
+			0b1010 => BottomRight,
+			// inside rect
+			_      => Calc.Smallest(point.X - X, X + Width - point.X, point.Y - Y, Y + Height - point.Y) switch
+			{
+				// left edge
+				0 => point with { X = X },
+				1 => point with { X = X + Width },
+				2 => point with { Y = Y },
+				3 => point with { Y = Y + Height },
+				_ => throw new UnreachableException(),
+			}
+		};
 
 	#endregion
 
