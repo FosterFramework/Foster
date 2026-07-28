@@ -83,6 +83,12 @@ public abstract class GraphicsDevice
 	public abstract bool IsTextureMultiSampleSupported(TextureFormat format, SampleCount sampleCount);
 
 	/// <summary>
+	/// Inserts a Debug Label into the graphics device.<br/>
+	/// See SDL_InsertGPUDebugLabel for more information: https://wiki.libsdl.org/SDL3/SDL_InsertGPUDebugLabel#remarks
+	/// </summary>
+	public abstract void InsertDebugLabel(string text);
+
+	/// <summary>
 	/// Performs a draw command
 	/// </summary>
 	public void Draw(DrawCommand command)

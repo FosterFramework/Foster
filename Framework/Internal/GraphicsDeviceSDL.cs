@@ -153,6 +153,12 @@ internal unsafe class GraphicsDeviceSDL(App app, GraphicsDriver preferred) : Gra
 
 	public override bool Disposed => device == nint.Zero;
 
+	public override void InsertDebugLabel(string text)
+	{
+		if (cmdRender != nint.Zero)
+			SDL_InsertGPUDebugLabel(cmdRender, text);
+	}
+
 	internal override void CreateDevice(in AppFlags flags)
 	{
 		if (device != nint.Zero)
