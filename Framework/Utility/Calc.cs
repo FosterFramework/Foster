@@ -530,8 +530,18 @@ public static class Calc
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static float AngleApproach(ref float val, float target, float maxMove)
-		=> val = AngleApproach(val, target, maxMove);
+	public static bool AngleApproach(ref float val, float target, float maxMove)
+	{
+		var diff = AngleDiff(val, target);
+		if (Math.Abs(diff) < maxMove)
+		{
+			val = target;
+			return true;
+		}
+
+		val += Clamp(diff, -maxMove, maxMove);
+		return false;
+	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float AngleLerp(float startAngle, float endAngle, float percent)
