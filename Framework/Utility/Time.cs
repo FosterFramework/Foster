@@ -67,6 +67,14 @@ public readonly record struct Time(
 		=> Calc.OnInterval(Elapsed.TotalSeconds, Delta, interval, offset);
 
 	/// <summary>
+	/// Returns how many times the interval has been passed over the last frame. Ex: with an interval of 0.01 and a steady delta time of 0.016, this will alternate returning 1 and 2 every frame
+	/// </summary>
+	/// <param name="interval">Interval to count the times we've crossed, in seconds</param>
+	/// <param name="offset">Offset to the interval in seconds (so we can, in effect, start partway through an interval)</param>
+	public int IntervalCount(double interval, double offset = 0)
+		=> Calc.IntervalCount(Elapsed.TotalSeconds, Delta, interval, offset);
+
+	/// <summary>
 	/// Returns true when the <see cref="Time"/> is between the given <paramref name="interval"/>. Ex: an <paramref name="interval"/> of 0.1 will be false for 0.1 seconds, then true for 0.1 seconds, and then repeat.
 	/// </summary>
 	/// <param name="interval">Interval to check whether we're between, in seconds</param>
