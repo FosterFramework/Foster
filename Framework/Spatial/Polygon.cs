@@ -171,23 +171,11 @@ public class Polygon : IList<Vector2>, IList
 
 	private void CalculateBounds()
 	{
-		if (!boundsDirty)
-			return;
-
-		boundsDirty = false;
-		if (vertices.Count == 0)
+		if (boundsDirty)
 		{
-			bounds = new();
-			return;
+			boundsDirty = false;
+			bounds = Rect.Containing(CollectionsMarshal.AsSpan(vertices));
 		}
-
-		Vector2 min = vertices[0], max = vertices[0];
-		for (int i = 1; i < vertices.Count; i ++)
-		{
-			min = Vector2.Min(min, vertices[i]);
-			max = Vector2.Max(max, vertices[i]);
-		}
-		bounds = Rect.Between(min, max);
 	}
 
 	/// <summary>

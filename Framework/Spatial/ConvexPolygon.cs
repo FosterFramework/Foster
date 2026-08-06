@@ -32,7 +32,7 @@ public struct ConvexPolygon : IConvexShape, IEnumerable<Vector2>
 		=> Vertices = [..vertices];
 
 	public readonly Rect Bounds
-		=> Vertices.Count <= 0 ? default : Rect.Between(Calc.Min(Vertices.Span), Calc.Max(Vertices.Span));
+		=> Rect.Containing(Vertices.Span);
 
 	public readonly Vector2 Center
 		=> Bounds.Center;

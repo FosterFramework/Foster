@@ -687,30 +687,9 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 	/// </summary>
 	public static Rect Containing(params ReadOnlySpan<Vector2> points)
 	{
-		if (points.Length == 0)
-			return default;
-
-		Rect rect = new(points[0], Vector2.Zero);
-		for (int i = 1; i < points.Length; i++)
-		{
-			if (points[i].X < rect.X)
-			{
-				rect.Width += rect.X - points[i].X;
-				rect.X = points[i].X;
-			}
-			else if (points[i].X > rect.Right)
-				rect.Width += points[i].X - rect.Right;
-
-			if (points[i].Y < rect.Y)
-			{
-				rect.Height += rect.Y - points[i].Y;
-				rect.Y     =  points[i].Y;
-			}
-			else if (points[i].Y > rect.Bottom)
-				rect.Height += points[i].Y - rect.Bottom;
-		}
-
-		return rect;
+		if (points.Length > 0)
+			return Between(Calc.Min(points), Calc.Max(points));
+		return default;
 	}
 
 	#endregion

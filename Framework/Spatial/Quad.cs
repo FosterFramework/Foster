@@ -64,20 +64,7 @@ public struct Quad(Vector2 a, Vector2 b, Vector2 c, Vector2 d) : IConvexShape, I
 	/// <summary>
 	/// Get the axis-aligned bounds of the <see cref="Quad"/>
 	/// </summary>
-	public readonly Rect Bounds
-	{
-		get
-		{
-			var bounds = new Rect
-			{
-				X = Math.Min(A.X, Math.Min(B.X, Math.Min(C.X, D.X))),
-				Y = Math.Min(A.Y, Math.Min(B.Y, Math.Min(C.Y, D.Y)))
-			};
-			bounds.Width = Math.Max(A.X, Math.Max(B.X, Math.Max(C.X, D.X))) - bounds.X;
-			bounds.Height = Math.Max(A.Y, Math.Max(B.Y, Math.Max(C.Y, D.Y))) - bounds.Y;
-			return bounds;
-		}
-	}
+	public readonly Rect Bounds => Rect.Containing([A, B, C, D]);
 
 	/// <summary>
 	/// Get the centerpoint of the <see cref="Quad"/>'s bounds
