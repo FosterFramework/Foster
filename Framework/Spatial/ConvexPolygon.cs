@@ -1,63 +1,41 @@
 ﻿using System.Collections;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Foster.Framework.JsonConverters;
 
 namespace Foster.Framework;
 
 /// <summary>
-/// A 2D Convex Polygon
+/// A 2D Convex Polygon, with a maximum of 32 vertices.
 /// </summary>
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Sequential), JsonConverter(typeof(JsonConverter))]
 public struct ConvexPolygon : IConvexShape, IEnumerable<Vector2>
 {
+	/// <summary>
+	/// Maximum number of Points in the Polygon
+	/// </summary>
 	public const int MaxPoints = StackList32<Vector2>.TypeCapacity;
+
+	/// <summary>
+	/// Vertices of the Polygon
+	/// </summary>
 	public StackList32<Vector2> Vertices;
 
 	public readonly int Points => Vertices.Count;
 	public readonly int Axes => Vertices.Count;
 
-	public ConvexPolygon()
-	{
-
-	}
+	public ConvexPolygon() {}
 
 	public ConvexPolygon(params ReadOnlySpan<Vector2> vertices)
-	{
-		Vertices = [..vertices];
-	}
+		=> Vertices = [..vertices];
 
 	public readonly Rect Bounds
-	{
-		get
-		{
-			Rect bounds = new(Vertices[0].X, Vertices[0].Y, 0, 0);
+		=> Vertices.Count <= 0 ? default : Rect.Between(Calc.Min(Vertices.Span), Calc.Max(Vertices.Span));
 
-			for (int i = 1; i < Points; i++)
-			{
-				if (Vertices[i].X < bounds.X)
-				{
-					bounds.Width += bounds.X - Vertices[i].X;
-					bounds.X = Vertices[i].X;
-				}
-
-				if (Vertices[i].X > bounds.Right)
-					bounds.Width = Vertices[i].X - bounds.X;
-
-				if (Vertices[i].Y < bounds.Y)
-				{
-					bounds.Height += bounds.Y - Vertices[i].Y;
-					bounds.Y = Vertices[i].Y;
-				}
-
-				if (Vertices[i].Y > bounds.Bottom)
-					bounds.Height = Vertices[i].Y - bounds.Y;
-			}
-
-			return bounds;
-		}
-	}
-
-	public readonly Vector2 Center => Bounds.Center;
+	public readonly Vector2 Center
+		=> Bounds.Center;
 
 	public readonly Vector2 Average
 	{
@@ -245,7 +223,8 @@ public struct ConvexPolygon : IConvexShape, IEnumerable<Vector2>
 		return result;
 	}
 
-	public readonly override bool Equals(object? obj) => obj is ConvexPolygon value && value == this;
+	public readonly override bool Equals(object? obj)
+		=> obj is ConvexPolygon value && value == this;
 
 	public readonly override int GetHashCode()
 	{
@@ -323,4 +302,28 @@ public struct ConvexPolygon : IConvexShape, IEnumerable<Vector2>
 	}
 
 	#endregion
+
+	public class JsonConverter : JsonConverter<ConvexPolygon>
+	{
+		private static readonly Vector2Converter vectorJsonConverter = new();
+
+		public override ConvexPolygon Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		{
+			var result = new ConvexPolygon();
+			if (reader.TokenType == JsonTokenType.StartArray)
+			{
+				while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+					result.Add(vectorJsonConverter.Read(ref reader, typeof(Vector2), options));
+			}
+			return result;
+		}
+
+		public override void Write(Utf8JsonWriter writer, ConvexPolygon value, JsonSerializerOptions options)
+		{
+			writer.WriteStartArray();
+			foreach (var it in value.Vertices)
+				vectorJsonConverter.Write(writer, it, options);
+			writer.WriteEndArray();
+		}
+	}
 }

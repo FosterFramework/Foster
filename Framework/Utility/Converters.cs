@@ -83,8 +83,8 @@ public abstract class IntVectorJsonConverter<T>(string[][] Components) : VectorJ
 /// This is generally unsafe and should only be used on types that are a list of a single component, like a Vector
 /// </summary>
 public abstract unsafe class VectorJsonConverter<T, TComponent>(
-	string[][] Components, 
-	VectorJsonConverter<T, TComponent>.WriteComponentFn WriteComponent, 
+	string[][] Components,
+	VectorJsonConverter<T, TComponent>.WriteComponentFn WriteComponent,
 	VectorJsonConverter<T, TComponent>.ReadComponentFn ReadComponent,
 	VectorJsonConverter<T, TComponent>.TryParseFn TryParseComponent) : JsonConverter<T>
 	where T : unmanaged

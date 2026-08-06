@@ -1,38 +1,25 @@
 ﻿using System.Numerics;
+using System.Text.Json.Serialization;
+using Foster.Framework.JsonConverters;
 
 namespace Foster.Framework;
 
 /// <summary>
 /// A 2D Quad
 /// </summary>
-public struct Quad : IConvexShape, IEquatable<Quad>
+[JsonConverter(typeof(JsonConverter))]
+public struct Quad(Vector2 a, Vector2 b, Vector2 c, Vector2 d) : IConvexShape, IEquatable<Quad>
 {
-	public Vector2 A;
-	public Vector2 B;
-	public Vector2 C;
-	public Vector2 D;
-
-	public Quad(Vector2 a, Vector2 b, Vector2 c, Vector2 d)
-	{
-		A = a;
-		B = b;
-		C = c;
-		D = d;
-	}
+	public Vector2 A = a;
+	public Vector2 B = b;
+	public Vector2 C = c;
+	public Vector2 D = d;
 
 	public Quad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
-	{
-		A = new(x1, y1);
-		B = new(x2, y2);
-		C = new(x3, y3);
-		D = new(x4, y4);
-	}
+		: this(new(x1, y1), new(x2, y2), new(x3, y3), new(x4, y4)) {}
 
 	public Quad(in Rect rect)
-		: this(rect.TopLeft, rect.TopRight, rect.BottomRight, rect.BottomLeft)
-	{
-
-	}
+		: this(rect.TopLeft, rect.TopRight, rect.BottomRight, rect.BottomLeft) {}
 
 	/// <summary>
 	/// Get the normal of the edge from <see cref="A"/> to <see cref="B"/>. Normals will be away from edges if winding is clockwise.
@@ -128,6 +115,7 @@ public struct Quad : IConvexShape, IEquatable<Quad>
 	}
 
 	public readonly int Points => 4;
+	public readonly int Axes => 4;
 
 	public readonly Vector2 GetPoint(int index)
 	{
@@ -140,8 +128,6 @@ public struct Quad : IConvexShape, IEquatable<Quad>
 			_ => throw new IndexOutOfRangeException(),
 		};
 	}
-
-	public readonly int Axes => 4;
 
 	public readonly Vector2 GetAxis(int index)
 		=> index switch
@@ -166,19 +152,23 @@ public struct Quad : IConvexShape, IEquatable<Quad>
 		bool reverse = maintainWinding && MathF.Sign(matrix.M11) * MathF.Sign(matrix.M22) < 0;
 
 		if (reverse)
+		{
 			return new(
 				Vector2.Transform(quad.D, matrix),
 				Vector2.Transform(quad.C, matrix),
 				Vector2.Transform(quad.B, matrix),
 				Vector2.Transform(quad.A, matrix)
-				);
+			);
+		}
 		else
+		{
 			return new(
 				Vector2.Transform(quad.A, matrix),
 				Vector2.Transform(quad.B, matrix),
 				Vector2.Transform(quad.C, matrix),
 				Vector2.Transform(quad.D, matrix)
-				);
+			);
+		}
 	}
 
 	public static Quad operator *(Quad lhs, float rhs) => new(lhs.A * rhs, lhs.B * rhs, lhs.C * rhs, lhs.D * rhs);
@@ -231,4 +221,7 @@ public struct Quad : IConvexShape, IEquatable<Quad>
 	}
 
 	#endregion
+
+	public class JsonConverter()
+		: FloatVectorJsonConverter<Quad>([["X1"], ["Y1"], ["X2"], ["Y2"], ["X3"], ["Y3"], ["X4"], ["Y4"]]);
 }

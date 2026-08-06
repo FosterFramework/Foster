@@ -204,6 +204,18 @@ public static class Calc
 		=> Min(Min(Min(a, b), c), d);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Min<T>(params ReadOnlySpan<T> span) where T : IComparable<T>
+	{
+		if (span.Length <= 0)
+			throw new Exception("Span cannot be empty");
+
+		var value = span[0];
+		for (int i = 1; i < span.Length; i ++)
+			value = Min(value, span[i]);
+		return value;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static T Max<T>(T a, T b) where T : IComparable<T>
 		=> a.CompareTo(b) > 0 ? a : b;
 
@@ -215,6 +227,18 @@ public static class Calc
 	public static T Max<T>(T a, T b, T c, T d) where T : IComparable<T>
 		=> Max(Max(Max(a, b), c), d);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Max<T>(params ReadOnlySpan<T> span) where T : IComparable<T>
+	{
+		if (span.Length <= 0)
+			throw new Exception("Span cannot be empty");
+
+		var value = span[0];
+		for (int i = 1; i < span.Length; i ++)
+			value = Max(value, span[i]);
+		return value;
+	}
+
 	/// <summary>
 	/// Returns a vector whose X and Y are the minimums of the three Xs and Ys of the given vectors
 	/// </summary>
@@ -222,12 +246,36 @@ public static class Calc
 	public static Vector2 Min(Vector2 a, Vector2 b, Vector2 c)
 		=> Vector2.Min(Vector2.Min(a, b), c);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vector2 Min(in ReadOnlySpan<Vector2> span)
+	{
+		if (span.Length <= 0)
+			throw new Exception("Span cannot be empty");
+
+		var value = span[0];
+		for (int i = 1; i < span.Length; i ++)
+			value = Vector2.Min(value, span[i]);
+		return value;
+	}
+
 	/// <summary>
 	/// Returns a vector whose X and Y are the maximums of the three Xs and Ys of the given vectors
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vector2 Max(Vector2 a, Vector2 b, Vector2 c)
 		=> Vector2.Max(Vector2.Max(a, b), c);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vector2 Max(in ReadOnlySpan<Vector2> span)
+	{
+		if (span.Length <= 0)
+			throw new Exception("Span cannot be empty");
+
+		var value = span[0];
+		for (int i = 1; i < span.Length; i ++)
+			value = Vector2.Max(value, span[i]);
+		return value;
+	}
 
 	/// <summary>
 	/// Get the index of the element in <paramref name="list"/> that is smallest. If multiple entries are equal, the one that appears first is chosen. Returns -1 if <paramref name="list"/> is empty.

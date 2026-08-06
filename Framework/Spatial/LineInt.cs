@@ -1,38 +1,62 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
+using Foster.Framework.JsonConverters;
 
 namespace Foster.Framework;
 
 /// <summary>
-/// A 2D Integer Line
+/// A 2D Integer Line Segment
 /// </summary>
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Sequential), JsonConverter(typeof(JsonConverter))]
 public struct LineInt(Point2 from, Point2 to) : IConvexShape, IEquatable<LineInt>
 {
+	/// <summary>
+	/// The First point of the Line
+	/// </summary>
 	public Point2 From = from;
+
+	/// <summary>
+	/// The Second point of the Line
+	/// </summary>
 	public Point2 To = to;
 
-	public readonly int Points => 2;
-	public readonly int Axes => 1;
+	/// <summary>
+	/// The bounding rectangle of the Line
+	/// </summary>
+	public readonly RectInt Bounds => RectInt.Between(From, To);
 
-	public readonly RectInt Bounds
-	{
-		get
-		{
-			var rect = new RectInt(Calc.Min(From.X, To.X), Calc.Min(From.Y, To.Y), 0, 0);
-			rect.Width = Calc.Max(From.X, To.X) - rect.X;
-			rect.Height = Calc.Max(From.Y, To.Y) - rect.Y;
-			return rect;
-		}
-	}
+	/// <summary>
+	/// The center point of the Line
+	/// </summary>
+	public readonly Vector2 Center => (From + To) / 2f;
 
-	public readonly Vector2 GetAxis(int index)
+	/// <summary>
+	/// The length of the Line
+	/// </summary>
+	public readonly float Length => (To - From).Length();
+
+	/// <summary>
+	/// The length of the line, squared
+	/// </summary>
+	public readonly float LengthSquared => (To - From).LengthSquared();
+
+	/// <summary>
+	/// The normalized vector of the Line direction
+	/// </summary>
+	public readonly Vector2 Direction => (To - From).Normalized();
+
+	readonly int IConvexShape.Points => 2;
+	readonly int IConvexShape.Axes => 1;
+
+	readonly Vector2 IConvexShape.GetAxis(int index)
 	{
 		var axis = (To - From).Normalized();
 		return new Vector2(axis.Y, -axis.X);
 	}
 
-	public readonly Vector2 GetPoint(int index)
+	readonly Vector2 IConvexShape.GetPoint(int index)
 		=> index switch
 		{
 			0 => From,
@@ -75,9 +99,21 @@ public struct LineInt(Point2 from, Point2 to) : IConvexShape, IEquatable<LineInt
 		return true;
 	}
 
+	public override readonly int GetHashCode()
+		=> HashCode.Combine(From, To);
+
+	public override readonly bool Equals([NotNullWhen(true)] object? obj)
+		=> obj is LineInt other && Equals(other);
+
 	public readonly bool Equals(LineInt other)
 		=> From == other.From && To == other.To;
 
+	public static bool operator ==(LineInt left, LineInt right) => left.Equals(right);
+	public static bool operator !=(LineInt left, LineInt right) => !(left == right);
+
 	public static LineInt operator +(LineInt a, Point2 b) => new(a.From + b, a.To + b);
 	public static LineInt operator -(LineInt a, Point2 b) => new(a.From - b, a.To - b);
+
+	public class JsonConverter()
+		: IntVectorJsonConverter<LineInt>([["X1"], ["Y1"], ["X2"], ["Y2"]]);
 }

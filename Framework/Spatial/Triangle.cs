@@ -2,13 +2,15 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
+using Foster.Framework.JsonConverters;
 
 namespace Foster.Framework;
 
 /// <summary>
 /// A 2D Triangle
 /// </summary>
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Sequential), JsonConverter(typeof(JsonConverter))]
 public struct Triangle(Vector2 a, Vector2 b, Vector2 c) : IConvexShape, IEquatable<Triangle>
 {
 	public Vector2 A = a;
@@ -16,10 +18,7 @@ public struct Triangle(Vector2 a, Vector2 b, Vector2 c) : IConvexShape, IEquatab
 	public Vector2 C = c;
 
 	public Triangle(float x1, float y1, float x2, float y2, float x3, float y3)
-		: this(new(x1, y1), new(x2, y2), new(x3, y3))
-	{
-
-	}
+		: this(new(x1, y1), new(x2, y2), new(x3, y3)) {}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly bool Contains(in Vector2 pt)
@@ -137,8 +136,18 @@ public struct Triangle(Vector2 a, Vector2 b, Vector2 c) : IConvexShape, IEquatab
 
 	#endregion
 
-	public bool Equals(Triangle other) => A.Equals(other.A) && B.Equals(other.B) && C.Equals(other.C);
-	public override bool Equals(object? obj) => obj is Triangle other && Equals(other);
-	public override int GetHashCode() => HashCode.Combine(A, B, C);
-	public override string ToString() => $"[{A}, {B}, {C}]";
+	public readonly bool Equals(Triangle other)
+		=> A.Equals(other.A) && B.Equals(other.B) && C.Equals(other.C);
+
+	public override readonly bool Equals(object? obj)
+		=> obj is Triangle other && Equals(other);
+
+	public override readonly int GetHashCode()
+		=> HashCode.Combine(A, B, C);
+
+	public override readonly string ToString()
+		=> $"[{A}, {B}, {C}]";
+
+	public class JsonConverter()
+		: FloatVectorJsonConverter<Triangle>([["X1"], ["Y1"], ["X2"], ["Y2"], ["X3"], ["Y3"]]);
 }

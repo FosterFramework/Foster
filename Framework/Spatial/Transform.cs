@@ -168,9 +168,9 @@ public struct Transform
 	public static bool operator ==(Transform a, Transform b) => a.position == b.position && a.scale == b.scale && a.rotation == b.rotation;
 	public static bool operator !=(Transform a, Transform b) => !(a == b);
 
-	public override bool Equals(object? obj)
+	public override readonly bool Equals(object? obj)
 		=> obj is Transform transform && this == transform;
 
-	public override int GetHashCode()
+	public override readonly int GetHashCode()
 		=> HashCode.Combine(position, scale, rotation);
 }

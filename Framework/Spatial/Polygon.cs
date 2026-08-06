@@ -3,11 +3,12 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Foster.Framework.JsonConverters;
 
 namespace Foster.Framework;
 
 /// <summary>
-/// Am arbitrary 2D Polygon (which may be concave)
+/// An arbitrary 2D Polygon, which may be convex or concave.
 /// </summary>
 [JsonConverter(typeof(JsonConverter))]
 public class Polygon : IList<Vector2>, IList
@@ -277,15 +278,25 @@ public class Polygon : IList<Vector2>, IList
 
 	public class JsonConverter : JsonConverter<Polygon>
 	{
+		private static readonly Vector2Converter vectorJsonConverter = new();
+
 		public override Polygon Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-			=> [.. JsonSerializer.Deserialize(ref reader, PolygonVerticesJsonContext.Default.ListVector2) ?? []];
+		{
+			var result = new Polygon();
+			if (reader.TokenType == JsonTokenType.StartArray)
+			{
+				while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+					result.Add(vectorJsonConverter.Read(ref reader, typeof(Vector2), options));
+			}
+			return result;
+		}
 
 		public override void Write(Utf8JsonWriter writer, Polygon value, JsonSerializerOptions options)
 		{
-			if (value != null)
-				JsonSerializer.Serialize(writer, value.vertices, PolygonVerticesJsonContext.Default.ListVector2);
-			else
-				writer.WriteNullValue();
+			writer.WriteStartArray();
+			foreach (var it in value.vertices)
+				vectorJsonConverter.Write(writer, it, options);
+			writer.WriteEndArray();
 		}
 	}
 
@@ -381,7 +392,3 @@ public class Polygon : IList<Vector2>, IList
 
 	#endregion
 }
-
-[JsonSerializable(typeof(List<Vector2>))]
-[JsonSourceGenerationOptions(Converters = [typeof(JsonConverters.Vector2Converter)])]
-internal partial class PolygonVerticesJsonContext : JsonSerializerContext {}
