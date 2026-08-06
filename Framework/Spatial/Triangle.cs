@@ -83,9 +83,9 @@ public struct Triangle(Vector2 a, Vector2 b, Vector2 c) : IConvexShape, IEquatab
 	public readonly Vector2 GetAxis(int index)
 		=> index switch
 		{
-			0 => AB.Normal.TurnRight(),
-			1 => BC.Normal.TurnRight(),
-			2 => CA.Normal.TurnRight(),
+			0 => AB.Direction.TurnRight(),
+			1 => BC.Direction.TurnRight(),
+			2 => CA.Direction.TurnRight(),
 			_ => throw new IndexOutOfRangeException(),
 		};
 

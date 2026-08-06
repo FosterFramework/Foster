@@ -12,17 +12,40 @@ namespace Foster.Framework;
 [StructLayout(LayoutKind.Sequential), JsonConverter(typeof(JsonConverter))]
 public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 {
+	/// <summary>
+	/// The First point of the Line
+	/// </summary>
 	public Vector2 From = from;
+
+	/// <summary>
+	/// The Second point of the Line
+	/// </summary>
 	public Vector2 To = to;
 
-	public readonly int Points => 2;
-	public readonly int Axes => 1;
-
+	/// <summary>
+	/// The bounding rectangle of the Line
+	/// </summary>
 	public readonly Rect Bounds => Rect.Between(From, To);
+
+	/// <summary>
+	/// The center point of the Line
+	/// </summary>
 	public readonly Vector2 Center => (From + To) / 2;
+
+	/// <summary>
+	/// The length of the Line
+	/// </summary>
 	public readonly float Length => (To - From).Length();
+
+	/// <summary>
+	/// The length of the line, squared
+	/// </summary>
 	public readonly float LengthSquared => (To - From).LengthSquared();
-	public readonly Vector2 Normal => (To - From).Normalized();
+
+	/// <summary>
+	/// The normalized vector of the Line direction
+	/// </summary>
+	public readonly Vector2 Direction => (To - From).Normalized();
 
 	public Line(float x1, float y1, float x2, float y2)
 		: this(new(x1, y1), new Vector2(x2, y2))
@@ -42,13 +65,16 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 
 	}
 
-	public readonly Vector2 GetAxis(int index)
+	readonly int IConvexShape.Points => 2;
+	readonly int IConvexShape.Axes => 1;
+
+	readonly Vector2 IConvexShape.GetAxis(int index)
 	{
 		var axis = (To - From).Normalized();
 		return new Vector2(axis.Y, -axis.X);
 	}
 
-	public readonly Vector2 GetPoint(int index)
+	readonly Vector2 IConvexShape.GetPoint(int index)
 		=> index switch
 		{
 			0 => From,
@@ -169,7 +195,8 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 		=> Intersects(other, out _);
 
 	/// <summary>
-	/// Check if the line intersects any of the edges of the quad
+	/// Returns true if the Line intersects any of the edges of the Quad, and outputs the first intersection point.<br/>
+	/// It is possible for the line to intersect multiple edges of the Quad, but these are ignored.
 	/// </summary>
 	public readonly bool Intersects(in Quad quad, out Vector2 point)
 	{
@@ -181,18 +208,24 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 		return false;
 	}
 
-	public readonly bool Intersects(in Rect other, out Vector2 point)
+	/// <summary>
+	/// Returns true if the Line intersects the Rectangle, and outputs the first intersection point.<br/>
+	/// It is possible for the line to intersect multiple edges of the Rectangle, but these are ignored.
+	/// </summary>
+	public readonly bool Intersects(in Rect rect, out Vector2 point)
 	{
-		foreach (var line in other.Edges)
+		foreach (var line in rect.Edges)
 			if (Intersects(line, out point))
 				return true;
 
-		if (other.Contains(From))
+		// TODO: Noel: should this really return true?
+		// It doesn't intersect the Rectangle... it's just inside it.
+		if (rect.Contains(From))
 		{
 			point = From;
 			return true;
 		}
-		else if (other.Contains(To))
+		else if (rect.Contains(To))
 		{
 			point = To;
 			return true;
@@ -202,6 +235,9 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 		return false;
 	}
 
+	/// <summary>
+	/// Returns true if the Line intersects another Line, and outputs the intersection point
+	/// </summary>
     public readonly bool Intersects(in Line other, out Vector2 point)
     {
 		point = default;
