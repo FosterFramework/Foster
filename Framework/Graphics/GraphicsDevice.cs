@@ -18,6 +18,11 @@ public abstract class GraphicsDevice
 	public abstract GraphicsDriver Driver { get; }
 
 	/// <summary>
+	/// The display name of the GPU device currently in use.
+	/// </summary>
+	public abstract string Name { get; }
+
+	/// <summary>
 	/// The Application this GraphicsDevice belongs to
 	/// </summary>
 	public readonly App App;

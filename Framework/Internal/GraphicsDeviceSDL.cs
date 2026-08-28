@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Text;
+using SDL3;
 using static SDL3.SDL;
 
 namespace Foster.Framework;
@@ -136,6 +137,22 @@ internal unsafe class GraphicsDeviceSDL(App app, GraphicsDriver preferred) : Gra
 	private AppFlags flags;
 
 	public override GraphicsDriver Driver => driver;
+
+	public override string Name
+	{
+		get
+		{
+			if (device == nint.Zero)
+				throw deviceNotCreated;
+
+			uint props = SDL_GetGPUDeviceProperties(device);
+			if (props == 0)
+				return string.Empty;
+
+			string nameVal = SDL_GetStringProperty(props, SDL_PROP_GPU_DEVICE_NAME_STRING, "Unknown");
+			return nameVal;
+		}
+	}
 
 	public override bool VSync
 	{
