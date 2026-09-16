@@ -50,6 +50,9 @@ public static class Calc
 	public const float UpLeft = TAU - PI * 0.75f;
 	public const float DownLeft = PI * 0.75f;
 
+	public const float Sqrt2    = 1.41421356237f;
+	public const float InvSqrt2 = 1 / Sqrt2;
+
 	#endregion
 
 	#region Binary  Operations
