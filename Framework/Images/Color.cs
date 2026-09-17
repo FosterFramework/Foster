@@ -49,16 +49,16 @@ public struct Color : IEquatable<Color>
 	public Color(int rgb, byte alpha = 255)
 	{
 		R = (byte)(rgb >> 16);
-		G = (byte)(rgb >> 8);
-		B = (byte)(rgb >> 0);
+		G = (byte)(rgb >> 08);
+		B = (byte)(rgb >> 00);
 		A = alpha;
 	}
 
 	public Color(int rgb, float alpha)
 	{
-		R = (byte)((rgb >> 16) * alpha);
-		G = (byte)((rgb >> 8) * alpha);
-		B = (byte)((rgb >> 0) * alpha);
+		R = (byte)((byte)(rgb >> 16) * alpha);
+		G = (byte)((byte)(rgb >> 08) * alpha);
+		B = (byte)((byte)(rgb >> 00) * alpha);
 		A = (byte)(255 * alpha);
 	}
 
@@ -75,9 +75,9 @@ public struct Color : IEquatable<Color>
 
 	public Color(uint rgba, float alpha)
 	{
-		R = (byte)((rgba >> 24) * alpha);
-		G = (byte)((rgba >> 16) * alpha);
-		B = (byte)((rgba >> 08) * alpha);
+		R = (byte)((byte)(rgba >> 16) * alpha);
+		G = (byte)((byte)(rgba >> 08) * alpha);
+		B = (byte)((byte)(rgba >> 00) * alpha);
 		A = (byte)(255 * alpha);
 	}
 
