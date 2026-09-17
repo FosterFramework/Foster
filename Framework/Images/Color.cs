@@ -73,6 +73,14 @@ public struct Color : IEquatable<Color>
 		A = (byte)(rgba);
 	}
 
+	public Color(uint rgba, float alpha)
+	{
+		R = (byte)(rgba >> 24);
+		G = (byte)(rgba >> 16);
+		B = (byte)(rgba >> 08);
+		A = (byte)(255 * alpha);
+	}
+
 	public Color(byte r, byte g, byte b, byte a)
 	{
 		R = r;
