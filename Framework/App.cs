@@ -464,8 +464,8 @@ public abstract class App : IDisposable
 			if (SDL_GetWindowRelativeMouseMode(Window.Handle) && Window.Focused)
 				SDL_WarpMouseInWindow(Window.Handle, Window.Width / 2, Window.Height / 2);
 
-			inputProvider.Update(Time);
 			PollEvents();
+			inputProvider.Update(Time);
 			FramePool.NextFrame();
 
 			while (mainThreadQueue.TryDequeue(out var action))
