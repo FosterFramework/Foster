@@ -2038,4 +2038,17 @@ public static class Calc
 
 	#endregion
 
+	/// <summary>
+	/// Update a timer if it is above zero, and return whether it reached zero
+	/// </summary>
+	public static bool TimerTick(ref float timer, in Time time)
+	{
+		if (timer > 0)
+		{
+			timer -= time.Delta;
+			return timer <= 0;
+		}
+		else
+			return false;
+	}
 }
