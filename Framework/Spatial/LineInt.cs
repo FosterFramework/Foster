@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 using Foster.Framework.JsonConverters;
@@ -46,6 +47,27 @@ public struct LineInt(Point2 from, Point2 to) : IConvexShape, IEquatable<LineInt
 	/// The normalized vector of the Line direction
 	/// </summary>
 	public readonly Vector2 Direction => (To - From).Normalized();
+
+	/// <summary>
+	/// Get a point along the line as a percent from <see cref="From"/> to <see cref="To"/>
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Vector2 On(float percent)
+		=> Vector2.Lerp(From, To, percent);
+
+	/// <summary>
+	/// Get a point along the line as a percent from <see cref="From"/> to <see cref="To"/>, clamped from 0-1
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Vector2 OnClamped(float percent)
+		=> Vector2.Lerp(From, To, Calc.Clamp(percent));
+
+	/// <summary>
+	/// Get a point along the line as a percent from <see cref="From"/> to <see cref="To"/>, and snapped to a grid
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public readonly Point2 OnSnapped(float percent, Point2 grid)
+		=> Calc.Snap(On(percent), grid);
 
 	readonly int IConvexShape.Points => 2;
 	readonly int IConvexShape.Axes => 1;
@@ -99,10 +121,10 @@ public struct LineInt(Point2 from, Point2 to) : IConvexShape, IEquatable<LineInt
 		return true;
 	}
 
-	public override readonly int GetHashCode()
+	public readonly override int GetHashCode()
 		=> HashCode.Combine(From, To);
 
-	public override readonly bool Equals([NotNullWhen(true)] object? obj)
+	public readonly override bool Equals([NotNullWhen(true)] object? obj)
 		=> obj is LineInt other && Equals(other);
 
 	public readonly bool Equals(LineInt other)

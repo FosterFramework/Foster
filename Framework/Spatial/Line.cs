@@ -83,10 +83,16 @@ public struct Line(Vector2 from, Vector2 to) : IConvexShape, IEquatable<Line>
 			_ => throw new IndexOutOfRangeException()
 		};
 
+	/// <summary>
+	/// Get a point along the line as a percent from <see cref="From"/> to <see cref="To"/>
+	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly Vector2 On(float percent)
 		=> Vector2.Lerp(From, To, percent);
 
+	/// <summary>
+	/// Get a point along the line as a percent from <see cref="From"/> to <see cref="To"/>, clamped from 0-1
+	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly Vector2 OnClamped(float percent)
 		=> Vector2.Lerp(From, To, Calc.Clamp(percent));
