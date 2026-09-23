@@ -307,6 +307,9 @@ public class Batcher : IDisposable
 
 	private void SetTexture(Texture? texture)
 	{
+		if (texture == null)
+			return;
+
 		if (currentBatch.Texture == null || currentBatch.Elements == 0)
 		{
 			currentBatch.Texture = texture;
@@ -453,6 +456,7 @@ public class Batcher : IDisposable
 				prev.Scissor == curr.Scissor &&
 				prev.Sampler == curr.Sampler &&
 				prev.Stencil == curr.Stencil &&
+				(prev.Offset + prev.Elements == curr.Offset) &&
 				(prev.Material == curr.Material || (prev.Material != null && curr.Material != null && prev.Material.EqualTo(curr.Material))))
 			{
 				currentBatch = prev;
