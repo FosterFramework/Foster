@@ -103,6 +103,12 @@ public struct Circle : IProjectable, IEquatable<Circle>
 	}
 
 	/// <summary>
+	/// Checks whether we overlap a <see cref="Circle"/>
+	/// </summary>
+	public readonly bool Overlaps(in Circle other)
+		=> Vector2.DistanceSquared(Position, other.Position) < Calc.Squared(Radius + other.Radius);
+
+	/// <summary>
 	/// Checks whether we overlap a <see cref="Circle"/> (as defined by its center and radius)
 	/// </summary>
 	public readonly bool Overlaps(in Vector2 center, float radius)
