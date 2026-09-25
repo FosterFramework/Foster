@@ -18,7 +18,8 @@ public abstract class GraphicsDevice
 	public abstract GraphicsDriver Driver { get; }
 
 	/// <summary>
-	/// The display name of the GPU device currently in use.
+	/// The adapter name of the GPU used by this GraphicsDevice.
+	/// Returns <c>Unknown</c> if the name could not be determined.
 	/// </summary>
 	public abstract string Name { get; }
 

@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Text;
-using SDL3;
 using static SDL3.SDL;
 
 namespace Foster.Framework;
