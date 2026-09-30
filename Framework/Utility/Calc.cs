@@ -2041,6 +2041,7 @@ public static class Calc
 	/// <summary>
 	/// Update a timer if it is above zero, and return whether it reached zero
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static bool TimerTick(ref float timer, in Time time)
 	{
 		if (timer > 0)

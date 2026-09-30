@@ -76,7 +76,7 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 	public Vector2 Normal => new(X, Y);
 
 	/// <summary>
-	/// Get the X-component of the <see cref="Cardinal"/> as a unit vector
+	/// Get the X-component of the <see cref="Cardinal"/> as an integer
 	/// </summary>
 	public int X => Value switch
 		{
@@ -86,7 +86,7 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 		};
 
 	/// <summary>
-	/// Get the Y-component of the <see cref="Cardinal"/> as a unit vector
+	/// Get the Y-component of the <see cref="Cardinal"/> as an integer
 	/// </summary>
 	public int Y => Value switch
 		{
@@ -94,6 +94,15 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 			DownValue => 1,
 			_ => 0
 		};
+
+	/// <summary>
+	/// Get the sign of the <see cref="Cardinal"/> along its axis. Right and Down have a sign of 1, while Left and Up have -1
+	/// </summary>
+	public int Sign => Value switch
+	{
+		RightValue or DownValue => 1,
+		_                       => -1,
+	};
 
 	/// <summary>
 	/// The <see cref="Cardinal"/>'s direction represented as radians

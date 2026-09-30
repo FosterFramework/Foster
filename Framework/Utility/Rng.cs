@@ -15,6 +15,14 @@ public struct Rng
 	public Rng(int seed) { Seed = (ulong)seed; }
 	public Rng(ulong seed) { Seed = seed; }
 
+	public Rng(ulong seed, string hash)
+	{
+		unchecked
+		{
+			Seed = seed + Calc.StaticStringHashUInt64(hash);
+		}
+	}
+
 	/// <summary>
 	/// Get an <see cref="Rng"/> instance seeded by the current <see cref="DateTime"/>
 	/// </summary>
