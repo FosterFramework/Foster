@@ -643,15 +643,22 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 	/// Get a rect justified around the origin point
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Rect Justified(float originX, float originY, float width, float height, float justifyX, float justifyY)
+		=> new(originX - justifyX * width, originY - justifyY * height, width, height);
+
+	/// <summary>
+	/// Get a rect justified around the origin point
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Rect Justified(in Vector2 origin, float width, float height, float justifyX, float justifyY)
-		=> new(origin.X - (justifyX * width), origin.Y - (justifyY * height), width, height);
+		=> new(origin.X - justifyX * width, origin.Y - justifyY * height, width, height);
 
 	/// <summary>
 	/// Get a rect justified around the origin point
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Rect Justified(in Vector2 origin, in Vector2 size, in Vector2 justify)
-		=> new(origin.X - (justify.X * size.X), origin.Y - (justify.Y * size.Y), size.X, size.Y);
+		=> new(origin.X - justify.X * size.X, origin.Y - justify.Y * size.Y, size.X, size.Y);
 
 	/// <summary>
 	/// Get a rect justified around the origin point
