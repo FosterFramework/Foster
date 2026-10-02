@@ -325,17 +325,19 @@ public static class Calc
 	/// <summary>
 	/// Move toward a <paramref name="target"/> value by no more than <paramref name="maxDelta"/>, without passing the <paramref name="target"/>
 	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static float Approach(float from, float target, float maxDelta)
-		=> from > target ? Math.Max(from - maxDelta, target) : Math.Min(from + maxDelta, target);
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static T Approach<T>(T from, T target, T maxDelta)
+		where T : IComparable<T>, IAdditionOperators<T, T, T>, ISubtractionOperators<T, T, T>
+		=> from.CompareTo(target) > 0 ? Max(from - maxDelta, target) : Min(from + maxDelta, target);
 
 	/// <summary>
 	/// Move toward a <paramref name="target"/> value by no more than <paramref name="maxDelta"/>, without passing the <paramref name="target"/>
 	/// </summary>
 	/// <returns>True if we reached the <paramref name="target"/> value</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool Approach(ref float from, float target, float maxDelta)
-		=> (from > target ? from = Math.Max(from - maxDelta, target) : from = Math.Min(from + maxDelta, target)) == target;
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static bool Approach<T>(ref T from, T target, T maxDelta)
+		where T : IComparable<T>, IAdditionOperators<T, T, T>, ISubtractionOperators<T, T, T>, IComparisonOperators<T, T, bool>
+		=> (from > target ? from = Max(from - maxDelta, target) : from = Min(from + maxDelta, target)) == target;
 
 	/// <summary>
 	/// Move a <see cref="Vector2"/> toward a <paramref name="target"/> position, moving no further than <paramref name="maxDelta"/>
