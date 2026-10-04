@@ -51,9 +51,14 @@ public class Image : IDisposable
 	public IntPtr Pointer => data.Data;
 
 	/// <summary>
-    /// internal image data wrapper
-    /// </summary>
+	/// internal image data wrapper
+	/// </summary>
 	private readonly ImageData data;
+
+	/// <summary>
+	/// An SDL Surface backing this Image, or zero if the Image has no pixel data
+	/// </summary>
+	internal nint Surface => data.Surface;
 
 	/// <summary>
 	/// Creates an empty Image with no width or height

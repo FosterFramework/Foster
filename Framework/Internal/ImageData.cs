@@ -28,6 +28,7 @@ internal unsafe struct ImageData
 	public readonly Span<byte> Bytes => new((void*)Data, SizeInBytes);
 	public readonly Span<Color> Pixels => new((void*)Data, Width * Height);
 	public readonly nint Data => surface != null ? surface->pixels : nint.Zero;
+	public readonly nint Surface => (nint)surface;
 
 	/// <summary>
 	/// Decode PNG or QOI image Data from a Stream
