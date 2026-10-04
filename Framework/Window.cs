@@ -457,6 +457,29 @@ public sealed class Window : IDrawableTarget
 		SDL_RaiseWindow(Handle);
 	}
 
+	/// <summary>
+	/// Sets the icon of the Window.
+	/// </summary>
+	public void SetWindowIcon(Image icon)
+	{
+		ObjectDisposedException.ThrowIf(icon.IsDisposed, icon);
+
+		if (!app.IsMainThread())
+		{
+			app.RunOnMainThread(() => SetWindowIcon(icon));
+			return;
+		}
+
+		if (Handle == nint.Zero)
+			return;
+
+		if (icon.Surface == nint.Zero)
+			throw new ArgumentException("Icon has no pixel data", nameof(icon));
+
+		if (!SDL_SetWindowIcon(Handle, icon.Surface))
+			Log.Warning($"Failed to set Window Icon: {SDL_GetError()}");
+	}
+
 	internal void OnEvent(SDL_EventType ev)
 	{
 		switch (ev)
