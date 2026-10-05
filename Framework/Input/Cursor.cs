@@ -72,22 +72,7 @@ public sealed class Cursor : IDisposable
 		FocusPoint = focusPoint;
 		Size = image.Size;
 		SystemType = null;
-
-		// create SDL surface from image
-		var surface = new nint(SDL_CreateSurfaceFrom(
-			image.Width,
-			image.Height,
-			SDL_PixelFormat.SDL_PIXELFORMAT_RGBA8888,
-			image.Pointer,
-			image.Width * sizeof(Color)));
-		if (surface == nint.Zero)
-			throw App.CreateExceptionFromSDL(nameof(SDL_CreateSurfaceFrom));
-
-		// create cursor, free surface
-		Handle = SDL_CreateColorCursor(surface, focusPoint.X, focusPoint.Y);
-		SDL_DestroySurface(surface);
-
-		// validate that cursor was created successfully
+		Handle = SDL_CreateColorCursor(image.Surface, focusPoint.X, focusPoint.Y);
 		if (Handle == nint.Zero)
 			throw App.CreateExceptionFromSDL(nameof(SDL_CreateColorCursor));
 	}
