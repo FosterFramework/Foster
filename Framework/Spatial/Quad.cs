@@ -82,6 +82,37 @@ public struct Quad(Vector2 a, Vector2 b, Vector2 c, Vector2 d) : IConvexShape, I
 	public readonly Quad Translated(in Vector2 amount)
 		=> new(A + amount, B + amount, C + amount, D + amount);
 
+	/// <summary>
+	/// Get a new <see cref="Quad"/> with its edges inflated by <paramref name="amount"/>.
+	/// </summary>
+	public readonly Quad Inflate(float amount)
+	{
+		var ab = NormalAB * amount;
+		var bc = NormalBC * amount;
+		var cd = NormalCD * amount;
+		var da = NormalDA * amount;
+
+		return new(
+			Intersect(D + da, A + da, A + ab, B + ab),
+			Intersect(A + ab, B + ab, B + bc, C + bc),
+			Intersect(B + bc, C + bc, C + cd, D + cd),
+			Intersect(C + cd, D + cd, D + da, A + da)
+		);
+
+		static Vector2 Intersect(Vector2 a, Vector2 b, Vector2 c, Vector2 d)
+		{
+			var r = b - a;
+			var s = d - c;
+			var cross = Vector2.Cross(r, s);
+
+			if (MathF.Abs(cross) < 0.000001f)
+				return (b + c) * 0.5f;
+
+			var t = Vector2.Cross(c - a, s) / cross;
+			return a + r * t;
+		}
+	}
+
 	public readonly void Project(in Vector2 axis, out float min, out float max)
 	{
 		min = float.MaxValue;

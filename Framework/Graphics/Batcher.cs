@@ -876,20 +876,12 @@ public class Batcher : IDisposable
 
 	public void QuadLine(in Quad quad, float lineWeight, in Color color)
 	{
-		var off_ab = quad.NormalAB * lineWeight;
-		var off_bc = quad.NormalBC * lineWeight;
-		var off_cd = quad.NormalCD * lineWeight;
-		var off_da = quad.NormalDA * lineWeight;
+		var inner = quad.Inflate(-lineWeight);
 
-		var aa = Intersection(quad.D + off_da, quad.A + off_da, quad.A + off_ab, quad.B + off_ab);
-		var bb = Intersection(quad.A + off_ab, quad.B + off_ab, quad.B + off_bc, quad.C + off_bc);
-		var cc = Intersection(quad.B + off_bc, quad.C + off_bc, quad.C + off_cd, quad.D + off_cd);
-		var dd = Intersection(quad.C + off_cd, quad.D + off_cd, quad.D + off_da, quad.A + off_da);
-
-		Quad(aa, quad.A, quad.B, bb, color);
-		Quad(bb, quad.B, quad.C, cc, color);
-		Quad(cc, quad.C, quad.D, dd, color);
-		Quad(dd, quad.D, quad.A, aa, color);
+		Quad(quad.A, quad.B, inner.B, inner.A, color);
+		Quad(quad.B, quad.C, inner.C, inner.B, color);
+		Quad(quad.C, quad.D, inner.D, inner.C, color);
+		Quad(quad.D, quad.A, inner.A, inner.D, color);
 	}
 
 	#endregion
