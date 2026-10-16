@@ -37,11 +37,18 @@ jobs:
           dpkg --add-architecture arm64
           apt-get update
           apt-get install -y sudo git libc6:arm64 libstdc++6:arm64
-      - name: Clone SDL3
-        run: git clone --depth 1 --branch ${{env.SDL_VERSION}} https://github.com/libsdl-org/sdl sdl3-src
+
+      - name: Checkout SDL3
+        uses: actions/checkout@v7
+        with:
+          repository: libsdl-org/sdl
+          ref: ${{ env.SDL_VERSION }}
+          path: sdl3-src
+          
       - name: Setup macOS universal build
         if: ${{ runner.os == 'macOS' }}
         run: echo "CMAKE_EXTRA_ARGS=-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" >> $GITHUB_ENV
+
       - name: Setup Linux dependencies
         if: ${{ runner.os == 'Linux' }}
         run: |
@@ -53,6 +60,7 @@ jobs:
             libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
             libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev libthai-dev \
             libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev
+
       - name: Build SDL3
         shell: bash
         run: |
@@ -63,11 +71,13 @@ jobs:
             -DSDL_STATIC=OFF \
             $CMAKE_EXTRA_ARGS
           cmake --build build --config Release
+
       - name: Collect Artifact
         shell: bash
         run: find build -name "${{matrix.lib}}" -exec cp {} . \;
-      - name: Publish Artifact
-        uses: actions/upload-artifact@v4
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
         with:
           name: ${{matrix.target}}
           path: ${{matrix.lib}}
@@ -75,16 +85,27 @@ jobs:
     if: github.ref == 'refs/heads/main'
     needs: [Build]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+
       - name: Download libs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: Framework/Internal/Native
+
       - name: Commit changes
-        uses: EndBug/add-and-commit@v9.1.3
-        with:
-          message: Updated native libs
-          committer_name: GitHub Actions
-          committer_email: actions@github.com
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+           git add Framework/Internal/Native
+
+           if git diff --cached --quiet; then
+             echo "no changes to commit"
+          else
+            git commit -m "Updated native libs"
+            git push
+          fi     
