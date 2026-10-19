@@ -1349,6 +1349,27 @@ public class Batcher : IDisposable
 		}
 	}
 
+	public void CircleLine(in Vector2 center, float radius, float lineWeight, int steps, in Color innerColor, in Color outerColor)
+	{
+		var innerRadius = radius - lineWeight;
+		if (innerRadius <= 0)
+		{
+			Circle(center, radius, steps, innerColor, outerColor);
+			return;
+		}
+
+		var last = Calc.AngleToVector(0);
+		for (int i = 1; i <= steps; i++)
+		{
+			var next = Calc.AngleToVector((i / (float)steps) * Calc.TAU);
+			Quad(
+				center + last * innerRadius, center + last * radius,
+				center + next * radius, center + next * innerRadius,
+				innerColor, outerColor, outerColor, innerColor);
+			last = next;
+		}
+	}
+
 	public void CircleLine(in Circle circle, float lineWeight, int steps, in Color color)
 		=> CircleLine(circle.Position, circle.Radius, lineWeight, steps, color);
 
