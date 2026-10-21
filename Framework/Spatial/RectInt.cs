@@ -869,6 +869,20 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 		=> new(-width / 2, -height / 2, width, height);
 
 	/// <summary>
+	/// Get a rect justified around (0, 0)
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static RectInt Justified(int width, int height, float justifyX, float justifyY)
+		=> new(-Calc.Round(justifyX * width), -Calc.Round(justifyY * height), width, height);
+
+	/// <summary>
+	/// Get a rect justified around (0, 0)
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static RectInt Justified(in Point2 size, in Vector2 justify)
+		=> new(-Calc.Round(justify.X * size.X), -Calc.Round(justify.Y * size.Y), size.X, size.Y);
+
+	/// <summary>
 	/// Get a rect justified around the origin point
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
