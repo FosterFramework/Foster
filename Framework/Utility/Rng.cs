@@ -26,15 +26,23 @@ public struct Rng
 	/// <summary>
 	/// Get an <see cref="Rng"/> instance seeded by the current <see cref="DateTime"/>
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Rng Randomized()
 		=> new((ulong)DateTime.Now.Ticks);
+
+	/// <summary>
+	/// Advance the seed once
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void Advance()
+		=> Seed += 0x9e3779b97f4a7c15ul;
 
 	/// <summary>
 	/// Get a random <see cref="ulong"/> from all possible values
 	/// </summary>
 	public ulong U64()
 	{
-		Seed += 0x9e3779b97f4a7c15ul;
+		Advance();
 		ulong n = Seed;
 		n = (n ^ (n >> 30)) * 0xbf58476d1ce4e5bul;
 		n = (n ^ (n >> 27)) * 0x94d049bb133111ebul;
