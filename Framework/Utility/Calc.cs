@@ -2041,7 +2041,7 @@ public static class Calc
 	#endregion
 
 	/// <summary>
-	/// Update a timer if it is above zero, and return whether it reached zero
+	/// Update a timer if it is above zero, and return whether it reached zero this frame
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static bool TimerTick(ref float timer, in Time time)
