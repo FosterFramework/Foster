@@ -127,6 +127,11 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 	};
 
 	/// <summary>
+	/// Turns right if the <see cref="Signs"/> is <see cref="Signs.Positive"/>, or left if it is <see cref="Signs.Negative"/>
+	/// </summary>
+	public Cardinal Turn(Signs dir) => dir == Signs.Positive ? TurnRight : TurnLeft;
+
+	/// <summary>
 	/// Get whether the other <see cref="Cardinal"/> is perpendicular to this one.
 	/// Ie. if one is on the horizontal axis and the other is on the vertical
 	/// </summary>
