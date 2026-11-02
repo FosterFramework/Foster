@@ -911,6 +911,16 @@ public struct RectInt(int x, int y, int w, int h) : IConvexShape, IEquatable<Rec
 		return rect;
 	}
 
+	/// <summary>
+	/// Get the smallest <see cref="RectInt"/> with positive width and height that contains all of the points
+	/// </summary>
+	public static RectInt Containing(params ReadOnlySpan<Point2> points)
+	{
+		if (points.Length > 0)
+			return Between(Point2.Min(points), Point2.Max(points));
+		return default;
+	}
+
 	#endregion
 
 	#region Enumerate Points

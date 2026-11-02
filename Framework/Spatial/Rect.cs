@@ -699,6 +699,16 @@ public struct Rect(float x, float y, float w, float h) : IConvexShape, IEquatabl
 		return default;
 	}
 
+	/// <summary>
+	/// Get the smallest <see cref="Rect"/> with positive width and height that contains all of the points
+	/// </summary>
+	public static Rect Containing(params ReadOnlySpan<Point2> points)
+	{
+		if (points.Length > 0)
+			return Between(Point2.Min(points), Point2.Max(points));
+		return default;
+	}
+
 	#endregion
 
 	/// <summary>
