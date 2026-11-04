@@ -105,6 +105,15 @@ public readonly struct Cardinal : IEquatable<Cardinal>
 	};
 
 	/// <summary>
+	/// Get the axis index of the <see cref="Cardinal"/>. The X-axis is 0 and Y-axis is 1.
+	/// </summary>
+	public int AxisIndex => Value switch
+	{
+		RightValue or LeftValue => 0,
+		_                       => 1,
+	};
+
+	/// <summary>
 	/// The <see cref="Cardinal"/>'s direction represented as radians
 	/// </summary>
 	public float Angle => Value switch
