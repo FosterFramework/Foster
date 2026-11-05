@@ -256,8 +256,8 @@ internal unsafe class GraphicsDeviceSDL(App app, GraphicsDriver preferred) : Gra
 			var data = stackalloc Color[1] { 0xe82979 };
 			emptyDefaultTexture = CreateTexture("Fallback", 1, 1, TextureFormat.R8G8B8A8, default, SampleCount.One, null);
 			emptyDefaultComputeStorageTexture = CreateTexture("StorageFallback", 1, 1, TextureFormat.R8G8B8A8, TextureFlags.ComputeRead | TextureFlags.ComputeWrite, SampleCount.One, null);
-			SetTextureData(emptyDefaultTexture, new nint(data), 4, RectInt.Identity);
-			SetTextureData(emptyDefaultComputeStorageTexture, new nint(data), 4, RectInt.Identity);
+			SetTextureData(emptyDefaultTexture, new nint(data), 4, RectInt.Identity, 0);
+			SetTextureData(emptyDefaultComputeStorageTexture, new nint(data), 4, RectInt.Identity, 0);
 		}
 
 		// default buffer we fall back to rendering if shader expects buffers the user didn't supply
@@ -647,7 +647,7 @@ internal unsafe class GraphicsDeviceSDL(App app, GraphicsDriver preferred) : Gra
 		return handle;
 	}
 
-	internal override void SetTextureData(ResourceHandle handle, nint data, int length, RectInt destRegion)
+	internal override void SetTextureData(ResourceHandle handle, nint data, int length, RectInt destRegion, int pixelsPerRow)
 	{
 		static uint RoundToAlignment(uint value, uint alignment)
 			=> alignment * ((value + alignment - 1) / alignment);
@@ -660,7 +660,7 @@ internal unsafe class GraphicsDeviceSDL(App app, GraphicsDriver preferred) : Gra
 		// search up for resolve texture if we're multisampled
 		if (res.MultiSampleResolve)
 		{
-			SetTextureData(res.MultiSampleResolve, data, length, destRegion);
+			SetTextureData(res.MultiSampleResolve, data, length, destRegion, pixelsPerRow);
 			return;
 		}
 
@@ -729,7 +729,7 @@ internal unsafe class GraphicsDeviceSDL(App app, GraphicsDriver preferred) : Gra
 					offset = transferOffset,
 					// if 0 is passed here, width & height of destination region are used as default values
 					// see: https://wiki.libsdl.org/SDL3/SDL_GPUTextureTransferInfo
-					pixels_per_row = 0,
+					pixels_per_row = (uint)pixelsPerRow,
 					rows_per_layer = 0,
 				},
 				destination: new()

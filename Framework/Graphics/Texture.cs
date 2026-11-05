@@ -98,13 +98,13 @@ public class Texture : IGraphicResource
 	/// <summary>
 	/// Sets the Texture data from the given buffer
 	/// </summary>
-	public void SetData<T>(ReadOnlySpan<T> data) where T : struct
-		=> SetData(data, new RectInt(0, 0, Width, Height));
+	public void SetData<T>(ReadOnlySpan<T> data, int pixelsPerRow = 0) where T : struct
+		=> SetData(data, new RectInt(0, 0, Width, Height), pixelsPerRow);
 
 	/// <summary>
 	/// Sets the Texture data in a region from the given buffer
 	/// </summary>
-	public unsafe void SetData<T>(ReadOnlySpan<T> data, RectInt destRegion) where T : struct
+	public unsafe void SetData<T>(ReadOnlySpan<T> data, RectInt destRegion, int pixelsPerRow = 0) where T : struct
 	{
 		if (IsDisposed)
 			throw new Exception("Resource is Disposed");
@@ -112,14 +112,15 @@ public class Texture : IGraphicResource
 		if (destRegion.Left < 0 || destRegion.Top < 0 || destRegion.Bottom > Height || destRegion.Right > Width)
 			throw new Exception("Destination region is out of range");
 
-		int dataLength = Unsafe.SizeOf<T>() * data.Length;
-
-		if (dataLength < destRegion.Width * destRegion.Height * Format.Size())
+		var dataLength = Unsafe.SizeOf<T>() * data.Length;
+		var rowPixels = pixelsPerRow > 0 ? pixelsPerRow : destRegion.Width;
+		var requiredSize = ((destRegion.Height - 1) * rowPixels + destRegion.Width) * Format.Size();
+		if (dataLength < requiredSize)
 			throw new Exception("Data Buffer is smaller than the Size of the Texture Destination");
 
 		fixed (byte* ptr = MemoryMarshal.AsBytes(data))
 		{
-			GraphicsDevice.SetTextureData(Resource, new nint(ptr), dataLength, destRegion);
+			GraphicsDevice.SetTextureData(Resource, new nint(ptr), dataLength, destRegion, pixelsPerRow);
 		}
 	}
 
@@ -141,7 +142,6 @@ public class Texture : IGraphicResource
 			throw new Exception("Source region is out of range");
 
 		int dataLength = Unsafe.SizeOf<T>() * data.Length;
-
 		if (dataLength < sourceRegion.Width * sourceRegion.Height * Format.Size())
 			throw new Exception("Data Buffer is smaller than the Size of the Texture Source");
 
