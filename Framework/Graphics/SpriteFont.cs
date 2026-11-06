@@ -537,17 +537,20 @@ public class SpriteFont : IDisposable
 		=> GetKerning(codepointFirst, codepointSecond, Size);
 
 	public void Draw(Batcher batch, ReadOnlySpan<char> text, Vector2 position, Color color)
-		=> Draw(batch, text, position, Vector2.Zero, Size, color);
+		=> Draw(batch, text, position, Vector2.Zero, Size, 0, color);
 
 	public void Draw(Batcher batch, ReadOnlySpan<char> text, Vector2 position, float size, Color color)
-		=> Draw(batch, text, position, Vector2.Zero, size, color);
+		=> Draw(batch, text, position, Vector2.Zero, size, 0, color);
 
 	public void Draw(Batcher batch, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, Color color)
-		=> Draw(batch, text, position, justify, Size, color);
+		=> Draw(batch, text, position, justify, Size, 0, color);
 
 	public void Draw(Batcher batch, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, float size, Color color)
+		=> Draw(batch, text, position, justify, size, 0, color);
+
+	public void Draw(Batcher batch, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, float size, float angle, Color color)
 	{
-		batch.PushMatrix(position, Vector2.One * (size / Size), 0f);
+		batch.PushMatrix(position, Vector2.One * (size / Size), angle);
 
 		var last = 0;
 
@@ -693,10 +696,13 @@ public static class SpriteFontBatcherExt
 			=> font.Draw(batch, text, position, justify, color);
 
 		public void Text(SpriteFont font, ReadOnlySpan<char> text, Vector2 position, float size, Color color)
-			=> font.Draw(batch, text, position, Vector2.Zero, size, color);
+			=> font.Draw(batch, text, position, Vector2.Zero, size, 0, color);
 
 		public void Text(SpriteFont font, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, float size, Color color)
-			=> font.Draw(batch, text, position, justify, size, color);
+			=> font.Draw(batch, text, position, justify, size, 0, color);
+
+		public void Text(SpriteFont font, ReadOnlySpan<char> text, Vector2 position, Vector2 justify, float size, float angle, Color color)
+			=> font.Draw(batch, text, position, justify, size, angle, color);
 
 		public void TextWrapped(SpriteFont font, ReadOnlySpan<char> text, float maxLineWidth, Vector2 position, Color color)
 			=> font.DrawWrapped(batch, text, position, Vector2.Zero, maxLineWidth, color);
@@ -711,10 +717,13 @@ public static class SpriteFontBatcherExt
 			=> font.DrawWrapped(batch, text, position, justify, maxLineWidth, size, color);
 
 		public void Text(ReadOnlySpan<char> text, Vector2 position, float size, Color color)
-			=> batch.GraphicsDevice.Defaults.SpriteFont.Draw(batch, text, position, Vector2.Zero, size, color);
+			=> batch.GraphicsDevice.Defaults.SpriteFont.Draw(batch, text, position, Vector2.Zero, size, 0, color);
 
 		public void Text(ReadOnlySpan<char> text, Vector2 position, Vector2 justify, float size, Color color)
-			=> batch.GraphicsDevice.Defaults.SpriteFont.Draw(batch, text, position, justify, size, color);
+			=> batch.GraphicsDevice.Defaults.SpriteFont.Draw(batch, text, position, justify, size, 0, color);
+
+		public void Text(ReadOnlySpan<char> text, Vector2 position, Vector2 justify, float size, float angle, Color color)
+			=> batch.GraphicsDevice.Defaults.SpriteFont.Draw(batch, text, position, justify, size, angle, color);
 
 		public void TextWrapped(ReadOnlySpan<char> text, float maxLineWidth, Vector2 position, float size, Color color)
 			=> batch.GraphicsDevice.Defaults.SpriteFont.DrawWrapped(batch, text, position, Vector2.Zero, maxLineWidth, size, color);
