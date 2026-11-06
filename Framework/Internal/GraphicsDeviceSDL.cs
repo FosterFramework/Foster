@@ -1222,7 +1222,7 @@ internal unsafe class GraphicsDeviceSDL(App app, GraphicsDriver preferred) : Gra
 		}
 
 		// set scissor
-		var nextScissor = command.Scissor ?? nextViewport;
+		var nextScissor = (command.Scissor ?? nextViewport).GetIntersection(nextViewport);
 		if (renderPassScissor != nextScissor)
 		{
 			renderPassScissor = nextScissor;
