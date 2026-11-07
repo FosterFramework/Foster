@@ -158,4 +158,7 @@ public readonly struct Subtexture : IEquatable<Subtexture>
 
 	public static bool operator ==(Subtexture a, Subtexture b) => a.Equals(b);
 	public static bool operator !=(Subtexture a, Subtexture b) => !a.Equals(b);
+
+	public static implicit operator Subtexture(Texture texture) => new(texture);
+	public static implicit operator Subtexture(Target texture) => new(texture);
 }

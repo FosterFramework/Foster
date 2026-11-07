@@ -1708,7 +1708,7 @@ public class Batcher : IDisposable
 		Matrix = was;
 	}
 
-	public void ImageFit(in Subtexture subtex, in Rect rect, in Vector2 justify, Color color, bool flipX, bool flipY)
+	public void ImageFit(in Subtexture subtex, in Rect rect, in Vector2 justify, Color color, bool flipX = false, bool flipY = false)
 	{
 		if (subtex.Texture == null)
 			return;
@@ -1726,7 +1726,7 @@ public class Batcher : IDisposable
 		Image(subtex, at, orig, new Vector2(flipX ? -1 : 1, flipY ? -1 : 1) * scale, 0, color);
 	}
 
-	public void ImageFit(in Subtexture subtex, in Rect rect, in Vector2 justify, Color c0, Color c1, Color c2, Color c3, bool flipX, bool flipY)
+	public void ImageFit(in Subtexture subtex, in Rect rect, in Vector2 justify, Color c0, Color c1, Color c2, Color c3, bool flipX = false, bool flipY = false)
 	{
 		if (subtex.Texture == null)
 			return;
