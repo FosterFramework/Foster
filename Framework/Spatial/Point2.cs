@@ -133,6 +133,16 @@ public struct Point2(int x, int y) : IEquatable<Point2>
 		Clamp(bounds.TopLeft, bounds.BottomRight);
 
 	/// <summary>
+	/// Mirror the point around an x-value
+	/// </summary>
+	public readonly Point2 MirrorX(int x) => (x - (X - x), Y);
+
+	/// <summary>
+	/// Mirror the point around a y-value
+	/// </summary>
+	public readonly Point2 MirrorY(int y) => (X, y - (Y - y));
+
+	/// <summary>
 	/// Convert the <see cref="Point2"/> into a tuple of integers
 	/// </summary>
 	public readonly (int X, int Y) Deconstruct() => (X, Y);
