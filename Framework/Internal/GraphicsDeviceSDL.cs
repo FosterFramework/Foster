@@ -459,7 +459,7 @@ internal unsafe class GraphicsDeviceSDL(App app, GraphicsDriver preferred) : Gra
 			return;
 
 		// if the window is hidden, we do not draw to it
-		if ((SDL_GetWindowFlags(state.Handle) & SDL_WindowFlags.SDL_WINDOW_HIDDEN) != 0)
+		if ((SDL_GetWindowFlags(state.Handle) & (SDL_WindowFlags.SDL_WINDOW_HIDDEN | SDL_WindowFlags.SDL_WINDOW_OCCLUDED)) != 0)
 			return;
 
 		// get the swapchain for this window
