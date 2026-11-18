@@ -14,6 +14,10 @@ namespace Foster.Framework;
 /// <param name="WindowTitle">What to display in the Window Title</param>
 /// <param name="Width">The Window Width</param>
 /// <param name="Height">The Window Height</param>
+/// <param name="MinWidth">An optional minimum width for the window</param>
+/// <param name="MinHeight">An optional minimum height for the window</param>
+/// <param name="MaxWidth">An optional maximum width for the window</param>
+/// <param name="MaxHeight">An optional maximum height for the window</param>
 /// <param name="Fullscreen">If the Window should default to Fullscreen</param>
 /// <param name="Resizable">If the Window should be resizable</param>
 /// <param name="UpdateMode">An optional default Update Mode to initialize the App with</param>
@@ -25,6 +29,10 @@ public readonly record struct AppConfig
 	string WindowTitle,
 	int Width,
 	int Height,
+	int? MinWidth = null,
+	int? MinHeight = null,
+	int? MaxWidth = null,
+	int? MaxHeight = null,
 	bool Fullscreen = false,
 	bool Resizable = true,
 	UpdateMode? UpdateMode = null,
@@ -252,6 +260,10 @@ public abstract class App : IDisposable
 		GraphicsDevice = new GraphicsDeviceSDL(this, config.PreferredGraphicsDriver);
 		GraphicsDevice.CreateDevice(config.Flags);
 		Window = new Window(this, config.WindowTitle, config.Width, config.Height, config.Fullscreen, config.Resizable);
+		if (config.MinWidth is int minWidth) Window.MinWidth = minWidth;
+		if (config.MinHeight is int minHeight) Window.MinHeight = minHeight;
+		if (config.MaxWidth is int maxWidth) Window.MaxWidth = maxWidth;
+		if (config.MaxHeight is int maxHeight) Window.MaxHeight = maxHeight;
 
 		// try to load default SDL gamepad mappings
 		Input.AddDefaultSDLGamepadMappings(AppContext.BaseDirectory);

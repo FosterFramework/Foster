@@ -132,6 +132,94 @@ public sealed class Window : IDrawableTarget
 	}
 
 	/// <summary>
+	/// The minimum Width that the Window is allowed to be.
+	/// If set to 0, the Window Width will have no minimum.
+	/// If the Window Width is smaller than this value, it gets increased to this value.
+	/// </summary>
+	public int MinWidth
+	{
+		get => MinSize.X;
+		set => MinSize = new(value, MinHeight);
+	}
+
+	/// <summary>
+	/// The minimum Height that the Window is allowed to be.
+	/// If set to 0, the Window Height will have no minimum.
+	/// If the Window Height is smaller than this value, it gets increased to this value.
+	/// </summary>
+	public int MinHeight
+	{
+		get => MinSize.Y;
+		set => MinSize = new(MinWidth, value);
+	}
+
+	/// <summary>
+	/// The minimum size of the Window.
+	/// If an axis is set to 0, the Window size on that axis will have no minimum.
+	/// Setting this to be larger than Size will cause Size to expand and fit accordingly.
+	/// </summary>
+	public Point2 MinSize
+	{
+		get
+		{
+			if (Handle == nint.Zero)
+				throw closedWindowException;
+			SDL_GetWindowMinimumSize(Handle, out int w, out int h);
+			return new(w, h);
+		}
+		set
+		{
+			if (Handle == nint.Zero)
+				throw closedWindowException;
+			SDL_SetWindowMinimumSize(Handle, value.X, value.Y);
+		}
+	}
+
+	/// <summary>
+	/// The maximum Width that the Window is allowed to be.
+	/// If set to 0, the Window Width will have no maximum.
+	/// If the Window Width is larger than this value, it shrinks to this value.
+	/// </summary>
+	public int MaxWidth
+	{
+		get => MaxSize.X;
+		set => MaxSize = new(value, MaxHeight);
+	}
+
+	/// <summary>
+	/// The maximum Height that the Window is allowed to be.
+	/// If set to 0, the Window Height will have no maximum.
+	/// If the Window Height is larger than this value, it shrinks to this value.
+	/// </summary>
+	public int MaxHeight
+	{
+		get => MaxSize.Y;
+		set => MaxSize = new(MaxWidth, value);
+	}
+
+	/// <summary>
+	/// The maximum size of the Window.
+	/// If an axis is set to 0, the Window size on that axis will have no maximum.
+	/// Setting this to be smaller than Size will cause Size to shrink and fit accordingly.
+	/// </summary>
+	public Point2 MaxSize
+	{
+		get
+		{
+			if (Handle == nint.Zero)
+				throw closedWindowException;
+			SDL_GetWindowMaximumSize(Handle, out int w, out int h);
+			return new(w, h);
+		}
+		set
+		{
+			if (Handle == nint.Zero)
+				throw closedWindowException;
+			SDL_SetWindowMaximumSize(Handle, value.X, value.Y);
+		}
+	}
+
+	/// <summary>
 	/// Gets the Size of the Display that the Window is currently in.
 	/// </summary>
 	public unsafe Point2 DisplaySize
