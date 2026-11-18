@@ -428,6 +428,37 @@ public abstract class App : IDisposable
 			Log.Warning($"Failed to set Mouse Cursor: {SDL_GetError()}");
 	}
 
+	/// <summary>
+	/// Icon styles for <see cref="App.ShowMessageBox"/>.
+	/// </summary>
+	public enum MessageBoxIcon
+	{
+		Info,
+		Warning,
+		Error
+	}
+
+	/// <summary>
+	/// Displays a modal message box over the game window.
+	/// </summary>
+	public void ShowMessageBox(MessageBoxIcon icon, string title, string message)
+	{
+		if (Window.Handle == nint.Zero)
+			return;
+
+		// SDL's MessageBox API is only safe to use from the main thread
+		RunOnMainThread(() =>
+		{
+			SDL_ShowSimpleMessageBox(icon switch
+			{
+				MessageBoxIcon.Error => SDL_MessageBoxFlags.SDL_MESSAGEBOX_ERROR,
+				MessageBoxIcon.Warning => SDL_MessageBoxFlags.SDL_MESSAGEBOX_WARNING,
+				MessageBoxIcon.Info => SDL_MessageBoxFlags.SDL_MESSAGEBOX_INFORMATION,
+				_ => throw new ArgumentOutOfRangeException(nameof(icon), icon, null)
+			}, title, message, Window.Handle);
+		});
+	}
+
 	internal void WindowCreated(Window window)
 	{
 		windows.Add(window);
