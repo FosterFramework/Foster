@@ -1853,6 +1853,18 @@ public static class Calc
 	public static float ClampedLerp(float a, float b, float percent, Ease.Easer easer)
 		=> float.Lerp(a, b, float.Clamp(easer(percent), 0, 1));
 
+	public static float ListLerp(float t, Ease.Easer easer, params ReadOnlySpan<float> values)
+	{
+		int a = int.Clamp((int)t, 0, values.Length - 2);
+		return float.Lerp(values[a], values[a + 1], easer(float.Clamp(t - a, 0, 1)));
+	}
+
+	public static Vector2 ListLerp(float t, Ease.Easer easer, params ReadOnlySpan<Vector2> values)
+	{
+		int a = int.Clamp((int)t, 0, values.Length - 2);
+		return Vector2.Lerp(values[a], values[a + 1], easer(float.Clamp(t - a, 0, 1)));
+	}
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Bezier(float a, float b, float c, float t)
 		=> Lerp(Lerp(a, b, t), Lerp(b, c, t), t);
