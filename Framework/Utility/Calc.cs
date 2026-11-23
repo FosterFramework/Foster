@@ -620,69 +620,6 @@ public static class Calc
 	public static float AngleReflectOnY(float radians)
 		=> AngleWrap(HalfPI - (radians - HalfPI));
 
-	/// <summary>
-	/// Returns true every time the elapsed <paramref name="time"/> passes a given <paramref name="interval"/>. Ex: with an <paramref name="interval"/> of 0.1, this will be true for one frame every 0.1 seconds
-	/// </summary>
-	/// <param name="time">Current elapsed time in seconds</param>
-	/// <param name="delta">Time since last frame in seconds</param>
-	/// <param name="interval">Interval to check whether we've crossed, in seconds</param>
-	/// <param name="offset">Offset to the interval in seconds (so we can, in effect, start partway through an interval)</param>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool OnInterval(double time, double delta, double interval, double offset = 0)
-		=> Math.Floor((time - offset - delta) / interval) < Math.Floor((time - offset) / interval);
-
-	/// <summary>
-	/// Returns how many times the interval has been passed over the last frame. Ex: with an interval of 0.01 and a steady delta time of 0.016, this will alternate returning 1 and 2 every frame
-	/// </summary>
-	/// <param name="time">Current elapsed time in seconds</param>
-	/// <param name="delta">Time since last frame in seconds</param>
-	/// <param name="interval">Interval to count the times we've crossed, in seconds</param>
-	/// <param name="offset">Offset to the interval in seconds (so we can, in effect, start partway through an interval)</param>
-	public static int IntervalCount(double time, double delta, double interval, double offset = 0)
-		=> Floor((time - offset) / interval) - Floor((time - offset - delta) / interval);
-
-	/// <summary>
-	/// Returns true when the elapsed <paramref name="time"/> is between the given <paramref name="interval"/>. Ex: with an <paramref name="interval"/> of 0.1, this will be false for 0.1 seconds, then true for 0.1 seconds, and then repeat.
-	/// </summary>
-	/// <param name="time">Current elapsed time in seconds</param>
-	/// <param name="interval">Interval to check whether we're between, in seconds</param>
-	/// <param name="offset">Offset to the interval in seconds (so we can, in effect, start partway through an interval)</param>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool BetweenInterval(double time, double interval, double offset = 0)
-		=> (time - offset) % (interval * 2) >= interval;
-
-	/// <summary>
-	/// Returns true when the elapsed <paramref name="time"/> is between the given <paramref name="falseInterval"/> and <paramref name="trueInterval"/>. Ex: with a <paramref name="falseInterval"/> of 0.1 and <paramref name="trueInterval"/> of 0.2, this will be false for 0.1 seconds, then true for 0.2 seconds, and then repeat.
-	/// </summary>
-	/// <param name="time">Current elapsed time in seconds</param>
-	/// <param name="falseInterval">Time to be false for, in seconds</param>
-	/// <param name="trueInterval">Time to be true for, in seconds</param>
-	/// <param name="offset">Offset to the interval in seconds (so we can, in effect, start partway through an interval)</param>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool BetweenInterval(double time, double falseInterval, double trueInterval, double offset)
-		=> (time - offset) % (falseInterval + trueInterval) >= falseInterval;
-
-	/// <summary>
-	/// Cycle through returning each element of <paramref name="options"/> based on elapsed <paramref name="time"/>, moving to the next value after every <paramref name="interval"/> seconds until we reach the end of <paramref name="options"/> and then looping back to the start.
-	/// </summary>
-	/// <param name="time">The current elapsed time in seconds</param>
-	/// <param name="interval">The interval time in seconds for each individual option to be chosen for</param>
-	/// <param name="offset">Offset to the interval in seconds (so we can, in effect, start partway through an interval)</param>
-	/// <param name="options">The return values to cycle through</param>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T CycleInterval<T>(double time, double interval, double offset, params ReadOnlySpan<T> options)
-		=> options[(int)((time - offset) / interval) % options.Length];
-
-	/// <summary>
-	/// Cycle through returning each element of <paramref name="options"/> based on elapsed <paramref name="time"/>, moving to the next value after every <paramref name="interval"/> seconds until we reach the end of <paramref name="options"/> and then looping back to the start.
-	/// </summary>
-	/// <param name="time">The current elapsed time in seconds</param>
-	/// <param name="interval">The interval time in seconds for each individual option to be chosen for</param>
-	/// <param name="options">The return values to cycle through</param>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T CycleInterval<T>(double time, double interval, params ReadOnlySpan<T> options)
-		=> options[(int)(time / interval) % options.Length];
-
 	public static int NextPowerOfTwo(int x)
 	{
 		x--;
@@ -760,6 +697,114 @@ public static class Calc
 			return null;
 		}
 	}
+
+	#endregion
+
+	#region Time Math
+
+	/// <summary>
+	/// Returns true every time the elapsed <paramref name="time"/> passes a given <paramref name="interval"/>.
+	/// <para><b>Example:</b> with an <paramref name="interval"/> of 0.1, this will be true for one frame every 0.1 seconds.</para>
+	/// </summary>
+	/// <param name="time">Current elapsed time in seconds</param>
+	/// <param name="delta">Time since last frame in seconds</param>
+	/// <param name="interval">Interval to check whether we've crossed, in seconds</param>
+	/// <param name="offset">Offset to the interval in seconds (so we can, in effect, start partway through an interval)</param>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool OnInterval(double time, double delta, double interval, double offset = 0)
+		=> Math.Floor((time - offset - delta) / interval) < Math.Floor((time - offset) / interval);
+
+	/// <summary>
+	/// Returns how many times the interval has been passed over the last frame.
+	/// <para><b>Example:</b> with an interval of 0.01 and a steady delta time of 0.016, this will alternate returning 1 and 2 every frame.</para>
+	/// </summary>
+	/// <param name="time">Current elapsed time in seconds</param>
+	/// <param name="delta">Time since last frame in seconds</param>
+	/// <param name="interval">Interval to count the times we've crossed, in seconds</param>
+	/// <param name="offset">Offset to the interval in seconds (so we can, in effect, start partway through an interval)</param>
+	public static int IntervalCount(double time, double delta, double interval, double offset = 0)
+		=> Floor((time - offset) / interval) - Floor((time - offset - delta) / interval);
+
+	/// <summary>
+	/// Returns true when the elapsed <paramref name="time"/> is between the given <paramref name="interval"/>.
+	/// <para><b>Example:</b> with an <paramref name="interval"/> of 0.1, this will be false for 0.1 seconds, then true for 0.1 seconds, and then repeat.</para>
+	/// </summary>
+	/// <param name="time">Current elapsed time in seconds</param>
+	/// <param name="interval">Interval to check whether we're between, in seconds</param>
+	/// <param name="offset">Offset to the interval in seconds (so we can, in effect, start partway through an interval)</param>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool BetweenInterval(double time, double interval, double offset = 0)
+		=> (time - offset) % (interval * 2) >= interval;
+
+	/// <summary>
+	/// Returns true when the elapsed <paramref name="time"/> is between the given <paramref name="falseInterval"/> and <paramref name="trueInterval"/>. <para><b>Example:</b> with a <paramref name="falseInterval"/> of 0.1 and <paramref name="trueInterval"/> of 0.2, this will be false for 0.1 seconds, then true for 0.2 seconds, and then repeat.</para>
+	/// </summary>
+	/// <param name="time">Current elapsed time in seconds</param>
+	/// <param name="falseInterval">Time to be false for, in seconds</param>
+	/// <param name="trueInterval">Time to be true for, in seconds</param>
+	/// <param name="offset">Offset to the interval in seconds (so we can, in effect, start partway through an interval)</param>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool BetweenInterval(double time, double falseInterval, double trueInterval, double offset)
+		=> (time - offset) % (falseInterval + trueInterval) >= falseInterval;
+
+	/// <summary>
+	/// As a timer approaches zero, the result flickers between true and false based on intervals provided.
+	/// <para><b>Example:</b> With <paramref name="intervals"/> of <c>(0.2, 2), (0.4, 1)</c>, true will result when <paramref name="time"/> is between values <c>0.4 ~ 0.6</c>, <c>0.2 ~ 0.3</c>, or <c>0 ~ 0.1</c>.</para>
+	/// </summary>
+	/// <param name="time">Current elapsed time in seconds. When larger than the total time of all intervals, true is returned.</param>
+	/// <param name="intervals">The flicker intervals, ordered by closest to zero first. An interval gives true when the timer is in the lower half of its duration. Intervals are inclusive min, exclusive max.</param>
+	public static bool FlickerIntervals(double time, params ReadOnlySpan<(double duration, int repeats)> intervals)
+	{
+		foreach (var interval in intervals)
+		{
+			double len = interval.duration * interval.repeats;
+			if (time < len)
+				return time % interval.duration < interval.duration/2;
+			time -= len;
+		}
+
+		return true;
+	}
+
+	/// <summary>
+	/// As a timer approaches zero, the result flickers between true and false based on intervals provided. Intervals are ordered closest to zero first.
+	/// <para><b>Example:</b> With <paramref name="intervals"/> of <c>(0.1, 0.1, 2), (0.3, 0.1, 1)</c>, true will result when <paramref name="time"/> is between values <c>0.4 ~ 0.7</c>, <c>0.2 ~ 0.3</c>, or <c>0 ~ 0.1</c></para>
+	/// </summary>
+	/// <param name="time">Current elapsed time in seconds. When larger than the total time of all intervals, true is returned.</param>
+	/// <param name="intervals">The flicker intervals, ordered by closest to zero first. The true duration is closer to zero than the false duration. Intervals are inclusive min, exclusive max.</param>
+	public static bool FlickerIntervals(double time, params ReadOnlySpan<(double trueDuration, double falseDuration, int repeats)> intervals)
+	{
+		foreach (var interval in intervals)
+		{
+			double len = (interval.trueDuration + interval.falseDuration) * interval.repeats;
+			if (time < len)
+				return time % (interval.trueDuration + interval.falseDuration) < interval.trueDuration;
+			time -= len;
+		}
+
+		return true;
+	}
+
+	/// <summary>
+	/// Cycle through returning each element of <paramref name="options"/> based on elapsed <paramref name="time"/>, moving to the next value after every <paramref name="interval"/> seconds until we reach the end of <paramref name="options"/> and then looping back to the start.
+	/// </summary>
+	/// <param name="time">The current elapsed time in seconds</param>
+	/// <param name="interval">The interval time in seconds for each individual option to be chosen for</param>
+	/// <param name="offset">Offset to the interval in seconds (so we can, in effect, start partway through an interval)</param>
+	/// <param name="options">The return values to cycle through</param>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T CycleInterval<T>(double time, double interval, double offset, params ReadOnlySpan<T> options)
+		=> options[(int)((time - offset) / interval) % options.Length];
+
+	/// <summary>
+	/// Cycle through returning each element of <paramref name="options"/> based on elapsed <paramref name="time"/>, moving to the next value after every <paramref name="interval"/> seconds until we reach the end of <paramref name="options"/> and then looping back to the start.
+	/// </summary>
+	/// <param name="time">The current elapsed time in seconds</param>
+	/// <param name="interval">The interval time in seconds for each individual option to be chosen for</param>
+	/// <param name="options">The return values to cycle through</param>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T CycleInterval<T>(double time, double interval, params ReadOnlySpan<T> options)
+		=> options[(int)(time / interval) % options.Length];
 
 	#endregion
 
